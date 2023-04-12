@@ -1,0 +1,17 @@
+[Defines]
+  INF_VERSION = 0x00010006
+  BASE_NAME = a9nloader
+  FILE_GUID = A0E47E30-03A8-4A13-A82C-85E21E20910B
+  MODULE_TYPE = UEFI_APPLICATION
+  VERSION_STRING = 0.1
+  ENTRY_POINT = efi_main
+
+[Sources]
+  a9nloader.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiLib
+  UefiApplicationEntryPoint
