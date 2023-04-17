@@ -58,7 +58,7 @@ EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root
 
     efi_status = get_image(image_handle, &device_image);
     Print(L"end_get_image\r\n");
-    efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
+    efi_status = get_root_file_system(image_handle, &device_image->DeviceHandle, &file_system);
     Print(L"end_get_root_file_system\r\n");
     efi_status = get_root_directory(file_system, root_directory);
     Print(L"end_open_root_directory\r\n");
