@@ -29,11 +29,11 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     // EFI_LOADED_IMAGE_PROTOCOL* kernel_image; kernel file (*.elf)
     EFI_FILE_PROTOCOL *root_directory;
     EFI_FILE_PROTOCOL *kernel;
-    UINT16 path[] = u"EFI\\BOOT\\BOOTX64.EFI";
+    // UINT16 path[] = L"EFI\\BOOT\\BOOTX64.EFI";
     print_info(system_table);
     efi_status = open_root_directory(image_handle, system_table, &root_directory);
 
-    root_directory->Open(root_directory, &kernel, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    root_directory->Open(root_directory, &kernel, L"EFI\\BOOT\\BOOTX64.EFI", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
     EFI_FILE_INFO file_info;
     UINT64 file_size;
     file_size = sizeof(file_info);
@@ -90,6 +90,7 @@ EFI_STATUS handle_error(EFI_STATUS efi_status)
 {
     if(efi_status != EFI_SUCCESS)
     {
+        Print(L"EFI_ERROR\r\n");
         return efi_status;
     }
     return EFI_SUCCESS;
