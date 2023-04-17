@@ -4,6 +4,7 @@
         "uefi.h": "c",
         "uefibasetype.h": "c",
         "uefispec.h": "c",
-        "loadedimage.h": "c"
+        "loadedimage.h": "c",
+        "xloctime": "c"
     }
 }
