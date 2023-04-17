@@ -17,6 +17,7 @@ void print_success(EFI_SYSTEM_TABLE*);
 void open_root_directory(EFI_HANDLE, EFI_FILE_PROTOCOL**);
 EFI_STATUS get_image(EFI_HANDLE, EFI_LOADED_IMAGE_PROTOCOL**);
 EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL**);
+EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
 EFI_STATUS handle_error(EFI_STATUS);
 
 
@@ -53,11 +54,6 @@ void open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table
     }
 }
 
-void print_success(EFI_SYSTEM_TABLE *system_table)
-{
-    system_table->ConOut->OutputString(system_table->ConOut, L"SUCCESS\n");
-}
-
 EFI_STATUS get_image(EFI_HANDLE image_handle, EFI_LOADED_IMAGE_PROTOCOL **device_image)
 {
     EFI_STATUS efi_status;
@@ -86,4 +82,9 @@ EFI_STATUS handle_error(EFI_STATUS efi_status)
         return efi_status;
     }
     return efi_status;
+}
+
+void print_success(EFI_SYSTEM_TABLE *system_table)
+{
+    system_table->ConOut->OutputString(system_table->ConOut, L"SUCCESS\n");
 }
