@@ -23,10 +23,8 @@ EFI_STATUS handle_error(EFI_STATUS);
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
-    EFI_STATUS status;
-    EFI_LOADED_IMAGE_PROTOCOL* kernel_image;// kernel file (*.elf)
+    // EFI_LOADED_IMAGE_PROTOCOL* kernel_image; kernel file (*.elf)
     EFI_FILE_PROTOCOL *root_directory;
-
     // system_table->ConOut->ClearScreen(system_table->ConOut);
     print_info(system_table);
     open_root_directory(image_handle, system_table, &root_directory);
@@ -47,7 +45,7 @@ void open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table
 
     efi_status = get_image(image_handle, &device_image);
     efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
-    efi_status = get_root_directory(file_system, &root_directory);
+    efi_status = get_root_directory(file_system, root_directory);
     if(efi_status == EFI_SUCCESS)
     {
         print_success(system_table);
