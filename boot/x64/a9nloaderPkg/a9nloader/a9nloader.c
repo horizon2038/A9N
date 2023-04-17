@@ -2,13 +2,14 @@
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include  <Library/PrintLib.h>
-#include  <Library/MemoryAllocationLib.h>
-#include  <Library/BaseMemoryLib.h>
+#include <Library/PrintLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Protocol/LoadedImage.h>
 #include <Protocol/SimpleFileSystem.h>
 #include <Protocol/DiskIo2.h>
 #include <Protocol/BlockIo.h>
+#include <Guid/FileInfo.h>
 #include "a9nloader.h"
 
 // PROTOTYPE
@@ -25,15 +26,32 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 {
     // EFI_LOADED_IMAGE_PROTOCOL* kernel_image; kernel file (*.elf)
     EFI_FILE_PROTOCOL *root_directory;
+    EFI_FILE_PROTOCOL *kernel;
+    UINT16 path[] = u"EFI\\BOOT\\BOOTX64.EFI";
     // system_table->ConOut->ClearScreen(system_table->ConOut);
     print_info(system_table);
     open_root_directory(image_handle, system_table, &root_directory);
+
+    root_directory->Open(root_directory, &kernel, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    EFI_FILE_INFO file_info;
+    UINT64 file_size;
+    EFI_STATUS status;
+
+    file_size = sizeof(file_info);
+    status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_size, (VOID*)&file_info);
+
+    CHAR8 buffer[256];
+    // AsciiSPrint(buffer, sizeof(buffer), "file_name: %s\nfile_size: %llu (%llu on disk) bytes\n", file_info.FileName, file_info.FileSize, file_info.PhysicalSize);
+    Print(L"file_name: %s\nfile_size: %llu (%llu on disk) bytes\n", file_info.FileName, file_info.FileSize, file_info.PhysicalSize);
+    system_table->ConOut->OutputString(system_table->ConOut, L"a9nloader\n");
+
     while(1);
     return 0;
 }
 
 void print_info(EFI_SYSTEM_TABLE *system_table)
 {
+    system_table->ConOut->ClearScreen(system_table->ConOut);
     system_table->ConOut->OutputString(system_table->ConOut, L"a9nloader\n");
 }
 
@@ -46,10 +64,6 @@ void open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table
     efi_status = get_image(image_handle, &device_image);
     efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
     efi_status = get_root_directory(file_system, root_directory);
-    if(efi_status == EFI_SUCCESS)
-    {
-        print_success(system_table);
-    }
 }
 
 EFI_STATUS get_image(EFI_HANDLE image_handle, EFI_LOADED_IMAGE_PROTOCOL **device_image)
