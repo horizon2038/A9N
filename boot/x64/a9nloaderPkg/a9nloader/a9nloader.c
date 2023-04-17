@@ -88,7 +88,7 @@ EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* root_file_system,
 
 EFI_STATUS handle_error(EFI_STATUS efi_status)
 {
-    if(efi_status != EFI_SUCCESS)
+    if(EFI_ERROR(efi_status))
     {
         Print(L"EFI_ERROR\r\n");
         return efi_status;
