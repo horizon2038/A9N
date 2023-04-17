@@ -24,6 +24,7 @@ EFI_STATUS handle_error(EFI_STATUS);
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
+    Print(L"start_uefi_main\r\n");
     EFI_STATUS efi_status;
     // EFI_LOADED_IMAGE_PROTOCOL* kernel_image; kernel file (*.elf)
     EFI_FILE_PROTOCOL *root_directory;
@@ -37,7 +38,7 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     UINT64 file_size;
     file_size = sizeof(file_info);
     efi_status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_size, (VOID*)&file_info);
-    Print(L"file_name: %s\nfile_size: %llu (%llu on disk) bytes\n", file_info.FileName, file_info.FileSize, file_info.PhysicalSize);
+    Print(L"file_name: %s\nfile_size: %llu (%llu on disk) bytes\r\n", file_info.FileName, (unsigned long long)file_info.FileSize, (unsigned long long)file_info.PhysicalSize);
 
     while(1);
     return efi_status;
@@ -45,7 +46,7 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 
 void print_info(EFI_SYSTEM_TABLE *system_table)
 {
-    system_table->ConOut->ClearScreen(system_table->ConOut);
+    // system_table->ConOut->ClearScreen(system_table->ConOut);
     system_table->ConOut->OutputString(system_table->ConOut, L"test_a9nloader\n");
 }
 
