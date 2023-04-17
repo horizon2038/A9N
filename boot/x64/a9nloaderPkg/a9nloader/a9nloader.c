@@ -14,7 +14,7 @@
 // PROTOTYPE
 void print_info(EFI_SYSTEM_TABLE*);
 void print_success(EFI_SYSTEM_TABLE*);
-void open_root_directory(EFI_HANDLE, EFI_FILE_PROTOCOL**);
+void open_root_directory(EFI_HANDLE, EFI_SYSTEM_TABLE *system_table, EFI_FILE_PROTOCOL**);
 EFI_STATUS get_image(EFI_HANDLE, EFI_LOADED_IMAGE_PROTOCOL**);
 EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL**);
 EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
