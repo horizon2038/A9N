@@ -47,7 +47,7 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 void print_info(EFI_SYSTEM_TABLE *system_table)
 {
     // system_table->ConOut->ClearScreen(system_table->ConOut);
-    system_table->ConOut->OutputString(system_table->ConOut, L"test_a9nloader\n");
+    system_table->ConOut->OutputString(system_table->ConOut, L"test_a9nloader\r\n");
 }
 
 EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table, EFI_FILE_PROTOCOL **root_directory)
@@ -56,6 +56,7 @@ EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system
     EFI_LOADED_IMAGE_PROTOCOL *device_image;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
     EFI_STATUS efi_status;
+    efi_status = EFI_SUCCESS;
 
     efi_status = get_image(image_handle, &device_image);
     efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
@@ -87,7 +88,7 @@ EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* root_file_system,
 
 EFI_STATUS handle_error(EFI_STATUS efi_status)
 {
-    if(EFI_ERROR(efi_status))
+    if(efi_status != EFI_SUCCESS)
     {
         return efi_status;
     }
