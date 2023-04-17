@@ -24,24 +24,23 @@ EFI_STATUS handle_error(EFI_STATUS);
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
-    EFI_STATUS status;
+    EFI_STATUS efi_status;
     // EFI_LOADED_IMAGE_PROTOCOL* kernel_image; kernel file (*.elf)
     EFI_FILE_PROTOCOL *root_directory;
     EFI_FILE_PROTOCOL *kernel;
     UINT16 path[] = u"EFI\\BOOT\\BOOTX64.EFI";
-    // system_table->ConOut->ClearScreen(system_table->ConOut);
     print_info(system_table);
-    status = open_root_directory(image_handle, system_table, &root_directory);
+    efi_status = open_root_directory(image_handle, system_table, &root_directory);
 
     root_directory->Open(root_directory, &kernel, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
     EFI_FILE_INFO file_info;
     UINT64 file_size;
     file_size = sizeof(file_info);
-    status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_size, (VOID*)&file_info);
+    efi_status = kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_size, (VOID*)&file_info);
     Print(L"file_name: %s\nfile_size: %llu (%llu on disk) bytes\n", file_info.FileName, file_info.FileSize, file_info.PhysicalSize);
 
     while(1);
-    return 0;
+    return efi_status;
 }
 
 void print_info(EFI_SYSTEM_TABLE *system_table)
