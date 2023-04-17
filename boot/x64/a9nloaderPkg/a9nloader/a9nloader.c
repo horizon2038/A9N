@@ -52,6 +52,7 @@ void print_info(EFI_SYSTEM_TABLE *system_table)
 
 EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table, EFI_FILE_PROTOCOL **root_directory)
 {
+    Print(L"start_open_root_directory\r\n");
     EFI_LOADED_IMAGE_PROTOCOL *device_image;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
     EFI_STATUS efi_status;
@@ -59,6 +60,7 @@ EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system
     efi_status = get_image(image_handle, &device_image);
     efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
     efi_status = get_root_directory(file_system, root_directory);
+    Print(L"end_open_root_directory\r\n");
     return efi_status;
 }
 
@@ -89,7 +91,7 @@ EFI_STATUS handle_error(EFI_STATUS efi_status)
     {
         return efi_status;
     }
-    return efi_status;
+    return EFI_SUCCESS;
 }
 
 void print_success(EFI_SYSTEM_TABLE *system_table)
