@@ -12,8 +12,8 @@
 #include "a9nloader.h"
 
 // PROTOTYPE
-void print_info();
-void get_memory_map();
+void print_info(EFI_SYSTEM_TABLE*);
+void print_success(EFI_SYSTEM_TABLE*);
 void open_root_directory(EFI_HANDLE, EFI_FILE_PROTOCOL**);
 EFI_STATUS get_image(EFI_HANDLE, EFI_LOADED_IMAGE_PROTOCOL**);
 EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL**);
@@ -27,36 +27,18 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     EFI_FILE_PROTOCOL *root_directory;
 
     // system_table->ConOut->ClearScreen(system_table->ConOut);
-    print_info(&system_table);
+    print_info(system_table);
+    open_root_directory(image_handle, system_table, &root_directory);
     while(1);
     return 0;
 }
 
 void print_info(EFI_SYSTEM_TABLE *system_table)
 {
-    system_table->ConOut->OutputString(system_table->ConOut, L"a9nloader");
+    system_table->ConOut->OutputString(system_table->ConOut, L"a9nloader\n");
 }
 
-void aiueo_open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory)
-{
-    EFI_LOADED_IMAGE_PROTOCOL *device_image;
-    EFI_STATUS efi_status;
-
-    efi_status = gBS->OpenProtocol(image_handle, &gEfiLoadedImageProtocolGuid, (VOID**)&device_image, image_handle, NULL, EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-    if(EFI_ERROR(efi_status))
-    {
-        return efi_status;
-    }
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
-    efi_status = gBS->OpenProtocol(device_image->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (VOID**)file_system, image_handle, NULL, EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-    if(EFI_ERROR(efi_status))
-    {
-        return efi_status;
-    }
-    return file_system->OpenVolume(file_system, root_directory); // void
-}
-
-void open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory)
+void open_root_directory(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table, EFI_FILE_PROTOCOL **root_directory)
 {
     EFI_LOADED_IMAGE_PROTOCOL *device_image;
     EFI_STATUS efi_status;
@@ -65,6 +47,15 @@ void open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_direc
     efi_status = get_image(image_handle, &device_image);
     efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
     efi_status = get_root_directory(file_system, &root_directory);
+    if(efi_status == EFI_SUCCESS)
+    {
+        print_success(system_table);
+    }
+}
+
+void print_success(EFI_SYSTEM_TABLE *system_table)
+{
+    system_table->ConOut->OutputString(system_table->ConOut, L"SUCCESS\n");
 }
 
 EFI_STATUS get_image(EFI_HANDLE image_handle, EFI_LOADED_IMAGE_PROTOCOL **device_image)
