@@ -7,6 +7,7 @@
         "loadedimage.h": "c",
         "xloctime": "c",
         "base.h": "c",
-        "processorbind.h": "c"
+        "processorbind.h": "c",
+        "diskio2.h": "c"
     }
 }
