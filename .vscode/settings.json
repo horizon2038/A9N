@@ -5,6 +5,8 @@
         "uefibasetype.h": "c",
         "uefispec.h": "c",
         "loadedimage.h": "c",
-        "xloctime": "c"
+        "xloctime": "c",
+        "base.h": "c",
+        "processorbind.h": "c"
     }
 }
