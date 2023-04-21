@@ -21,6 +21,8 @@ EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_P
 EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
 EFI_STATUS handle_error(EFI_STATUS);
 
+EFI_STATUS load_kernel(EFI_FILE_PROTOCOL*);
+
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
@@ -87,4 +89,9 @@ EFI_STATUS handle_error(EFI_STATUS efi_status)
         return efi_status;
     }
     return EFI_SUCCESS;
+}
+
+EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
+{
+    Print(L"load_kernel\r\n");   
 }
