@@ -93,5 +93,5 @@ EFI_STATUS handle_error(EFI_STATUS efi_status)
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
 {
-    Print(L"load_kernel\r\n");   
+    Print(L"load_kernel\r\n");
 }
