@@ -93,5 +93,61 @@ EFI_STATUS handle_error(EFI_STATUS efi_status)
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
 {
+    elf64_header *loaded_elf64_header;
+    // load header
+    elf64_program_header *loaded_elf64_program_header;
+    // load program_header
+    for(int i=0; i < loaded_elf64_header->program_header_number; i++)
+    {
+        if(loaded_elf64_program_header[i].type != PT_LOAD)
+        {
+            continue; // early return
+        }
+        // TODO:
+        // load segment: PT_LOAD to memory.
+        // process
+    }
     Print(L"load_kernel\r\n");
+    // TODO:
+    // search .bss from section.
+    // zero-clear .bss section.
+    // set entry_point.
 }
+
+uint64_t calculate_file_size(EFI_FILE_PROTOCOL *file, uint64_t *file_size)
+{
+    EFI_STATUS efi_status;
+    EFI_FILE_INFO *file_info;
+
+    *file_size = sizeof(file_info) + sizeof(uint16_t) * 256;
+    efi_status = file->GetInfo(file, &gEfiFileInfoGuid, file_size, (VOID*)file_info);
+    return file_info->FileSize;
+}
+
+EFI_STATUS read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, size_t size, void **buffer)
+{
+    EFI_STATUS efi_status;
+
+    efi_status = gBS->AllocatePool(EfiLoaderData, size, buffer);
+    file->SetPosition(file, offset);
+    efi_status =  file->Read(file, &size, *buffer);
+    return efi_status;
+}
+
+EFI_STATUS calculate_elf_segment(elf64_header *elf64_header, elf64_address head)
+{
+    elf64_program_header *loaded_elf64_program_header;
+    loaded_elf64_program_header = (elf64_program_header*)(head + elf64_header->program_header_offset);
+    for(int i=0; i < elf64_header->program_header_number; i++)
+    {
+        if(loaded_elf64_program_header[i].type != PT_LOAD)
+        {
+            continue; // early return
+        }
+        // TODO:
+        // load segment: PT_LOAD to memory.
+        // process
+    }
+}
+
+// EFI_STATUS load_elf_segment();
