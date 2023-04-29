@@ -42,7 +42,7 @@ typedef struct
     elf64_word flags;
     elf64_offset offset;
     elf64_address virtual_address;
-    elf64_address physical_addr;
+    elf64_address physical_address;
     elf64_xword file_size;
     elf64_xword memory_size;
     elf64_xword alignment;
