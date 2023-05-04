@@ -8,6 +8,7 @@
         "xloctime": "c",
         "base.h": "c",
         "processorbind.h": "c",
-        "diskio2.h": "c"
+        "diskio2.h": "c",
+        "simplefilesystem.h": "c"
     }
 }
