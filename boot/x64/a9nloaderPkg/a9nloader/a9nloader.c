@@ -21,7 +21,7 @@ EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_P
 EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
 EFI_STATUS handle_error(EFI_STATUS);
 
-EFI_STATUS load_kernel(EFI_FILE_PROTOCOL*);
+// EFI_STATUS load_kernel(EFI_FILE_PROTOCOL*);
 
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
@@ -124,12 +124,12 @@ uint64_t calculate_file_size(EFI_FILE_PROTOCOL *file, uint64_t *file_size)
     return file_info->FileSize;
 }
 
-EFI_STATUS read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, size_t size, void **buffer)
+EFI_STATUS read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, int size, void **buffer)
 {
     EFI_STATUS efi_status;
-
-    efi_status = gBS->AllocatePool(EfiLoaderData, size, buffer);
-    file->SetPosition(file, offset);
+    // efi_status = gBS->AllocatePool(EfiLoaderData, size, buffer);
+    *buffer = AllocatePool(size);
+    efi_status = file->SetPosition(file, offset);
     efi_status =  file->Read(file, &size, *buffer);
     return efi_status;
 }
@@ -147,6 +147,72 @@ EFI_STATUS calculate_elf_segment(elf64_header *elf64_header, elf64_address head)
         // TODO:
         // load segment: PT_LOAD to memory.
         // process
+    }
+}
+
+EFI_STATUS calculate_elf_segment(elf64_header *elf64_header, EFI_PHYSICAL_ADDRESS image_base)
+{
+    EFI_STATUS status;
+
+    // Get pointer to program headers
+    elf64_program_header *program_header = (elf64_program_header *)((UINTN)elf64_header + elf64_header->program_header_offset);
+
+    // Load each program segment into memory
+    for (UINT16 i = 0; i < elf64_header->program_header_number; i++)
+    {
+        // Loadable segment type
+        if (program_header[i].type != PT_LOAD)
+        {
+            continue;
+        }
+        // Get the start address of the segment in memory
+        EFI_PHYSICAL_ADDRESS segment_start = image_base + program_header[i].virtual_address;
+        // Allocate memory for the segment
+        status = gBS->AllocatePages(AllocateAddress, EfiLoaderData, EFI_SIZE_TO_PAGES(program_header[i].memory_size), &segment_start);
+        if (EFI_ERROR(status))
+        {
+            Print(L"Failed to allocate memory for segment %d: %r\n", i, status);
+            return status;
+        }
+        // Copy the segment from the file to memory
+        gBS->CopyMem((VOID *)(UINTN)segment_start, (VOID *)((UINTN)elf64_header + program_header[i].offset), program_header[i].file_size);
+        if (EFI_ERROR(status))
+        {
+            Print(L"Failed to copy segment %d to memory: %r\n", i, status);
+            return status;
+        }
+        // Zero out any remaining memory in the segment
+        if (program_header[i].file_size < program_header[i].memory_size)
+        {
+            gBS->SetMem((VOID *)(UINTN)(segment_start + program_header[i].file_size), program_header[i].memory_size - program_header[i].file_size, 0);
+            if (EFI_ERROR(status))
+            {
+                Print(L"Failed to zero out remaining memory in segment %d: %r\n", i, status);
+                return status;
+            }
+        }
+    }
+}
+
+EFI_STATUS load_elf_segment(elf64_header *header, elf64_program_header *program_header, EFI_PHYSICAL_ADDRESS segment_start)
+{
+    EFI_STATUS efi_status;
+    efi_status = gBS->AllocatePages(AllocateAddress, EfiLoaderData, EFI_SIZE_TO_PAGES(program_header->memory_size), &segment_start);
+    gBS->CopyMem((VOID *)(UINTN)segment_start, (VOID *)((UINTN)header + program_header->offset), program_header->file_size);
+    return efi_status;
+}
+
+EFI_STATUS zero_clear(elf64_program_header *program_header, EFI_PHYSICAL_ADDRESS segment_start)
+{
+    EFI_STATUS efi_status;
+    if (program_header->file_size < program_header->memory_size)
+    {
+        gBS->SetMem((VOID *)(UINTN)(segment_start + program_header->file_size), program_header->memory_size - program_header->file_size, 0);
+        if (EFI_ERROR(efi_status))
+        {
+            Print(L"Failed to zero out remaining memory in segment %d: %r\n", i, efi_status);
+            return efi_status;
+        }
     }
 }
 
