@@ -213,7 +213,9 @@ EFI_STATUS zero_clear(elf64_program_header *program_header, EFI_PHYSICAL_ADDRESS
             Print(L"Failed to zero out remaining memory in segment %d: %r\n", i, efi_status);
             return efi_status;
         }
+        return efi_status;
     }
+    return efi_status;
 }
 
 // EFI_STATUS load_elf_segment();
