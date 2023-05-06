@@ -9,6 +9,8 @@
         "base.h": "c",
         "processorbind.h": "c",
         "diskio2.h": "c",
-        "simplefilesystem.h": "c"
+        "simplefilesystem.h": "c",
+        "uefibootservicestablelib.h": "c",
+        "uefiruntimeservicestablelib.h": "c"
     }
 }
