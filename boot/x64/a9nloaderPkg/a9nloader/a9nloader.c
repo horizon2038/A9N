@@ -21,9 +21,6 @@ EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_P
 EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
 EFI_STATUS handle_error(EFI_STATUS);
 
-// EFI_STATUS load_kernel(EFI_FILE_PROTOCOL*);
-
-
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
     Print(L"start_efi_main\r\n");
@@ -96,22 +93,11 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
     elf64_header *loaded_elf64_header;
     // load header
     elf64_program_header *loaded_elf64_program_header;
-    // load program_header
-    for(int i=0; i < loaded_elf64_header->program_header_number; i++)
-    {
-        if(loaded_elf64_program_header[i].type != PT_LOAD)
-        {
-            continue; // early return
-        }
-        // TODO:
-        // load segment: PT_LOAD to memory.
-        // process
-    }
-    Print(L"load_kernel\r\n");
-    // TODO:
-    // search .bss from section.
-    // zero-clear .bss section.
-    // set entry_point.
+    // read header.
+    // calculate elf_location
+    // locatiion(load) elf segment.
+    // complete.
+
 }
 
 uint64_t calculate_file_size(EFI_FILE_PROTOCOL *file, uint64_t *file_size)
@@ -216,6 +202,7 @@ EFI_STATUS zero_clear(elf64_program_header *program_header, EFI_PHYSICAL_ADDRESS
         return efi_status;
     }
     return efi_status;
+    // TODO: Connection all things.
 }
 
 // EFI_STATUS load_elf_segment();
