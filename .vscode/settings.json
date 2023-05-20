@@ -12,6 +12,7 @@
         "simplefilesystem.h": "c",
         "uefibootservicestablelib.h": "c",
         "uefiruntimeservicestablelib.h": "c",
-        "memoryallocationlib.h": "c"
+        "memoryallocationlib.h": "c",
+        "open_kernel.h": "c"
     }
 }

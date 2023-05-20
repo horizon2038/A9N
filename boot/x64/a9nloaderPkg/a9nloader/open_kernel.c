@@ -41,13 +41,3 @@ EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* root_file_system,
     efi_status = root_file_system->OpenVolume(root_file_system, root_directory);
     return handle_error(efi_status);
 }
-
-EFI_STATUS handle_error(EFI_STATUS efi_status)
-{
-    if(EFI_ERROR(efi_status))
-    {
-        Print(L"EFI_ERROR\r\n");
-        return efi_status;
-    }
-    return EFI_SUCCESS;
-}
