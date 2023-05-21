@@ -1,6 +1,10 @@
 #include "open_kernel.h" // impl
 
+#include <Uefi.h>
+#include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/LoadedImage.h>
+#include <Protocol/SimpleFileSystem.h>
 
 #include "error_handler.h"
 

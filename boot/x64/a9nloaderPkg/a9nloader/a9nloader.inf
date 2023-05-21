@@ -8,6 +8,8 @@
 
 [Sources]
   a9nloader.c
+  open_kernel.c
+  error_handler.c
 
 [Packages]
   MdePkg/MdePkg.dec
