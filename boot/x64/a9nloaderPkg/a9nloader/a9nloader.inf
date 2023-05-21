@@ -8,8 +8,9 @@
 
 [Sources]
   a9nloader.c
-  open_kernel.c
+  kernel_opener.c
   error_handler.c
+  file_info_logger.c
 
 [Packages]
   MdePkg/MdePkg.dec
