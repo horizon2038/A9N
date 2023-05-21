@@ -1,6 +1,8 @@
-#include "load_kernel.h"
+#include "kernel_loader.h"
 
 #include <Library/UefiBootServicesTableLib.h>
+
+#include "file_reader.h"
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
 {
@@ -13,22 +15,23 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
     // complete.
 }
 
-EFI_STATUS calculate_elf_segment(elf64_header *elf64_header, EFI_PHYSICAL_ADDRESS image_base)
+EFI_STATUS calculate_elf_segment(elf64_header *header, EFI_PHYSICAL_ADDRESS image_base)
 {
     EFI_STATUS status;
 
     // Get pointer to program headers
-    elf64_program_header *program_header = (elf64_program_header *)((UINTN)elf64_header + elf64_header->program_header_offset);
+    elf64_program_header *program_header = (elf64_program_header *)((UINTN)header + header->program_header_offset);
 
     // Load each program segment into memory
-    for (UINT16 i = 0; i < elf64_header->program_header_number; i++)
+    for (UINT16 i = 0; i < header->program_header_number; i++)
     {
         // Loadable segment type
         if (program_header[i].type != PT_LOAD)
         {
-            // some things.
             continue;
         }
+
+        load_elf_segment(header, program_header, 0x000000);
     }
 }
 
@@ -54,6 +57,5 @@ EFI_STATUS zero_clear(elf64_program_header *program_header, EFI_PHYSICAL_ADDRESS
         return efi_status;
     }
     return efi_status;
-    // TODO: Connection all things.
 }
 

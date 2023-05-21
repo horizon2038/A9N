@@ -1,4 +1,4 @@
-#include "open_kernel.h" // impl
+#include "kernel_opener.h" // impl
 
 #include <Uefi.h>
 #include <Library/UefiLib.h>
@@ -8,20 +8,23 @@
 
 #include "error_handler.h"
 
+EFI_STATUS open_kernel(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory, EFI_FILE_PROTOCOL **kernel)
+{
+    EFI_STATUS efi_status;
+    efi_status = open_root_directory(image_handle, root_directory);
+    (*root_directory)->Open(*root_directory, kernel, u"kernel\\kernel.elf", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    return efi_status;
+}
+
 EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory)
 {
-    Print(L"start_open_root_directory\r\n");
     EFI_LOADED_IMAGE_PROTOCOL *device_image;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
     EFI_STATUS efi_status;
     efi_status = EFI_SUCCESS;
-
     efi_status = get_image(image_handle, &device_image);
-    Print(L"end_get_image\r\n");
     efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
-    Print(L"end_get_root_file_system\r\n");
     efi_status = get_root_directory(file_system, root_directory);
-    Print(L"end_open_root_directory\r\n");
     return efi_status;
 }
 

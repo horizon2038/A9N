@@ -15,6 +15,9 @@
         "memoryallocationlib.h": "c",
         "open_kernel.h": "c",
         "blockio.h": "c",
-        "printlib.h": "c"
+        "printlib.h": "c",
+        "kernel_opener.h": "c",
+        "fileinfo.h": "c",
+        "file_info_logger.h": "c"
     }
 }
