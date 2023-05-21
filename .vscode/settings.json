@@ -13,6 +13,8 @@
         "uefibootservicestablelib.h": "c",
         "uefiruntimeservicestablelib.h": "c",
         "memoryallocationlib.h": "c",
-        "open_kernel.h": "c"
+        "open_kernel.h": "c",
+        "blockio.h": "c",
+        "printlib.h": "c"
     }
 }
