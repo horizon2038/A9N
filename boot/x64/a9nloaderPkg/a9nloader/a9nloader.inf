@@ -11,6 +11,9 @@
   kernel_opener.c
   error_handler.c
   file_info_logger.c
+  kernel_loader.c
+  file_reader.c
+  elf_info_logger.c
 
 [Packages]
   MdePkg/MdePkg.dec
