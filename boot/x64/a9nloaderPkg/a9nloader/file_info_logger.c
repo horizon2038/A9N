@@ -35,7 +35,7 @@ void print_info(EFI_FILE_INFO *file_info)
 {
     Print
     (
-        L"file_name: %s\nfile_size: %llu bytes\nfile_physical_size: %llu bytes", 
+        L"file_name: %s\nfile_size: %llu bytes\nfile_physical_size: %llu bytes\n", 
         file_info->FileName, 
         (unsigned long long)file_info->FileSize, 
         (unsigned long long)file_info->PhysicalSize

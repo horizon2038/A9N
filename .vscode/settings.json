@@ -18,6 +18,8 @@
         "printlib.h": "c",
         "kernel_opener.h": "c",
         "fileinfo.h": "c",
-        "file_info_logger.h": "c"
+        "file_info_logger.h": "c",
+        "kernel_loader.h": "c",
+        "file_reader.h": "c"
     }
 }
