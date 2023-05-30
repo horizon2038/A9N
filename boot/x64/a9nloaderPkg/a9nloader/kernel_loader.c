@@ -8,14 +8,17 @@
 #include "elf_info_logger.h"
 
 EFI_STATUS load_elf_header(EFI_FILE_PROTOCOL*, elf64_header*);
+EFI_STATUS load_elf_program_header(EFI_FILE_PROTOCOL*, elf64_header*, elf64_program_header*);
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset)
 {
     EFI_STATUS efi_status;
     elf64_header loaded_elf64_header = (elf64_header) {0};
-    load_elf_header(kernel, &loaded_elf64_header);
+    efi_status = load_elf_header(kernel, &loaded_elf64_header);
     // efi_status = read_file(kernel, 0, sizeof(elf64_header), (void*)&loaded_elf64_header);
     print_elf_info(&loaded_elf64_header);
+    elf64_program_header *loaded_elf64_program_header = 0;
+    efi_status = load_elf_program_header(kernel, &loaded_elf64_header, loaded_elf64_program_header);
     efi_status = calculate_elf_segment(&loaded_elf64_header, 0);
     // elf64_program_header *loaded_elf64_program_header;
     return efi_status;
@@ -28,12 +31,17 @@ EFI_STATUS load_elf_header(EFI_FILE_PROTOCOL *kernel, elf64_header *header)
     return efi_status;
 }
 
+EFI_STATUS load_elf_program_header(EFI_FILE_PROTOCOL *kernel, elf64_header *header, elf64_program_header *program_header)
+{
+    EFI_STATUS efi_status;
+    gBS->AllocatePool(EfiReservedMemoryType, sizeof(elf64_program_header) * header->program_header_number, (void*)program_header);
+    efi_status = read_file(kernel, (uint64_t)header, sizeof(elf64_program_header) * header->program_header_number, (void*)program_header);
+    return efi_status;
+}
+
 EFI_STATUS calculate_elf_segment(elf64_header *header, EFI_PHYSICAL_ADDRESS image_base)
 {
     EFI_STATUS efi_status;
-
-    // Get pointer to program headers
-    // efi_status = read_file();
     elf64_program_header *program_header = (elf64_program_header *)((UINTN)header + header->program_header_offset);
     Print(L"start_calculate_elf_segment\r\n");
 
@@ -43,11 +51,10 @@ EFI_STATUS calculate_elf_segment(elf64_header *header, EFI_PHYSICAL_ADDRESS imag
         // Loadable segment type
         if (program_header[i].type != PT_LOAD)
         {
-            Print(L"PT_LOAD\r\n");
             continue;
         }
         Print(L"count: %d", i);
-
+        Print(L"PT_LOAD\r\n");
         efi_status = load_elf_segment(header, program_header, 0x000000);
     }
     return efi_status;
