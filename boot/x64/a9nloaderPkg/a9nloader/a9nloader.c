@@ -11,12 +11,14 @@
 #include "file_info_logger.h"
 #include "kernel_loader.h"
 #include "error_handler.h"
+#include "kernel_jumper.h"
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
+    EFI_STATUS efi_status = EFI_SUCCESS;
     EFI_FILE_PROTOCOL *root_directory;
     EFI_FILE_PROTOCOL *kernel;
-    EFI_STATUS efi_status = EFI_SUCCESS;
+    uint64_t entry_point_address = 0;
 
     system_table->ConOut->ClearScreen(system_table->ConOut);
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_WHITE);
@@ -27,10 +29,11 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     {
         efi_status = open_kernel(image_handle, &root_directory, &kernel);
         efi_status = print_file_info(&kernel);
-        efi_status = load_kernel(kernel, 0);
+        efi_status = load_kernel(kernel, &entry_point_address);
         break;
     }
     efi_status = handle_error(efi_status);
+    jump_kernel(entry_point_address);
     while(1);
     return efi_status;
 }

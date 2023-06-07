@@ -33,6 +33,8 @@
         "utility": "c",
         "vector": "c",
         "basememorylib.h": "c",
-        "elf_info_logger.h": "c"
+        "elf_info_logger.h": "c",
+        "stdint.h": "c",
+        "kernel_jumper.h": "c"
     }
 }
