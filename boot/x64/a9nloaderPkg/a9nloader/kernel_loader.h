@@ -12,8 +12,9 @@
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t offset);
 // uint64_t calculate_file_size(EFI_FILE_PROTOCOL *file, uint64_t *file_size);
+EFI_STATUS load_elf_header(EFI_FILE_PROTOCOL*, elf64_header**);
+EFI_STATUS load_elf_program_header(EFI_FILE_PROTOCOL*, elf64_header*, elf64_program_header**);
 EFI_STATUS load_elf_segment(elf64_header *elf64_header, elf64_program_header*, EFI_PHYSICAL_ADDRESS image_base);
 EFI_STATUS locate_elf_segment(elf64_header *header, elf64_program_header *program_header);
 void zero_clear(elf64_program_header *program_header);
-
 #endif
