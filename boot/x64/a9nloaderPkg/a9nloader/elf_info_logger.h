@@ -3,6 +3,7 @@
 
 #include "elf.h"
 
-void print_elf_info(elf64_header*);
+void print_elf_header_info(elf64_header*);
+void print_elf_program_header_info(elf64_program_header*);
 
 #endif
