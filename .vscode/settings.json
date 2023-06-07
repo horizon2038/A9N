@@ -31,6 +31,8 @@
         "string_view": "c",
         "unordered_map": "c",
         "utility": "c",
-        "vector": "c"
+        "vector": "c",
+        "basememorylib.h": "c",
+        "elf_info_logger.h": "c"
     }
 }
