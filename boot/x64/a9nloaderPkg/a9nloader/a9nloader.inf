@@ -14,6 +14,7 @@
   kernel_loader.c
   file_reader.c
   elf_info_logger.c
+  kernel_jumper.c
 
 [Packages]
   MdePkg/MdePkg.dec
