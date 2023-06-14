@@ -17,6 +17,7 @@ void print_elf_header_info(elf64_header *header)
 void print_elf_program_header_info(elf64_program_header *program_header)
 {
     Print(L"=====ELF_PROGRAM_HEADER=====\r\n");
+    Print(L"program_header_address: 0x%04llx\n", (uint64_t)program_header);
     Print(L"type: %u\n", program_header->type);
     Print(L"flags: %llu\n", program_header->flags);
     Print(L"offset: 0x%04llx\n", program_header->offset);

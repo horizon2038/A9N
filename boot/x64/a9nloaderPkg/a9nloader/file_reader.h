@@ -7,5 +7,5 @@
 #include <Library/UefiLib.h>
 // #include <Protocol/SimpleFIleSystem.h>
 
-EFI_STATUS read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, int size, void **buffer);
+EFI_STATUS read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, uint64_t size, void **buffer);
 #endif
