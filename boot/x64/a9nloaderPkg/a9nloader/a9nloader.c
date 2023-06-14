@@ -25,14 +25,15 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     Print(L"a9nloader v0.0.1\r\n");
     Print(L"start_efi_main\r\n");
 
-    while(!EFI_ERROR(efi_status))
-    {
-        efi_status = open_kernel(image_handle, &root_directory, &kernel);
-        efi_status = print_file_info(&kernel);
-        efi_status = load_kernel(kernel, &entry_point_address);
-        break;
-    }
-    efi_status = handle_error(efi_status);
+    efi_status = open_kernel(image_handle, &root_directory, &kernel);
+    if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = print_file_info(&kernel);
+    if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = load_kernel(kernel, &entry_point_address);
+    if(EFI_ERROR(efi_status)) return efi_status;
+
+    // efi_status = handle_error(efi_status);
+    system_table->ConOut->SetAttribute(system_table->ConOut, EFI_GREEN);
     jump_kernel(entry_point_address);
     while(1);
     return efi_status;
