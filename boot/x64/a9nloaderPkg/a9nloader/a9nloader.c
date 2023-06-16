@@ -1,3 +1,5 @@
+#include "a9nloader.h"
+
 #include <Uefi.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -5,7 +7,6 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Guid/FileInfo.h>
 
-#include "a9nloader.h"
 #include "elf.h"    
 #include "kernel_opener.h"
 #include "file_info_logger.h"
