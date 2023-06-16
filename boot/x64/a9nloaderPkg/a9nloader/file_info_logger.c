@@ -4,10 +4,15 @@
 #include <Library/UefiLib.h>
 #include <Protocol/SimpleFileSystem.h>
 #include <Guid/FileInfo.h>
+#include <stdint.h>
+
+uint64_t calculate_file_size();
+EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **, uint64_t*, EFI_FILE_INFO*);
+void print_info(EFI_FILE_INFO*);
 
 EFI_STATUS print_file_info(EFI_FILE_PROTOCOL **file)
 {
-    UINT64 file_size;
+    uint64_t file_size;
     EFI_FILE_INFO file_info;
     EFI_STATUS efi_status;
     file_size = calculate_file_size();
@@ -16,15 +21,15 @@ EFI_STATUS print_file_info(EFI_FILE_PROTOCOL **file)
     return efi_status;
 }
 
-UINT64 calculate_file_size()
+uint64_t calculate_file_size()
 {
-    UINT64 file_size;
+    uint64_t file_size;
     file_size = sizeof(EFI_FILE_INFO);
-    file_size += sizeof(CHAR16) * 16;
+    file_size += sizeof(short) * 16;
     return file_size;
 }
 
-EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **file, UINT64 *file_size, EFI_FILE_INFO *file_info)
+EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **file, uint64_t *file_size, EFI_FILE_INFO *file_info)
 {
     EFI_STATUS efi_status;
     efi_status = (*file)->GetInfo(*file, &gEfiFileInfoGuid, file_size, (VOID*)file_info);
@@ -37,7 +42,7 @@ void print_info(EFI_FILE_INFO *file_info)
     (
         L"file_name: %s\nfile_size: %llu bytes\nfile_physical_size: %llu bytes\n", 
         file_info->FileName, 
-        (unsigned long long)file_info->FileSize, 
-        (unsigned long long)file_info->PhysicalSize
+        file_info->FileSize, 
+        file_info->PhysicalSize
     );
 }
