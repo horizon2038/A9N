@@ -39,7 +39,7 @@ EFI_STATUS read_elf_header(EFI_FILE_PROTOCOL *kernel, elf64_header **header)
     EFI_STATUS efi_status = EFI_SUCCESS;
 
     efi_status = read_file(kernel, 0, sizeof(elf64_header), (void**)header);
-    // print_elf_header_info(*header);
+    print_elf_header_info(*header);
     
     return efi_status;
 }
@@ -70,7 +70,7 @@ EFI_STATUS load_elf_segment(EFI_FILE_PROTOCOL *kernel, elf64_header *header, elf
         {
             continue;
         }
-        // print_elf_program_header_info(program_header);
+        print_elf_program_header_info(program_header);
         efi_status = read_file(kernel, program_header->offset, program_header->file_size, &buffer);
         if(EFI_ERROR(efi_status)) return efi_status;
         locate_elf_segment(header, program_header, (uint64_t)buffer);
@@ -119,4 +119,3 @@ void zero_clear(elf64_program_header *program_header)
         gBS->SetMem((void *)(program_header->virtual_address + program_header->file_size), program_header->memory_size - program_header->file_size, 0);
     }
 }
-
