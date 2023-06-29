@@ -4,7 +4,7 @@
 #include <Library/UefiLib.h>
 #include <Protocol/SimpleFileSystem.h>
 #include <Guid/FileInfo.h>
-#include <stdint.h>
+#include "stdint.h"
 
 uint64_t calculate_file_size();
 EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **, uint64_t*, EFI_FILE_INFO*);

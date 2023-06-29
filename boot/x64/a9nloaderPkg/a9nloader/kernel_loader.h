@@ -2,7 +2,7 @@
 #define LOAD_KERNEL_H
 
 #include <Uefi.h>
-#include <stdint.h>
+#include "stdint.h"
 #include <Protocol/SimpleFileSystem.h>
 
 #include "elf.h"

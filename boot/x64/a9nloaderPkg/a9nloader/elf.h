@@ -1,7 +1,7 @@
 #ifndef ELF_H
 #define ELF_H
 
-#include <stdint.h>
+#include "stdint.h"
 
 typedef uint64_t elf64_address;
 typedef uint16_t elf64_half;
