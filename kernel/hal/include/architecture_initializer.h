@@ -4,7 +4,6 @@
 class architecture_initializer
 {
     public:
-        virtual ~architecture_initializer() {};
         // architecture-dependent processing is done in the constructor
         // Possibility to make the Code cleaner by introducing a kernel module
         virtual void init_interrupt() = 0;

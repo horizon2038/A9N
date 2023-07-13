@@ -1,7 +1,4 @@
-extern "C" void kernel_main()
+extern "C" int kernel_main()
 {
-    while(true)
-    {
-        __asm__ ("hlt");
-    }
+    return 2038;
 }
