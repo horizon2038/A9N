@@ -4,11 +4,11 @@
 #include "../include/architecture_initializer.h"
 
 
-class x86_64_architecture_initializer : architecture_initializer
+class x86_64_architecture_initializer : public architecture_initializer
 {
     public:
-        x86_64_architecture_initializer() {};
-        ~x86_64_architecture_initializer() {};
+        x86_64_architecture_initializer();
+        ~x86_64_architecture_initializer();
         void init_interrupt();
         void init_memory();
         void init_timer();
