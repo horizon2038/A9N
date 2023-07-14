@@ -3,21 +3,27 @@ SHELL=/usr/bin/bash
 TARGET = kernel.elf
 SRCDIR ?= ./kernel
 BUILDDIR ?= ./build
+ARCH = x86_64
 
-# SRCS = $(shell find $(SRCDIR) -name "*.c" -or -name "*.cpp" -or -name "*.s")
-SRCS = $(shell find $(SRCDIR) -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
+# SRCS = $(shell find $(SRCDIR) -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
+SRCS  = $(shell find $(SRCDIR) -path $(SRCDIR)/hal -prune -o -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \) -print)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCS))
 OBJS := $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(OBJS))
 OBJS := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%.o,$(OBJS))
-# OBJS = $(patsubst $(SRCDIR)%,$(BUILDDIR)%,$(SRCS:.c=.o))
-# OBJS := $(patsubst $(SRCDIR)%,$(BUILDDIR)%,$(OBJS:.cpp=.o))
-# OBJS := $(patsubst $(SRCDIR)%,$(BUILDDIR)%,$(OBJS:.s=.o))
-# OBJS = $(SRCS:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
-# OBJS := $(OBJS:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
-# OBJS := $(OBJS:$(SRCDIR/)%.s=$(BUILDDIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
+ARCH_INCDIR = $(shell find $(SRCDIR)/hal/$(ARCH) -type d)
+# HAL_SRCS =  $(shell find $(SRCDIR)/hal -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \) -not -path "$(SRCDIR)/hal/$(ARCH)/*")
+# HAL_OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(HAL_SRCS))
+# HAL_OBJS := $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(HAL_OBJS))
+# HAL_OBJS := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%.o,$(HAL_OBJS))
+HAL_SRCS :=  $(shell find $(SRCDIR)/hal -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
+HAL_OBJS = $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(HAL_SRCS:$(SRCDIR)/%=%))))
+OBJS += $(HAL_OBJS)
+DEPS += $(HAL_OBJS:.o=.d)
+
 INCDIR = $(shell find $(SRCDIR) -type d)
+INCDIR += $(ARCH_INCDIR)
 INCFLAGS = $(addprefix -I,$(INCDIR))
 
 CC := clang++ 
@@ -52,6 +58,18 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s
 	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) -o $@ $<
+
+# $(BUILDDIR)/hal/%.o: $(SRCDIR)/hal/%.c
+# 	mkdir -p $(dir $@)
+# 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+# 
+# $(BUILDDIR)/hal/%.o: $(SRCDIR)/hal/%.cpp
+# 	mkdir -p $(dir $@)
+# 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+# 	
+# $(BUILDDIR)/hal/%.o: $(SRCDIR)/hal/%.s
+# 	mkdir -p $(dir $@)
+# 	$(ASM) $(ASFLAGS) -o $@ $<
 
 build: all
 
