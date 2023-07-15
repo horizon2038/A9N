@@ -5,7 +5,7 @@
 function init () {
     #Init ENV
     CURRENT=$(pwd)
-    EDK2=~/Documents/Program/A9N/Build/x86_64/edk2
+    EDK2=~/Documents/Program/A9N/A9N/chain/x86_64/edk2
     echo $SHELL
 
     #init LLVM
@@ -26,8 +26,8 @@ function enable_build () {
     cd ${EDK2}
     source ./edksetup.sh BaseTools
     build
-    cd ${CURRENT}
-    cp ${EDK2}/Build/a9nloaderPkg/x64/DEBUG_CLANGPDB/X64/a9nloader.efi EFI/BOOT/BOOTX64.EFI
+    # cd ${CURRENT}
+    # cp ${EDK2}/build/a9nloaderPkg/x64/DEBUG_CLANGPDB/X64/a9nloader.efi EFI/BOOT/BOOTX64.EFI
     printf "${ESC}${BLUE}OK: BUILD SUCCESSFUL\n${ESC}[m"
 }
 
@@ -37,7 +37,7 @@ function enable_gdb () {
 
 function run_qemu () {
     #Run QEMU
-    QEMU_RUN_SCRIPT="qemu-system-x86_64 -bios lib/OVMF.fd -drive format=raw,file=fat:rw:./ -monitor stdio $GDB_OPTION"
+    QEMU_RUN_SCRIPT="qemu-system-x86_64 -bios OVMF.fd -drive format=raw,file=fat:rw:./ -monitor stdio $GDB_OPTION"
     echo ${QEMU_RUN_SCRIPT}
     eval ${QEMU_RUN_SCRIPT}
 }

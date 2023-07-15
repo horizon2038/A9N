@@ -35,6 +35,7 @@
         "basememorylib.h": "c",
         "elf_info_logger.h": "c",
         "stdint.h": "c",
-        "kernel_jumper.h": "c"
+        "kernel_jumper.h": "c",
+        "a9nloader.h": "c"
     }
 }

@@ -35,6 +35,7 @@
 *.out
 *.app
 *.elf
+*.EFI
 
 # OS
 *.DS_Store
