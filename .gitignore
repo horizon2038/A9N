@@ -1,3 +1,7 @@
+# dirs
+/build/
+/chain/
+
 # Prerequisites
 *.d
 
