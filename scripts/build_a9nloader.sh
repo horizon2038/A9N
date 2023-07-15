@@ -1,5 +1,9 @@
 #!/bin/bash
 
+ARCH=${ARCH}
+: ${ARCH:="x86_64"}
+LLVMDIR=${LLVMDIR}
+: ${LLVMDIR:="/usr/local/opt/llvm/bin"}
 CURRENT=`dirname $0`
 
 cd $CURRENT
