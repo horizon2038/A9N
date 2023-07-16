@@ -5,6 +5,7 @@ BOOT = BOOTX64.EFI
 SRCDIR ?= ./src/kernel
 BUILDDIR ?= ./build
 ARCH = x86_64
+export ARCH
 CHAINDIR = ./chain
 A9NLOADER = a9nloaderPkg
 SCRIPTSDIR = ./scripts
@@ -65,7 +66,7 @@ $(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/%.s
 	$(ASM) $(ASFLAGS) -o $@ $<
 
 $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
-	ARCH=$(ARCH); LLVMDIR=$(LLVMDIR); $(SCRIPTSDIR)/build_a9nloader.sh
+	ARCH=$(ARCH) LLVMDIR=$(LLVMDIR) $(SCRIPTSDIR)/build_a9nloader.sh
 	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
 
 clean:
