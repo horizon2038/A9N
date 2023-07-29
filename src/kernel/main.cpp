@@ -10,5 +10,6 @@ extern "C" int kernel_main()
     char buf[255];
     gdt_initializer *my_gdt_initializer = new((void*)buf) gdt_initializer;
     my_gdt_initializer->init_gdt();
+    __asm volatile("hlt");
     return 2038;
 }

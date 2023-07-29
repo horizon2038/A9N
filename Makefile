@@ -34,8 +34,8 @@ CC := clang
 CXX := clang++
 ASM := nasm
 LD = ld.lld
-CFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone
-CXXFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17
+CFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -masm=intel
+CXXFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -masm=intel
 CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/include -I$(SRCDIR)/hal/include
 ASFLAGS = -f elf64
 LDFLAGS = --entry kernel_main -z norelro --image-base 0x100000 --static
@@ -63,7 +63,7 @@ $(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/%.cpp
 
 $(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/%.s
 	mkdir -p $(dir $@)
-	$(ASM) $(ASFLAGS) -o $@ $<
+	$(ASM) $(ASFLAGS) $< -o $@ 
 
 $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	ARCH=$(ARCH) LLVMDIR=$(LLVMDIR) $(SCRIPTSDIR)/build_a9nloader.sh
