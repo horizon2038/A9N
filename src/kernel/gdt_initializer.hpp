@@ -24,7 +24,7 @@ class gdt_initializer
             0x00aff3000000ffff
         };
         void load_gdt();
-        void load_segment_register();
+        void load_segment_register(uint16_t code_segment_register);
     };
 
 #endif
