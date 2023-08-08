@@ -11,7 +11,7 @@ class gdt_initializer
         void init_gdt();
 
     private:
-        static inline uint64_t gdt[] =
+        constexpr static uint64_t gdt[] =
         {
             0x0000000000000000,
             0x00009a000000ffff,
