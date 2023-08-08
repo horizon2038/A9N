@@ -23,7 +23,7 @@ void gdt_initializer :: init_gdt()
 void gdt_initializer :: load_gdt()
 {
     uint16_t gdt_size = sizeof(gdt) - 1;
-    uint64_t *gdt_address = gdt;
+    uint64_t *gdt_address = (uint64_t*)gdt;
     _load_gdt(gdt_size, gdt_address);
 }
 

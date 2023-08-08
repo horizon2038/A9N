@@ -1,4 +1,4 @@
-#include "gdt_initializer.hpp"
+#include <x86_64/gdt_configurer.hpp>
 #include <stdint.h>
 #include <cpp_dependent/new.hpp>
 

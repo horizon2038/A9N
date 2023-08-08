@@ -1,2 +1,4 @@
 -I./src/kernel/include/
 -I./src/kernel/hal/include/
+-I./src/kernel/hal/
+-std=c++17
