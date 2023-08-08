@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-class gdt_initializer
+class gdt_configurer
 {
     public:
-        gdt_initializer();
-        ~gdt_initializer();
+        gdt_configurer();
+        ~gdt_configurer();
         void init_gdt();
 
     private:

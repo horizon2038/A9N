@@ -8,8 +8,8 @@ extern "C" int kernel_main()
     // init gdt and set protection mode (ring 0 - ring 3, kernel/user mode).
     // first: make GDT struct and that array.
     char buf[255];
-    gdt_initializer *my_gdt_initializer = new((void*)buf) gdt_initializer;
-    my_gdt_initializer->init_gdt();
+    gdt_configurer *my_gdt_configurer = new((void*)buf) gdt_configurer;
+    my_gdt_configurer->init_gdt();
     __asm volatile("hlt");
     return 2038;
 }
