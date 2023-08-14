@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-class segment_configurer
+class segment_configurator
 {
     public:
-        segment_configurer();
-        ~segment_configurer();
+        segment_configurator();
+        ~segment_configurator();
         void init_gdt();
 
     private:
