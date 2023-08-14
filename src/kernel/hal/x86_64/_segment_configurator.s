@@ -16,7 +16,9 @@ _load_segment_register:
     retfq
 
 .reload_cs
+    ; if you setting up of code segment register: CS, you should use far return and set up value.
     mov ax, 0x10
+    ; ax register value is 0x10, but safe to use null.
     mov ds, ax
     mov es, ax
     mov fs, ax
