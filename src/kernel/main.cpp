@@ -8,7 +8,7 @@ extern "C" int kernel_main()
     // init gdt and set protection mode (ring 0 - ring 3, kernel/user mode).
     // first: make GDT struct and that array.
     char buf[8];
-    segment_configurator *my_segment_configurator = new((void*)buf) segment_configurator;
+    hal::x86_64::segment_configurator *my_segment_configurator = new((void*)buf) hal::x86_64::segment_configurator;
     my_segment_configurator->init_gdt();
     __asm volatile("hlt");
     return 2038;
