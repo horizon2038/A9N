@@ -66,7 +66,7 @@ namespace hal::x86_64
         {
             if ((mask & (1ull << i)) != 0)
             {
-                idt[i].type &= PRESENT;
+                idt[i].type &= ~PRESENT;
             }
         }
     };
