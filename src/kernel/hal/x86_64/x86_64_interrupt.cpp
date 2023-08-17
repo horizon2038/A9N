@@ -60,7 +60,7 @@ namespace hal::x86_64
         _disable_interrupt_all();
     };
 
-    void interrupt::mask_interrupt(uint64_t mask)
+    void interrupt::mask_interrupt(uint64_t mask) // TODO: FIX THIS
     {
         for (int i = 0; i < 256; i++)
         {
