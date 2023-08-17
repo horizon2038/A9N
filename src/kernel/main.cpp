@@ -7,8 +7,10 @@ extern "C" int kernel_main()
     // TODO: test gdt things
     // init gdt and set protection mode (ring 0 - ring 3, kernel/user mode).
     // first: make GDT struct and that array.
-    char buf[8];
+    constexpr uint16_t segment_configurator_size = sizeof(hal::x86_64::segment_configurator);
+    alignas(hal::x86_64::segment_configurator) char buf[segment_configurator_size];
     hal::x86_64::segment_configurator *my_segment_configurator = new((void*)buf) hal::x86_64::segment_configurator;
+    new (my_segment_configurator) hal::x86_64::segment_configurator();
     my_segment_configurator->init_gdt();
     __asm volatile("hlt");
     return 2038;
