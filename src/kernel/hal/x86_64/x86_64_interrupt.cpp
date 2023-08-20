@@ -1,13 +1,21 @@
 #include "x86_64_interrupt.hpp"
 
 #include "../include/interrupt_handler.hpp"
-#include "x86_64/interrupt_descriptor.hpp"
+#include "interrupt_descriptor.hpp"
 
 namespace hal::x86_64
 {
     extern "C" void _load_idt(uint16_t size, uint64_t *offset);
     extern "C" void _enable_interrupt_all();
     extern "C" void _disable_interrupt_all();
+
+    interrupt::interrupt()
+    {
+    }
+
+    interrupt::~interrupt()
+    {
+    }
 
     void interrupt::init_interrupt()
     {
@@ -17,7 +25,7 @@ namespace hal::x86_64
 
     void interrupt::load_idt()
     {
-        uint16_t idt_size = sizeof(interrupt::idt) - 1;
+        constexpr uint16_t idt_size = sizeof(idt) - 1;
         uint64_t *idt_address = (uint64_t*)idt;
         _load_idt(idt_size, idt_address);
     }
@@ -60,14 +68,11 @@ namespace hal::x86_64
         _disable_interrupt_all();
     };
 
-    void interrupt::mask_interrupt(uint64_t mask) // TODO: FIX THIS
+    void interrupt::mask_interrupt(hal::interrupt_mask mask) // TODO: FIX THIS
     {
-        for (int i = 0; i < 256; i++)
+        for(int i = 0; i < 256; i++)
         {
-            if ((mask & (1ull << i)) != 0)
-            {
-                idt[i].type &= ~PRESENT;
-            }
+            idt[i].type = INTERRUPT_GATE | (mask.mask_bool[i] << 7);
         }
     };
 }

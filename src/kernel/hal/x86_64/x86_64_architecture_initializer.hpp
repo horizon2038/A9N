@@ -4,7 +4,7 @@
 #include "../include/architecture_initializer.h"
 
 
-class x86_64_architecture_initializer : public architecture_initializer
+class x86_64_architecture_initializer final : public architecture_initializer
 {
     public:
         x86_64_architecture_initializer();
