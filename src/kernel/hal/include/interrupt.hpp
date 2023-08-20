@@ -6,6 +6,12 @@
 
 namespace hal
 {
+    typedef union
+    {
+        uint64_t mask_uint64[4];
+        bool mask_bool[256];
+    } interrupt_mask;
+
     class interrupt
     {
         public:
@@ -15,7 +21,7 @@ namespace hal
             virtual void disable_interrupt(uint32_t irq_number) = 0;
             virtual void enable_interrupt_all() = 0;
             virtual void disable_interrupt_all() = 0;
-            virtual void mask_interrupt(uint64_t mask) = 0;
+            virtual void mask_interrupt(interrupt_mask mask) = 0;
     };
 
 }

@@ -2,16 +2,30 @@
 #include <stdint.h>
 #include <cpp_dependent/new.hpp>
 
+#include <include/interrupt.hpp>
+#include <x86_64/x86_64_interrupt.hpp>
+
 extern "C" int kernel_main()
 {
-    // TODO: test gdt things
-    // init gdt and set protection mode (ring 0 - ring 3, kernel/user mode).
-    // first: make GDT struct and that array.
+    /*
+    char segment_buffer[256] = {};
+    hal::x86_64::segment_configurator *my_segment_configurator = new((void*)segment_buffer) hal::x86_64::segment_configurator();
+    my_segment_configurator->init_gdt();
+    */
+
     constexpr uint16_t segment_configurator_size = sizeof(hal::x86_64::segment_configurator);
     alignas(hal::x86_64::segment_configurator) char buf[segment_configurator_size];
     hal::x86_64::segment_configurator *my_segment_configurator = new((void*)buf) hal::x86_64::segment_configurator;
     new (my_segment_configurator) hal::x86_64::segment_configurator();
     my_segment_configurator->init_gdt();
-    __asm volatile("hlt");
+
+    /*
+    char segment_configurator_buffer[sizeof(hal::x86_64::segment_configurator)];
+    hal::x86_64::segment_configurator *my_segment_configurator = reinterpret_cast<hal::x86_64::segment_configurator*>(segment_configurator_buffer);
+    new (my_segment_configurator) hal::x86_64::segment_configurator();
+    my_segment_configurator->init_gdt();
+    */
+
+    asm volatile("hlt");
     return 2038;
 }

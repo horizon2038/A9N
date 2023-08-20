@@ -13,6 +13,7 @@
 #include "kernel_loader.h"
 #include "error_handler.h"
 #include "kernel_jumper.h"
+#include "exit_uefi.h"
 
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
@@ -35,6 +36,8 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 
     // efi_status = handle_error(efi_status);
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_GREEN);
+    
+    efi_status = exit_uefi(image_handle);
     jump_kernel(entry_point_address);
     while(1);
     return efi_status;
