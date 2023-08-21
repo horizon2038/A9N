@@ -5,27 +5,35 @@
 #include <include/interrupt.hpp>
 #include <x86_64/x86_64_interrupt.hpp>
 
+#include <include/port_io.hpp>
+#include <x86_64/x86_64_port_io.hpp>
+
+#include <x86_64/x86_64_serial.hpp>
+
 extern "C" int kernel_main()
 {
-    /*
-    char segment_buffer[256] = {};
-    hal::x86_64::segment_configurator *my_segment_configurator = new((void*)segment_buffer) hal::x86_64::segment_configurator();
-    my_segment_configurator->init_gdt();
-    */
-
     constexpr uint16_t segment_configurator_size = sizeof(hal::x86_64::segment_configurator);
     alignas(hal::x86_64::segment_configurator) char buf[segment_configurator_size];
-    hal::x86_64::segment_configurator *my_segment_configurator = new((void*)buf) hal::x86_64::segment_configurator;
-    new (my_segment_configurator) hal::x86_64::segment_configurator();
+    hal::x86_64::segment_configurator *my_segment_configurator = new((void*)buf) hal::x86_64::segment_configurator{};
+    // new (my_segment_configurator) hal::x86_64::segment_configurator();
     my_segment_configurator->init_gdt();
 
-    /*
-    char segment_configurator_buffer[sizeof(hal::x86_64::segment_configurator)];
-    hal::x86_64::segment_configurator *my_segment_configurator = reinterpret_cast<hal::x86_64::segment_configurator*>(segment_configurator_buffer);
-    new (my_segment_configurator) hal::x86_64::segment_configurator();
-    my_segment_configurator->init_gdt();
-    */
+    constexpr uint16_t interrupt_size = sizeof(hal::x86_64::interrupt);
+    alignas(hal::x86_64::interrupt) char interrupt_buf[interrupt_size];
+    hal::interrupt *my_interrupt = new((void*)interrupt_buf) hal::x86_64::interrupt;
+    new(my_interrupt) hal::x86_64::interrupt();
+    my_interrupt->init_interrupt();
 
+    constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
+    alignas(hal::x86_64::port_io) char port_io_buf[port_io_size]; 
+    hal::port_io *my_port_io = new((void*)port_io_buf) hal::x86_64::port_io{};
+
+    constexpr uint16_t serial_size = sizeof(hal::x86_64::serial);
+    alignas(hal::x86_64::serial) char serial_buf[serial_size];
+    hal::x86_64::serial *my_serial = new((void*)serial_buf) hal::x86_64::serial{*my_port_io};
+    my_serial->init_serial(115200);
+    my_serial->write_string_serial("hello, a9n world!\n");
+    
     asm volatile("hlt");
     return 2038;
 }
