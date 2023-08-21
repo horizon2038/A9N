@@ -70,7 +70,7 @@ EFI_STATUS load_elf_segment(EFI_FILE_PROTOCOL *kernel, elf64_header *header, elf
         {
             continue;
         }
-        // print_elf_program_header_info(program_header);
+        print_elf_program_header_info(program_header);
         efi_status = read_file(kernel, program_header->offset, program_header->file_size, &buffer);
         if(EFI_ERROR(efi_status)) return efi_status;
         locate_elf_segment(header, program_header, (uint64_t)buffer);
