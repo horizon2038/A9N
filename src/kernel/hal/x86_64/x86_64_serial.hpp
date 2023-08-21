@@ -2,26 +2,27 @@
 #define X86_64_SERIAL_HPP
 
 #include <stdint.h>
+#include <include/port_io.hpp>
 
 namespace hal::x86_64
 {
     class serial
     {
         public:
+            serial(hal::port_io &injected_port_io);
+            ~serial();
             void init_serial(uint32_t baud_rate);
             int read_serial();
-            void write_serial();
+            void write_serial(char data);
+            void write_string_serial(char *out);
 
         private:
-            int isReceived();
-            int isEmpty();
+            hal::port_io &target_port_io;
+            int is_received();
+            int is_empty();
+            uint32_t strlen(const char *s);
 
     };
-
-constexpr static uint16_t COM_1 = 0x3f8;
-constexpr static uint16_t COM_2 = 0x2f8;
-constexpr static uint16_t COM_3 = 0x3e8;
-constexpr static uint16_t COM_4 = 0x2e8;
 
 }
 

@@ -27,7 +27,8 @@ function run_qemu() {
     cd $QEMUDIR
     # QEMUPARAM=("${QEMUFLAGS}" "${GDB_OPTION}")
     # qemu-system-$ARCH "${QEMUPARAM[@]}"
-    qemu-system-${ARCH} -bios OVMF.fd -drive format=raw,file=fat:rw:./ -monitor stdio
+    qemu-system-${ARCH} -bios OVMF.fd -drive format=raw,file=fat:rw:./ -serial stdio
+    # -monitor stdio
 }
 
 init

@@ -28,17 +28,6 @@ namespace hal::x86_64
                 0x00afaa000000ffff,
                 // User Mode Data Segment
                 0x00cff2000000ffff 
-                /*
-                0x0000000000000000,
-                0x00009a000000ffff,
-                0x000093000000ffff,
-                0x00cf9a000000ffff,
-                0x00cf93000000ffff,
-                0x00af9b000000ffff,
-                0x00af93000000ffff,
-                0x00affb000000ffff,
-                0x00aff3000000ffff
-                */
             };
     };
 
