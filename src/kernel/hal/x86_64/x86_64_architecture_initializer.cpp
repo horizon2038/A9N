@@ -1,29 +1,21 @@
 #include "x86_64_architecture_initializer.hpp"
 
-x86_64_architecture_initializer::x86_64_architecture_initializer()
+namespace hal::x86_64
 {
 
-}
+    architecture_initializer::architecture_initializer(segment_configurator &injected_segment_configurator) : _segment_configurator(injected_segment_configurator)
+    {
 
-x86_64_architecture_initializer::~x86_64_architecture_initializer()
-{
+    }
 
-}
+    architecture_initializer::~architecture_initializer()
+    {
 
-void x86_64_architecture_initializer::init_interrupt()
-{
+    }
 
-}
-void x86_64_architecture_initializer::init_memory()
-{
-
-}
-void x86_64_architecture_initializer::init_timer()
-{
-
-}
-void x86_64_architecture_initializer::init_serial_device()
-{
-
+    void architecture_initializer::init_architecture()
+    {
+        _segment_configurator.init_gdt();
+    }
 }
 
