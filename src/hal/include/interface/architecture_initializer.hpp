@@ -1,7 +1,7 @@
 #ifndef ARCHITECTURE_INITIALIZER_HPP
 #define ARCHITECTURE_INITIALIZER_HPP
 
-namespace hal
+namespace hal::interface
 {
     class architecture_initializer
     {
