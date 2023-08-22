@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "interrupt_handler.hpp"
 
-namespace hal
+namespace hal::interface
 {
     typedef union
     {

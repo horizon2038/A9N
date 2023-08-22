@@ -1,6 +1,6 @@
 #include "x86_64_interrupt.hpp"
 
-#include "../include/interrupt_handler.hpp"
+#include <interface/interrupt_handler.hpp>
 #include "interrupt_descriptor.hpp"
 
 namespace hal::x86_64
@@ -30,7 +30,7 @@ namespace hal::x86_64
         _load_idt(idt_size, idt_address);
     }
 
-    void interrupt::register_interrupt(uint32_t irq_number, hal::interrupt_handler &target_interrupt_handler)
+    void interrupt::register_interrupt(uint32_t irq_number, hal::interface::interrupt_handler &target_interrupt_handler)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
         uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(&target_interrupt_handler);
@@ -68,7 +68,7 @@ namespace hal::x86_64
         _disable_interrupt_all();
     };
 
-    void interrupt::mask_interrupt(hal::interrupt_mask mask) // TODO: FIX THIS
+    void interrupt::mask_interrupt(hal::interface::interrupt_mask mask) // TODO: FIX THIS
     {
         for(int i = 0; i < 256; i++)
         {

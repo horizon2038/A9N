@@ -3,7 +3,7 @@
 
 #include "hal.hpp"
 
-namespace hal
+namespace hal::interface
 {
     class hal_factory
     {

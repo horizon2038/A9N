@@ -2,7 +2,7 @@ SHELL=/usr/bin/bash
 
 TARGET = kernel.elf
 BOOT = BOOTX64.EFI
-SRCDIR ?= ./src/kernel
+SRCDIR ?= ./src
 BUILDDIR ?= ./build
 ARCH = x86_64
 export ARCH
@@ -11,24 +11,26 @@ A9NLOADER = a9nloaderPkg
 SCRIPTSDIR = ./scripts
 LLVMDIR = /usr/local/opt/llvm/bin
 
-SRCS  = $(shell find $(SRCDIR) -path $(SRCDIR)/hal -prune -o -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \) -print)
-OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(SRCS))
-OBJS := $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
-OBJS := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
+SRCS  = $(shell find $(SRCDIR)/kernel -path $(SRCDIR)/hal/$(ARCH) -prune -o -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \) -print)
+OBJS = $(patsubst $(SRCDIR)/kernel/%.c,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(SRCS))
+OBJS := $(patsubst $(SRCDIR)/kernel/%.cpp,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
+OBJS := $(patsubst $(SRCDIR)/kernel/%.s,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
 DEPS = $(OBJS:.o=.d)
 
-$(warning SRCS: $(SRCS))
-$(warning OBJS: $(OBJS))
-
 ARCH_INCDIR = $(shell find $(SRCDIR)/hal/$(ARCH) -type d)
-HAL_SRCS :=  $(shell find $(SRCDIR)/hal -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
-HAL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/kernel/, $(addsuffix .o, $(basename $(HAL_SRCS:$(SRCDIR)/%=%))))
+HAL_SRCS :=  $(shell find $(SRCDIR)/hal/$(ARCH) -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
+HAL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/hal/, $(addsuffix .o, $(basename $(HAL_SRCS:$(SRCDIR)/hal/%=%))))
 OBJS += $(HAL_OBJS)
 DEPS += $(HAL_OBJS:.o=.d)
 
-INCDIR = $(shell find $(SRCDIR) -type d)
+INCDIR = $(shell find $(SRCDIR)/kernel -type d)
 INCDIR += $(ARCH_INCDIR)
 INCFLAGS = $(addprefix -I,$(INCDIR))
+
+$(warning SRCS: $(SRCS))
+$(warning OBJS: $(OBJS))
+$(warning HAL_SRCS: $(HAL_SRCS))
+$(warning HAL_OBJS: $(HAL_OBJS))
 
 CC := clang 
 CXX := clang++
@@ -36,7 +38,7 @@ ASM := nasm
 LD = ld.lld
 CFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -masm=intel
 CXXFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -masm=intel
-CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/include -I$(SRCDIR)/hal/include
+CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include
 ASFLAGS = -f elf64
 LDFLAGS = --entry kernel_main -z norelro --image-base 0x100000 --static
 LIBS = 
@@ -53,15 +55,31 @@ $(BUILDDIR)/$(ARCH)/kernel/$(TARGET): $(OBJS) $(LIBS)
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/%.c
+$(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/kernel/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/%.cpp
+$(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/kernel/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-$(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/%.s
+$(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/kernel/%.s
+	mkdir -p $(dir $@)
+	$(ASM) $(ASFLAGS) $< -o $@ 
+
+$(BUILDDIR)/$(ARCH)/hal/$(TARGET): $(OBJS) $(LIBS)
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+$(BUILDDIR)/$(ARCH)/hal/%.o: $(SRCDIR)/hal/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/$(ARCH)/hal/%.o: $(SRCDIR)/hal/%.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+$(BUILDDIR)/$(ARCH)/hal/%.o: $(SRCDIR)/hal/%.s
 	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) $< -o $@ 
 

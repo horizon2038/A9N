@@ -1,7 +1,7 @@
 #ifndef INTERRUPT_HANDLER_HPP
 #define INTERRUPT_HANDLER_HPP
 
-namespace hal
+namespace hal::interface
 {
     class interrupt_handler 
     {

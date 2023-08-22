@@ -8,7 +8,7 @@
 #include "serial.hpp"
 
 
-namespace hal
+namespace hal::interface
 {
     class hal
     {

@@ -1,7 +1,7 @@
 #include "x86_64_serial.hpp"
 
 #include "x86_64_port_io.hpp"
-#include <include/port_io.hpp>
+#include <interface/port_io.hpp>
 #include <cpp_dependent/new.hpp>
 
 namespace hal::x86_64
@@ -11,7 +11,7 @@ namespace hal::x86_64
     constexpr static uint16_t COM_3 = 0x3e8;
     constexpr static uint16_t COM_4 = 0x2e8;
 
-    serial::serial(hal::port_io &injected_port_io) : _port_io(injected_port_io)
+    serial::serial(hal::interface::port_io &injected_port_io) : _port_io(injected_port_io)
     {
         
     }
