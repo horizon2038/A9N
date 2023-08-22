@@ -1,14 +1,14 @@
-#include "hal.hpp"
-
 #ifndef HAL_FACTORY_HPP
 #define HAL_FACTORY_HPP
+
+#include "hal.hpp"
 
 namespace hal
 {
     class hal_factory
     {
         public:
-            hal make();
+            virtual hal make() = 0;
     };
 }
 #endif

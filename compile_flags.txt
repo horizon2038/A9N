@@ -1,4 +1,4 @@
 -I./src/kernel/include/
 -I./src/kernel/hal/include/
--I./src/kernel/hal/
+-I./src/kernel/sal/
 -std=c++17

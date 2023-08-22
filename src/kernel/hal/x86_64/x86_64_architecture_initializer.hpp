@@ -1,18 +1,21 @@
 #ifndef X86_64_ARCHITECTURE_INITIALIZER
 #define X86_64_ARCHITECTURE_INITIALIZER
 
-#include "../include/architecture_initializer.h"
+#include "../include/architecture_initializer.hpp"
+#include "segment_configurator.hpp"
 
-
-class x86_64_architecture_initializer final : public architecture_initializer
+namespace hal::x86_64
 {
-    public:
-        x86_64_architecture_initializer();
-        ~x86_64_architecture_initializer();
-        void init_interrupt();
-        void init_memory();
-        void init_timer();
-        void init_serial_device();
-};
+    class architecture_initializer final : public hal::architecture_initializer
+    {
+        public:
+            architecture_initializer(segment_configurator &injected_segment_configurator);
+            ~architecture_initializer();
+            void init_architecture() override;
+
+        private:
+            segment_configurator &_segment_configurator; 
+    };
+}
 
 #endif
