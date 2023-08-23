@@ -13,6 +13,8 @@
 
 #include "../hal/x86_64/x86_64_architecture_initializer.hpp"
 
+#include "printf.hpp"
+
 extern "C" int kernel_main()
 {
     constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
@@ -38,6 +40,18 @@ extern "C" int kernel_main()
     hal::interface::interrupt *my_interrupt = new((void*)interrupt_buf) hal::x86_64::interrupt{};
     my_interrupt->init_interrupt();
     my_serial->write_string_serial("init_interrupt\n");
+
+    my_serial->write_string_serial("a9n_kernel\n");
+    my_serial->write_string_serial("mitou jr project\n");
+    my_serial->write_string_serial("@horizon2k38\n");
+
+    constexpr uint16_t print_size = sizeof(kernel::utility::print);
+    alignas(kernel::utility::print) char print_buf[print_size];
+    kernel::utility::print *my_print = new((void*)print_buf) kernel::utility::print{*my_serial};
+
+    char buffer[100];
+    my_print->sprintf(buffer, "sprintf test: %d\n", 2038);
+    my_serial->write_string_serial(buffer);
 
     asm volatile("hlt");
     return 2038;
