@@ -13,7 +13,7 @@
 
 #include "../hal/x86_64/x86_64_architecture_initializer.hpp"
 
-#include "printf.hpp"
+#include "print.hpp"
 
 extern "C" int kernel_main()
 {

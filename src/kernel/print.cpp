@@ -1,4 +1,4 @@
-#include "printf.hpp"
+#include "print.hpp"
 
 #include <interface/serial.hpp>
 
@@ -34,8 +34,8 @@ namespace kernel::utility
                 chars_written++;
             }
         }
-            write_char(&dest, '\0');
-            __builtin_va_end(args);
+        write_char(&dest, '\0');
+        __builtin_va_end(args);
     }
 
     void print::write_char(char** dest, char c)
@@ -76,6 +76,7 @@ namespace kernel::utility
         }
 
         return len;
-        
+
     }
 }
+
