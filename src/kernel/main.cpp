@@ -15,6 +15,9 @@
 
 #include "print.hpp"
 
+#include <interface/timer.hpp>
+#include "../hal/x86_64/pit_timer.hpp"
+
 extern "C" int kernel_main()
 {
     constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
@@ -52,6 +55,12 @@ extern "C" int kernel_main()
     char buffer[100];
     my_print->sprintf(buffer, "sprintf test: %d\n", 2038);
     my_serial->write_string_serial(buffer);
+
+    constexpr uint16_t timer_size = sizeof(hal::x86_64::pit_timer);
+    alignas(hal::x86_64::pit_timer) char timer_buf[timer_size];
+    hal::interface::timer *my_timer = new((void*)timer_buf) hal::x86_64::pit_timer{*my_port_io, *my_serial};
+    my_timer->configure_timer(10);
+    my_interrupt->register_interrupt(0, *my_timer);
 
     asm volatile("hlt");
     return 2038;

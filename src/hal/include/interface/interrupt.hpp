@@ -2,10 +2,12 @@
 #define INTERRUPT_HPP
 
 #include <stdint.h>
-#include "interrupt_handler.hpp"
 
 namespace hal::interface
 {
+
+    using interrupt_handler = void (*) (void);
+
     typedef union
     {
         uint64_t mask_uint64[4];
@@ -16,7 +18,7 @@ namespace hal::interface
     {
         public:
             virtual void init_interrupt() = 0;
-            virtual void register_interrupt(uint32_t irq_number, interrupt_handler &target_irq_handler) = 0;
+            virtual void register_interrupt(uint32_t irq_number, interrupt_handler target_interrupt_handler) = 0;
             virtual void enable_interrupt(uint32_t irq_number) = 0;
             virtual void disable_interrupt(uint32_t irq_number) = 0;
             virtual void enable_interrupt_all() = 0;
