@@ -3,7 +3,6 @@
 
 #include <interface/interrupt.hpp>
 #include "interrupt_descriptor.hpp"
-#include <interface/interrupt_handler.hpp>
 
 namespace hal::x86_64
 {
@@ -13,7 +12,7 @@ namespace hal::x86_64
             interrupt();
             ~interrupt();
             void init_interrupt() override;
-            void register_interrupt(uint32_t irq_number, hal::interface::interrupt_handler &target_interrupt_handler) override;
+            void register_interrupt(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler) override;
             void enable_interrupt(uint32_t irq_number) override;
             void disable_interrupt(uint32_t irq_number) override;
             void enable_interrupt_all() override;
