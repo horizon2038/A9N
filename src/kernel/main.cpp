@@ -31,7 +31,7 @@ extern "C" int kernel_main()
     my_serial->init_serial(115200);
     my_serial->write_string_serial("start kernel\n");
     my_serial->write_string_serial("init_serial_driver\n");
-    
+
     constexpr uint16_t segment_configurator_size = sizeof(hal::x86_64::segment_configurator);
     alignas(hal::x86_64::segment_configurator) char buf[segment_configurator_size];
     hal::x86_64::segment_configurator *my_segment_configurator = new((void*)buf) hal::x86_64::segment_configurator{};
@@ -59,9 +59,26 @@ extern "C" int kernel_main()
     constexpr uint16_t timer_size = sizeof(hal::x86_64::pit_timer);
     alignas(hal::x86_64::pit_timer) char timer_buf[timer_size];
     hal::interface::timer *my_timer = new((void*)timer_buf) hal::x86_64::pit_timer{*my_port_io, *my_serial};
-    my_timer->configure_timer(10);
-    my_interrupt->register_interrupt(0, *my_timer);
 
-    asm volatile("hlt");
+    hal::interface::interrupt_handler timer_interrupt_handler = hal::x86_64::pit_timer::handle;
+
+    my_interrupt->disable_interrupt_all();
+    my_serial->write_string_serial("disable interrupt\n");
+    my_interrupt->register_interrupt(0, timer_interrupt_handler);
+    my_serial->write_string_serial("register timer interrupt\n");
+    my_interrupt->enable_interrupt_all();
+    my_serial->write_string_serial("enable interrupt\n");
+
+    my_timer->init_timer();
+    my_serial->write_string_serial("init timer\n");
+
+    char tick_buffer[100];
+    while(1)
+    {
+        my_print->sprintf(tick_buffer, "tick: %d\n", my_timer->get_tick());
+        my_serial->write_string_serial(tick_buffer);
+        asm volatile ("hlt");
+    }
+
     return 2038;
 }

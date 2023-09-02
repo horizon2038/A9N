@@ -6,7 +6,8 @@
 namespace hal::interface
 {
 
-    using interrupt_handler = void (*) (void);
+    using interrupt_handler = void (*)(void*);
+    // typedef void (*interrupt_handler) ();
 
     typedef union
     {
