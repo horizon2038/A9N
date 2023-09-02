@@ -32,14 +32,14 @@ namespace hal::x86_64
     void interrupt::register_interrupt(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
-        uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(&target_interrupt_handler);
+        uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(target_interrupt_handler);
 
         idt_entry->offset_low = interrupt_handler_address & 0xffff;
         idt_entry->kernel_cs = 0x08; // kernel code segment
         idt_entry->ist = 0;
         idt_entry->type = INTERRUPT_GATE | PRESENT;
         idt_entry->offset_mid = (interrupt_handler_address >> 16) & 0xffff;
-        idt_entry->offset_high = interrupt_handler_address >> 32;
+        idt_entry->offset_high = (interrupt_handler_address >> 32) & 0xffffffff;
         idt_entry->reserved = 0;
     };
 
