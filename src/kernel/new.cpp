@@ -20,5 +20,3 @@ void operator delete[](void *object, void *buffer) throw()
 
 }
 
-// question: can i use stddef.h in -ffreestanding operator ?
-// 
