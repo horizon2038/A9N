@@ -58,7 +58,7 @@ extern "C" int kernel_main()
 
     constexpr uint16_t timer_size = sizeof(hal::x86_64::pit_timer);
     alignas(hal::x86_64::pit_timer) char timer_buf[timer_size];
-    hal::interface::timer *my_timer = new((void*)timer_buf) hal::x86_64::pit_timer{*my_port_io, *my_serial};
+    hal::interface::timer *my_timer = new((void*)timer_buf) hal::x86_64::pit_timer{*my_port_io};
 
     hal::interface::interrupt_handler timer_interrupt_handler = hal::x86_64::pit_timer::handle;
 

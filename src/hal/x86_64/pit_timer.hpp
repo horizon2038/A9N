@@ -7,6 +7,8 @@
 
 #include <interface/serial.hpp>
 
+#include "pic.hpp"
+
 #include <stdint.h>
 
 namespace hal::x86_64
@@ -14,7 +16,7 @@ namespace hal::x86_64
     class pit_timer final : public hal::interface::timer
     {
         public:
-            pit_timer(hal::interface::port_io &injected_port_io, hal::interface::serial &injected_serial);
+            pit_timer(hal::interface::port_io &injected_port_io);
             ~pit_timer();
 
             static pit_timer *this_timer;
@@ -28,10 +30,8 @@ namespace hal::x86_64
             uint32_t ticks = 0;
 
         private:
-            void init_pic();
-            void eoi_pic();
             hal::interface::port_io &_port_io;
-            hal::interface::serial &_serial;
+            hal::x86_64::pic _pic;
     };
 }
 
