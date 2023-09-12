@@ -17,6 +17,44 @@
 
 #include <interface/timer.hpp>
 #include "../hal/x86_64/pit_timer.hpp"
+#include "process.hpp"
+
+extern void _switch_context(uint64_t *current_stack_pointer, uint64_t *next_stack_pointer);
+
+kernel::process *g_process_1;
+kernel::process *g_process_2;
+
+void context_1(void)
+{
+    constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
+    alignas(hal::x86_64::port_io) char port_io_buf[port_io_size]; 
+    hal::interface::port_io *my_port_io = new((void*)port_io_buf) hal::x86_64::port_io{};
+
+    constexpr uint16_t serial_size = sizeof(hal::x86_64::serial);
+    alignas(hal::x86_64::serial) char serial_buf[serial_size];
+    hal::interface::serial *my_serial = new((void*)serial_buf) hal::x86_64::serial{*my_port_io};
+
+    while(1)
+    {
+        my_serial->write_string_serial("context_1\n");
+    }
+}
+
+void context_2(void)
+{
+    constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
+    alignas(hal::x86_64::port_io) char port_io_buf[port_io_size]; 
+    hal::interface::port_io *my_port_io = new((void*)port_io_buf) hal::x86_64::port_io{};
+
+    constexpr uint16_t serial_size = sizeof(hal::x86_64::serial);
+    alignas(hal::x86_64::serial) char serial_buf[serial_size];
+    hal::interface::serial *my_serial = new((void*)serial_buf) hal::x86_64::serial{*my_port_io};
+
+    while(1)
+    {
+        my_serial->write_string_serial("context_2\n");
+    }
+}
 
 extern "C" int kernel_main()
 {
@@ -77,8 +115,10 @@ extern "C" int kernel_main()
     {
         my_print->sprintf(tick_buffer, "tick: %d\n", my_timer->get_tick());
         my_serial->write_string_serial(tick_buffer);
+        context_1();
         asm volatile ("hlt");
     }
 
     return 2038;
 }
+
