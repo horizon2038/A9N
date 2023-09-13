@@ -2,7 +2,7 @@
 #define SCHEDULER_HPP
 
 #include <stdint.h>
-#include <interface/arch_context_switch.hpp>
+#include "context_switch.hpp"
 
 namespace kernel
 {
