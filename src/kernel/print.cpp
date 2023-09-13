@@ -1,18 +1,35 @@
 #include "print.hpp"
 
 #include <interface/serial.hpp>
+#include <stdint.h>
+#include <stddef.h>
 
+// dogshit temporarily code
 namespace kernel::utility
 {
     print::print(hal::interface::serial &injected_serial) : _serial(injected_serial)
     {
     }
 
+    void print::printf(const char *format, ...)
+    {
+        __builtin_va_list args;
+        __builtin_va_start(args, format);
+        vsprintf(print_buffer, format, args);
+        __builtin_va_end(args);
+        _serial.write_string_serial(print_buffer);
+    }
+
     void print::sprintf(char *buffer, const char *format, ...)
     {
         __builtin_va_list args;
         __builtin_va_start(args, format);
+        vsprintf(buffer, format, args);
+        __builtin_va_end(args);
+    }
 
+    void print::vsprintf(char *buffer, const char *format, __builtin_va_list args)
+    {
         char* dest = buffer;
         int chars_written = 0;
 

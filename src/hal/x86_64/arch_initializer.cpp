@@ -2,8 +2,11 @@
 
 namespace hal::x86_64
 {
-
-    arch_initializer::arch_initializer(segment_configurator &injected_segment_configurator) : _segment_configurator(injected_segment_configurator)
+    arch_initializer::arch_initializer
+    (
+        segment_configurator &injected_segment_configurator
+    )
+    : _segment_configurator(injected_segment_configurator)
     {
 
     }
