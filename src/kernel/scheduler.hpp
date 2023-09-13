@@ -2,6 +2,7 @@
 #define SCHEDULER_HPP
 
 #include <stdint.h>
+#include <interface/context_switch.hpp>
 
 namespace kernel
 {

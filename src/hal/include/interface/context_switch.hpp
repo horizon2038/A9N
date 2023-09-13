@@ -5,7 +5,7 @@
 
 namespace hal::interface
 {
-    class context_switch
+    class arch_context_switch
     {
         virtual void switch_context(uint64_t *preview_stack_pointer, uint64_t *next_stack_pointer) = 0;
     };
