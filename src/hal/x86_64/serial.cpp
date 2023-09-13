@@ -1,6 +1,6 @@
-#include "x86_64_serial.hpp"
+#include "serial.hpp"
 
-#include "x86_64_port_io.hpp"
+#include "port_io.hpp"
 #include <interface/port_io.hpp>
 #include <cpp_dependent/new.hpp>
 
