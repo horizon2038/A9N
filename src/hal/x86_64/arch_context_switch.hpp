@@ -1,7 +1,7 @@
 #ifndef X86_64_CONTEXT_SWITCH_HPP
 #define X86_64_CONTEXT_SWITCH_HPP
 
-#include <interface/context_switch.hpp>
+#include <interface/arch_context_switch.hpp>
 
 namespace hal::x86_64
 {

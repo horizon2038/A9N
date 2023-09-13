@@ -1,4 +1,4 @@
-#include "x86_64_interrupt.hpp"
+#include "interrupt.hpp"
 
 #include "interrupt_descriptor.hpp"
 

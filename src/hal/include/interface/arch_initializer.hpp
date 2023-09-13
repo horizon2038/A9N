@@ -3,7 +3,7 @@
 
 namespace hal::interface
 {
-    class architecture_initializer
+    class arch_initializer
     {
         public:
             virtual void init_architecture() = 0;
