@@ -2,7 +2,7 @@
 #define HAL_HPP
 
 // core services
-#include "arch_context_switch.hpp"
+#include "process_manager.hpp"
 #include "interrupt.hpp"
 
 // platform services
@@ -19,7 +19,7 @@ namespace hal::interface
     {
         public:
             // core services
-            virtual arch_context_switch &_arch_context_switch() = 0;
+            virtual process_manager &_process_manager() = 0;
             virtual interrupt &_interrupt() = 0;
 
             // platform services

@@ -10,7 +10,7 @@ namespace kernel
     {
     }
 
-    void scheduler::clock(void* data)
+    process scheduler::*schedule_next_process()
     {
     }
 }
