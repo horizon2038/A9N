@@ -1,5 +1,5 @@
-#ifndef INTERRUPT_HPP
-#define INTERRUPT_HPP
+#ifndef HAL_INTERRUPT_HPP
+#define HAL_INTERRUPT_HPP
 
 #include <stdint.h>
 

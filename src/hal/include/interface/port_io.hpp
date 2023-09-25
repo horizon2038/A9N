@@ -1,5 +1,5 @@
-#ifndef PORT_IO_HPP
-#define PORT_IO_HPP
+#ifndef HAL_PORT_IO_HPP
+#define HAL_PORT_IO_HPP
 
 #include <stdint.h>
 
