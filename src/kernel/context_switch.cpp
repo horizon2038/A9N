@@ -1,13 +1,14 @@
 #include "context_switch.hpp"
+#include "interface/process_manager.hpp"
 
 namespace kernel
 {
     context_switch::context_switch
     (
-        hal::interface::context_switch &injected_context_switch,
+        hal::interface::process_manager &injected_process_manager,
         hal::interface::interrupt &injected_interrupt
     )
-        : _context_switch(injected_context_switch)
+        : _process_manager(injected_process_manager)
         , _interrupt(injected_interrupt)
     {
     }
@@ -21,7 +22,7 @@ namespace kernel
         // hardware specific processing (hardware-dependent)
         _interrupt.disable_interrupt_all();
 
-        _context_switch.switch_context(preview_process, next_process);
+        _process_manager.switch_context(preview_process, next_process);
 
         _interrupt.enable_interrupt_all();
     }
