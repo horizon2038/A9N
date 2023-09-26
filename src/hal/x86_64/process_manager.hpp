@@ -10,8 +10,9 @@ namespace hal::x86_64
         public:
             process_manager();
             ~process_manager();
-            void switch_context(uint64_t *preview_stack_pointer, uint64_t *next_stack_pointer) override;
             void switch_context(kernel::process *preview_process, kernel::process *next_process) override;
+            void init_process(kernel::process *target_process) override;
+            void delete_process(kernel::process *target_process) override;
         
         private:
     };
