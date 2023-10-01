@@ -26,3 +26,4 @@ _load_segment_register:
     mov gs, ax
     mov ss, ax
     ret
+; setup hardware-specific processing.

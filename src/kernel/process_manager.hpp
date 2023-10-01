@@ -2,7 +2,9 @@
 #define PROCESS_MANAGER_HPP
 
 #include <process.hpp>
-#include "context_switch.hpp"
+#include <interface/process_manager.hpp>
+#include <interface/interrupt.hpp>
+#include "scheduler.hpp"
 
 namespace kernel
 {
@@ -12,20 +14,19 @@ namespace kernel
             process_manager
             (
                 hal::interface::process_manager &injected_process_manager,
-                hal::interface::interrupt &inject_interrupt
+                hal::interface::interrupt &injected_interrupt
             );
 
             ~process_manager();
 
             void create_process(const char *process_name, uint64_t process_address);
             void delete_process(int32_t process_id);
-            void switch_context(process *preview_process, process *next_process);
-
-            static void schedule(); // called by timer-interrupt handler
+            void switch_context();
 
         private:
             hal::interface::process_manager &_process_manager;
             hal::interface::interrupt &_interrupt;
+            scheduler _scheduler;
     };
 }
 
