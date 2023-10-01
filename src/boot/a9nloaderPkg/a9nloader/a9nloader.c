@@ -33,12 +33,13 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     if(EFI_ERROR(efi_status)) return efi_status;
     efi_status = load_kernel(kernel, &entry_point_address);
     if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = exit_uefi(image_handle);
+    if(EFI_ERROR(efi_status)) return efi_status;
 
-    // efi_status = handle_error(efi_status);
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_GREEN);
     
-    efi_status = exit_uefi(image_handle);
     jump_kernel(entry_point_address);
+
     while(1);
     return efi_status;
 }
