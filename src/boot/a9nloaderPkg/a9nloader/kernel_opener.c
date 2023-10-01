@@ -7,10 +7,10 @@
 #include <Protocol/SimpleFileSystem.h>
 
 
-EFI_STATUS open_root_directory(EFI_HANDLE, EFI_FILE_PROTOCOL**);
-EFI_STATUS get_image(EFI_HANDLE, EFI_LOADED_IMAGE_PROTOCOL**);
-EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL**);
-EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
+static EFI_STATUS open_root_directory(EFI_HANDLE, EFI_FILE_PROTOCOL**);
+static EFI_STATUS get_image(EFI_HANDLE, EFI_LOADED_IMAGE_PROTOCOL**);
+static EFI_STATUS get_root_file_system(EFI_HANDLE, EFI_HANDLE, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL**);
+static EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL*, EFI_FILE_PROTOCOL**);
 
 EFI_STATUS open_kernel(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory, EFI_FILE_PROTOCOL **kernel)
 {
@@ -21,7 +21,7 @@ EFI_STATUS open_kernel(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directo
     return efi_status;
 }
 
-EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory)
+static EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory)
 {
     EFI_LOADED_IMAGE_PROTOCOL *device_image;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
@@ -37,7 +37,7 @@ EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root
     return efi_status;
 }
 
-EFI_STATUS get_image(EFI_HANDLE image_handle, EFI_LOADED_IMAGE_PROTOCOL **device_image)
+static EFI_STATUS get_image(EFI_HANDLE image_handle, EFI_LOADED_IMAGE_PROTOCOL **device_image)
 {
     EFI_STATUS efi_status;
 
@@ -45,7 +45,7 @@ EFI_STATUS get_image(EFI_HANDLE image_handle, EFI_LOADED_IMAGE_PROTOCOL **device
     return efi_status;
 }
 
-EFI_STATUS get_root_file_system(EFI_HANDLE image_handle, EFI_HANDLE device_handle, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **file_system)
+static EFI_STATUS get_root_file_system(EFI_HANDLE image_handle, EFI_HANDLE device_handle, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **file_system)
 {
     EFI_STATUS efi_status;
 
@@ -53,7 +53,7 @@ EFI_STATUS get_root_file_system(EFI_HANDLE image_handle, EFI_HANDLE device_handl
     return efi_status;
 }
 
-EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* root_file_system, EFI_FILE_PROTOCOL **root_directory)
+static EFI_STATUS get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* root_file_system, EFI_FILE_PROTOCOL **root_directory)
 {
     EFI_STATUS efi_status;
 
