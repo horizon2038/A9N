@@ -27,13 +27,13 @@ static EFI_STATUS open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
     EFI_STATUS efi_status = EFI_SUCCESS;
 
-    while(!EFI_ERROR(efi_status))
-    {
-        efi_status = get_image(image_handle, &device_image);
-        efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
-        efi_status = get_root_directory(file_system, root_directory);
-        break;
-    }
+    efi_status = get_image(image_handle, &device_image);
+    if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = get_root_file_system(image_handle, device_image->DeviceHandle, &file_system);
+    if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = get_root_directory(file_system, root_directory);
+    if(EFI_ERROR(efi_status)) return efi_status;
+
     return efi_status;
 }
 
