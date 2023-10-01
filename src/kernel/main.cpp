@@ -35,9 +35,11 @@ extern "C" int kernel_entry()
 
     my_serial->init_serial(115200);
 
-    my_serial->write_string_serial("@horizon2k38\n");
+    my_serial->write_string_serial("[ INFO ] a9n by horizon2k38\n");
 
     my_serial->write_string_serial("[ START ] a9n kernel\n");
+
+    my_serial->write_string_serial("\n");
 
     my_serial->write_string_serial("[ INIT ] portio driver\n");
     my_serial->write_string_serial("[ START ] portio driver\n");
