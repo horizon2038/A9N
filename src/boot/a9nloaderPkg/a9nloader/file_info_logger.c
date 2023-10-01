@@ -40,9 +40,10 @@ static void print_info(EFI_FILE_INFO *file_info)
 {
     Print
     (
-        L"file_name: %s\nfile_size: %llu bytes\nfile_physical_size: %llu bytes\n", 
+        L"[ INFO ] file_name: %s\r\n[ INFO ] file_size: %llu bytes\r\n[ INFO ] file_physical_size: %llu bytes\r\n", 
         file_info->FileName, 
         file_info->FileSize, 
         file_info->PhysicalSize
     );
+    Print(L"\r\n");
 }
