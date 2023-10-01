@@ -15,6 +15,7 @@
   file_reader.c
   elf_info_logger.c
   kernel_jumper.c
+  uefi_lifetime.c
 
 [Packages]
   MdePkg/MdePkg.dec
