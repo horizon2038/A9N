@@ -1,5 +1,4 @@
 #include "process_manager.hpp"
-#include "process.hpp"
 
 namespace kernel
 {
@@ -10,6 +9,7 @@ namespace kernel
     )
         : _process_manager(injected_process_manager)
         , _interrupt(injected_interrupt)
+        , _scheduler()
     {
     }
 
@@ -25,13 +25,19 @@ namespace kernel
     {
     }
 
-    void process_manager::switch_context(process *preview_process, process *next_process)
+    void process_manager::switch_context()
     {
-        // hardware specific processing (hardware-dependent)
         _interrupt.disable_interrupt_all();
 
-        _process_manager.switch_context(preview_process, next_process);
+        /*
+        process *current_process;
+        process *next_process;
+        next_process = _scheduler.schedule_next_process();
+        // undefined symnbol:
+        _process_manager.switch_context(current_process, next_process);
+        */
 
         _interrupt.enable_interrupt_all();
     }
 }
+
