@@ -1,6 +1,7 @@
 #ifndef INTERRUPT_DESCRIPTOR_H
 #define INTERRUPT_DESCRIPTOR_H
 
+#include "interface/interrupt.hpp"
 #include <stdint.h>
 
 namespace hal::x86_64
@@ -17,7 +18,15 @@ namespace hal::x86_64
     } interrupt_descriptor_64;
 
     constexpr static uint8_t INTERRUPT_GATE = 0xe;
+    constexpr static uint8_t TRAP_GATE = 0xf;
     constexpr static uint8_t PRESENT = 0x80;
+
+    enum class interrupt_type : uint8_t
+    {
+        INTERRUPT = 0xe,
+        TRAP = 0xf,
+        PRESENT = 0x80
+    };
 }
 
 #endif

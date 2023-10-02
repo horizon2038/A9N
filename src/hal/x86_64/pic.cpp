@@ -34,8 +34,8 @@ namespace hal::x86_64
         _port_io.write(PIC_MASTER_DATA, 0x01); // set master to normal mode
         _port_io.write(PIC_SLAVE_DATA, 0x01); // set slave to normal mode
 
-        _port_io.write(PIC_MASTER_DATA, 0x00);
-        _port_io.write(PIC_SLAVE_DATA, 0x00);
+        // _port_io.write(PIC_MASTER_DATA, 0x00);
+        // _port_io.write(PIC_SLAVE_DATA, 0x00);
     }
 
     void pic::end_of_interrupt_pic()

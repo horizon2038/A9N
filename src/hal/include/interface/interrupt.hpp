@@ -15,6 +15,13 @@ namespace hal::interface
         bool mask_bool[256];
     } interrupt_mask;
 
+    enum class interrupt_type
+    {
+        INTERRUPT,
+        EXCEPTION,
+        SYSTEMCALL
+    };
+
     class interrupt
     {
         public:

@@ -44,6 +44,13 @@ namespace kernel::utility
                     int num = __builtin_va_arg(args, int);
                     chars_written += write_int(&dest, num);
                 }
+
+                if (format[i] == 's')
+                {
+                    char *s = __builtin_va_arg(args, char*);
+                    write_string(&dest, s);
+                }
+
             }
             else
             {
@@ -61,6 +68,15 @@ namespace kernel::utility
         {
             **dest = c;
             (*dest)++;
+        }
+    }
+
+    void print::write_string(char** dest, char *s)
+    {
+        while(*s != '\0')
+        {
+            write_char(dest, *s);
+            s++;
         }
     }
 
