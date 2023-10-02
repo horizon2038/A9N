@@ -35,12 +35,13 @@ namespace hal::x86_64
 
     uint8_t serial::read_serial()
     {
-        return 0;
+        while (is_received() == 0);
+        return _port_io.read(COM_1);
     }
 
     int serial::is_received()
     {
-        return 0;
+        return _port_io.read(COM_1 + 5) & 1;
     }
 
     void serial::write_serial(char data)

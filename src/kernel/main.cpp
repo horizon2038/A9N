@@ -40,12 +40,12 @@ extern "C" int kernel_entry()
     kernel::utility::logger *my_logger = new((void*)logger_buf) kernel::utility::logger{*my_serial};
     using logger = kernel::utility::logger;
 
+    logger::a9nout();
+    logger::log("START", "A9N kernel");
+
     logger::log("INIT", "port_io");
     logger::log("INIT", "serial");
     logger::log("INIT", "logger");
-
-    logger::log("INFO", "A9N by horizon2k38");
-    logger::log("START", "A9N kernel");
 
     constexpr uint16_t segment_configurator_size = sizeof(hal::x86_64::segment_configurator);
     alignas(hal::x86_64::segment_configurator) char buf[segment_configurator_size];
@@ -70,9 +70,12 @@ extern "C" int kernel_entry()
 
     my_interrupt->disable_interrupt_all();
     logger::log("DISABLE", "interrput");
+
     my_interrupt->register_interrupt(0, timer_interrupt_handler);
     logger::log("REGISTER", "interrput");
+
     my_interrupt->enable_interrupt_all();
+
     logger::log("ENABLE", "interrput");
 
     timer->init_timer();
@@ -106,9 +109,7 @@ void kernel_main(void)
     my_print->printf("[ INFO ] tick: ");
     while(1)
     {
-        // my_print->sprintf(tick_buffer, "tick: %d\e[6G", timer->get_tick());
         my_print->printf("\e[15G%d\e[22G", timer->get_tick());
-        // my_serial->write_string_serial(tick_buffer);
         asm volatile ("hlt");
     }
 

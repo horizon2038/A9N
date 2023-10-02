@@ -28,6 +28,7 @@ namespace kernel::utility
             static void log(const char *sender, const char *message); 
             static void debug(const char *message, const uint64_t value); 
             static void error(const char *message); 
+            static void a9nout();
         
         private:
             static uint32_t log_id;

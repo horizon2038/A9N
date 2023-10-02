@@ -18,7 +18,7 @@ namespace kernel::utility
             void write_char(char** destination, char c);
             void write_string(char** destination, char *s);
             int write_int(char** destination, int num);
-            char print_buffer[100];
+            char print_buffer[1024];
     };
 }
 
