@@ -31,5 +31,67 @@ namespace kernel::utility
         while(1);
         log_id++;
     }
+
+    void logger::a9nout()
+    {
+        this_logger->_print.printf
+        (
+            "\e[32m" \
+            "                                   \n" \
+            "        d8888 .d8888b. 888b    888 \n" \
+            "       d88888d88P  Y88b8888b   888 \n" \
+            "      d88P888888    88888888b  888 \n" \
+            "     d88P 888Y88b. d888888Y88b 888 \n" \
+            "    d88P  888  Y888P888888 Y88b888 \n" \
+            "   d88P   888       888888  Y88888 \n" \
+            "  d8888888888Y88b  d88P888   Y8888 \n" \
+            " d88P     888  Y8888P  888    Y888 \n" \
+            "                                   \n" \
+            "\e[0m"
+        );
+
+        this_logger->_print.printf
+        (
+            "\e[32m" \
+            "                                   \n" \
+            "         @@@@@@  @@@@@@@@@         \n" \
+            "        @@@@@@@  @@@@@@@@@@        \n" \
+            "        @@@@@@  @@@@@@@@@@@        \n" \
+            "       @@@@@@@  @@@@@@@@@@@@       \n" \
+            "       @@@@@@  @@@@@@ @@@@@@       \n" \
+            "      @@@@@@@  @@@@@@ &@@@@@@      \n" \
+            "      @@@@@@  @@@@@@   @@@@@@      \n" \
+            "     @@@@@@@  @@@@@@   0@@@@@@     \n" \
+            "     @@@@@@  @@@@@@  @  @@@@@@     \n" \
+            "    @@@@@@&  @@@@@@  @@ &@@@@@@    \n" \
+            "    @@@@@@  ......  @@@  @@@@@@    \n" \
+            "   @@@@@@@  @@@@@@@@@@@@ &@@@@@@   \n" \
+            "   @@@@@@  @@@@@@@@@@@@@  @@@@@@   \n" \
+            "  @@@@@@@ .@@@@@@@@@@@@@0 (@@@@@@  \n" \
+            "  @@@@@@  @@@@@@           @@@@@@  \n" \
+            " @@@@@@0  @@@@@@           /@@@@@@ \n" \
+            "                                   \n" \
+            "\e[0m"
+        );
+
+        this_logger->_print.printf
+        (
+            "\e[11F" \
+            "\e[36G" \
+            "\e[32m" \
+            "kernel: \e[48GA9N v0.0.1\n" \
+            "\e[36G" \
+            "creator:\e[48Ghorizon2k38\n" \
+            "\e[36G" \
+            "project: \e[48Gmitoujr\n" \
+            "\e[36G" \
+            "about: \e[48GA9N is a kernel built on HAL <Hardware Abstraction Layer> and microkernel.\n" \
+            "\e[36G" \
+            "\e[48GIt combines high portability, stability, and scalability.\n" \
+            "\e[0m" \
+            "\e[13E"
+        );
+        
+    }
 }
 
