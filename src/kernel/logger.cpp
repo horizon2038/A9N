@@ -79,17 +79,24 @@ namespace kernel::utility
             "\e[11F" \
             "\e[36G" \
             "\e[32m" \
-            "kernel: \e[48GA9N v0.0.1\n" \
+            "kernel: \e[52G\e[37mA9N v0.0.1\n" \
             "\e[36G" \
-            "creator:\e[48Ghorizon2k38\n" \
+            "\e[32m" \
+            "architecture: \e[52G\e[37m%s\n" \
             "\e[36G" \
-            "project: \e[48Gmitoujr\n" \
+            "\e[32m" \
+            "creator: \e[52G\e[37mhorizon2k38\n" \
             "\e[36G" \
-            "about: \e[48GA9N is a kernel built on HAL <Hardware Abstraction Layer> and microkernel.\n" \
+            "\e[32m" \
+            "project: \e[52G\e[37mmitoujr\n" \
             "\e[36G" \
-            "\e[48GIt combines high portability, stability, and scalability.\n" \
+            "\e[32m" \
+            "about: \e[52G\e[37mA9N is a kernel built on HAL <Hardware Abstraction Layer> and microkernel.\n" \
+            "\e[36G" \
+            "\e[32m" \
+            "\e[52G\e[37mIt combines high portability, stability, and scalability.\n" \
             "\e[0m" \
-            "\e[13E"
+            "\e[13E", "x86_64" // TODO: change hard-coded architexture.
         );
         
     }
