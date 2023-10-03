@@ -19,6 +19,7 @@ namespace kernel
 
             ~process_manager();
 
+            void init_process();
             void create_process(const char *process_name, uint64_t process_address);
             void delete_process(int32_t process_id);
             void switch_context();

@@ -19,17 +19,27 @@ namespace hal::x86_64
         _switch_context(preview_stack_pointer, next_stack_pointer);
     }
 
-    void process_manager::init_process(kernel::process *target_process, uint64_t pc)
+    void process_manager::create_process(kernel::process *target_process, uint64_t entry_point_address)
     {
-        *target_process->stack_pointer-- = 0;
-        *target_process->stack_pointer-- = 0;
-        *target_process->stack_pointer-- = 0;
-        *target_process->stack_pointer-- = 0;
-        *target_process->stack_pointer-- = 0;
-        *target_process->stack_pointer-- = 0;
-        *target_process->stack_pointer-- = 0;
-        // TODO: impl
-        *target_process->stack_pointer-- = pc;
+        /*
+        init callee-saved register stacks.
+        rbp
+        rbx
+        r12
+        r13
+        r14
+        r15
+        rflags
+        */
+        *--target_process->stack_pointer = 0;
+        *--target_process->stack_pointer = 0;
+        *--target_process->stack_pointer = 0;
+        *--target_process->stack_pointer = 0;
+        *--target_process->stack_pointer = 0;
+        *--target_process->stack_pointer = 0;
+        *--target_process->stack_pointer = 0;
+        // setup return address (program_counter) to stacks.
+        *target_process->stack_pointer-- = entry_point_address;
     }
 
     void process_manager::delete_process(kernel::process *target_process)

@@ -17,7 +17,11 @@ namespace kernel
     {
     }
 
-    void process_manager::create_process(const char *process_name, uint64_t process_address)
+    void process_manager::init_process()
+    {
+    }
+
+    void process_manager::create_process(const char *process_name, uint64_t entry_point_address)
     {
     }
 
