@@ -69,14 +69,14 @@ extern "C" int kernel_entry()
     hal::interface::interrupt_handler timer_interrupt_handler = hal::x86_64::pit_timer::handle;
 
     my_interrupt->disable_interrupt_all();
-    logger::log("DISABLE", "interrput");
+    logger::log("DISABLE", "interrupt");
 
     my_interrupt->register_interrupt(0, timer_interrupt_handler);
-    logger::log("REGISTER", "interrput");
+    logger::log("REGISTER", "interrupt");
 
     my_interrupt->enable_interrupt_all();
 
-    logger::log("ENABLE", "interrput");
+    logger::log("ENABLE", "interrupt");
 
     timer->init_timer();
     logger::log("INIT", "timer");
