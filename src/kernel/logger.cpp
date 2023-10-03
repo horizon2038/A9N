@@ -96,7 +96,7 @@ namespace kernel::utility
             "\e[32m" \
             "\e[52G\e[37mIt combines high portability, stability, and scalability.\n" \
             "\e[0m" \
-            "\e[13E", "x86_64" // TODO: change hard-coded architexture.
+            "\e[13E", "x86_64" // TODO: change hard-coded architecture.
         );
         
     }
