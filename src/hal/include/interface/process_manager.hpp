@@ -10,8 +10,7 @@ namespace hal::interface
     {
         public:
             virtual void switch_context(kernel::process *preview_process, kernel::process *next_process) = 0;
-            // TODO: change switch_context to process received.
-            virtual void init_process(kernel::process *target_process, uint64_t pc) = 0;
+            virtual void create_process(kernel::process *target_process, uint64_t entry_point_address) = 0;
             virtual void delete_process(kernel::process *target_process) = 0;
     };
 }
