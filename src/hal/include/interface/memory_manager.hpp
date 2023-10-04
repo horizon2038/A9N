@@ -6,6 +6,7 @@ namespace hal::interface
     class memory_manager
     {
         public:
+            virtual void init_memory() = 0;
             virtual void virtual_memory_map() = 0;
             virtual void virtual_memory_unmap() = 0;
     };
