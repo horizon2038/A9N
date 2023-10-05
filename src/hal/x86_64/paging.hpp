@@ -7,15 +7,15 @@ namespace hal::x86_64
 {
     union page
     {
-        uint64_t data; 
+        uint64_t all; 
         
-        struct entry
+        struct bits
         {
             uint64_t present : 1;
             uint64_t rw : 1;
             uint64_t user_supervisor : 1;
-            uint64_t page_write_through : 1;
-            uint64_t page_cache_disable : 1;
+            uint64_t write_through : 1;
+            uint64_t cache_disable : 1;
             uint64_t accessed : 1;
             uint64_t : 1;
             uint64_t page_size : 1;
