@@ -34,9 +34,10 @@ namespace hal::x86_64
             uint64_t write_through : 1;
             uint64_t cache_disable : 1;
             uint64_t accessed : 1;
-            uint64_t : 1;
+            uint64_t dirty : 1;
             uint64_t page_size : 1;
-            uint64_t : 4;
+            uint64_t global : 1;
+            uint64_t : 3;
             uint64_t address : 40;
             uint64_t : 12;
         } __attribute__((packed));
@@ -47,6 +48,8 @@ namespace hal::x86_64
         public:
             page_table();
             ~page_table();
+
+            page *page_to_physical_address(uint16_t index);
 
             page entries[PAGE_TABLE_COUNT];
 

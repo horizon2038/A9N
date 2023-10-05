@@ -18,4 +18,10 @@ namespace hal::x86_64
             entries[i].all = 0;
         }
     }
+    
+    page *page_table::page_to_physical_address(uint16_t index)
+    {
+        return reinterpret_cast<page*>(entries[index].address << 12);
+    }
 }
+
