@@ -5,11 +5,28 @@
 
 namespace hal::x86_64
 {
+    constexpr static uint16_t PAGE_TABLE_COUNT = 512;
+
+    union virtual_address
+    {
+        uint64_t all;
+
+        struct
+        {
+            uint64_t page : 12;
+            uint64_t page_table : 9;
+            uint64_t page_directory : 9;
+            uint64_t page_directory_pointer : 9;
+            uint64_t page_map_level_4 : 9;
+            uint64_t canonical : 16;
+        } __attribute__((packed));
+    };
+
     union page
     {
         uint64_t all; 
         
-        struct bits
+        struct
         {
             uint64_t present : 1;
             uint64_t rw : 1;
@@ -23,6 +40,11 @@ namespace hal::x86_64
             uint64_t address : 40;
             uint64_t : 12;
         } __attribute__((packed));
+    };
+
+    class page_table
+    {
+        page entries[PAGE_TABLE_COUNT];
     };
 }
 

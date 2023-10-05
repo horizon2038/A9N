@@ -4,6 +4,7 @@
 #include <interface/memory_manager.hpp>
 
 #include <stdint.h>
+#include "paging.hpp"
 
 namespace hal::x86_64
 {
