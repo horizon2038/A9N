@@ -44,7 +44,14 @@ namespace hal::x86_64
 
     class page_table
     {
-        page entries[PAGE_TABLE_COUNT];
+        public:
+            page_table();
+            ~page_table();
+
+            page entries[PAGE_TABLE_COUNT];
+
+        private:
+            void init();
     };
 }
 
