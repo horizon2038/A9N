@@ -16,6 +16,11 @@ namespace hal::x86_64
             void virtual_memory_unmap() override;
 
         private:
+            page_table page_table_level_1;
+            page_table page_table_level_2;
+            page_table page_table_level_3;
+            page_table page_table_level_4;
+
     };
 }
 
