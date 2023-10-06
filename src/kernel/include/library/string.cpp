@@ -1,10 +1,10 @@
-#include "string.h"
+#include "string.hpp"
 
-namespace library 
+namespace std 
 {
     void *memset(void *buffer, char value, size_t buffer_size)
     {
-        uint8_t *buffer_pointer = (uint8_t*)buffer;
+        uint8_t *buffer_pointer = reinterpret_cast<uint8_t*>(buffer);
 
         for (size_t i = 0; i < buffer_size; i++)
         {
@@ -17,8 +17,8 @@ namespace library
 
     void *memcpy(void *buffer, const void *source, size_t size)
     {
-        uint8_t *buffer_pointer = (uint8_t*)buffer;
-        const uint8_t *source_pointer = (const uint8_t*)source;
+        uint8_t *buffer_pointer = reinterpret_cast<uint8_t*>(buffer);
+        const uint8_t *source_pointer = reinterpret_cast<const uint8_t*>(source);
         
         for (size_t i = 0; i < size; i++)
         {
@@ -58,6 +58,7 @@ namespace library
             source_1++;
             source_2++;
         }
-        return *(unsigned char*)source_1 - *(unsigned char*)source_2;
+        return *reinterpret_cast<const unsigned char*>(source_1) - *reinterpret_cast<const unsigned char*>(source_2);
     }
 }
+
