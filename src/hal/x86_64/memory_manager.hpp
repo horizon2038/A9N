@@ -11,7 +11,8 @@ namespace hal::x86_64
     class memory_manager final : public hal::interface::memory_manager
     {
         public:
-            void init_memory(uint64_t target_page_table) override;
+            void init_memory() override;
+            void init_page_table(uint64_t target_page_table) override;
             void virtual_memory_map() override;
             void virtual_memory_unmap() override;
 
