@@ -16,6 +16,8 @@
   elf_info_logger.c
   kernel_jumper.c
   uefi_lifetime.c
+  uefi_memory_map.c
+  uefi_boot_info_configurator.c
 
 [Packages]
   MdePkg/MdePkg.dec
