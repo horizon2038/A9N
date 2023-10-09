@@ -20,11 +20,13 @@
 #include "../hal/x86_64/pit_timer.hpp"
 #include "process.hpp"
 
+#include "boot_info.h"
+
 void kernel_main(void);
 
 hal::interface::timer *timer;
 
-extern "C" int kernel_entry()
+extern "C" int kernel_entry(boot_info *target_boot_info)
 {
     constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
     alignas(hal::x86_64::port_io) char port_io_buf[port_io_size]; 
@@ -39,6 +41,21 @@ extern "C" int kernel_entry()
     alignas(kernel::utility::logger) char logger_buf[logger_size];
     kernel::utility::logger *my_logger = new((void*)logger_buf) kernel::utility::logger{*my_serial};
     using logger = kernel::utility::logger;
+
+    logger::debug("memory_map_count", target_boot_info->memory_map_count);
+    logger::debug("memory_map_size", target_boot_info->memory_size);
+    logger::debug("memory_map_address", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
+
+    memory_map_entry *target_memory_map_entry = target_boot_info->memory_map;
+
+    for (uint16_t i = 0; i < target_boot_info->memory_map_count; i++)
+    {
+        logger::debug("memory_map_count", i);
+        logger::debug("physical_address_start", target_memory_map_entry[i].physical_address_start); 
+        logger::debug("page_count", target_memory_map_entry[i].page_count); 
+        logger::debug("is_free", static_cast<uint64_t>(target_memory_map_entry[i].is_free)); 
+        logger::debug("is_device", static_cast<uint64_t>(target_memory_map_entry[i].is_device)); 
+    }
 
     logger::a9nout();
     logger::log("START", "A9N kernel");

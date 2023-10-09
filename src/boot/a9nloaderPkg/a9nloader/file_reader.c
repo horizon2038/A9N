@@ -12,7 +12,7 @@ EFI_STATUS read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, uint64_t size, vo
     if(EFI_ERROR(efi_status)) return efi_status;
     efi_status = file->SetPosition(file, offset);
     if(EFI_ERROR(efi_status)) return efi_status;
-    efi_status =  file->Read(file, (uint64_t*)&size, *buffer);
+    efi_status = file->Read(file, (uint64_t*)&size, *buffer);
 
     return efi_status;
 }

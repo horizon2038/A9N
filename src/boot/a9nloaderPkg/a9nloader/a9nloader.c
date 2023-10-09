@@ -15,12 +15,19 @@
 #include "kernel_jumper.h"
 #include "uefi_lifetime.h"
 
+#include "uefi_memory_map.h"
+#include "boot_info.h"
+#include "uefi_boot_info_configurator.h"
+
 EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
     EFI_STATUS efi_status = EFI_SUCCESS;
     EFI_FILE_PROTOCOL *root_directory;
     EFI_FILE_PROTOCOL *kernel;
     uint64_t entry_point_address = 0;
+
+    uefi_memory_map target_uefi_memory_map;
+    boot_info target_boot_info;
 
     system_table->ConOut->ClearScreen(system_table->ConOut);
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_WHITE);
@@ -34,12 +41,16 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     if(EFI_ERROR(efi_status)) return efi_status;
     efi_status = load_kernel(kernel, &entry_point_address);
     if(EFI_ERROR(efi_status)) return efi_status;
-    efi_status = exit_uefi(image_handle);
+    efi_status = get_uefi_memory_map(&target_uefi_memory_map);
+    if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = make_boot_info(&target_uefi_memory_map, &target_boot_info);
+    if(EFI_ERROR(efi_status)) return efi_status;
+    efi_status = exit_uefi(image_handle, &target_uefi_memory_map);
     // known issues: checking efi_status in exit_uefi causes "EFI Hard Drive" error.
 
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_GREEN);
     
-    jump_kernel(entry_point_address);
+    jump_kernel(entry_point_address, &target_boot_info);
 
     while(1);
     return efi_status;
