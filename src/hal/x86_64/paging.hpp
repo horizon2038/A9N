@@ -50,8 +50,9 @@ namespace hal::x86_64
             ~page_table();
 
             page *page_to_physical_address(uint16_t index);
+            void allocate_physical_memory();
 
-            page entries[PAGE_TABLE_COUNT];
+            page entries[PAGE_TABLE_COUNT] __attribute__((aligned(4096)));
 
         private:
             void init();

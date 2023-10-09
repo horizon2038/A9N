@@ -1,4 +1,5 @@
 #include "paging.hpp"
+#include <library/string.hpp>
 
 namespace hal::x86_64
 {
@@ -13,10 +14,13 @@ namespace hal::x86_64
 
     void page_table::init()
     {
+        /*
         for (uint16_t i = 0; i <= PAGE_TABLE_COUNT; i++)
         {
             entries[i].all = 0;
         }
+        */
+        std::memset(entries, 0, sizeof(page_table) * PAGE_TABLE_COUNT);
     }
     
     page *page_table::page_to_physical_address(uint16_t index)
