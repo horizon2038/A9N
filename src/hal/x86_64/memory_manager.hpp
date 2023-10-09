@@ -13,14 +13,16 @@ namespace hal::x86_64
         public:
             void init_memory() override;
             void init_page_table(uint64_t target_page_table) override;
-            void virtual_memory_map() override;
+            void virtual_memory_map
+            (
+                kernel::process *target_process,
+                uint64_t virtual_addresss,
+                uint64_t physical_address
+            ) override;
             void virtual_memory_unmap() override;
 
         private:
             page_table page_table_level_1;
-            page_table page_table_level_2;
-            page_table page_table_level_3;
-            page_table page_table_level_4;
 
     };
 }

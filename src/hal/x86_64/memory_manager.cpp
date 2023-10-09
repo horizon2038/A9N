@@ -13,7 +13,12 @@ namespace hal::x86_64
         //
     }
 
-    void memory_manager::virtual_memory_map()
+    void memory_manager::virtual_memory_map
+    (
+        kernel::process *target_process,
+        uint64_t virtual_addresss,
+        uint64_t physical_address
+    )
     {
     }
 
