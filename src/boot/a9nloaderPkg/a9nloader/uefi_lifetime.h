@@ -1,7 +1,7 @@
 #ifndef UEFI_LIFETIME_H
 #define UEFI_LIFETIME_H
 
-#include "memory_map.h"
+#include "uefi_memory_map.h"
 
 #include <Uefi.h>
 #include <Library/UefiLib.h>

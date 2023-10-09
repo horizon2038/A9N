@@ -8,6 +8,7 @@ typedef struct
     uint64_t physical_memory_start;
     uint64_t page_count;
     bool is_free;
+    bool is_device;
 } memory_map_entry;
 
 typedef struct
