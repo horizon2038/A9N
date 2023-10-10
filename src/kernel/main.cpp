@@ -42,19 +42,20 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     kernel::utility::logger *my_logger = new((void*)logger_buf) kernel::utility::logger{*my_serial};
     using logger = kernel::utility::logger;
 
-    logger::debug("memory_map_count", target_boot_info->memory_map_count);
-    logger::debug("memory_map_size", target_boot_info->memory_size);
-    logger::debug("memory_map_address", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
+    logger::debug("memory_map_max:\e[55G%10d", target_boot_info->memory_map_count);
+    logger::debug("memory_map_size:\e[55G%10d x 4KiB", target_boot_info->memory_size);
+    logger::debug("memory_map_address:\e[55G%10x", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
 
     memory_map_entry *target_memory_map_entry = target_boot_info->memory_map;
 
     for (uint16_t i = 0; i < target_boot_info->memory_map_count; i++)
     {
-        logger::debug("memory_map_count", i);
-        logger::debug("physical_address_start", target_memory_map_entry[i].physical_address_start); 
-        logger::debug("page_count", target_memory_map_entry[i].page_count); 
-        logger::debug("is_free", static_cast<uint64_t>(target_memory_map_entry[i].is_free)); 
-        logger::debug("is_device", static_cast<uint64_t>(target_memory_map_entry[i].is_device)); 
+        logger::debug("memory_map_count:\e[55G%10d", i);
+        logger::printk("memory_map_count:\e[55G%10d\n", i);
+        logger::printk("physical_address_start:\e[55G%10x\n", target_memory_map_entry[i].physical_address_start); 
+        logger::printk("page_count:\e[55G%10d\n", target_memory_map_entry[i].page_count); 
+        logger::printk("is_free:\e[55G%10d\n", static_cast<uint64_t>(target_memory_map_entry[i].is_free)); 
+        logger::printk("is_device:\e[55G%10d\n", static_cast<uint64_t>(target_memory_map_entry[i].is_device)); 
     }
 
     logger::a9nout();
