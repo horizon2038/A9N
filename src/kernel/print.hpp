@@ -9,15 +9,26 @@ namespace kernel::utility
     {
         public:
             print(hal::interface::serial &injected_serial);
+
             void printf(const char *format, ...);
+            void vprintf(const char *format, __builtin_va_list args);
+
             void sprintf(char *buffer, const char *format, ...);
             void vsprintf(char *buffer, const char *format, __builtin_va_list args);
         
         private:
             hal::interface::serial &_serial;
-            void write_char(char** destination, char c);
-            void write_string(char** destination, char *s);
-            int write_int(char** destination, int num);
+
+            void process_format(char** destination, const char** format_pointer, __builtin_va_list args);
+            void write_char(char** destination, char target_char);
+            void write_string(char** destination, char* target_string, int width = 0);
+            void write_int(char** destination, int count, int width = 0, bool zero_pad = false);
+            void write_hex
+            (
+                char** destination, unsigned int count, int width = 0, bool zero_pad = false, bool uppercase = false
+            );
+            void write_pointer(char** destination, const void* pointer);
+
             char print_buffer[1024];
     };
 }

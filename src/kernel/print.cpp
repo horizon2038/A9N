@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// dogshit temporarily code
 namespace kernel::utility
 {
     print::print(hal::interface::serial &injected_serial) : _serial(injected_serial)
@@ -20,6 +19,12 @@ namespace kernel::utility
         _serial.write_string_serial(print_buffer);
     }
 
+    void print::vprintf(const char *format, __builtin_va_list args)
+    {
+        vsprintf(print_buffer, format, args);
+        printf("%s", print_buffer);
+    }
+
     void print::sprintf(char *buffer, const char *format, ...)
     {
         __builtin_va_list args;
@@ -30,86 +35,179 @@ namespace kernel::utility
 
     void print::vsprintf(char *buffer, const char *format, __builtin_va_list args)
     {
-        char* dest = buffer;
-        int chars_written = 0;
+        char* destination = buffer;
 
-        for (int i = 0; format[i] != '\0'; i++)
+        for (const char *pointer = format; *pointer != '\0'; ++pointer)
         {
-            if (format[i] == '%')
+            if (*pointer == '%')
             {
-                i++;
-
-                if (format[i] == 'd')
-                {
-                    int num = __builtin_va_arg(args, int);
-                    chars_written += write_int(&dest, num);
-                }
-
-                if (format[i] == 's')
-                {
-                    char *s = __builtin_va_arg(args, char*);
-                    write_string(&dest, s);
-                }
-
+                ++pointer;
+                process_format(&destination, &pointer, args);
             }
             else
             {
-                write_char(&dest, format[i]);
-                chars_written++;
+                write_char(&destination, *pointer);
             }
         }
-        write_char(&dest, '\0');
-        __builtin_va_end(args);
+        write_char(&destination, '\0');
     }
 
-    void print::write_char(char** dest, char c)
+    void print::process_format(char** destination, const char** format_pointer, __builtin_va_list args)
     {
-        if (*dest)
+        int width = 0;
+        bool zero_pad = false;
+
+        while (true)
         {
-            **dest = c;
-            (*dest)++;
+            if (**format_pointer == '0' && !width)
+            {
+                zero_pad = true;
+                ++(*format_pointer);
+            }
+            else if (**format_pointer >= '1' && **format_pointer <= '9')
+            {
+                width = width * 10 + (**format_pointer - '0');
+                ++(*format_pointer);
+            }
+            else if (**format_pointer == '0' && width)
+            {
+                width = width * 10;
+                ++(*format_pointer);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        switch (**format_pointer)
+        {
+            case 'd':
+                write_int(destination, __builtin_va_arg(args, int), width, zero_pad);
+                break;
+
+            case 'x':
+                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, false);
+                break;
+
+            case 'X':
+                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, true);
+                break;
+
+            case 's':
+                write_string(destination, __builtin_va_arg(args, char*), width);
+                break;
+
+            case 'p':
+                write_pointer(destination, __builtin_va_arg(args, void*));
+                break;
+
+            default:
+                write_char(destination, '%');
+                write_char(destination, **format_pointer);
+                break;
         }
     }
 
-    void print::write_string(char** dest, char *s)
+    void print::write_char(char** destination, char target_char)
     {
-        while(*s != '\0')
+        if (*destination)
         {
-            write_char(dest, *s);
-            s++;
+            **destination = target_char;
+            (*destination)++;
         }
     }
 
-    int print::write_int(char** dest, int num)
+    void print::write_string(char** destination, char *target_string, int width)
     {
-        if (num < 0)
+        int length = 0;
+
+        for (char* pointer = target_string; *pointer != '\0'; ++pointer)
         {
-            write_char(dest, '-');
-            num = -num;
+            ++length;
         }
 
-        if (num == 0)
+        int padding = width - length;
+
+        while (padding-- > 0)
         {
-            write_char(dest, '0');
-            return 1;
+            write_char(destination, ' ');
         }
 
-        char buffer[20];
-        int len = 0;
-
-        while (num > 0)
+        while(*target_string != '\0')
         {
-            buffer[len++] = '0' + (num % 10);
-            num /= 10;
+            write_char(destination, *target_string);
+            target_string++;
+        }
+    }
+
+    void print::write_int(char** destination, int count, int width, bool zero_pad)
+    {
+        if (count < 0)
+        {
+            write_char(destination, '-');
+            count = -count;
+            --width;
         }
 
-        for (int i = len - 1; i >= 0; i--)
+        char buffer[10];
+        char* ptr = buffer + 10;
+
+        do {
+            *--ptr = '0' + (count % 10);
+            count /= 10;
+            --width;
+        } while (count > 0);
+
+        while (width-- > 0)
         {
-            write_char(dest, buffer[i]);
+            write_char(destination, zero_pad ? '0' : ' ');
         }
 
-        return len;
+        while (ptr < buffer + 10)
+        {
+            write_char(destination, *ptr++);
+        }
+    }
 
+    void print::write_hex(char** destination, unsigned int count, int width, bool zero_pad, bool uppercase)
+    {
+        char buffer[8];
+        char* pointer = buffer + 8;
+
+        do {
+            int digit = count % 16;
+            *--pointer = (digit < 10) ? ('0' + digit) : ((uppercase ? 'A' : 'a') + digit - 10);
+            count /= 16;
+            --width;
+        } while (count > 0);
+
+        char pad_char = zero_pad ? '0' : ' ';
+
+        while (width-- > 0)
+        {
+            write_char(destination, pad_char);
+        }
+
+        while (pointer < buffer + 8)
+        {
+            write_char(destination, *pointer++);
+        }
+    }
+
+    void print::write_pointer(char** destination, const void* pointer)
+    {
+        static const char* hex_digits = "0123456789abcdef";
+        unsigned long value = reinterpret_cast<unsigned long>(pointer);
+
+        write_char(destination, '0');
+        write_char(destination, 'x');
+
+        for (int i = (sizeof(pointer) * 8) - 4; i >= 0; i -= 4)
+        {
+            unsigned char nibble = (value >> i) & 0xf;
+            write_char(destination, hex_digits[nibble]);
+        }
     }
 }
 

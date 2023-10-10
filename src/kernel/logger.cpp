@@ -8,28 +8,48 @@ namespace kernel::utility
     logger::logger(hal::interface::serial &target_serial)
         : _print(target_serial)
     {
-        uint8_t log_id = 0;
         this_logger = this;
         this_logger->_print.printf("\e[0m");
     }
 
     void logger::log(const char *sender, const char *message)
     {
-        this_logger->_print.printf("\e[0m[\e[32m %d \e[0m]\e[37m\e[11G[ %s ]\e[25G: %s\n\e[0m", log_id, sender, message);
-        log_id++;
+        this_logger->print_log_id();
+        this_logger->print_sender(sender);
+        this_logger->print_splitter();
+        this_logger->_print.printf("%s\n", message);
     }
 
-    void logger::debug(const char *message, const uint64_t value)
+    void logger::debug(const char *message, ...)
     {
-        this_logger->_print.printf("\e[0m[\e[34m %d \e[0m]\e[37m\e[11G[\e[34m %s \e[0m]\e[25G: [ %d ] %s\n\e[0m", log_id, "DEBUG", value, message);
-        log_id++;
+        __builtin_va_list args;
+        __builtin_va_start(args, message);
+        this_logger->print_log_id(terminal_color::CYAN);
+        this_logger->print_sender("DEBUG", terminal_color::CYAN);
+        this_logger->print_splitter();
+        this_logger->_print.vprintf(message, args);
+        this_logger->_print.printf("\n");
+        __builtin_va_end(args);
     }
 
     void logger::error(const char *message)
     {
-        this_logger->_print.printf("\e[0m[\e[31m %d \e[0m]\e[37m\e[11G[\e[31m %s \e[0m]\e[25G: %s\n\e[0m", log_id, "ERROR", message);
-        while(1);
-        log_id++;
+        this_logger->print_log_id();
+        this_logger->print_sender("ERROR", terminal_color::RED);
+        this_logger->print_splitter();
+        this_logger->_print.printf("%s\n", message);
+        while (true);
+    }
+
+    void logger::printk(const char *format, ...)
+    {
+        __builtin_va_list args;
+        __builtin_va_start(args, format);
+        this_logger->print_log_id(terminal_color::GREEN);
+        this_logger->print_sender("KERNEL");
+        this_logger->print_splitter();
+        this_logger->_print.vprintf(format, args);
+        __builtin_va_end(args);
     }
 
     void logger::a9nout()
@@ -98,7 +118,23 @@ namespace kernel::utility
             "\e[0m" \
             "\e[13E", "x86_64" // TODO: change hard-coded architecture.
         );
-        
+
+    }
+
+    void logger::print_log_id(const char *color_id)
+    {
+        this_logger->_print.printf("[ %s%s%010d%s ] ", terminal_color::RESET, color_id, log_id, terminal_color::RESET);
+        log_id++;
+    }
+
+    void logger::print_sender(const char *sender, const char *color_id)
+    {
+        this_logger->_print.printf("[ %s%s%8s%s ] ", terminal_color::RESET, color_id, sender, terminal_color::RESET);
+    }
+
+    void logger::print_splitter()
+    {
+        this_logger->_print.printf(": ");
     }
 }
 
