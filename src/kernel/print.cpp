@@ -100,45 +100,45 @@ namespace kernel::utility
                 if (long_modifier)
                 {
                     write_int(destination, __builtin_va_arg(args, long), width, zero_pad);
+                    break;
                 }
                 if (long_long_modifier)
                 {
                     write_int_ll(destination, __builtin_va_arg(args, long long), width, zero_pad);
+                    break;
                 }
-                else
-                {
-                    write_int(destination, __builtin_va_arg(args, int), width, zero_pad);
-                }
+
+                write_int(destination, __builtin_va_arg(args, int), width, zero_pad);
                 break;
 
             case 'x':
-                if (long_modifier)
-                {
-                    write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, false);
-                }
                 if (long_long_modifier)
                 {
                     write_hex_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad, false);
+                    break;
                 }
-                else
+                if (long_modifier)
                 {
-                    write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, false);
+                    write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, false);
+                    break;
                 }
+
+                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, false);
                 break;
 
             case 'X':
                 if (long_modifier)
                 {
                     write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, true);
+                    break;
                 }
                 if (long_long_modifier)
                 {
                     write_hex_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad, true);
+                    break;
                 }
-                else
-                {
-                    write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, true);
-                }
+
+                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, true);
                 break;
 
             case 's':
@@ -153,15 +153,15 @@ namespace kernel::utility
                 if (long_modifier)
                 {
                     write_uint(destination, __builtin_va_arg(args, unsigned long), width, zero_pad);
+                    break;
                 }
                 if (long_long_modifier)
                 {
                     write_uint_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad);
+                    break;
                 }
-                else
-                {
-                    write_uint(destination, __builtin_va_arg(args, unsigned int), width, zero_pad);
-                }
+
+                write_uint(destination, __builtin_va_arg(args, unsigned int), width, zero_pad);
                 break;
 
             default:
