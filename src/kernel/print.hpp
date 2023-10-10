@@ -23,10 +23,14 @@ namespace kernel::utility
             void write_char(char** destination, char target_char);
             void write_string(char** destination, char* target_string, int width = 0);
             void write_int(char** destination, int count, int width = 0, bool zero_pad = false);
+            void write_int_ll(char** destination, long long count, int width = 0, bool zero_pad = false);
+            void write_uint(char** destination, unsigned int count, int width, bool zero_pad);
+            void write_uint_ll(char** destination, unsigned long long count, int width, bool zero_pad);
             void write_hex
             (
                 char** destination, unsigned int count, int width = 0, bool zero_pad = false, bool uppercase = false
             );
+            void write_hex_ll(char** destination, unsigned long long count, int width, bool zero_pad, bool uppercase = false);
             void write_pointer(char** destination, const void* pointer);
 
             char print_buffer[1024];

@@ -48,7 +48,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 
     logger::printk("boot_info->memory_map\n");
     logger::printk("memory_map_max\e[52G:\e[60G%16d\n", target_boot_info->memory_map_count);
-    logger::printk("memory_map_size\e[52G:\e[60G%16d B | %6d MiB \n" , target_boot_info->memory_size, target_boot_info->memory_size / (1024 * 1024));
+    logger::printk("memory_map_size\e[52G:\e[60G%16llu B | %6d MiB \n" , target_boot_info->memory_size, target_boot_info->memory_size / (1024 * 1024));
     logger::printk("memory_map_address\e[52G:\e[58G0x%016x\n", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
     logger::split();
 
@@ -60,7 +60,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
         uint64_t memory_map_size_kb = memory_map_size / 1024;
         uint64_t memory_map_size_mb = memory_map_size_kb / 1024;
         logger::printk("----- memory_map_entry %16d -----\n", i);
-        logger::printk("physical_address\e[52G:\e[58G0x%016x\n", target_memory_map_entry[i].physical_address_start); 
+        logger::printk("physical_address\e[52G:\e[58G0x%016llx\n", target_memory_map_entry[i].physical_address_start); 
         logger::printk
         (
             "size\e[52G:\e[60G%16d B | %6d KiB | %6d MiB \n",
