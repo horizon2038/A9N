@@ -52,6 +52,11 @@ namespace kernel::utility
         __builtin_va_end(args);
     }
 
+    void logger::split()
+    {
+        this_logger->_print.printf("\n");
+    }
+
     void logger::a9nout()
     {
         this_logger->_print.printf

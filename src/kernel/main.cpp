@@ -42,24 +42,36 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     kernel::utility::logger *my_logger = new((void*)logger_buf) kernel::utility::logger{*my_serial};
     using logger = kernel::utility::logger;
 
-    logger::debug("memory_map_max:\e[55G%10d", target_boot_info->memory_map_count);
-    logger::debug("memory_map_size:\e[55G%10d x 4KiB", target_boot_info->memory_size);
-    logger::debug("memory_map_address:\e[55G%10x", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
+    logger::a9nout();
+    logger::log("START", "A9N kernel");
+    logger::split();
+
+    logger::printk("boot_info->memory_map\n");
+    logger::printk("memory_map_max\e[52G:\e[60G%16d\n", target_boot_info->memory_map_count);
+    logger::printk("memory_map_size\e[52G:\e[60G%16d B | %6d MiB \n" , target_boot_info->memory_size, target_boot_info->memory_size / (1024 * 1024));
+    logger::printk("memory_map_address\e[52G:\e[58G0x%016x\n", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
+    logger::split();
 
     memory_map_entry *target_memory_map_entry = target_boot_info->memory_map;
 
     for (uint16_t i = 0; i < target_boot_info->memory_map_count; i++)
     {
-        logger::debug("memory_map_count:\e[55G%10d", i);
-        logger::printk("memory_map_count:\e[55G%10d\n", i);
-        logger::printk("physical_address_start:\e[55G%10x\n", target_memory_map_entry[i].physical_address_start); 
-        logger::printk("page_count:\e[55G%10d\n", target_memory_map_entry[i].page_count); 
-        logger::printk("is_free:\e[55G%10d\n", static_cast<uint64_t>(target_memory_map_entry[i].is_free)); 
-        logger::printk("is_device:\e[55G%10d\n", static_cast<uint64_t>(target_memory_map_entry[i].is_device)); 
+        uint64_t memory_map_size = target_memory_map_entry[i].page_count * 4096;
+        uint64_t memory_map_size_kb = memory_map_size / 1024;
+        uint64_t memory_map_size_mb = memory_map_size_kb / 1024;
+        logger::printk("----- memory_map_entry %16d -----\n", i);
+        logger::printk("physical_address\e[52G:\e[58G0x%016x\n", target_memory_map_entry[i].physical_address_start); 
+        logger::printk
+        (
+            "size\e[52G:\e[60G%16d B | %6d KiB | %6d MiB \n",
+            memory_map_size,
+            memory_map_size_kb,
+            memory_map_size_mb
+        ); 
+        logger::printk("is_free\e[52G:\e[60G%16s\n", target_memory_map_entry[i].is_free ? "yes" : "no"); 
+        logger::printk("is_device\e[52G:\e[60G%16s\n", target_memory_map_entry[i].is_device ? "yes" : "no"); 
+        logger::split();
     }
-
-    logger::a9nout();
-    logger::log("START", "A9N kernel");
 
     logger::log("INIT", "port_io");
     logger::log("INIT", "serial");
