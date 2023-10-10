@@ -56,6 +56,8 @@ namespace kernel::utility
     {
         int width = 0;
         bool zero_pad = false;
+        bool long_modifier = false;
+        bool long_long_modifier = false;
 
         while (true)
         {
@@ -74,6 +76,18 @@ namespace kernel::utility
                 width = width * 10;
                 ++(*format_pointer);
             }
+            else if (**format_pointer == 'l')
+            {
+                if(*(*format_pointer + 1) == 'l')
+                {
+                    long_long_modifier = true;
+                    *format_pointer += 2;
+                }
+                else {
+                long_modifier = true;
+                ++(*format_pointer);
+                }
+            }
             else
             {
                 break;
@@ -83,15 +97,48 @@ namespace kernel::utility
         switch (**format_pointer)
         {
             case 'd':
-                write_int(destination, __builtin_va_arg(args, int), width, zero_pad);
+                if (long_modifier)
+                {
+                    write_int(destination, __builtin_va_arg(args, long), width, zero_pad);
+                }
+                if (long_long_modifier)
+                {
+                    write_int_ll(destination, __builtin_va_arg(args, long long), width, zero_pad);
+                }
+                else
+                {
+                    write_int(destination, __builtin_va_arg(args, int), width, zero_pad);
+                }
                 break;
 
             case 'x':
-                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, false);
+                if (long_modifier)
+                {
+                    write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, false);
+                }
+                if (long_long_modifier)
+                {
+                    write_hex_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad, false);
+                }
+                else
+                {
+                    write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, false);
+                }
                 break;
 
             case 'X':
-                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, true);
+                if (long_modifier)
+                {
+                    write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, true);
+                }
+                if (long_long_modifier)
+                {
+                    write_hex_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad, true);
+                }
+                else
+                {
+                    write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, true);
+                }
                 break;
 
             case 's':
@@ -100,6 +147,21 @@ namespace kernel::utility
 
             case 'p':
                 write_pointer(destination, __builtin_va_arg(args, void*));
+                break;
+
+            case 'u':
+                if (long_modifier)
+                {
+                    write_uint(destination, __builtin_va_arg(args, unsigned long), width, zero_pad);
+                }
+                if (long_long_modifier)
+                {
+                    write_uint_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad);
+                }
+                else
+                {
+                    write_uint(destination, __builtin_va_arg(args, unsigned int), width, zero_pad);
+                }
                 break;
 
             default:
@@ -151,10 +213,10 @@ namespace kernel::utility
         }
 
         char buffer[10];
-        char* ptr = buffer + 10;
+        char* pointer = buffer + 10;
 
         do {
-            *--ptr = '0' + (count % 10);
+            *--pointer = '0' + (count % 10);
             count /= 10;
             --width;
         } while (count > 0);
@@ -164,9 +226,85 @@ namespace kernel::utility
             write_char(destination, zero_pad ? '0' : ' ');
         }
 
-        while (ptr < buffer + 10)
+        while (pointer < buffer + 10)
         {
-            write_char(destination, *ptr++);
+            write_char(destination, *pointer++);
+        }
+    }
+    void print::write_int_ll(char** destination, long long count, int width, bool zero_pad)
+    {
+        if (count < 0)
+        {
+            write_char(destination, '-');
+            count = -count;
+            --width;
+        }
+
+        char buffer[20];
+        char* pointer = buffer + 20;
+
+        do {
+            *--pointer = '0' + (count % 10);
+            count /= 10;
+            --width;
+        } while (count > 0);
+
+      
+        while (width-- > 0)
+        {
+            write_char(destination, zero_pad ? '0' : ' ');
+        }
+
+      
+        while (pointer < buffer + 20)
+        {
+            write_char(destination, *pointer++);
+        }
+    }
+
+    void print::write_uint(char** destination, unsigned int count, int width, bool zero_pad)
+    {
+        char buffer[10];
+        char* pointer = buffer + 10;
+
+        do {
+            *--pointer = '0' + (count % 10);
+            count /= 10;
+            --width;
+        } while (count > 0);
+
+      
+        while (width-- > 0)
+        {
+            write_char(destination, zero_pad ? '0' : ' ');
+        }
+
+      
+        while (pointer < buffer + 10)
+        {
+            write_char(destination, *pointer++);
+        }
+    }
+
+    void print::write_uint_ll(char** destination, unsigned long long count, int width, bool zero_pad)
+    {
+        char buffer[20];
+        char* pointer = buffer + 20;
+
+        do {
+            *--pointer = '0' + (count % 10);
+            count /= 10;
+            --width;
+        } while (count > 0);
+
+        while (width-- > 0)
+        {
+            write_char(destination, zero_pad ? '0' : ' ');
+        }
+
+        while (pointer < buffer + 20)
+        {
+            write_char(destination, *pointer++);
         }
     }
 
@@ -190,6 +328,31 @@ namespace kernel::utility
         }
 
         while (pointer < buffer + 8)
+        {
+            write_char(destination, *pointer++);
+        }
+    }
+
+    void print::write_hex_ll(char** destination, unsigned long long count, int width, bool zero_pad, bool uppercase)
+    {
+        char buffer[16];
+        char* pointer = buffer + 16;
+
+        do {
+            int digit = count % 16;
+            *--pointer = (digit < 10) ? ('0' + digit) : ((uppercase ? 'A' : 'a') + digit - 10);
+            count /= 16;
+            --width;
+        } while (count > 0);
+
+        char pad_char = zero_pad ? '0' : ' ';
+
+        while (width-- > 0)
+        {
+            write_char(destination, pad_char);
+        }
+
+        while (pointer < buffer + 16)
         {
             write_char(destination, *pointer++);
         }
