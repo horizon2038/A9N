@@ -47,14 +47,14 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     logger::split();
 
     logger::printk("boot_info->memory_map\n");
-    logger::printk("memory_map_max\e[52G:\e[60G%16d\n", target_boot_info->memory_map_count);
-    logger::printk("memory_map_size\e[52G:\e[60G%16llu B | %6d MiB \n" , target_boot_info->memory_size, target_boot_info->memory_size / (1024 * 1024));
-    logger::printk("memory_map_address\e[52G:\e[58G0x%016x\n", reinterpret_cast<uint64_t>(target_boot_info->memory_map));
+    logger::printk("memory_map_max\e[52G:\e[60G%16d\n", target_boot_info->boot_memory_info.memory_map_count);
+    logger::printk("memory_map_size\e[52G:\e[60G%16llu B | %6d MiB \n" , target_boot_info->boot_memory_info.memory_size, target_boot_info->boot_memory_info.memory_size / (1024 * 1024));
+    logger::printk("memory_map_address\e[52G:\e[58G0x%016x\n", reinterpret_cast<uint64_t>(target_boot_info->boot_memory_info.memory_map));
     logger::split();
 
-    memory_map_entry *target_memory_map_entry = target_boot_info->memory_map;
+    memory_map_entry *target_memory_map_entry = target_boot_info->boot_memory_info.memory_map;
 
-    for (uint16_t i = 0; i < target_boot_info->memory_map_count; i++)
+    for (uint16_t i = 0; i < target_boot_info->boot_memory_info.memory_map_count; i++)
     {
         uint64_t memory_map_size = target_memory_map_entry[i].page_count * 4096;
         uint64_t memory_map_size_kb = memory_map_size / 1024;
