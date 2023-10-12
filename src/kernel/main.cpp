@@ -13,8 +13,8 @@
 
 #include "../hal/x86_64/arch_initializer.hpp"
 
-#include "print.hpp"
-#include <logger.hpp>
+#include <library/print.hpp>
+#include <library/logger.hpp>
 
 #include <interface/timer.hpp>
 #include "../hal/x86_64/pit_timer.hpp"
