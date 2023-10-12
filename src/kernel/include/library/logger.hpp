@@ -2,7 +2,7 @@
 #define LOGGER_HPP
 
 #include <stdint.h>
-#include "../print.hpp"
+#include <library/print.hpp>
 #include "interface/serial.hpp"
 
 namespace kernel::utility
