@@ -29,6 +29,8 @@ namespace kernel
             memory_block *head_memory_block;
             void init(const memory_info &target_memory_info);
             void init_memory_block(const memory_info &target_memory_info);
+            size_t align_size(size_t size, uint16_t page_size);
+            uint64_t align_physical_address(uint64_t physical_address, uint16_t page_size);
     };
 }
 
