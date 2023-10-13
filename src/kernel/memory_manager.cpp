@@ -7,6 +7,7 @@ namespace kernel
     memory_manager::memory_manager(const memory_info &target_memory_info)
     : head_memory_block(nullptr)
     {
+        init(target_memory_info);
     }
 
     void memory_manager::init(const memory_info &target_memory_info)
@@ -21,6 +22,11 @@ namespace kernel
 
     void memory_manager::init_memory_block(const memory_info &target_memory_info)
     {
+        /*
+        memory_block is like a header placed at the beginning of free memory.
+        therefore, memory allocations are not required
+        (since it is assumed that free memory exists).
+        */
         memory_map_entry *_memory_map_entry;
         memory_block *previous_memory_block = nullptr;
 
@@ -49,13 +55,27 @@ namespace kernel
         }
     }
 
+    size_t memory_manager::align_size(size_t size, uint16_t page_size)
+    {
+        size_t aligned_size = (size + page_size - 1) & ~(page_size - 1);
+        return aligned_size;
+    }
+
+    uint64_t memory_manager::align_physical_address(uint64_t physical_address, uint16_t page_size)
+    {
+        uint64_t aligned_address = (physical_address + page_size - 1) & ~(page_size - 1); 
+        return aligned_address;
+    }
+
     void *memory_manager::allocate_physical_memory(size_t size)
     {
+        size_t aligned_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
         memory_block *current_memory_block = head_memory_block;
         memory_block *previous_memory_block = nullptr;
+
         while (current_memory_block)
         {
-            if (current_memory_block->size >= size)
+            if (current_memory_block->size >= aligned_size)
             {
                 current_memory_block->size -= size;
                 return reinterpret_cast<void*>(current_memory_block->physical_address);
