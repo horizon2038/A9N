@@ -12,11 +12,6 @@ namespace kernel
 
     void memory_manager::init(const memory_info &target_memory_info)
     {
-        /*
-        TODO: allocate_physical_memoryを実装する.
-        memory_infoからmemory_blockへ変換する.
-        allocateしてからmemory_blockをそこへ配置し, 適切に設定する.
-        */
         init_memory_block(target_memory_info);
     }
 
@@ -42,7 +37,7 @@ namespace kernel
 
             uint64_t memory_block_size = sizeof(memory_block) + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
             uint64_t adjusted_address = _memory_map_entry->physical_address_start + memory_block_size;
-            size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count - 1) - memory_block_size;
+            size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count) - memory_block_size;
 
             memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
             current_memory_block->physical_address = adjusted_address;
@@ -86,7 +81,13 @@ namespace kernel
             
             if (has_free_frames)
             {
-                configure_memory_frames(&current_memory_block->memory_frames[start_frame_index], requested_page_count, owner, true);
+                configure_memory_frames
+                (
+                    &current_memory_block->memory_frames[start_frame_index],
+                    requested_page_count,
+                    owner,
+                    true
+                );
                 uint64_t start_frame_address = current_memory_block->physical_address + (start_frame_index * PAGE_SIZE);
                 return reinterpret_cast<void*>(start_frame_address);
             }
@@ -130,13 +131,13 @@ namespace kernel
                 continue;
             }
 
-            free_page_count++;
-
             if (free_page_count == page_count)
             {
-                start_frame_index = i + 1 - free_page_count;
+                start_frame_index = i - free_page_count;
                 return true;
             }
+
+            free_page_count++;
         }
         return false;
     }
