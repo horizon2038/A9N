@@ -27,22 +27,30 @@ namespace kernel
         therefore, memory allocations are not required
         (since it is assumed that free memory exists).
         */
-        memory_map_entry *_memory_map_entry;
+        memory_map_entry *_memory_map_entry = nullptr;
         memory_block *previous_memory_block = nullptr;
 
         for (uint16_t i = 0; i < target_memory_info.memory_map_count; i++)
         {
             _memory_map_entry = &target_memory_info.memory_map[i];
 
+
             if (!(_memory_map_entry->is_free))
             {
                 continue;
             }
 
+            uint64_t memory_block_size = sizeof(memory_block) + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
+            uint64_t adjusted_address = _memory_map_entry->physical_address_start + memory_block_size;
+            size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count - 1) - memory_block_size;
+
             memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
-            current_memory_block->physical_address = _memory_map_entry->physical_address_start + sizeof(memory_block);
-            current_memory_block->size = PAGE_SIZE * (_memory_map_entry->page_count - 1);
+            current_memory_block->physical_address = adjusted_address;
+            current_memory_block->size = adjusted_size;
             current_memory_block->next = nullptr;
+            current_memory_block->memory_frame_count = adjusted_size / PAGE_SIZE;
+
+            init_memory_frame(*current_memory_block);
 
             if (!previous_memory_block)
             {
@@ -55,21 +63,18 @@ namespace kernel
         }
     }
 
-    size_t memory_manager::align_size(size_t size, uint16_t page_size)
+    void memory_manager::init_memory_frame(memory_block &target_memory_block)
     {
-        size_t aligned_size = (size + page_size - 1) & ~(page_size - 1);
-        return aligned_size;
-    }
-
-    uint64_t memory_manager::align_physical_address(uint64_t physical_address, uint16_t page_size)
-    {
-        uint64_t aligned_address = (physical_address + page_size - 1) & ~(page_size - 1); 
-        return aligned_address;
+            for (uint64_t j = 0; j < target_memory_block.memory_frame_count - 1; j++)
+            {
+                target_memory_block.memory_frames[j].owner = nullptr;
+                target_memory_block.memory_frames[j].is_allocated = false;
+            }
     }
 
     void *memory_manager::allocate_physical_memory(size_t size)
     {
-        size_t aligned_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+        size_t aligned_size = align_size(size, PAGE_SIZE); 
         memory_block *current_memory_block = head_memory_block;
         memory_block *previous_memory_block = nullptr;
 
@@ -89,4 +94,17 @@ namespace kernel
     void memory_manager::dealocate_physical_memory(void *pointer)
     {
     }
+
+    size_t memory_manager::align_size(size_t size, uint16_t page_size)
+    {
+        size_t aligned_size = (size + page_size - 1) & ~(page_size - 1);
+        return aligned_size;
+    }
+
+    uint64_t memory_manager::align_physical_address(uint64_t physical_address, uint16_t page_size)
+    {
+        uint64_t aligned_address = (physical_address + page_size - 1) & ~(page_size - 1); 
+        return aligned_address;
+    }
+
 }
