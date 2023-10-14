@@ -65,33 +65,92 @@ namespace kernel
 
     void memory_manager::init_memory_frame(memory_block &target_memory_block)
     {
-            for (uint64_t j = 0; j < target_memory_block.memory_frame_count - 1; j++)
-            {
-                target_memory_block.memory_frames[j].owner = nullptr;
-                target_memory_block.memory_frames[j].is_allocated = false;
-            }
+        for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)
+        {
+            target_memory_block.memory_frames[i].owner = nullptr;
+            target_memory_block.memory_frames[i].is_allocated = false;
+        }
     }
 
-    void *memory_manager::allocate_physical_memory(size_t size)
+    void *memory_manager::allocate_physical_memory(size_t size, process *owner)
     {
-        size_t aligned_size = align_size(size, PAGE_SIZE); 
-        memory_block *current_memory_block = head_memory_block;
-        memory_block *previous_memory_block = nullptr;
+        size_t aligned_requested_size = align_size(size, PAGE_SIZE); 
+        size_t requested_page_count = aligned_requested_size / PAGE_SIZE;
+        memory_block *current_memory_block;
+        uint64_t start_frame_index;
+        bool has_free_frames;
 
-        while (current_memory_block)
+        while((current_memory_block = find_free_memory_block(aligned_requested_size)))
         {
-            if (current_memory_block->size >= aligned_size)
+            has_free_frames = find_free_frames(*current_memory_block, requested_page_count, start_frame_index);
+            
+            if (has_free_frames)
             {
-                current_memory_block->size -= size;
-                return reinterpret_cast<void*>(current_memory_block->physical_address);
+                configure_memory_frames(&current_memory_block->memory_frames[start_frame_index], requested_page_count, owner, true);
+                uint64_t start_frame_address = current_memory_block->physical_address + (start_frame_index * PAGE_SIZE);
+                return reinterpret_cast<void*>(start_frame_address);
             }
-            previous_memory_block = current_memory_block;
-            current_memory_block = current_memory_block->next;
+
+            current_memory_block->size = 0;
         }
+
         return nullptr;
     }
 
-    void memory_manager::dealocate_physical_memory(void *pointer)
+    memory_block *memory_manager::find_free_memory_block(size_t size)
+    {
+        memory_block *current_memory_block = head_memory_block;
+
+        while (current_memory_block)
+        {
+            if (current_memory_block->size >= size)
+            {
+                return current_memory_block;
+            }
+            current_memory_block = current_memory_block->next;
+        }
+
+        return nullptr;
+    }
+
+    bool memory_manager::find_free_frames
+    (
+        memory_block &target_memory_block,
+        uint64_t page_count,
+        uint64_t &start_frame_index
+    )
+    {
+        uint64_t free_page_count = 0;
+
+        for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)
+        {
+            if (target_memory_block.memory_frames[i].is_allocated)
+            {
+                free_page_count = 0;
+                continue;
+            }
+
+            free_page_count++;
+
+            if (free_page_count == page_count)
+            {
+                start_frame_index = i + 1 - free_page_count;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void memory_manager::configure_memory_frames(memory_frame *start_frame, uint64_t page_count, process *owner, bool flag)
+    {
+        for (uint64_t i = 0; i < page_count; i++)
+        {
+            start_frame[i].is_allocated = flag;
+            start_frame[i].owner = owner;
+        }
+    }
+
+    void memory_manager::deallocate_physical_memory(void *pointer)
     {
     }
 
