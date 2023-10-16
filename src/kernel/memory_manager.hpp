@@ -27,7 +27,9 @@ namespace kernel
         memory_frame memory_frames[1];
     };
 
-    // future: delegate physical_memory_allocation_system to virtual_memory_server (user-space).
+    // future: delegate physical_memory_allocation_system to physical_memory_server (user-space).
+    // future: delegate virtual_memory_allocation_system to virtual_memory_server (user-space).
+
     class memory_manager
     {
         public:
