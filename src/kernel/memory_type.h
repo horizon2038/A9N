@@ -15,8 +15,8 @@ typedef struct
 typedef struct
 {
     uint64_t memory_size;
-    memory_map_entry *memory_map;
     uint16_t memory_map_count;
+    memory_map_entry *memory_map;
 } memory_info;
 
 #endif

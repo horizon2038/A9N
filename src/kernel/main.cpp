@@ -22,6 +22,8 @@
 
 #include "boot_info.h"
 
+#include "memory_manager.hpp"
+
 void kernel_main(void);
 
 hal::interface::timer *timer;
@@ -72,6 +74,14 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
         logger::printk("is_device\e[52G:\e[60G%16s\n", target_memory_map_entry[i].is_device ? "yes" : "no"); 
         logger::split();
     }
+
+    constexpr uint16_t memory_manager_size = sizeof(kernel::memory_manager);
+    alignas(kernel::memory_manager) char memory_manager_buf[memory_manager_size];
+    kernel::memory_manager *my_memory_manager = new((void*)memory_manager_buf) kernel::memory_manager{target_boot_info->boot_memory_info};
+    void *allocate_256kb = my_memory_manager->allocate_physical_memory(2560000, nullptr);
+    logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_256kb));
+    void *allocate_512kb = my_memory_manager->allocate_physical_memory(5240000, nullptr);
+    logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_512kb));
 
     logger::log("INIT", "port_io");
     logger::log("INIT", "serial");
