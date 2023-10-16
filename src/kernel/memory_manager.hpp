@@ -23,8 +23,8 @@ namespace kernel
         uint64_t physical_address;
         size_t size;
         memory_block *next;
-        memory_frame memory_frames[1];
         uint64_t memory_frame_count;
+        memory_frame memory_frames[1];
     };
 
     // future: delegate physical_memory_allocation_system to virtual_memory_server (user-space).
@@ -39,6 +39,7 @@ namespace kernel
             memory_block *head_memory_block;
             void init(const memory_info &target_memory_info);
             void init_memory_block(const memory_info &target_memory_info);
+            void print_memory_block_info(memory_block &target_memory_block);
             void init_memory_frame(memory_block &target_memory_block);
             size_t align_size(size_t size, uint16_t page_size);
             uint64_t align_physical_address(uint64_t physical_address, uint16_t page_size);
