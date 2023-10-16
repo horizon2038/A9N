@@ -29,7 +29,6 @@ namespace kernel
         {
             _memory_map_entry = &target_memory_info.memory_map[i];
 
-
             if (!(_memory_map_entry->is_free))
             {
                 continue;
@@ -45,27 +44,25 @@ namespace kernel
             current_memory_block->next = nullptr;
             current_memory_block->memory_frame_count = adjusted_size / PAGE_SIZE;
 
-
             init_memory_frame(*current_memory_block);
 
             if (head_memory_block == nullptr)
             {
+                kernel::utility::logger::printk("memory_map_count: %llu\n", i);
                 kernel::utility::logger::printk("init_first!\n");
                 kernel::utility::logger::split();
                 head_memory_block = current_memory_block;
+                previous_memory_block = current_memory_block;
+                print_memory_block_info(*current_memory_block);
+                continue;
             }
-            else
-            {
-                if (previous_memory_block != nullptr)
-                {
-                    previous_memory_block->next = current_memory_block;
-                }
-            }
+
+            previous_memory_block->next = current_memory_block;
 
             print_memory_block_info(*current_memory_block);
             previous_memory_block = current_memory_block;
-
         }
+
         memory_block *now_memory_block = head_memory_block;
 
         while (now_memory_block)
@@ -86,7 +83,7 @@ namespace kernel
 
         logger::printk("----- memory_block_info\e[60G%16s\n", "-----");
         logger::printk("physical_address\e[52G:\e[58G0x%016llx\n", target_memory_block.physical_address); 
-        logger::printk("next_physical_address\e[52G:\e[58G0x%016llx\n", target_memory_block.next->physical_address); 
+        logger::printk("next_physical_address\e[52G:\e[58G0x%016llx\n", (target_memory_block.next)->physical_address); 
         logger::printk
         (
             "size\e[52G:\e[60G%16llu B | %6llu KiB | %6llu MiB \n",
@@ -114,12 +111,12 @@ namespace kernel
         size_t aligned_requested_size = align_size(size, PAGE_SIZE); 
         size_t requested_page_count = aligned_requested_size / PAGE_SIZE;
         memory_block *current_memory_block = head_memory_block;
-        kernel::utility::logger::printk("memory_frame_count_head: %llu\n", current_memory_block->memory_frame_count);
         uint64_t start_frame_index;
         bool has_free_frames;
 
         while(current_memory_block)
         {
+            kernel::utility::logger::printk("memory_frame_count: %llu\n", current_memory_block->memory_frame_count);
             has_free_frames = find_free_frames(*current_memory_block, requested_page_count, start_frame_index);
 
             if (current_memory_block->size < aligned_requested_size)
@@ -147,24 +144,6 @@ namespace kernel
         return nullptr;
     }
 
-    memory_block *memory_manager::find_free_memory_block(size_t size)
-    {
-        memory_block *current_memory_block = head_memory_block;
-
-        while (current_memory_block)
-        {
-            if (current_memory_block->size >= size)
-            {
-                kernel::utility::logger::printk("current_memory_block->size >= size : %16llu >=%16llu\n", current_memory_block->size, size);
-                kernel::utility::logger::printk("current_memory_block_address: %016p\n", current_memory_block);
-                return current_memory_block;
-            }
-            current_memory_block = current_memory_block->next;
-        }
-
-        return nullptr;
-    }
-
     bool memory_manager::find_free_frames
     (
         memory_block &target_memory_block,
@@ -183,7 +162,6 @@ namespace kernel
             }
 
             free_page_count++;
-            kernel::utility::logger::printk("i: %016llu | free_page_count: %016llu\e[0G", i, free_page_count);
 
             if (free_page_count == page_count)
             {
@@ -191,7 +169,6 @@ namespace kernel
                 return true;
             }
         }
-        kernel::utility::logger::split();
         return false;
     }
 

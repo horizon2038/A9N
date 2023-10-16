@@ -44,7 +44,6 @@ namespace kernel
             size_t align_size(size_t size, uint16_t page_size);
             uint64_t align_physical_address(uint64_t physical_address, uint16_t page_size);
             void configure_memory_frames(memory_frame *start_frame, uint64_t end_frame_index, process *owner, bool flag);
-            memory_block *find_free_memory_block(size_t size);
             bool find_free_frames(memory_block &target_memory_block, uint64_t page_count, uint64_t &start_frame_index);
     };
 }
