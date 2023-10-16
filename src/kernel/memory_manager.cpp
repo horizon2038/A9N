@@ -38,7 +38,7 @@ namespace kernel
             uint64_t adjusted_address = _memory_map_entry->physical_address_start + memory_block_size;
             size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count) - memory_block_size;
 
-            volatile memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
+            memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
             current_memory_block->physical_address = adjusted_address;
             current_memory_block->size = adjusted_size;
             current_memory_block->next = nullptr;
@@ -151,11 +151,22 @@ namespace kernel
         uint64_t &start_frame_index
     )
     {
+        return find_frames(target_memory_block, page_count, start_frame_index, false);
+    }
+
+    bool memory_manager::find_frames
+    (
+        memory_block &target_memory_block,
+        uint64_t page_count,
+        uint64_t &start_frame_index,
+        bool flag
+    )
+    {
         uint64_t free_page_count = 0;
 
         for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)
         {
-            if (target_memory_block.memory_frames[i].is_allocated)
+            if (target_memory_block.memory_frames[i].is_allocated != flag)
             {
                 free_page_count = 0;
                 continue;
@@ -181,8 +192,32 @@ namespace kernel
         }
     }
 
-    void memory_manager::deallocate_physical_memory(void *pointer)
+    void memory_manager::deallocate_physical_memory(void *physical_address, size_t size)
     {
+        memory_block *current_memory_block = head_memory_block;
+        uint64_t page_count = align_size(size, PAGE_SIZE) / PAGE_SIZE;
+        uint64_t start_frame_index = 0;
+
+        while (current_memory_block)
+        {
+            uint64_t start_physical_address = reinterpret_cast<uint64_t>(physical_address);
+            uint64_t end_physical_address = start_physical_address + align_size(size, PAGE_SIZE);
+            uint64_t end_memory_block_address = current_memory_block->physical_address + current_memory_block->size;
+
+            if
+            (
+                start_physical_address  > current_memory_block->physical_address || 
+                end_memory_block_address < end_physical_address
+            )
+            {
+                current_memory_block = current_memory_block->next;
+                continue;
+            }
+            
+            start_frame_index = (start_physical_address - current_memory_block->physical_address) / PAGE_SIZE;
+            configure_memory_frames(&(current_memory_block->memory_frames[start_frame_index]), page_count, nullptr, false);
+            break;
+        }
     }
 
     size_t memory_manager::align_size(size_t size, uint16_t page_size)
