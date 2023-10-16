@@ -38,7 +38,7 @@ namespace kernel
             uint64_t adjusted_address = _memory_map_entry->physical_address_start + memory_block_size;
             size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count) - memory_block_size;
 
-            memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
+            volatile memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
             current_memory_block->physical_address = adjusted_address;
             current_memory_block->size = adjusted_size;
             current_memory_block->next = nullptr;
