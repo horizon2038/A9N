@@ -1,65 +1,35 @@
 ENTRY(kernel_entry)
 
-PHYSICAL_BASE = 0x100000;
-VIRTUAL_BASE = 0xFFFFFFFF80000000 + PHYSICAL_BASE;
+KERNEL_VMA = 0xFFFF800000000000;
+KERNEL_LMA = 0x100000;
 
 SECTIONS
 {
-    . = VIRTUAL_BASE;
+    . = KERNEL_VMA + KERNEL_LMA;
 
-    .text : AT(PHYSICAL_BASE)
+    .text ALIGN(0x1000) : AT(ALIGN(0x1000) + KERNEL_LMA)
     {
-        _code = .;
+        __kernel_start = . - KERNEL_VMA;
         *(.text)
-        *(.rodata*)
-        . = ALIGN(4096);
+        *(.text.*)
     }
 
-   .data : AT(PHYSICAL_BASE + (ADDR(.text) - VIRTUAL_BASE) + SIZEOF(.text))
-   {
-        _data = .;
+    .rodata ALIGN(0x1000) : AT(ALIGN(0x1000) + KERNEL_LMA)
+    {
+        *(.rodata)
+        *(.rodata.*)
+    }
+
+    .data ALIGN(0x1000) : AT(ALIGN(0x1000) + KERNEL_LMA)
+    {
         *(.data)
-        . = ALIGN(4096);
-   }
-
-   .eh_frame : AT(PHYSICAL_BASE + (ADDR(.data) - VIRTUAL_BASE) + SIZEOF(.data))
-   {
-       _ehframe = .;
-       *(.eh_frame)
-        . = ALIGN(4096);
-   }
-
-   .ctors : AT(PHYSICAL_BASE + (ADDR(.eh_frame) - VIRTUAL_BASE) + SIZEOF(.eh_frame))
-   {
-        _ctors_start = .;
-        KEEP(*(SORT_BY_INIT_PRIORITY(.ctors.*)))
-        KEEP(*(.ctors))
-        . = ALIGN(8);
-        _ctors_end = .;
+        *(.data.*)
     }
 
-   .dtors : AT(PHYSICAL_BASE + (ADDR(.ctors) - VIRTUAL_BASE) + SIZEOF(.ctors))
-   {
-        _dtors_start = .;
-        KEEP(*(SORT_BY_INIT_PRIORITY(.dtors.*)))
-        KEEP(*(.dtors))
-        . = ALIGN(8);
-        _dtors_end = .;
+    .bss ALIGN(0x1000) : AT(ALIGN(0x1000) + KERNEL_LMA)
+    {
+        *(.bss)
+        *(.bss.*)
+        __kernel_end = . - KERNEL_VMA;
     }
-
-   .bss : AT(PHYSICAL_BASE + (ADDR(.dtors) - VIRTUAL_BASE) + SIZEOF(.dtors))
-   {
-       _bss = .;
-       *(.bss)
-       *(COMMON)
-       . = ALIGN(4096);
-   }
-
-   _end = .;
-
-   /DISCARD/ :
-   {
-        *(.comment)
-   }
 }
-
