@@ -98,8 +98,8 @@ static EFI_STATUS allocate_kernel_memory(elf64_header *header, elf64_program_hea
         {
             continue;
         }
-        start_segment_address = MIN(start_segment_address, program_header->virtual_address);
-        end_segment_address = MAX(end_segment_address, program_header->virtual_address + program_header->memory_size);
+        start_segment_address = MIN(start_segment_address, program_header->physical_address);
+        end_segment_address = MAX(end_segment_address, program_header->physical_address + program_header->memory_size);
     }
     segment_size = EFI_SIZE_TO_PAGES(end_segment_address - start_segment_address);
     efi_status = gBS->AllocatePages(AllocateAddress, EfiLoaderData, segment_size, &start_segment_address);
@@ -109,13 +109,13 @@ static EFI_STATUS allocate_kernel_memory(elf64_header *header, elf64_program_hea
 
 static void locate_elf_segment(elf64_header *header, elf64_program_header *program_header, uint64_t buffer)
 {
-    CopyMem((void *)(program_header->virtual_address), (void*)buffer, program_header->file_size);
+    CopyMem((void *)(program_header->physical_address), (void*)buffer, program_header->file_size);
 }
 
 static void zero_clear(elf64_program_header *program_header)
 {
     if (program_header->file_size < program_header->memory_size)
     {
-        gBS->SetMem((void *)(program_header->virtual_address + program_header->file_size), program_header->memory_size - program_header->file_size, 0);
+        gBS->SetMem((void *)(program_header->physical_address + program_header->file_size), program_header->memory_size - program_header->file_size, 0);
     }
 }
