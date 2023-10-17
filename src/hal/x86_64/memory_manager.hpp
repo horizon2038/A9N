@@ -12,7 +12,7 @@ namespace hal::x86_64
     {
         public:
             void init_memory() override;
-            void init_virtual_memory(uint64_t target_page_table) override;
+            void init_virtual_memory(uint64_t top_page_table) override;
             void map_virtual_memory
             (
                 kernel::process *target_process,
@@ -28,7 +28,7 @@ namespace hal::x86_64
             ) override;
 
         private:
-            page_table page_table_level_1;
+            page_table kernel_top_page_table;
 
     };
 }
