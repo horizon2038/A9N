@@ -89,6 +89,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_64b));
     allocate_64b = my_memory_manager->allocate_physical_memory(64, nullptr);
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_64b));
+    logger::split();
 
     logger::log("INIT", "port_io");
     logger::log("INIT", "serial");
