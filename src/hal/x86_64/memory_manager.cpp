@@ -17,12 +17,18 @@ namespace hal::x86_64
     (
         kernel::process *target_process,
         uint64_t virtual_addresss,
-        uint64_t physical_address
+        uint64_t physical_address,
+        uint64_t page_count
     )
     {
     }
 
-    void memory_manager::unmap_virtual_memory()
+    void memory_manager::unmap_virtual_memory
+    (
+        kernel::process *target_process,
+        uint64_t virtual_addresss,
+        uint64_t page_count
+    )
     {
     }
 }
