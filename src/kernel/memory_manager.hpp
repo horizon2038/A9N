@@ -24,7 +24,7 @@ namespace kernel
         size_t size;
         memory_block *next;
         uint64_t memory_frame_count;
-        memory_frame memory_frames[1];
+        memory_frame memory_frames[1]; // C++ uses an array of 1 elements to emulate a FAM (Flexible Array Members).
     };
 
     // future: delegate physical_memory_allocation_system to physical_memory_server (user-space).
@@ -40,6 +40,8 @@ namespace kernel
             void deallocate_physical_memory(void *physical_address, size_t size);
 
             // virtual-memory management
+            void map_virtual_memory();
+            void unmap_virtual_memory();
 
 
         private:
