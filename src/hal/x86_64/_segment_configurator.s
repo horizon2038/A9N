@@ -1,3 +1,4 @@
+default rel
 section .text
 
 global _load_gdt
