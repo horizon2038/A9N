@@ -30,6 +30,7 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
     if(EFI_ERROR(efi_status)) return efi_status;
 
     *entry_point = loaded_elf64_header->entry_point_address;
+    // *entry_point = loaded_elf64_header->entry_point_address - 0xffff800000000000;
     
     return efi_status;
 }

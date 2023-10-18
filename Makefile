@@ -37,10 +37,11 @@ CXX := clang++
 ASM := nasm
 LD = ld.lld
 CFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -masm=intel
-CXXFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -masm=intel
+CXXFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
 CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include
 ASFLAGS = -f elf64
-LDFLAGS = --entry kernel_entry -z norelro --image-base 0x100000 --static
+# LDFLAGS = --entry kernel_entry -z norelro --image-base 0x100000 --static
+LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static
 LIBS = 
 
 .PHONY: all kernel boot clean

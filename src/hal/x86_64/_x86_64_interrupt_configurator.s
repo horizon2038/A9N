@@ -1,3 +1,4 @@
+default rel
 ; INTERRUPT CONFIGURATION
 global _load_idt, _enable_interrupt_all, _disable_interrupt_all
 
