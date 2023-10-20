@@ -8,6 +8,8 @@
 
 namespace hal::x86_64
 {
+    constexpr uint16_t PAGE_SIZE = 4096;
+
     class memory_manager final : public hal::interface::memory_manager
     {
         public:
@@ -26,9 +28,14 @@ namespace hal::x86_64
                 uint64_t virtual_address,
                 uint64_t page_count
             ) override;
+            
 
         private:
             page_table kernel_top_page_table;
+
+            void map_page(page_table &top_page_table, uint64_t virtual_address, uint64_t physical_address);
+            page_table *create_page_tabe(page_table* parent_page_table, uint64_t index);
+            page_table *acquire_page_table(page_table &parent_page_table, uint64_t index);
 
     };
 }

@@ -21,6 +21,7 @@ namespace kernel
             uint32_t priority;
             uint8_t stack[STACK_SIZE_MAX];
             uint64_t *stack_pointer;
+            uint64_t page_table;
 
         private:
 

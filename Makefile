@@ -36,12 +36,16 @@ CC := clang
 CXX := clang++
 ASM := nasm
 LD = ld.lld
-CFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -masm=intel
-CXXFLAGS = -O2 -Wall -g --target=$(ARCH)-elf -ffreestanding -mno-red-zone -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
+CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
+CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
 CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include
 ASFLAGS = -f elf64
-LDFLAGS = --entry kernel_entry -z norelro --image-base 0x100000 --static
-# LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static
+
+# without linker-script (lower-half kernel)
+# LDFLAGS = --entry kernel_entry -z norelro --image-base 0x100000 --static
+
+# with linker-script (higher-half kernel)
+LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static -no-pie -nostdlib -Map kernel.map
 LIBS = 
 
 .PHONY: all kernel boot clean

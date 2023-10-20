@@ -7,7 +7,7 @@ namespace hal::x86_64
 {
     constexpr static uint16_t PAGE_TABLE_COUNT = 512;
 
-    union virtual_address
+    union x86_64_virtual_address
     {
         uint64_t all;
 
@@ -49,7 +49,8 @@ namespace hal::x86_64
             page_table();
             ~page_table();
 
-            page *page_to_physical_address(uint16_t index);
+            uint64_t page_to_physical_address(uint16_t index);
+            bool is_present(uint16_t index);
 
             page entries[PAGE_TABLE_COUNT] __attribute__((aligned(4096)));
 
