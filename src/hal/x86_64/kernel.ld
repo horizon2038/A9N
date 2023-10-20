@@ -1,59 +1,72 @@
-ENTRY(trampoline)
+ENTRY(_boot_kernel_gateway)
 
 /* KERNEL_VMA = 0xFFFF800000000000; */
 KERNEL_VMA = 0xFFFF800000000000;
-KERNEL_LMA = 0x100000;
+KERNEL_LMA = 0x200000;
 
 SECTIONS
 {
     . = KERNEL_LMA;
 
-    .boot :
+    .boot ALIGN(0x1000) :
     {
-        __kernel_start = .;
+        /* . = ALIGN(8); */
         KEEP(*(.boot));
-        . = ALIGN(4096);
     }
 
-    . = KERNEL_VMA + KERNEL_LMA - .;
+    . = KERNEL_VMA + KERNEL_LMA + 0x1000;
 
-    .text : AT(ADDR(.text) - KERNEL_VMA)
+    .text ALIGN(8) : AT(ADDR(.text) - KERNEL_VMA)
     {
+        __kernel_start = . - KERNEL_VMA;
         *(.text);
         *(.text.*);
     }
 
-    .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
+    .rodata ALIGN(8) : AT(ADDR(.rodata) - KERNEL_VMA)
     {
         *(.rodata);
         *(.rodata.*);
     }
 
-    .data : AT(ADDR(.data) - KERNEL_VMA)
+    .data ALIGN(8) : AT(ADDR(.data) - KERNEL_VMA)
     {
         *(.data);
         *(.data.*);
     }
 
-    .bss : AT(ADDR(.bss) - KERNEL_VMA)
+    .bss ALIGN(8) : AT(ADDR(.bss) - KERNEL_VMA)
     {
-        __bss_start = .;
+        __bss_start = . - KERNEL_VMA;
+        *(COMMON);
         *(.bss);
         *(.bss.*);
-        *(COMMON);
-        __bss_end = .;
+        __bss_end = . - KERNEL_VMA;
 
-        . = ALIGN(4096);
-        __kernel_pml4 = . - KERNEL_LMA;
+        . = ALIGN(0x1000);
+        __kernel_pml4 = . - KERNEL_VMA;
         . += 0x1000;
 
-        __kernel_pdpt = . - KERNEL_LMA;
+        . = ALIGN(0x1000);
+        __kernel_pdpt = . - KERNEL_VMA;
         . += 0x1000;
 
-        __kernel_pd = . - KERNEL_LMA;
+        . = ALIGN(0x1000);
+        __kernel_pd = . - KERNEL_VMA;
         . += 4 * 512 * 8;
 
+        . = ALIGN(0x1000);
+        __boot_stack_start = . - KERNEL_VMA;
+        . += 0x1000 * 16;
+        __boot_stack_end = . - KERNEL_VMA; 
+
+        . = ALIGN(0x1000);
         __kernel_end = . - KERNEL_VMA;
+    }
+
+    /DISCARD/ :
+    {
+        *(*.eh_frame);
     }
 }
 

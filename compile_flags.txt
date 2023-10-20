@@ -4,3 +4,4 @@
 
 -I./chain/x86_64/edk2/MdePkg/include/
 -I./chain/x86_64/edk2/MdePkg/include/X64/
+--target=x86_64-elf
