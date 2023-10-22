@@ -2,18 +2,22 @@
 
 #include <library/logger.hpp>
 #include <common.hpp>
+#include <library/string.hpp>
 
 namespace kernel
 {
-    memory_manager::memory_manager(const memory_info &target_memory_info)
-    : head_memory_block(nullptr)
+    memory_manager::memory_manager(hal::interface::memory_manager &target_memory_manager, const memory_info &target_memory_info)
+    :   _memory_manager(target_memory_manager)
+    ,   head_memory_block(nullptr)
     {
         init(target_memory_info);
+        _memory_manager.init_memory();
     }
 
     void memory_manager::init(const memory_info &target_memory_info)
     {
         init_memory_block(target_memory_info);
+        // init kernel_page_map
     }
 
     void memory_manager::init_memory_block(const memory_info &target_memory_info)
@@ -227,6 +231,58 @@ namespace kernel
     {
         uint64_t aligned_address = (physical_address + page_size - 1) & ~(page_size - 1); 
         return aligned_address;
+    }
+
+    virtual_address memory_manager::convert_physical_to_virtual_address(physical_address target_physical_address)
+    {
+        return _memory_manager.convert_physical_to_virtual_address(target_physical_address);
+    }
+
+    physical_address memory_manager::convert_virtual_to_physical_address(virtual_address target_virtual_address)
+    {
+        return _memory_manager.convert_virtual_to_physical_address(target_virtual_address);
+    }
+
+    void memory_manager::init_virtual_memory(process *target_process)
+    {
+        if (!target_process)
+        {
+            return; // error
+        }
+
+        physical_address page_table_address = allocate_physical_memory(PAGE_SIZE, target_process);
+        if (page_table_address == 0)
+        {
+            return; // error
+        }
+
+        std::memset(reinterpret_cast<void*>(target_process->page_table), 0, PAGE_SIZE); 
+
+        target_process->page_table = page_table_address;
+        _memory_manager.init_virtual_memory(target_process);
+
+        return;
+    }
+
+    void memory_manager::map_virtual_memory
+    (
+        kernel::process *target_process,
+        kernel::virtual_address target_virtual_address,
+        kernel::physical_address target_physical_address,
+        uint64_t page_count
+    )
+    {
+
+    }
+
+    void memory_manager::unmap_virtual_memory
+    (
+        kernel::process *target_process,
+        kernel::virtual_address target_virtual_address,
+        kernel::physical_address target_physical_address
+    )
+    {
+        
     }
 
 }

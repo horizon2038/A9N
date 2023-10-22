@@ -2,6 +2,7 @@
 #define PROCESS_HPP
 
 #include <stdint.h>
+#include <common.hpp>
 
 namespace kernel
 {
@@ -20,8 +21,8 @@ namespace kernel
             uint32_t status;
             uint32_t priority;
             uint8_t stack[STACK_SIZE_MAX];
-            uint64_t *stack_pointer;
-            uint64_t page_table;
+            physical_address stack_pointer;
+            physical_address page_table;
 
         private:
 

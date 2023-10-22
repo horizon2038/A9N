@@ -19,7 +19,7 @@ namespace hal::x86_64
         return target_physical_address + KERNEL_VIRTUAL_BASE;
     }
 
-    static inline kernel::virtual_address convert_virtual_to_physical_address(const kernel::virtual_address target_virtual_address)
+    static inline kernel::physical_address convert_virtual_to_physical_address(const kernel::virtual_address target_virtual_address)
     {
         return target_virtual_address - KERNEL_VIRTUAL_BASE;
     }
