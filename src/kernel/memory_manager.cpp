@@ -1,6 +1,7 @@
 #include "memory_manager.hpp"
 
 #include <library/logger.hpp>
+#include <common.hpp>
 
 namespace kernel
 {
@@ -35,11 +36,11 @@ namespace kernel
             }
 
             uint64_t memory_block_size = sizeof(memory_block) + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
-            uint64_t adjusted_address = _memory_map_entry->physical_address_start + memory_block_size;
+            kernel::physical_address adjusted_address = _memory_map_entry->start_physical_address + memory_block_size;
             size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count) - memory_block_size;
 
-            memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->physical_address_start); 
-            current_memory_block->physical_address = adjusted_address;
+            memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->start_physical_address); 
+            current_memory_block->start_physical_address = adjusted_address;
             current_memory_block->size = adjusted_size;
             current_memory_block->next = nullptr;
             current_memory_block->memory_frame_count = adjusted_size / PAGE_SIZE;
@@ -53,13 +54,10 @@ namespace kernel
                 kernel::utility::logger::split();
                 head_memory_block = current_memory_block;
                 previous_memory_block = current_memory_block;
-                print_memory_block_info(*current_memory_block);
                 continue;
             }
 
             previous_memory_block->next = current_memory_block;
-
-            print_memory_block_info(*current_memory_block);
             previous_memory_block = current_memory_block;
         }
 
@@ -82,8 +80,8 @@ namespace kernel
         uint64_t memory_map_size_mb = memory_map_size_kb / 1024;
 
         logger::printk("----- memory_block_info\e[60G%16s\n", "-----");
-        logger::printk("physical_address\e[52G:\e[58G0x%016llx\n", target_memory_block.physical_address); 
-        logger::printk("next_physical_address\e[52G:\e[58G0x%016llx\n", (target_memory_block.next)->physical_address); 
+        logger::printk("physical_address\e[52G:\e[58G0x%016llx\n", target_memory_block.start_physical_address); 
+        logger::printk("next_physical_address\e[52G:\e[58G0x%016llx\n", (target_memory_block.next)->start_physical_address); 
         logger::printk
         (
             "size\e[52G:\e[60G%16llu B | %6llu KiB | %6llu MiB \n",
@@ -106,7 +104,7 @@ namespace kernel
         kernel::utility::logger::split();
     }
 
-    void *memory_manager::allocate_physical_memory(size_t size, process *owner)
+    physical_address memory_manager::allocate_physical_memory(size_t size, process *owner)
     {
         size_t aligned_requested_size = align_size(size, PAGE_SIZE); 
         size_t requested_page_count = aligned_requested_size / PAGE_SIZE;
@@ -134,14 +132,14 @@ namespace kernel
                     owner,
                     true
                 );
-                uint64_t start_frame_address = current_memory_block->physical_address + (start_frame_index * PAGE_SIZE);
-                return reinterpret_cast<void*>(start_frame_address);
+                physical_address start_frame_address = current_memory_block->start_physical_address + (start_frame_index * PAGE_SIZE);
+                return start_frame_address;
             }
 
             current_memory_block = current_memory_block->next;
         }
 
-        return nullptr;
+        return 0;
     }
 
     bool memory_manager::find_free_frames
@@ -192,7 +190,7 @@ namespace kernel
         }
     }
 
-    void memory_manager::deallocate_physical_memory(void *physical_address, size_t size)
+    void memory_manager::deallocate_physical_memory(physical_address start_physical_address, size_t size)
     {
         memory_block *current_memory_block = head_memory_block;
         uint64_t page_count = align_size(size, PAGE_SIZE) / PAGE_SIZE;
@@ -200,13 +198,12 @@ namespace kernel
 
         while (current_memory_block)
         {
-            uint64_t start_physical_address = reinterpret_cast<uint64_t>(physical_address);
-            uint64_t end_physical_address = start_physical_address + align_size(size, PAGE_SIZE);
-            uint64_t end_memory_block_address = current_memory_block->physical_address + current_memory_block->size;
+            physical_address end_physical_address = start_physical_address + align_size(size, PAGE_SIZE);
+            physical_address end_memory_block_address = current_memory_block->start_physical_address + current_memory_block->size;
 
             if
             (
-                start_physical_address  > current_memory_block->physical_address || 
+                start_physical_address  > current_memory_block->start_physical_address || 
                 end_memory_block_address < end_physical_address
             )
             {
@@ -214,7 +211,7 @@ namespace kernel
                 continue;
             }
             
-            start_frame_index = (start_physical_address - current_memory_block->physical_address) / PAGE_SIZE;
+            start_frame_index = (start_physical_address - current_memory_block->start_physical_address) / PAGE_SIZE;
             configure_memory_frames(&(current_memory_block->memory_frames[start_frame_index]), page_count, nullptr, false);
             break;
         }

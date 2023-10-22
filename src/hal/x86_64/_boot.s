@@ -33,17 +33,17 @@ _boot_kernel_gateway:
 bits 64
 section .boot align=16
 _boot_gdtr:
-    dw gdt_end - gdt - 16
-    dq gdt
+    dw boot_gdt_end - boot_gdt - 16
+    dq boot_gdt
 
 bits 64
 section .boot align=16
-gdt:
+boot_gdt:
     dq 0x0000000000000000
     dq 0x00af9a000000ffff
     dq 0x00cf92000000ffff
     dq 0x00cf9a000000ffff
-gdt_end:
+boot_gdt_end:
 
 
 bits 64

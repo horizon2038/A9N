@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    uint64_t physical_address_start;
+    uint64_t start_physical_address;
     uint64_t page_count;
     bool is_free;
     bool is_device;
