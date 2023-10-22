@@ -29,7 +29,6 @@ namespace hal::interface
             /*
             TODO: create memory-management interface and 
             impl of arch-specific interface implement.
-            - allocate physical-memory
             - map virtual-memory
             - unmap virtual-memory
             - initialize page-table

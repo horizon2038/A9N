@@ -4,13 +4,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "common.hpp"
 #include "memory_type.h"
 
 #include <process.hpp>
 
 namespace kernel
 {
-    constexpr static uint16_t PAGE_SIZE = 4096;
+    // constexpr static uint16_t PAGE_SIZE = 4096;
 
     struct memory_frame
     {
@@ -20,7 +21,7 @@ namespace kernel
 
     struct memory_block
     {
-        uint64_t physical_address;
+        physical_address start_physical_address;
         size_t size;
         memory_block *next;
         uint64_t memory_frame_count;
@@ -36,8 +37,8 @@ namespace kernel
             memory_manager(const memory_info &target_memory_info);
 
             // physical-memory management
-            void *allocate_physical_memory(size_t size, process *owner);
-            void deallocate_physical_memory(void *physical_address, size_t size);
+            physical_address allocate_physical_memory(size_t size, process *owner);
+            void deallocate_physical_memory(physical_address target_physical_address, size_t size);
 
             // virtual-memory management
             void map_virtual_memory();
@@ -51,7 +52,7 @@ namespace kernel
             void print_memory_block_info(memory_block &target_memory_block);
             void init_memory_frame(memory_block &target_memory_block);
             size_t align_size(size_t size, uint16_t page_size);
-            uint64_t align_physical_address(uint64_t physical_address, uint16_t page_size);
+            uint64_t align_physical_address(physical_address target_physical_address, uint16_t page_size);
             void configure_memory_frames(memory_frame *start_frame, uint64_t end_frame_index, process *owner, bool flag);
             bool find_free_frames(memory_block &target_memory_block, uint64_t page_count, uint64_t &start_frame_index);
             bool find_frames(memory_block &target_memory_block, uint64_t page_count, uint64_t &start_frame_index, bool flag);

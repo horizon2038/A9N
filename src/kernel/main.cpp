@@ -18,6 +18,7 @@
 
 #include <interface/timer.hpp>
 #include "../hal/x86_64/pit_timer.hpp"
+#include "common.hpp"
 #include "process.hpp"
 
 #include "boot_info.h"
@@ -62,7 +63,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
         uint64_t memory_map_size_kb = memory_map_size / 1024;
         uint64_t memory_map_size_mb = memory_map_size_kb / 1024;
         logger::printk("----- memory_map_entry %16d -----\n", i);
-        logger::printk("physical_address\e[52G:\e[58G0x%016llx\n", target_memory_map_entry[i].physical_address_start); 
+        logger::printk("physical_address\e[52G:\e[58G0x%016llx\n", target_memory_map_entry[i].start_physical_address); 
         logger::printk
         (
             "size\e[52G:\e[60G%16d B | %6d KiB | %6d MiB \n",
@@ -78,11 +79,11 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     constexpr uint16_t memory_manager_size = sizeof(kernel::memory_manager);
     alignas(kernel::memory_manager) char memory_manager_buf[memory_manager_size];
     kernel::memory_manager *my_memory_manager = new((void*)memory_manager_buf) kernel::memory_manager{target_boot_info->boot_memory_info};
-    void *allocate_256kb = my_memory_manager->allocate_physical_memory(2560000, nullptr);
+    kernel::physical_address allocate_256kb = my_memory_manager->allocate_physical_memory(2560000, nullptr);
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_256kb));
-    void *allocate_512kb = my_memory_manager->allocate_physical_memory(5240000, nullptr);
+    kernel::physical_address allocate_512kb = my_memory_manager->allocate_physical_memory(5240000, nullptr);
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_512kb));
-    void *allocate_64b = my_memory_manager->allocate_physical_memory(64, nullptr);
+    kernel::physical_address allocate_64b = my_memory_manager->allocate_physical_memory(64, nullptr);
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_64b));
     my_memory_manager->deallocate_physical_memory(allocate_256kb, 2560000);
     allocate_64b = my_memory_manager->allocate_physical_memory(64, nullptr);
@@ -91,6 +92,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_64b));
     logger::split();
 
+    logger::printk("kernel_entry_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(kernel_entry));
     logger::log("INIT", "port_io");
     logger::log("INIT", "serial");
     logger::log("INIT", "logger");
