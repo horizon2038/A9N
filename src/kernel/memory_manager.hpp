@@ -8,6 +8,7 @@
 #include "memory_type.h"
 
 #include <process.hpp>
+#include <interface/memory_manager.hpp>
 
 namespace kernel
 {
@@ -34,19 +35,36 @@ namespace kernel
     class memory_manager
     {
         public:
-            memory_manager(const memory_info &target_memory_info);
+            memory_manager(hal::interface::memory_manager &target_memory_manager, const memory_info &target_memory_info);
 
             // physical-memory management
             physical_address allocate_physical_memory(size_t size, process *owner);
             void deallocate_physical_memory(physical_address target_physical_address, size_t size);
 
             // virtual-memory management
-            void map_virtual_memory();
-            void unmap_virtual_memory();
+            void init_virtual_memory(process *target_process);
+            void map_virtual_memory
+            (
+                kernel::process *target_process,
+                kernel::virtual_address target_virtual_address,
+                kernel::physical_address target_physical_address,
+                uint64_t page_count
+            );
+            void unmap_virtual_memory
+            (
+                kernel::process *target_process,
+                kernel::virtual_address target_virtual_address,
+                uint64_t page_count
+            );
+
+            virtual_address convert_physical_to_virtual_address(physical_address target_physical_address);
+            physical_address convert_virtual_to_physical_address(virtual_address target_virtual_address);
 
 
         private:
             memory_block *head_memory_block;
+            hal::interface::memory_manager &_memory_manager;
+
             void init(const memory_info &target_memory_info);
             void init_memory_block(const memory_info &target_memory_info);
             void print_memory_block_info(memory_block &target_memory_block);
