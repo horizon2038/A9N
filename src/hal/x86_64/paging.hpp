@@ -1,6 +1,7 @@
 #ifndef X86_64_PAGING_HPP
 #define X86_64_PAGING_HPP
 
+#include "common.hpp"
 #include <stdint.h>
 
 namespace hal::x86_64
@@ -41,22 +42,32 @@ namespace hal::x86_64
             uint64_t address : 40;
             uint64_t : 12;
         } __attribute__((packed));
+
+        kernel::physical_address get_physical_address()
+        {
+            return reinterpret_cast<kernel::physical_address>(address << 12);
+        }
+
+        void configure_physical_address(kernel::physical_address target_physical_address)
+        {
+            address = (target_physical_address >> 12);
+        }
     };
 
-    class page_table
+    namespace PAGE_DEPTH
     {
-        public:
-            page_table();
-            ~page_table();
+        constexpr static uint16_t PML4 = 4;
+        constexpr static uint16_t PDPT = 3;
+        constexpr static uint16_t PD = 2;
+        constexpr static uint16_t PT = 1;
+    }
 
-            uint64_t page_to_physical_address(uint16_t index);
-            bool is_present(uint16_t index);
-
-            page entries[PAGE_TABLE_COUNT] __attribute__((aligned(4096)));
-
-        private:
-            void init();
-    };
+    static inline uint64_t calculate_page_table_index(kernel::virtual_address target_virtual_address, uint16_t table_depth)
+    {
+        // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}
+        uint64_t shift = 12 + (9 * (table_depth - 1));
+        return (target_virtual_address >> shift) & 0x1FF;
+    }
 }
 
 #endif
