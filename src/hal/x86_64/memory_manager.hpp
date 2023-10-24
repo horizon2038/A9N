@@ -16,7 +16,7 @@ namespace hal::x86_64
         public:
             void init_memory() override;
 
-            void init_virtual_memory(kernel::process *target_process) override;
+            void init_virtual_memory(kernel::physical_address top_page_table_address) override;
 
             bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address) override;
 
@@ -31,15 +31,13 @@ namespace hal::x86_64
             (
                 kernel::physical_address top_page_table_address,
                 kernel::virtual_address target_virtual_address,
-                kernel::physical_address target_physical_address,
-                uint64_t page_count
+                kernel::physical_address target_physical_address
             ) override;
 
             void unmap_virtual_memory
             (
                 kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address,
-                uint64_t page_count
+                kernel::virtual_address target_virtual_address
             ) override;
 
             kernel::virtual_address convert_physical_to_virtual_address

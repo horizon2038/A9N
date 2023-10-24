@@ -13,7 +13,7 @@ namespace hal::interface
         public:
             virtual void init_memory() = 0;
 
-            virtual void init_virtual_memory(kernel::process *target_process) = 0;
+            virtual void init_virtual_memory(kernel::physical_address top_page_table_address) = 0;
 
             virtual bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address);
 
@@ -28,15 +28,13 @@ namespace hal::interface
             (
                 kernel::physical_address top_page_table_address,
                 kernel::virtual_address target_virtual_addresss,
-                kernel::physical_address target_physical_address,
-                uint64_t page_count
+                kernel::physical_address target_physical_address
             ) = 0;
 
             virtual void unmap_virtual_memory
             (
                 kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address,
-                uint64_t page_count
+                kernel::virtual_address target_virtual_address
             ) = 0;
 
             virtual kernel::virtual_address convert_physical_to_virtual_address
