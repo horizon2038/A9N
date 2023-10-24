@@ -250,16 +250,17 @@ namespace kernel
             return; // error
         }
 
+        // allocate top_page_table
         physical_address page_table_address = allocate_physical_memory(PAGE_SIZE, target_process);
         if (page_table_address == 0)
         {
             return; // error
         }
 
+        target_process->page_table = page_table_address;
         std::memset(reinterpret_cast<void*>(target_process->page_table), 0, PAGE_SIZE); 
 
-        target_process->page_table = page_table_address;
-        _memory_manager.init_virtual_memory(target_process);
+        _memory_manager.init_virtual_memory(target_process->page_table);
 
         return;
     }
@@ -272,6 +273,36 @@ namespace kernel
         uint64_t page_count
     )
     {
+        for (uint64_t i = 0; i < page_count; i++)
+        {
+            uint64_t address_offset = i * PAGE_SIZE;
+            while(true)
+            {
+                bool is_table_exists;
+                is_table_exists = _memory_manager.is_table_exists(target_process->page_table, target_virtual_address + address_offset);
+
+                if (is_table_exists)
+                {
+                    _memory_manager.map_virtual_memory
+                    (
+                        target_process->page_table,
+                        target_virtual_address + address_offset,
+                        target_physical_address + address_offset
+                    );
+                    break;
+                }
+
+                kernel::physical_address allocated_page_table;
+                allocated_page_table = allocate_physical_memory(PAGE_SIZE, target_process);
+                _memory_manager.configure_page_table
+                (
+                    target_process->page_table,
+                    target_virtual_address + address_offset,
+                    allocated_page_table
+                );
+            }
+        }
+
     }
 
     void memory_manager::unmap_virtual_memory
