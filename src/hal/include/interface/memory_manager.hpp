@@ -12,20 +12,33 @@ namespace hal::interface
     {
         public:
             virtual void init_memory() = 0;
+
             virtual void init_virtual_memory(kernel::process *target_process) = 0;
+
+            virtual bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address);
+
+            virtual void configure_page_table
+            (
+                kernel::physical_address top_page_table_address,
+                kernel::virtual_address target_virtual_address,
+                kernel::physical_address page_table_address
+            );
+
             virtual void map_virtual_memory
             (
-                kernel::process *target_process,
+                kernel::physical_address top_page_table_address,
                 kernel::virtual_address target_virtual_addresss,
                 kernel::physical_address target_physical_address,
                 uint64_t page_count
             ) = 0;
+
             virtual void unmap_virtual_memory
             (
-                kernel::process *target_process,
+                kernel::physical_address top_page_table_address,
                 kernel::virtual_address target_virtual_address,
                 uint64_t page_count
             ) = 0;
+
             virtual kernel::virtual_address convert_physical_to_virtual_address
             (
                 const kernel::physical_address target_physical_address
@@ -35,14 +48,6 @@ namespace hal::interface
             (
                 const kernel::virtual_address target_virtual_address
             ) = 0;
-            /*
-            TODO: create memory-management interface and 
-            impl of arch-specific interface implement.
-            - map virtual-memory
-            - unmap virtual-memory
-            - initialize page-table
-                - arch-specific: void pointer -> cast ?
-            */
     };
 }
 

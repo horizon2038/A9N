@@ -272,7 +272,6 @@ namespace kernel
         uint64_t page_count
     )
     {
-
     }
 
     void memory_manager::unmap_virtual_memory
