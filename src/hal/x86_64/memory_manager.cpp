@@ -3,14 +3,16 @@
 #include "common.hpp"
 
 #include <library/string.hpp>
+#include <library/logger.hpp>
 
 namespace hal::x86_64
 {
-    void init_memory()
+    void memory_manager::init_memory()
     {
         // init kernel memory mapping
         kernel::physical_address *kernel_top_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
         kernel_top_page_table[0] = 0; // reset id-map
+        _invalidate_page(0);
     }
 
     void memory_manager::init_virtual_memory(kernel::physical_address top_page_table_address)
@@ -27,6 +29,13 @@ namespace hal::x86_64
     )
     {
         kernel::physical_address *current_page_table = reinterpret_cast<kernel::physical_address*>(top_page_table_address);
+
+        // search kernel
+        if (!top_page_table_address)
+        {
+            current_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+        }
+
         page current_page_table_entry;
 
         for (uint16_t i = PAGE_DEPTH::PML4; i > PAGE_DEPTH::PT; i--)
@@ -41,10 +50,12 @@ namespace hal::x86_64
 
             current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
         }
+        // offset
 
-        uint64_t pt_index = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT); 
-        kernel::physical_address pt_entry = current_page_table[pt_entry];
-        return pt_entry != 0;
+        uint64_t PT_INDEX = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT); 
+        current_page_table_entry.all = current_page_table[PT_INDEX];
+        return current_page_table_entry.present;
+        // return pt_entry != 0;
     }
 
     void memory_manager::configure_page_table
@@ -55,26 +66,34 @@ namespace hal::x86_64
     )
     {
         kernel::physical_address *current_page_table = reinterpret_cast<kernel::physical_address*>(top_page_table_address);
+
+        if (!top_page_table_address)
+        {
+            current_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+        }
+
         page current_page_table_entry;
 
-        for (uint16_t i = PAGE_DEPTH::PML4; i > PAGE_DEPTH::PT; i--)
+        for (uint16_t i = PAGE_DEPTH::PML4; i >= PAGE_DEPTH::PT; i--)
         {
             uint64_t current_page_table_index = calculate_page_table_index(target_virtual_address, i);
             current_page_table_entry.all = current_page_table[current_page_table_index];
 
-            if (!current_page_table_entry.present)
+            if (current_page_table_entry.present)
             {
-                current_page_table_entry.configure_physical_address(page_table_address);
-                current_page_table_entry.present = true;
-                current_page_table[current_page_table_index] = current_page_table_entry.all;
-                return;
+                current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
+                continue;
             }
 
-            current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
+            current_page_table_entry.configure_physical_address(page_table_address);
+            current_page_table_entry.present = true;
+            current_page_table_entry.rw = true;
+            current_page_table[current_page_table_index] = current_page_table_entry.all;
+            kernel::utility::logger::printk("hal_configure_page_table : page_table_entry : loop %d : 0x%llx\n", i, current_page_table_entry.all);
+            break;
         }
-
-        uint64_t pt_index = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);
-        current_page_table[pt_index] = page_table_address;
+        kernel::utility::logger::printk("hal_configure_page_table : loop_end!\n");
+        kernel::utility::logger::split();
     }
 
     void memory_manager::map_virtual_memory
@@ -85,6 +104,12 @@ namespace hal::x86_64
     )
     {
         kernel::physical_address *current_page_table = reinterpret_cast<kernel::physical_address*>(top_page_table_address);
+
+        if (!top_page_table_address)
+        {
+            current_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+        }
+
         page current_page_table_entry;
 
         for (uint16_t i = PAGE_DEPTH::PML4; i > PAGE_DEPTH::PT; i--)
@@ -96,7 +121,13 @@ namespace hal::x86_64
         }
 
         uint64_t pt_index = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);
-        current_page_table[pt_index] = target_physical_address;
+        current_page_table_entry.all = current_page_table[pt_index]; 
+        current_page_table_entry.configure_physical_address(target_physical_address);
+        current_page_table_entry.present = true;
+        current_page_table_entry.rw = true;
+        current_page_table[pt_index] = current_page_table_entry.all;
+        kernel::utility::logger::printk("hal_map_virtual_memory : page_table_entry :  0x%llx\n", current_page_table_entry.all);
+        _flush_tlb();
     }
 
     void memory_manager::unmap_virtual_memory
@@ -105,6 +136,7 @@ namespace hal::x86_64
         kernel::virtual_address target_virtual_addresss
     )
     {
+        return;
     }
 
     kernel::virtual_address memory_manager::convert_physical_to_virtual_address

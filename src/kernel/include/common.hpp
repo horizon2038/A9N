@@ -5,12 +5,16 @@
 
 namespace kernel
 {
-    // constant
     constexpr static uint16_t PAGE_SIZE = 4096;
 
-    // type definition
     using virtual_address = uint64_t;
     using physical_address = uint64_t;
+
+    using result = int;
+    constexpr static result OK = 0;
+    constexpr static result INVALID_ARGUMENT = -1;
+    constexpr static result PERMISSION_DENIED = -2;
+    
 }
 
 #endif

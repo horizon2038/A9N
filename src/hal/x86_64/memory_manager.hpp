@@ -9,8 +9,6 @@
 
 namespace hal::x86_64
 {
-    extern "C" uint64_t __kernel_pml4;
-
     class memory_manager final : public hal::interface::memory_manager
     {
         public:

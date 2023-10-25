@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <process.hpp>
+#include <common.hpp>
 
 namespace hal::interface
 {
@@ -10,7 +11,7 @@ namespace hal::interface
     {
         public:
             virtual void switch_context(kernel::process *preview_process, kernel::process *next_process) = 0;
-            virtual void create_process(kernel::process *target_process, uint64_t entry_point_address) = 0;
+            virtual void create_process(kernel::process *target_process, kernel::virtual_address entry_point_address) = 0;
             virtual void delete_process(kernel::process *target_process) = 0;
     };
 }
