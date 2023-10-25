@@ -11,8 +11,11 @@ namespace hal::x86_64
     {
         // init kernel memory mapping
         kernel::physical_address *kernel_top_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+
+        /*
         kernel_top_page_table[0] = 0; // reset id-map
         _invalidate_page(0);
+        */
     }
 
     void memory_manager::init_virtual_memory(kernel::physical_address top_page_table_address)
@@ -127,7 +130,7 @@ namespace hal::x86_64
         current_page_table_entry.rw = true;
         current_page_table[pt_index] = current_page_table_entry.all;
         kernel::utility::logger::printk("hal_map_virtual_memory : page_table_entry :  0x%llx\n", current_page_table_entry.all);
-        _flush_tlb();
+        _invalidate_page(target_virtual_address);
     }
 
     void memory_manager::unmap_virtual_memory

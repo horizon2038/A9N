@@ -139,7 +139,7 @@ namespace kernel
                 );
                 physical_address start_frame_address = current_memory_block->start_physical_address + (start_frame_index * PAGE_SIZE);
                 kernel::utility::logger::printk("allocate_physical_memory : 0x%0llx , %llu B\n", start_frame_address, aligned_requested_size); 
-                return convert_physical_to_virtual_address(start_frame_address);
+                return start_frame_address;
             }
 
             current_memory_block = current_memory_block->next;
