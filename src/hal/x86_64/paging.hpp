@@ -4,8 +4,14 @@
 #include "common.hpp"
 #include <stdint.h>
 
+#include <library/logger.hpp>
+
 namespace hal::x86_64
 {
+    extern "C" uint64_t __kernel_pml4;
+    extern "C" void _flush_tlb();
+    extern "C" void _invalidate_page(kernel::virtual_address target_virtual_address);
+
     constexpr static uint16_t PAGE_TABLE_COUNT = 512;
 
     union x86_64_virtual_address
@@ -60,14 +66,17 @@ namespace hal::x86_64
         constexpr static uint16_t PDPT = 3;
         constexpr static uint16_t PD = 2;
         constexpr static uint16_t PT = 1;
+        constexpr static uint16_t OFFSET = 0;
     }
 
     static inline uint64_t calculate_page_table_index(kernel::virtual_address target_virtual_address, uint16_t table_depth)
     {
         // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}
-        uint64_t shift = 12 + (9 * (table_depth - 1));
+        uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 0;
+        kernel::utility::logger::printk("calculate_page_table_index : depth %d : shift %llu, index %llu\n", table_depth, shift, (target_virtual_address >> shift) & 0x1FF);
         return (target_virtual_address >> shift) & 0x1FF;
     }
+
 }
 
 #endif

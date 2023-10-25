@@ -1,5 +1,4 @@
 #include "../hal/x86_64/segment_configurator.hpp"
-#include "../hal/x86_64/segment_configurator.hpp"
 #include <stdint.h>
 #include <cpp_dependent/new.hpp>
 
@@ -24,6 +23,8 @@
 #include "boot_info.h"
 
 #include "memory_manager.hpp"
+#include <interface/memory_manager.hpp>
+#include "../hal/x86_64/memory_manager.hpp"
 
 void kernel_main(void);
 
@@ -76,9 +77,14 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
         logger::split();
     }
 
+    constexpr uint16_t hal_memory_manager_size = sizeof(hal::x86_64::memory_manager);
+    alignas(hal::x86_64::memory_manager) char hal_memory_manager_buf[hal_memory_manager_size];
+    hal::interface::memory_manager *my_hal_memory_manager = new((void*)hal_memory_manager_buf) hal::x86_64::memory_manager();
+
     constexpr uint16_t memory_manager_size = sizeof(kernel::memory_manager);
     alignas(kernel::memory_manager) char memory_manager_buf[memory_manager_size];
-    kernel::memory_manager *my_memory_manager = new((void*)memory_manager_buf) kernel::memory_manager{target_boot_info->boot_memory_info};
+    kernel::memory_manager *my_memory_manager = new((void*)memory_manager_buf) kernel::memory_manager{*my_hal_memory_manager, target_boot_info->boot_memory_info};
+    logger::log("INIT", "memory_manager");
     kernel::physical_address allocate_256kb = my_memory_manager->allocate_physical_memory(2560000, nullptr);
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_256kb));
     kernel::physical_address allocate_512kb = my_memory_manager->allocate_physical_memory(5240000, nullptr);
@@ -91,6 +97,8 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     allocate_64b = my_memory_manager->allocate_physical_memory(64, nullptr);
     logger::printk("allocated_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(allocate_64b));
     logger::split();
+
+    my_memory_manager->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
     logger::printk("kernel_entry_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(kernel_entry));
     logger::log("INIT", "port_io");

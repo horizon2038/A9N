@@ -15,14 +15,14 @@ namespace hal::interface
 
             virtual void init_virtual_memory(kernel::physical_address top_page_table_address) = 0;
 
-            virtual bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address);
+            virtual bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address) = 0;
 
             virtual void configure_page_table
             (
                 kernel::physical_address top_page_table_address,
                 kernel::virtual_address target_virtual_address,
                 kernel::physical_address page_table_address
-            );
+            ) = 0;
 
             virtual void map_virtual_memory
             (

@@ -41,6 +41,7 @@ namespace kernel
 
             uint64_t memory_block_size = sizeof(memory_block) + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
             kernel::physical_address adjusted_address = _memory_map_entry->start_physical_address + memory_block_size;
+            adjusted_address = align_physical_address(adjusted_address, PAGE_SIZE);
             size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count) - memory_block_size;
 
             memory_block *current_memory_block = reinterpret_cast<memory_block*>(_memory_map_entry->start_physical_address); 
@@ -93,7 +94,7 @@ namespace kernel
             memory_map_size_kb,
             memory_map_size_mb
         ); 
-        logger::printk("memory_frame_count\e[52G:\e[60G%16llu x 4KiB\n", target_memory_block.memory_frame_count); 
+        // logger::printk("memory_frame_count\e[52G:\e[60G%16llu x 4KiB\n", target_memory_block.memory_frame_count); 
         logger::split();
     }
 
@@ -116,9 +117,9 @@ namespace kernel
         uint64_t start_frame_index;
         bool has_free_frames;
 
+        kernel::utility::logger::printk("while loop start in allocate_physical_memory\n");
         while(current_memory_block)
         {
-            kernel::utility::logger::printk("memory_frame_count: %llu\n", current_memory_block->memory_frame_count);
             has_free_frames = find_free_frames(*current_memory_block, requested_page_count, start_frame_index);
 
             if (current_memory_block->size < aligned_requested_size)
@@ -137,7 +138,8 @@ namespace kernel
                     true
                 );
                 physical_address start_frame_address = current_memory_block->start_physical_address + (start_frame_index * PAGE_SIZE);
-                return start_frame_address;
+                kernel::utility::logger::printk("allocate_physical_memory : 0x%0llx , %llu B\n", start_frame_address, aligned_requested_size); 
+                return convert_physical_to_virtual_address(start_frame_address);
             }
 
             current_memory_block = current_memory_block->next;
@@ -273,19 +275,36 @@ namespace kernel
         uint64_t page_count
     )
     {
+        kernel::utility::logger::printk("map_virtual_memory\n");
+        kernel::utility::logger::printk("map_virtual_memory : virtual_address : 0x%016llx, physical_address : 0x%016llx\n", target_virtual_address, target_physical_address);
+
+        bool is_kernel = !(target_process);
+        kernel::physical_address target_page_table_address;
+        target_page_table_address = target_process->page_table;
+
+        if (is_kernel)
+        {
+            kernel::utility::logger::printk("map_virtual_memory : kernel mode\n");
+            target_page_table_address = 0;
+        }
+
         for (uint64_t i = 0; i < page_count; i++)
         {
+            kernel::utility::logger::printk("map_virtual_memory : loop %llu\n", i);
             uint64_t address_offset = i * PAGE_SIZE;
+            kernel::utility::logger::printk("map_virtual_memory : offset : 0x%016llx\n", address_offset);
+
             while(true)
             {
                 bool is_table_exists;
-                is_table_exists = _memory_manager.is_table_exists(target_process->page_table, target_virtual_address + address_offset);
+                is_table_exists = _memory_manager.is_table_exists(target_page_table_address, target_virtual_address + address_offset);
+                kernel::utility::logger::printk("map_virtual_memory : is_table_exists : %s\n", is_table_exists ? "yes" : "no");
 
                 if (is_table_exists)
                 {
                     _memory_manager.map_virtual_memory
                     (
-                        target_process->page_table,
+                        target_page_table_address,
                         target_virtual_address + address_offset,
                         target_physical_address + address_offset
                     );
@@ -293,10 +312,10 @@ namespace kernel
                 }
 
                 kernel::physical_address allocated_page_table;
-                allocated_page_table = allocate_physical_memory(PAGE_SIZE, target_process);
+                allocated_page_table = allocate_physical_memory(PAGE_SIZE, is_kernel ? nullptr : target_process);
                 _memory_manager.configure_page_table
                 (
-                    target_process->page_table,
+                    target_page_table_address,
                     target_virtual_address + address_offset,
                     allocated_page_table
                 );
