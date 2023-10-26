@@ -31,6 +31,7 @@
 #include "../hal/x86_64/hal_factory.hpp"
 
 #include "kernel.hpp"
+#include "process_manager.hpp"
 
 void kernel_main(void);
 
@@ -56,6 +57,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     logger::split();
 
     logger::printk("kernel_entry_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(kernel_entry));
+    logger::printk("boot_info_address\e[52G:\e[60G0x%016llx\n", reinterpret_cast<uint64_t>(target_boot_info));
     logger::split();
 
     logger::printk("init hal\n");
@@ -64,24 +66,26 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     logger::printk("init logger\n");
 
     logger::printk("create memory_manager\n");
-
     kernel::kernel_object::memory_manager = new(kernel::kernel_object::memory_manager_buffer) kernel::memory_manager(*hal_instance->_memory_manager, target_boot_info->boot_memory_info);
+
+    logger::printk("test memory_manager\n");
     kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
     kernel::kernel_object::memory_manager->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
     logger::printk("init architecture\n");
     hal_instance->_arch_initializer->init_architecture();
 
-    constexpr uint16_t interrupt_size = sizeof(hal::x86_64::interrupt);
-    alignas(hal::x86_64::interrupt) char interrupt_buf[interrupt_size];
-    hal::interface::interrupt *my_interrupt = new((void*)interrupt_buf) hal::x86_64::interrupt{};
-    my_interrupt->init_interrupt();
-
     logger::printk("init interrupt\n");
+    hal_instance->_interrupt->init_interrupt();
+    
+    hal_instance->_interrupt->disable_interrupt_all();
 
-    hal::interface::interrupt_handler timer_interrupt_handler = hal::x86_64::pit_timer::handle;
+    // hal_instance->_timer->init_timer();
+
+    hal_instance->_interrupt->enable_interrupt_all();
 
     logger::printk("init process_manager\n");
+    kernel::kernel_object::process_manager = new(kernel::kernel_object::process_manager_buffer) kernel::process_manager();
 
     kernel_main();
 
@@ -90,26 +94,13 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 
 void kernel_main(void)
 {
-    using logger = kernel::utility::logger;
-    constexpr uint16_t port_io_size = sizeof(hal::x86_64::port_io);
-    alignas(hal::x86_64::port_io) char port_io_buf[port_io_size]; 
-    hal::interface::port_io *my_port_io = new((void*)port_io_buf) hal::x86_64::port_io{};
 
-    constexpr uint16_t serial_size = sizeof(hal::x86_64::serial);
-    alignas(hal::x86_64::serial) char serial_buf[serial_size];
-    hal::interface::serial *my_serial = new((void*)serial_buf) hal::x86_64::serial{*my_port_io};
-    my_serial->init_serial(115200);
+    kernel::utility::logger::printk("start kernel_main\n");
 
-    constexpr uint16_t print_size = sizeof(kernel::utility::print);
-    alignas(kernel::utility::print) char print_buf[print_size];
-    kernel::utility::print *my_print = new((void*)print_buf) kernel::utility::print{*my_serial};
-
-    logger::printk("start kernel_main\n");
-
-    my_print->printf("[ INFO ] tick: ");
     while(1)
     {
         // my_print->printf("\e[15G%d\e[22G", timer->get_tick());
+        kernel::utility::logger::printk("Hack!\n");
         asm volatile ("hlt");
     }
 

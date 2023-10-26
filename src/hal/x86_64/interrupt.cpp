@@ -2,6 +2,8 @@
 
 #include "interrupt_descriptor.hpp"
 
+#include <library/logger.hpp>
+
 namespace hal::x86_64
 {
     extern "C" void _load_idt(uint16_t size, uint64_t *offset);
@@ -74,4 +76,9 @@ namespace hal::x86_64
             idt[i].type = INTERRUPT_GATE | (mask.mask_bool[i] << 7);
         }
     };
+
+    extern "C" void x86_64_do_irq(uint8_t irq_number)
+    {
+        kernel::utility::logger::printk("irq_number : %d\n", irq_number);
+    }
 }

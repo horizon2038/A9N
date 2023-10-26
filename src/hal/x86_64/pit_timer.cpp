@@ -38,15 +38,10 @@ namespace hal::x86_64
         _port_io.write(PIT_CHANNEL_0, pit_rate >> 8);
     }
 
-    void pit_timer::handle(void *data)
-    {
-        this_timer->clock();
-        this_timer->_pic.end_of_interrupt_pic();
-    }
-
     void pit_timer::clock()
     {
         ticks++;
+        this_timer->_pic.end_of_interrupt_pic();
     }
 
     uint32_t pit_timer::get_tick()
