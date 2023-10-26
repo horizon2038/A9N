@@ -73,7 +73,6 @@ namespace hal::x86_64
     {
         // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}
         uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 0;
-        kernel::utility::logger::printk("calculate_page_table_index : depth %d : shift %llu, index %llu\n", table_depth, shift, (target_virtual_address >> shift) & 0x1FF);
         return (target_virtual_address >> shift) & 0x1FF;
     }
 

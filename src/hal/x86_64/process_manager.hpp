@@ -6,7 +6,7 @@
 
 namespace hal::x86_64
 {
-    class process_manager final : hal::interface::process_manager
+    class process_manager final : public hal::interface::process_manager
     {
         public:
             process_manager();

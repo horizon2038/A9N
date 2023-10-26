@@ -1,0 +1,10 @@
+#ifndef INTERRUPT_HPP
+#define INTERRUPT_HPP
+
+using fn=void;
+
+fn musical()
+{
+}
+
+#endif

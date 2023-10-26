@@ -1,6 +1,8 @@
 #include "segment_configurator.hpp"
 #include <stdint.h>
 
+#include <library/logger.hpp>
+
 namespace hal::x86_64
 {
     extern "C" void _load_gdt(uint16_t size, uint64_t *offset);

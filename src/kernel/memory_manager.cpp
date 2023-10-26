@@ -11,12 +11,15 @@ namespace kernel
     ,   head_memory_block(nullptr)
     {
         init(target_memory_info);
-        _memory_manager.init_memory();
     }
 
     void memory_manager::init(const memory_info &target_memory_info)
     {
+        kernel::utility::logger::printk("init physical_memory\n");
         init_memory_block(target_memory_info);
+
+        kernel::utility::logger::printk("init virtual_memory\n");
+        _memory_manager.init_memory();
         // init kernel_page_map
     }
 
@@ -27,6 +30,7 @@ namespace kernel
         therefore, memory allocations are not required
         (since it is assumed that free memory exists).
         */
+
         memory_map_entry *_memory_map_entry = nullptr;
         memory_block *previous_memory_block = nullptr;
 
@@ -54,9 +58,6 @@ namespace kernel
 
             if (head_memory_block == nullptr)
             {
-                kernel::utility::logger::printk("memory_map_count: %llu\n", i);
-                kernel::utility::logger::printk("init_first!\n");
-                kernel::utility::logger::split();
                 head_memory_block = current_memory_block;
                 previous_memory_block = current_memory_block;
                 continue;
@@ -68,12 +69,13 @@ namespace kernel
 
         memory_block *now_memory_block = head_memory_block;
 
+        /*
         while (now_memory_block)
         {
-            kernel::utility::logger::debug("test_memory_block_init");
             print_memory_block_info(*now_memory_block);
             now_memory_block = now_memory_block->next;
         }
+        */
     }
 
     void memory_manager::print_memory_block_info(memory_block &target_memory_block)
@@ -100,13 +102,11 @@ namespace kernel
 
     void memory_manager::init_memory_frame(memory_block &target_memory_block)
     {
-        kernel::utility::logger::printk("init_memory_frame\n"); 
         for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)
         {
             target_memory_block.memory_frames[i].owner = nullptr;
             target_memory_block.memory_frames[i].is_allocated = false;
         }
-        kernel::utility::logger::split();
     }
 
     physical_address memory_manager::allocate_physical_memory(size_t size, process *owner)
@@ -117,7 +117,6 @@ namespace kernel
         uint64_t start_frame_index;
         bool has_free_frames;
 
-        kernel::utility::logger::printk("while loop start in allocate_physical_memory\n");
         while(current_memory_block)
         {
             has_free_frames = find_free_frames(*current_memory_block, requested_page_count, start_frame_index);
@@ -275,30 +274,23 @@ namespace kernel
         uint64_t page_count
     )
     {
-        kernel::utility::logger::printk("map_virtual_memory\n");
-        kernel::utility::logger::printk("map_virtual_memory : virtual_address : 0x%016llx, physical_address : 0x%016llx\n", target_virtual_address, target_physical_address);
-
         bool is_kernel = !(target_process);
         kernel::physical_address target_page_table_address;
         target_page_table_address = target_process->page_table;
 
         if (is_kernel)
         {
-            kernel::utility::logger::printk("map_virtual_memory : kernel mode\n");
             target_page_table_address = 0;
         }
 
         for (uint64_t i = 0; i < page_count; i++)
         {
-            kernel::utility::logger::printk("map_virtual_memory : loop %llu\n", i);
             uint64_t address_offset = i * PAGE_SIZE;
-            kernel::utility::logger::printk("map_virtual_memory : offset : 0x%016llx\n", address_offset);
 
             while(true)
             {
                 bool is_table_exists;
                 is_table_exists = _memory_manager.is_table_exists(target_page_table_address, target_virtual_address + address_offset);
-                kernel::utility::logger::printk("map_virtual_memory : is_table_exists : %s\n", is_table_exists ? "yes" : "no");
 
                 if (is_table_exists)
                 {

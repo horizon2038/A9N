@@ -92,11 +92,8 @@ namespace hal::x86_64
             current_page_table_entry.present = true;
             current_page_table_entry.rw = true;
             current_page_table[current_page_table_index] = current_page_table_entry.all;
-            kernel::utility::logger::printk("hal_configure_page_table : page_table_entry : loop %d : 0x%llx\n", i, current_page_table_entry.all);
             break;
         }
-        kernel::utility::logger::printk("hal_configure_page_table : loop_end!\n");
-        kernel::utility::logger::split();
     }
 
     void memory_manager::map_virtual_memory
@@ -121,6 +118,7 @@ namespace hal::x86_64
             uint16_t current_page_table_index = calculate_page_table_index(target_virtual_address, i);
             current_page_table_entry.all = current_page_table[current_page_table_index];
             current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
+            kernel::utility::logger::printk("hal_map_vm, %d\n", i);
         }
 
         uint64_t pt_index = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);
@@ -129,7 +127,6 @@ namespace hal::x86_64
         current_page_table_entry.present = true;
         current_page_table_entry.rw = true;
         current_page_table[pt_index] = current_page_table_entry.all;
-        kernel::utility::logger::printk("hal_map_virtual_memory : page_table_entry :  0x%llx\n", current_page_table_entry.all);
         _invalidate_page(target_virtual_address);
     }
 

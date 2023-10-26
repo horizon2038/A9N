@@ -8,7 +8,7 @@ namespace hal::interface
     class hal_factory
     {
         public:
-            virtual hal make() = 0;
+            virtual hal *make() = 0;
     };
 }
 #endif
