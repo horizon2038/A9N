@@ -4,12 +4,8 @@ namespace kernel
 {
     process_manager::process_manager
     (
-        hal::interface::process_manager &injected_process_manager,
-        hal::interface::interrupt &injected_interrupt
     )
-        : _process_manager(injected_process_manager)
-        , _interrupt(injected_interrupt)
-        , _scheduler()
+        : _scheduler()
     {
     }
 
@@ -31,7 +27,6 @@ namespace kernel
 
     void process_manager::switch_context()
     {
-        _interrupt.disable_interrupt_all();
 
         /*
         process *current_process;
@@ -41,7 +36,6 @@ namespace kernel
         _process_manager.switch_context(current_process, next_process);
         */
 
-        _interrupt.enable_interrupt_all();
     }
 }
 

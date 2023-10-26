@@ -14,7 +14,7 @@
           200090           200090       ad    16         ./build/x86_64/hal/x86_64/boot.o:(.boot)
           200090           200090       ad     1                 init_page_table
           20013d           20013d      ec3     1 . = KERNEL_VMA + KERNEL_LMA + 0x1000
-ffff800000201000           201000     411e    16 .text
+ffff800000201000           201000     4ffe    16 .text
           201000     800000201000        0     1         __kernel_start = . - KERNEL_VMA
 ffff800000201000           201000      366    16         ./build/x86_64/kernel/include/library/string.o:(.text)
 ffff800000201000           201000      13f     1                 std::memset(void*, char, unsigned long)
@@ -35,302 +35,303 @@ ffff8000002016c0           2016c0       c2     1                 kernel::utility
 ffff800000201790           201790      13d     1                 kernel::utility::logger::printk(char const*, ...)
 ffff8000002018d0           2018d0       2a     1                 kernel::utility::logger::split()
 ffff800000201900           201900       61     1                 kernel::utility::logger::a9nout()
-ffff800000201970           201970      273    16         ./build/x86_64/kernel/main.o:(.text)
-ffff800000201970           201970      1c9     1                 kernel_entry
-ffff800000201b40           201b40       a3     1                 kernel_main()
-ffff800000201bf0           201bf0      986    16         ./build/x86_64/kernel/memory_manager.o:(.text)
-ffff800000201bf0           201bf0       1f     1                 kernel::memory_manager::memory_manager(hal::interface::memory_manager&, memory_info const&)
-ffff800000201bf0           201bf0       1f     1                 kernel::memory_manager::memory_manager(hal::interface::memory_manager&, memory_info const&)
-ffff800000201c10           201c10      145     1                 kernel::memory_manager::init(memory_info const&)
-ffff800000201d60           201d60       f7     1                 kernel::memory_manager::init_memory_block(memory_info const&)
-ffff800000201e60           201e60       16     1                 kernel::memory_manager::align_physical_address(unsigned long, unsigned short)
-ffff800000201e80           201e80       6d     1                 kernel::memory_manager::init_memory_frame(kernel::memory_block&)
-ffff800000201ef0           201ef0       b3     1                 kernel::memory_manager::print_memory_block_info(kernel::memory_block&)
-ffff800000201fb0           201fb0      130     1                 kernel::memory_manager::allocate_physical_memory(unsigned long, kernel::process*)
-ffff8000002020e0           2020e0       16     1                 kernel::memory_manager::align_size(unsigned long, unsigned short)
-ffff800000202100           202100       52     1                 kernel::memory_manager::find_free_frames(kernel::memory_block&, unsigned long, unsigned long&)
-ffff800000202160           202160       60     1                 kernel::memory_manager::configure_memory_frames(kernel::memory_frame*, unsigned long, kernel::process*, bool)
-ffff8000002021c0           2021c0       4e     1                 kernel::memory_manager::find_frames(kernel::memory_block&, unsigned long, unsigned long&, bool)
-ffff800000202210           202210       c3     1                 kernel::memory_manager::deallocate_physical_memory(unsigned long, unsigned long)
-ffff8000002022e0           2022e0       12     1                 kernel::memory_manager::convert_physical_to_virtual_address(unsigned long)
-ffff800000202300           202300       12     1                 kernel::memory_manager::convert_virtual_to_physical_address(unsigned long)
-ffff800000202320           202320       ee     1                 kernel::memory_manager::init_virtual_memory(kernel::process*)
-ffff800000202410           202410      15d     1                 kernel::memory_manager::map_virtual_memory(kernel::process*, unsigned long, unsigned long, unsigned long)
-ffff800000202570           202570        6     1                 kernel::memory_manager::unmap_virtual_memory(kernel::process*, unsigned long, unsigned long)
-ffff800000202580           202580       36    16         ./build/x86_64/kernel/new.o:(.text)
-ffff800000202580           202580        9     1                 operator new(unsigned long, void*)
-ffff800000202590           202590        9     1                 operator new[](unsigned long, void*)
-ffff8000002025a0           2025a0        6     1                 operator delete(void*, void*)
-ffff8000002025b0           2025b0        6     1                 operator delete[](void*, void*)
-ffff8000002025c0           2025c0     1c04    16         ./build/x86_64/kernel/print.o:(.text)
-ffff8000002025c0           2025c0        9     1                 kernel::utility::print::print(hal::interface::serial&)
-ffff8000002025c0           2025c0        9     1                 kernel::utility::print::print(hal::interface::serial&)
-ffff8000002025d0           2025d0      124     1                 kernel::utility::print::printf(char const*, ...)
-ffff800000202700           202700       94     1                 kernel::utility::print::vsprintf(char*, char const*, __va_list_tag*)
-ffff8000002027a0           2027a0       c3     1                 kernel::utility::print::vprintf(char const*, __va_list_tag*)
-ffff800000202870           202870      107     1                 kernel::utility::print::sprintf(char*, char const*, ...)
-ffff800000202980           202980     10d4     1                 kernel::utility::print::process_format(char**, char const**, __va_list_tag*)
-ffff800000203a60           203a60       14     1                 kernel::utility::print::write_char(char**, char)
-ffff800000203a80           203a80      104     1                 kernel::utility::print::write_int(char**, int, int, bool)
-ffff800000203b90           203b90      114     1                 kernel::utility::print::write_int_ll(char**, long long, int, bool)
-ffff800000203cb0           203cb0       e4     1                 kernel::utility::print::write_hex_ll(char**, unsigned long long, int, bool, bool)
-ffff800000203da0           203da0       e4     1                 kernel::utility::print::write_hex(char**, unsigned int, int, bool, bool)
-ffff800000203e90           203e90       82     1                 kernel::utility::print::write_string(char**, char*, int)
-ffff800000203f20           203f20       ae     1                 kernel::utility::print::write_pointer(char**, void const*)
-ffff800000203fd0           203fd0       f4     1                 kernel::utility::print::write_uint(char**, unsigned int, int, bool)
-ffff8000002040d0           2040d0       f4     1                 kernel::utility::print::write_uint_ll(char**, unsigned long long, int, bool)
-ffff8000002041d0           2041d0       16    16         ./build/x86_64/kernel/process.o:(.text)
-ffff8000002041d0           2041d0        6     1                 kernel::process::process()
-ffff8000002041d0           2041d0        6     1                 kernel::process::process()
-ffff8000002041e0           2041e0        6     1                 kernel::process::~process()
-ffff8000002041e0           2041e0        6     1                 kernel::process::~process()
-ffff8000002041f0           2041f0       93    16         ./build/x86_64/kernel/process_manager.o:(.text)
-ffff8000002041f0           2041f0       1c     1                 kernel::process_manager::process_manager(hal::interface::process_manager&, hal::interface::interrupt&)
-ffff8000002041f0           2041f0       1c     1                 kernel::process_manager::process_manager(hal::interface::process_manager&, hal::interface::interrupt&)
-ffff800000204210           204210       15     1                 kernel::process_manager::~process_manager()
-ffff800000204210           204210       15     1                 kernel::process_manager::~process_manager()
-ffff800000204230           204230        6     1                 kernel::process_manager::init_process()
-ffff800000204240           204240        6     1                 kernel::process_manager::create_process(char const*, unsigned long)
-ffff800000204250           204250        6     1                 kernel::process_manager::delete_process(int)
-ffff800000204260           204260       23     1                 kernel::process_manager::switch_context()
-ffff800000204290           204290       24    16         ./build/x86_64/kernel/scheduler.o:(.text)
-ffff800000204290           204290        6     1                 kernel::scheduler::scheduler()
-ffff800000204290           204290        6     1                 kernel::scheduler::scheduler()
-ffff8000002042a0           2042a0        6     1                 kernel::scheduler::~scheduler()
-ffff8000002042a0           2042a0        6     1                 kernel::scheduler::~scheduler()
-ffff8000002042b0           2042b0        4     1                 kernel::schedule_next_process()
-ffff8000002042b4           2042b4        0     4         ./build/x86_64/kernel/timer.o:(.text)
-ffff8000002042c0           2042c0       1e    16         ./build/x86_64/hal/x86_64/_boot.o:(.text)
-ffff8000002042c0           2042c0        0     1                 _boot_higher_half
-ffff8000002042da           2042da        0     1                 none
-ffff8000002042e0           2042e0        f    16         ./build/x86_64/hal/x86_64/_paging.o:(.text)
-ffff8000002042e0           2042e0        0     1                 _load_cr3
-ffff8000002042e4           2042e4        0     1                 _flush_tlb
-ffff8000002042eb           2042eb        0     1                 _invalidate_page
-ffff8000002042f0           2042f0       3a    16         ./build/x86_64/hal/x86_64/_segment_configurator.o:(.text)
-ffff8000002042f0           2042f0        0     1                 gdtr
-ffff8000002042fa           2042fa        0     1                 _load_gdt
-ffff800000204310           204310        0     1                 _load_segment_register
-ffff80000020431b           20431b        0     1                 _load_segment_register.reload_cs
-ffff800000204330           204330       1d    16         ./build/x86_64/hal/x86_64/_x86_64_context_switch.o:(.text)
-ffff800000204330           204330        0     1                 _switch_context
-ffff800000204350           204350       31    16         ./build/x86_64/hal/x86_64/_x86_64_interrupt.o:(.text)
-ffff800000204350           204350        0     1                 interrupt_handler_common
-ffff800000204390           204390       29    16         ./build/x86_64/hal/x86_64/_x86_64_interrupt_configurator.o:(.text)
-ffff800000204390           204390        0     1                 idtr
-ffff80000020439a           20439a        0     1                 _load_idt
-ffff8000002043b5           2043b5        0     1                 _enable_interrupt_all
-ffff8000002043b7           2043b7        0     1                 _disable_interrupt_all
-ffff8000002043c0           2043c0        d    16         ./build/x86_64/hal/x86_64/_x86_64_port_io.o:(.text)
-ffff8000002043c0           2043c0        0     1                 _read
-ffff8000002043c4           2043c4        0     1                 _write
-ffff8000002043d0           2043d0       3e    16         ./build/x86_64/hal/x86_64/arch_initializer.o:(.text)
-ffff8000002043d0           2043d0       3e     1                 hal::x86_64::arch_initializer::init_architecture()
-ffff800000204410           204410        0     4         ./build/x86_64/hal/x86_64/boot.o:(.text)
-ffff800000204410           204410      12f    16         ./build/x86_64/hal/x86_64/hal_factory.o:(.text)
-ffff800000204410           204410      12f     1                 hal::x86_64::hal_factory::make()
-ffff800000204540           204540      229    16         ./build/x86_64/hal/x86_64/interrupt.o:(.text)
-ffff800000204540           204540       17     1                 hal::x86_64::interrupt::interrupt()
-ffff800000204540           204540       17     1                 hal::x86_64::interrupt::interrupt()
-ffff800000204560           204560        6     1                 hal::x86_64::interrupt::~interrupt()
-ffff800000204560           204560        6     1                 hal::x86_64::interrupt::~interrupt()
-ffff800000204570           204570       1a     1                 hal::x86_64::interrupt::init_interrupt()
-ffff800000204590           204590       1a     1                 hal::x86_64::interrupt::load_idt()
-ffff8000002045b0           2045b0       35     1                 hal::x86_64::interrupt::register_interrupt(unsigned int, void (*)(void*))
-ffff8000002045f0           2045f0       11     1                 hal::x86_64::interrupt::enable_interrupt(unsigned int)
-ffff800000204610           204610       11     1                 hal::x86_64::interrupt::disable_interrupt(unsigned int)
-ffff800000204630           204630       11     1                 hal::x86_64::interrupt::enable_interrupt_all()
-ffff800000204650           204650       11     1                 hal::x86_64::interrupt::disable_interrupt_all()
-ffff800000204670           204670       f9     1                 hal::x86_64::interrupt::mask_interrupt(hal::interface::interrupt_mask)
-ffff800000204770           204770      2b3    16         ./build/x86_64/hal/x86_64/memory_manager.o:(.text)
-ffff800000204770           204770        6     1                 hal::x86_64::memory_manager::init_memory()
-ffff800000204780           204780       23     1                 hal::x86_64::memory_manager::init_virtual_memory(unsigned long)
-ffff8000002047b0           2047b0       7f     1                 hal::x86_64::memory_manager::is_table_exists(unsigned long, unsigned long)
-ffff800000204830           204830       ad     1                 hal::x86_64::memory_manager::configure_page_table(unsigned long, unsigned long, unsigned long)
-ffff8000002048e0           2048e0       fe     1                 hal::x86_64::memory_manager::map_virtual_memory(unsigned long, unsigned long, unsigned long)
-ffff8000002049e0           2049e0        6     1                 hal::x86_64::memory_manager::unmap_virtual_memory(unsigned long, unsigned long)
-ffff8000002049f0           2049f0       13     1                 hal::x86_64::memory_manager::convert_physical_to_virtual_address(unsigned long)
-ffff800000204a10           204a10       13     1                 hal::x86_64::memory_manager::convert_virtual_to_physical_address(unsigned long)
-ffff800000204a30           204a30       eb    16         ./build/x86_64/hal/x86_64/pic.o:(.text)
-ffff800000204a30           204a30        9     1                 hal::x86_64::pic::pic(hal::interface::port_io&)
-ffff800000204a30           204a30        9     1                 hal::x86_64::pic::pic(hal::interface::port_io&)
-ffff800000204a40           204a40        6     1                 hal::x86_64::pic::~pic()
-ffff800000204a40           204a40        6     1                 hal::x86_64::pic::~pic()
-ffff800000204a50           204a50       aa     1                 hal::x86_64::pic::init_pic()
-ffff800000204b00           204b00       1b     1                 hal::x86_64::pic::end_of_interrupt_pic()
-ffff800000204b20           204b20      289    16         ./build/x86_64/hal/x86_64/pit_timer.o:(.text)
-ffff800000204b20           204b20       49     1                 hal::x86_64::pit_timer::pit_timer(hal::interface::port_io&)
-ffff800000204b20           204b20       49     1                 hal::x86_64::pit_timer::pit_timer(hal::interface::port_io&)
-ffff800000204b70           204b70       26     1                 hal::x86_64::pit_timer::~pit_timer()
-ffff800000204b70           204b70       26     1                 hal::x86_64::pit_timer::~pit_timer()
-ffff800000204ba0           204ba0       5e     1                 hal::x86_64::pit_timer::init_timer()
-ffff800000204c00           204c00       54     1                 hal::x86_64::pit_timer::configure_timer(unsigned short)
-ffff800000204c60           204c60      12f     1                 hal::x86_64::pit_timer::handle(void*)
-ffff800000204d90           204d90        a     1                 hal::x86_64::pit_timer::clock()
-ffff800000204da0           204da0        9     1                 hal::x86_64::pit_timer::get_tick()
-ffff800000204db0           204db0       35    16         ./build/x86_64/hal/x86_64/port_io.o:(.text)
-ffff800000204db0           204db0       13     1                 hal::x86_64::port_io::read(unsigned short)
-ffff800000204dd0           204dd0       15     1                 hal::x86_64::port_io::write(unsigned short, unsigned char)
-ffff800000204df0           204df0       76    16         ./build/x86_64/hal/x86_64/process_manager.o:(.text)
-ffff800000204df0           204df0       17     1                 hal::x86_64::process_manager::process_manager()
-ffff800000204df0           204df0       17     1                 hal::x86_64::process_manager::process_manager()
-ffff800000204e10           204e10        6     1                 hal::x86_64::process_manager::~process_manager()
-ffff800000204e10           204e10        6     1                 hal::x86_64::process_manager::~process_manager()
-ffff800000204e20           204e20       1f     1                 hal::x86_64::process_manager::switch_context(kernel::process*, kernel::process*)
-ffff800000204e40           204e40       20     1                 hal::x86_64::process_manager::create_process(kernel::process*, unsigned long)
-ffff800000204e60           204e60        6     1                 hal::x86_64::process_manager::delete_process(kernel::process*)
-ffff800000204e70           204e70       93    16         ./build/x86_64/hal/x86_64/segment_configurator.o:(.text)
-ffff800000204e70           204e70        6     1                 hal::x86_64::segment_configurator::segment_configurator()
-ffff800000204e70           204e70        6     1                 hal::x86_64::segment_configurator::segment_configurator()
-ffff800000204e80           204e80        6     1                 hal::x86_64::segment_configurator::~segment_configurator()
-ffff800000204e80           204e80        6     1                 hal::x86_64::segment_configurator::~segment_configurator()
-ffff800000204e90           204e90       31     1                 hal::x86_64::segment_configurator::init_gdt()
-ffff800000204ed0           204ed0       20     1                 hal::x86_64::segment_configurator::load_gdt()
-ffff800000204ef0           204ef0       13     1                 hal::x86_64::segment_configurator::load_segment_register(unsigned short)
-ffff800000204f10           204f10      20e    16         ./build/x86_64/hal/x86_64/serial.o:(.text)
-ffff800000204f10           204f10       1b     1                 hal::x86_64::serial::serial(hal::interface::port_io&)
-ffff800000204f10           204f10       1b     1                 hal::x86_64::serial::serial(hal::interface::port_io&)
-ffff800000204f30           204f30        6     1                 hal::x86_64::serial::~serial()
-ffff800000204f30           204f30        6     1                 hal::x86_64::serial::~serial()
-ffff800000204f40           204f40       98     1                 hal::x86_64::serial::init_serial(unsigned int)
-ffff800000204fe0           204fe0       39     1                 hal::x86_64::serial::read_serial()
-ffff800000205020           205020       19     1                 hal::x86_64::serial::is_received()
-ffff800000205040           205040       3c     1                 hal::x86_64::serial::write_serial(char)
-ffff800000205080           205080       19     1                 hal::x86_64::serial::is_empty()
-ffff8000002050a0           2050a0       5f     1                 hal::x86_64::serial::write_string_serial(char*)
-ffff800000205100           205100       1e     1                 hal::x86_64::serial::strlen(char const*)
-ffff800000205120           205120      a88    16 .rodata
-ffff800000205120           205120      108     8         ./build/x86_64/kernel/print.o:(.rodata)
-ffff800000205228           205228       18     8         ./build/x86_64/hal/x86_64/arch_initializer.o:(.rodata)
-ffff800000205228           205228       18     1                 vtable for hal::x86_64::arch_initializer
-ffff800000205240           205240       18     8         ./build/x86_64/hal/x86_64/hal_factory.o:(.rodata)
-ffff800000205240           205240       18     1                 vtable for hal::x86_64::hal_factory
-ffff800000205258           205258       48     8         ./build/x86_64/hal/x86_64/interrupt.o:(.rodata)
-ffff800000205258           205258       48     1                 vtable for hal::x86_64::interrupt
-ffff8000002052a0           2052a0       50     8         ./build/x86_64/hal/x86_64/memory_manager.o:(.rodata)
-ffff8000002052a0           2052a0       50     1                 vtable for hal::x86_64::memory_manager
-ffff8000002052f0           2052f0       30     8         ./build/x86_64/hal/x86_64/pit_timer.o:(.rodata)
-ffff8000002052f0           2052f0       30     1                 vtable for hal::x86_64::pit_timer
-ffff800000205320           205320       20     8         ./build/x86_64/hal/x86_64/port_io.o:(.rodata)
-ffff800000205320           205320       20     1                 vtable for hal::x86_64::port_io
-ffff800000205340           205340       28     8         ./build/x86_64/hal/x86_64/process_manager.o:(.rodata)
-ffff800000205340           205340       28     1                 vtable for hal::x86_64::process_manager
-ffff800000205368           205368       30     8         ./build/x86_64/hal/x86_64/serial.o:(.rodata)
-ffff800000205368           205368       30     1                 vtable for hal::x86_64::serial
-ffff800000205398           205398      7c3     1         <internal>:(.rodata)
-ffff800000205b60           205b60       20    16         <internal>:(.rodata)
-ffff800000205b80           205b80       28    16         ./build/x86_64/hal/x86_64/segment_configurator.o:(.rodata._ZN3hal6x86_6420segment_configurator3gdtE)
-ffff800000205b80           205b80       28     1                 hal::x86_64::segment_configurator::gdt
-ffff800000205ba8           205ba8        0     1 .data
-ffff800000205ba8           205ba8    17458     8 .bss
-          205ba8     800000205ba8        0     1         __bss_start = . - KERNEL_VMA
-ffff800000205ba8           205ba8       48     8         ./build/x86_64/kernel/kernel.o:(.bss)
-ffff800000205ba8           205ba8       10     1                 kernel::kernel_object::memory_manager_buffer
-ffff800000205bb8           205bb8        8     1                 kernel::kernel_object::memory_manager
-ffff800000205bc0           205bc0       18     1                 kernel::kernel_object::process_manager_buffer
-ffff800000205bd8           205bd8        8     1                 kernel::kernel_object::process_manager
-ffff800000205be0           205be0        1     1                 kernel::kernel_object::ipc_manager_buffer
-ffff800000205be8           205be8        8     1                 kernel::kernel_object::ipc_manager
-ffff800000205bf0           205bf0       10     8         ./build/x86_64/kernel/logger.o:(.bss)
-ffff800000205bf0           205bf0        4     1                 kernel::utility::logger::log_id
-ffff800000205bf8           205bf8        8     1                 kernel::utility::logger::this_logger
-ffff800000205c00           205c00       10     8         ./build/x86_64/kernel/main.o:(.bss)
-ffff800000205c00           205c00        8     1                 hal_instance
-ffff800000205c08           205c08        8     1                 hal_factory_buffer
-ffff800000205c10           205c10     1090     8         ./build/x86_64/hal/x86_64/hal_factory.o:(.bss)
-ffff800000205c10           205c10       38     1                 hal::x86_64::hal_factory::hal_buffer
-ffff800000205c48           205c48        8     1                 hal::x86_64::hal_factory::memory_manager_buffer
-ffff800000205c50           205c50        8     1                 hal::x86_64::hal_factory::process_manager_buffer
-ffff800000205c58           205c58     1008     1                 hal::x86_64::hal_factory::interrupt_buffer
-ffff800000206c60           206c60        8     1                 hal::x86_64::hal_factory::arch_initializer_buffer
-ffff800000206c68           206c68        8     1                 hal::x86_64::hal_factory::port_io_buffer
-ffff800000206c70           206c70       10     1                 hal::x86_64::hal_factory::serial_buffer
-ffff800000206c80           206c80       20     1                 hal::x86_64::hal_factory::timer_buffer
-ffff800000206ca0           206ca0        8     8         ./build/x86_64/hal/x86_64/pit_timer.o:(.bss)
-ffff800000206ca0           206ca0        8     1                 hal::x86_64::pit_timer::this_timer
-          206ca8     800000206ca8        0     1         __bss_end = . - KERNEL_VMA
-          206ca8     800000206ca8      358     1         . = ALIGN ( 0x1000 )
-          207000     800000207000        0     1         __kernel_pml4 = . - KERNEL_VMA
-          207000     800000207000     1000     1         . += 0x1000
-          208000     800000208000        0     1         . = ALIGN ( 0x1000 )
-          208000     800000208000        0     1         __kernel_pdpt = . - KERNEL_VMA
+ffff800000201970           201970      25b    16         ./build/x86_64/kernel/main.o:(.text)
+ffff800000201970           201970      213     1                 kernel_entry
+ffff800000201b90           201b90       3b     1                 kernel_main()
+ffff800000201bd0           201bd0      986    16         ./build/x86_64/kernel/memory_manager.o:(.text)
+ffff800000201bd0           201bd0       1f     1                 kernel::memory_manager::memory_manager(hal::interface::memory_manager&, memory_info const&)
+ffff800000201bd0           201bd0       1f     1                 kernel::memory_manager::memory_manager(hal::interface::memory_manager&, memory_info const&)
+ffff800000201bf0           201bf0      145     1                 kernel::memory_manager::init(memory_info const&)
+ffff800000201d40           201d40       f7     1                 kernel::memory_manager::init_memory_block(memory_info const&)
+ffff800000201e40           201e40       16     1                 kernel::memory_manager::align_physical_address(unsigned long, unsigned short)
+ffff800000201e60           201e60       6d     1                 kernel::memory_manager::init_memory_frame(kernel::memory_block&)
+ffff800000201ed0           201ed0       b3     1                 kernel::memory_manager::print_memory_block_info(kernel::memory_block&)
+ffff800000201f90           201f90      130     1                 kernel::memory_manager::allocate_physical_memory(unsigned long, kernel::process*)
+ffff8000002020c0           2020c0       16     1                 kernel::memory_manager::align_size(unsigned long, unsigned short)
+ffff8000002020e0           2020e0       52     1                 kernel::memory_manager::find_free_frames(kernel::memory_block&, unsigned long, unsigned long&)
+ffff800000202140           202140       60     1                 kernel::memory_manager::configure_memory_frames(kernel::memory_frame*, unsigned long, kernel::process*, bool)
+ffff8000002021a0           2021a0       4e     1                 kernel::memory_manager::find_frames(kernel::memory_block&, unsigned long, unsigned long&, bool)
+ffff8000002021f0           2021f0       c3     1                 kernel::memory_manager::deallocate_physical_memory(unsigned long, unsigned long)
+ffff8000002022c0           2022c0       12     1                 kernel::memory_manager::convert_physical_to_virtual_address(unsigned long)
+ffff8000002022e0           2022e0       12     1                 kernel::memory_manager::convert_virtual_to_physical_address(unsigned long)
+ffff800000202300           202300       ee     1                 kernel::memory_manager::init_virtual_memory(kernel::process*)
+ffff8000002023f0           2023f0      15d     1                 kernel::memory_manager::map_virtual_memory(kernel::process*, unsigned long, unsigned long, unsigned long)
+ffff800000202550           202550        6     1                 kernel::memory_manager::unmap_virtual_memory(kernel::process*, unsigned long, unsigned long)
+ffff800000202560           202560       36    16         ./build/x86_64/kernel/new.o:(.text)
+ffff800000202560           202560        9     1                 operator new(unsigned long, void*)
+ffff800000202570           202570        9     1                 operator new[](unsigned long, void*)
+ffff800000202580           202580        6     1                 operator delete(void*, void*)
+ffff800000202590           202590        6     1                 operator delete[](void*, void*)
+ffff8000002025a0           2025a0     1c04    16         ./build/x86_64/kernel/print.o:(.text)
+ffff8000002025a0           2025a0        9     1                 kernel::utility::print::print(hal::interface::serial&)
+ffff8000002025a0           2025a0        9     1                 kernel::utility::print::print(hal::interface::serial&)
+ffff8000002025b0           2025b0      124     1                 kernel::utility::print::printf(char const*, ...)
+ffff8000002026e0           2026e0       94     1                 kernel::utility::print::vsprintf(char*, char const*, __va_list_tag*)
+ffff800000202780           202780       c3     1                 kernel::utility::print::vprintf(char const*, __va_list_tag*)
+ffff800000202850           202850      107     1                 kernel::utility::print::sprintf(char*, char const*, ...)
+ffff800000202960           202960     10d4     1                 kernel::utility::print::process_format(char**, char const**, __va_list_tag*)
+ffff800000203a40           203a40       14     1                 kernel::utility::print::write_char(char**, char)
+ffff800000203a60           203a60      104     1                 kernel::utility::print::write_int(char**, int, int, bool)
+ffff800000203b70           203b70      114     1                 kernel::utility::print::write_int_ll(char**, long long, int, bool)
+ffff800000203c90           203c90       e4     1                 kernel::utility::print::write_hex_ll(char**, unsigned long long, int, bool, bool)
+ffff800000203d80           203d80       e4     1                 kernel::utility::print::write_hex(char**, unsigned int, int, bool, bool)
+ffff800000203e70           203e70       82     1                 kernel::utility::print::write_string(char**, char*, int)
+ffff800000203f00           203f00       ae     1                 kernel::utility::print::write_pointer(char**, void const*)
+ffff800000203fb0           203fb0       f4     1                 kernel::utility::print::write_uint(char**, unsigned int, int, bool)
+ffff8000002040b0           2040b0       f4     1                 kernel::utility::print::write_uint_ll(char**, unsigned long long, int, bool)
+ffff8000002041b0           2041b0       16    16         ./build/x86_64/kernel/process.o:(.text)
+ffff8000002041b0           2041b0        6     1                 kernel::process::process()
+ffff8000002041b0           2041b0        6     1                 kernel::process::process()
+ffff8000002041c0           2041c0        6     1                 kernel::process::~process()
+ffff8000002041c0           2041c0        6     1                 kernel::process::~process()
+ffff8000002041d0           2041d0       76    16         ./build/x86_64/kernel/process_manager.o:(.text)
+ffff8000002041d0           2041d0       11     1                 kernel::process_manager::process_manager()
+ffff8000002041d0           2041d0       11     1                 kernel::process_manager::process_manager()
+ffff8000002041f0           2041f0       11     1                 kernel::process_manager::~process_manager()
+ffff8000002041f0           2041f0       11     1                 kernel::process_manager::~process_manager()
+ffff800000204210           204210        6     1                 kernel::process_manager::init_process()
+ffff800000204220           204220        6     1                 kernel::process_manager::create_process(char const*, unsigned long)
+ffff800000204230           204230        6     1                 kernel::process_manager::delete_process(int)
+ffff800000204240           204240        6     1                 kernel::process_manager::switch_context()
+ffff800000204250           204250       24    16         ./build/x86_64/kernel/scheduler.o:(.text)
+ffff800000204250           204250        6     1                 kernel::scheduler::scheduler()
+ffff800000204250           204250        6     1                 kernel::scheduler::scheduler()
+ffff800000204260           204260        6     1                 kernel::scheduler::~scheduler()
+ffff800000204260           204260        6     1                 kernel::scheduler::~scheduler()
+ffff800000204270           204270        4     1                 kernel::schedule_next_process()
+ffff800000204274           204274        0     4         ./build/x86_64/kernel/timer.o:(.text)
+ffff800000204280           204280       1e    16         ./build/x86_64/hal/x86_64/_boot.o:(.text)
+ffff800000204280           204280        0     1                 _boot_higher_half
+ffff80000020429a           20429a        0     1                 none
+ffff8000002042a0           2042a0        f    16         ./build/x86_64/hal/x86_64/_paging.o:(.text)
+ffff8000002042a0           2042a0        0     1                 _load_cr3
+ffff8000002042a4           2042a4        0     1                 _flush_tlb
+ffff8000002042ab           2042ab        0     1                 _invalidate_page
+ffff8000002042b0           2042b0       3a    16         ./build/x86_64/hal/x86_64/_segment_configurator.o:(.text)
+ffff8000002042b0           2042b0        0     1                 gdtr
+ffff8000002042ba           2042ba        0     1                 _load_gdt
+ffff8000002042d0           2042d0        0     1                 _load_segment_register
+ffff8000002042db           2042db        0     1                 _load_segment_register.reload_cs
+ffff8000002042f0           2042f0       1d    16         ./build/x86_64/hal/x86_64/_x86_64_context_switch.o:(.text)
+ffff8000002042f0           2042f0        0     1                 _switch_context
+ffff800000204310           204310     102f    16         ./build/x86_64/hal/x86_64/_x86_64_interrupt.o:(.text)
+ffff800000204310           204310        0     1                 interrupt_handlers
+ffff800000205300           205300        0     1                 interrupt_handler_common
+ffff800000205340           205340       29    16         ./build/x86_64/hal/x86_64/_x86_64_interrupt_configurator.o:(.text)
+ffff800000205340           205340        0     1                 idtr
+ffff80000020534a           20534a        0     1                 _load_idt
+ffff800000205365           205365        0     1                 _enable_interrupt_all
+ffff800000205367           205367        0     1                 _disable_interrupt_all
+ffff800000205370           205370        d    16         ./build/x86_64/hal/x86_64/_x86_64_port_io.o:(.text)
+ffff800000205370           205370        0     1                 _read
+ffff800000205374           205374        0     1                 _write
+ffff800000205380           205380       3e    16         ./build/x86_64/hal/x86_64/arch_initializer.o:(.text)
+ffff800000205380           205380       3e     1                 hal::x86_64::arch_initializer::init_architecture()
+ffff8000002053c0           2053c0        0     4         ./build/x86_64/hal/x86_64/boot.o:(.text)
+ffff8000002053c0           2053c0      12f    16         ./build/x86_64/hal/x86_64/hal_factory.o:(.text)
+ffff8000002053c0           2053c0      12f     1                 hal::x86_64::hal_factory::make()
+ffff8000002054f0           2054f0      24f    16         ./build/x86_64/hal/x86_64/interrupt.o:(.text)
+ffff8000002054f0           2054f0       17     1                 hal::x86_64::interrupt::interrupt()
+ffff8000002054f0           2054f0       17     1                 hal::x86_64::interrupt::interrupt()
+ffff800000205510           205510        6     1                 hal::x86_64::interrupt::~interrupt()
+ffff800000205510           205510        6     1                 hal::x86_64::interrupt::~interrupt()
+ffff800000205520           205520       1a     1                 hal::x86_64::interrupt::init_interrupt()
+ffff800000205540           205540       1a     1                 hal::x86_64::interrupt::load_idt()
+ffff800000205560           205560       35     1                 hal::x86_64::interrupt::register_interrupt(unsigned int, void (*)(void*))
+ffff8000002055a0           2055a0       11     1                 hal::x86_64::interrupt::enable_interrupt(unsigned int)
+ffff8000002055c0           2055c0       11     1                 hal::x86_64::interrupt::disable_interrupt(unsigned int)
+ffff8000002055e0           2055e0       11     1                 hal::x86_64::interrupt::enable_interrupt_all()
+ffff800000205600           205600       11     1                 hal::x86_64::interrupt::disable_interrupt_all()
+ffff800000205620           205620       f9     1                 hal::x86_64::interrupt::mask_interrupt(hal::interface::interrupt_mask)
+ffff800000205720           205720       1f     1                 x86_64_do_irq
+ffff800000205740           205740      2b3    16         ./build/x86_64/hal/x86_64/memory_manager.o:(.text)
+ffff800000205740           205740        6     1                 hal::x86_64::memory_manager::init_memory()
+ffff800000205750           205750       23     1                 hal::x86_64::memory_manager::init_virtual_memory(unsigned long)
+ffff800000205780           205780       7f     1                 hal::x86_64::memory_manager::is_table_exists(unsigned long, unsigned long)
+ffff800000205800           205800       ad     1                 hal::x86_64::memory_manager::configure_page_table(unsigned long, unsigned long, unsigned long)
+ffff8000002058b0           2058b0       fe     1                 hal::x86_64::memory_manager::map_virtual_memory(unsigned long, unsigned long, unsigned long)
+ffff8000002059b0           2059b0        6     1                 hal::x86_64::memory_manager::unmap_virtual_memory(unsigned long, unsigned long)
+ffff8000002059c0           2059c0       13     1                 hal::x86_64::memory_manager::convert_physical_to_virtual_address(unsigned long)
+ffff8000002059e0           2059e0       13     1                 hal::x86_64::memory_manager::convert_virtual_to_physical_address(unsigned long)
+ffff800000205a00           205a00      10b    16         ./build/x86_64/hal/x86_64/pic.o:(.text)
+ffff800000205a00           205a00        9     1                 hal::x86_64::pic::pic(hal::interface::port_io&)
+ffff800000205a00           205a00        9     1                 hal::x86_64::pic::pic(hal::interface::port_io&)
+ffff800000205a10           205a10        6     1                 hal::x86_64::pic::~pic()
+ffff800000205a10           205a10        6     1                 hal::x86_64::pic::~pic()
+ffff800000205a20           205a20       d0     1                 hal::x86_64::pic::init_pic()
+ffff800000205af0           205af0       1b     1                 hal::x86_64::pic::end_of_interrupt_pic()
+ffff800000205b10           205b10      179    16         ./build/x86_64/hal/x86_64/pit_timer.o:(.text)
+ffff800000205b10           205b10       49     1                 hal::x86_64::pit_timer::pit_timer(hal::interface::port_io&)
+ffff800000205b10           205b10       49     1                 hal::x86_64::pit_timer::pit_timer(hal::interface::port_io&)
+ffff800000205b60           205b60       26     1                 hal::x86_64::pit_timer::~pit_timer()
+ffff800000205b60           205b60       26     1                 hal::x86_64::pit_timer::~pit_timer()
+ffff800000205b90           205b90       5e     1                 hal::x86_64::pit_timer::init_timer()
+ffff800000205bf0           205bf0       54     1                 hal::x86_64::pit_timer::configure_timer(unsigned short)
+ffff800000205c50           205c50       26     1                 hal::x86_64::pit_timer::clock()
+ffff800000205c80           205c80        9     1                 hal::x86_64::pit_timer::get_tick()
+ffff800000205c90           205c90       35    16         ./build/x86_64/hal/x86_64/port_io.o:(.text)
+ffff800000205c90           205c90       13     1                 hal::x86_64::port_io::read(unsigned short)
+ffff800000205cb0           205cb0       15     1                 hal::x86_64::port_io::write(unsigned short, unsigned char)
+ffff800000205cd0           205cd0       76    16         ./build/x86_64/hal/x86_64/process_manager.o:(.text)
+ffff800000205cd0           205cd0       17     1                 hal::x86_64::process_manager::process_manager()
+ffff800000205cd0           205cd0       17     1                 hal::x86_64::process_manager::process_manager()
+ffff800000205cf0           205cf0        6     1                 hal::x86_64::process_manager::~process_manager()
+ffff800000205cf0           205cf0        6     1                 hal::x86_64::process_manager::~process_manager()
+ffff800000205d00           205d00       1f     1                 hal::x86_64::process_manager::switch_context(kernel::process*, kernel::process*)
+ffff800000205d20           205d20       20     1                 hal::x86_64::process_manager::create_process(kernel::process*, unsigned long)
+ffff800000205d40           205d40        6     1                 hal::x86_64::process_manager::delete_process(kernel::process*)
+ffff800000205d50           205d50       93    16         ./build/x86_64/hal/x86_64/segment_configurator.o:(.text)
+ffff800000205d50           205d50        6     1                 hal::x86_64::segment_configurator::segment_configurator()
+ffff800000205d50           205d50        6     1                 hal::x86_64::segment_configurator::segment_configurator()
+ffff800000205d60           205d60        6     1                 hal::x86_64::segment_configurator::~segment_configurator()
+ffff800000205d60           205d60        6     1                 hal::x86_64::segment_configurator::~segment_configurator()
+ffff800000205d70           205d70       31     1                 hal::x86_64::segment_configurator::init_gdt()
+ffff800000205db0           205db0       20     1                 hal::x86_64::segment_configurator::load_gdt()
+ffff800000205dd0           205dd0       13     1                 hal::x86_64::segment_configurator::load_segment_register(unsigned short)
+ffff800000205df0           205df0      20e    16         ./build/x86_64/hal/x86_64/serial.o:(.text)
+ffff800000205df0           205df0       1b     1                 hal::x86_64::serial::serial(hal::interface::port_io&)
+ffff800000205df0           205df0       1b     1                 hal::x86_64::serial::serial(hal::interface::port_io&)
+ffff800000205e10           205e10        6     1                 hal::x86_64::serial::~serial()
+ffff800000205e10           205e10        6     1                 hal::x86_64::serial::~serial()
+ffff800000205e20           205e20       98     1                 hal::x86_64::serial::init_serial(unsigned int)
+ffff800000205ec0           205ec0       39     1                 hal::x86_64::serial::read_serial()
+ffff800000205f00           205f00       19     1                 hal::x86_64::serial::is_received()
+ffff800000205f20           205f20       3c     1                 hal::x86_64::serial::write_serial(char)
+ffff800000205f60           205f60       19     1                 hal::x86_64::serial::is_empty()
+ffff800000205f80           205f80       5f     1                 hal::x86_64::serial::write_string_serial(char*)
+ffff800000205fe0           205fe0       1e     1                 hal::x86_64::serial::strlen(char const*)
+ffff800000206000           206000      ac8    16 .rodata
+ffff800000206000           206000      108     8         ./build/x86_64/kernel/print.o:(.rodata)
+ffff800000206108           206108       18     8         ./build/x86_64/hal/x86_64/arch_initializer.o:(.rodata)
+ffff800000206108           206108       18     1                 vtable for hal::x86_64::arch_initializer
+ffff800000206120           206120       18     8         ./build/x86_64/hal/x86_64/hal_factory.o:(.rodata)
+ffff800000206120           206120       18     1                 vtable for hal::x86_64::hal_factory
+ffff800000206138           206138       48     8         ./build/x86_64/hal/x86_64/interrupt.o:(.rodata)
+ffff800000206138           206138       48     1                 vtable for hal::x86_64::interrupt
+ffff800000206180           206180       50     8         ./build/x86_64/hal/x86_64/memory_manager.o:(.rodata)
+ffff800000206180           206180       50     1                 vtable for hal::x86_64::memory_manager
+ffff8000002061d0           2061d0       30     8         ./build/x86_64/hal/x86_64/pit_timer.o:(.rodata)
+ffff8000002061d0           2061d0       30     1                 vtable for hal::x86_64::pit_timer
+ffff800000206200           206200       20     8         ./build/x86_64/hal/x86_64/port_io.o:(.rodata)
+ffff800000206200           206200       20     1                 vtable for hal::x86_64::port_io
+ffff800000206220           206220       28     8         ./build/x86_64/hal/x86_64/process_manager.o:(.rodata)
+ffff800000206220           206220       28     1                 vtable for hal::x86_64::process_manager
+ffff800000206248           206248       30     8         ./build/x86_64/hal/x86_64/serial.o:(.rodata)
+ffff800000206248           206248       30     1                 vtable for hal::x86_64::serial
+ffff800000206278           206278      807     1         <internal>:(.rodata)
+ffff800000206a80           206a80       20    16         <internal>:(.rodata)
+ffff800000206aa0           206aa0       28    16         ./build/x86_64/hal/x86_64/segment_configurator.o:(.rodata._ZN3hal6x86_6420segment_configurator3gdtE)
+ffff800000206aa0           206aa0       28     1                 hal::x86_64::segment_configurator::gdt
+ffff800000206ac8           206ac8        0     1 .data
+ffff800000206ac8           206ac8    17538     8 .bss
+          206ac8     800000206ac8        0     1         __bss_start = . - KERNEL_VMA
+ffff800000206ac8           206ac8       38     8         ./build/x86_64/kernel/kernel.o:(.bss)
+ffff800000206ac8           206ac8       10     1                 kernel::kernel_object::memory_manager_buffer
+ffff800000206ad8           206ad8        8     1                 kernel::kernel_object::memory_manager
+ffff800000206ae0           206ae0        1     1                 kernel::kernel_object::process_manager_buffer
+ffff800000206ae8           206ae8        8     1                 kernel::kernel_object::process_manager
+ffff800000206af0           206af0        1     1                 kernel::kernel_object::ipc_manager_buffer
+ffff800000206af8           206af8        8     1                 kernel::kernel_object::ipc_manager
+ffff800000206b00           206b00       10     8         ./build/x86_64/kernel/logger.o:(.bss)
+ffff800000206b00           206b00        4     1                 kernel::utility::logger::log_id
+ffff800000206b08           206b08        8     1                 kernel::utility::logger::this_logger
+ffff800000206b10           206b10       10     8         ./build/x86_64/kernel/main.o:(.bss)
+ffff800000206b10           206b10        8     1                 hal_instance
+ffff800000206b18           206b18        8     1                 hal_factory_buffer
+ffff800000206b20           206b20     1090     8         ./build/x86_64/hal/x86_64/hal_factory.o:(.bss)
+ffff800000206b20           206b20       38     1                 hal::x86_64::hal_factory::hal_buffer
+ffff800000206b58           206b58        8     1                 hal::x86_64::hal_factory::memory_manager_buffer
+ffff800000206b60           206b60        8     1                 hal::x86_64::hal_factory::process_manager_buffer
+ffff800000206b68           206b68     1008     1                 hal::x86_64::hal_factory::interrupt_buffer
+ffff800000207b70           207b70        8     1                 hal::x86_64::hal_factory::arch_initializer_buffer
+ffff800000207b78           207b78        8     1                 hal::x86_64::hal_factory::port_io_buffer
+ffff800000207b80           207b80       10     1                 hal::x86_64::hal_factory::serial_buffer
+ffff800000207b90           207b90       20     1                 hal::x86_64::hal_factory::timer_buffer
+ffff800000207bb0           207bb0        8     8         ./build/x86_64/hal/x86_64/pit_timer.o:(.bss)
+ffff800000207bb0           207bb0        8     1                 hal::x86_64::pit_timer::this_timer
+          207bb8     800000207bb8        0     1         __bss_end = . - KERNEL_VMA
+          207bb8     800000207bb8      448     1         . = ALIGN ( 0x1000 )
+          208000     800000208000        0     1         __kernel_pml4 = . - KERNEL_VMA
           208000     800000208000     1000     1         . += 0x1000
           209000     800000209000        0     1         . = ALIGN ( 0x1000 )
-          209000     800000209000        0     1         __kernel_pd = . - KERNEL_VMA
-          209000     800000209000     4000     1         . += 4 * 512 * 8
-          20d000     80000020d000        0     1         . = ALIGN ( 0x1000 )
-          20d000     80000020d000        0     1         __boot_stack_start = . - KERNEL_VMA
-          20d000     80000020d000    10000     1         . += 0x1000 * 16
-          21d000     80000021d000        0     1         __boot_stack_end = . - KERNEL_VMA
-          21d000     80000021d000        0     1         . = ALIGN ( 0x1000 )
-          21d000     80000021d000        0     1         __kernel_end = . - KERNEL_VMA
-               0                0     3661     1 .debug_str
-               0                0     3661     1         <internal>:(.debug_str)
-               0                0     693d     1 .debug_loc
+          209000     800000209000        0     1         __kernel_pdpt = . - KERNEL_VMA
+          209000     800000209000     1000     1         . += 0x1000
+          20a000     80000020a000        0     1         . = ALIGN ( 0x1000 )
+          20a000     80000020a000        0     1         __kernel_pd = . - KERNEL_VMA
+          20a000     80000020a000     4000     1         . += 4 * 512 * 8
+          20e000     80000020e000        0     1         . = ALIGN ( 0x1000 )
+          20e000     80000020e000        0     1         __boot_stack_start = . - KERNEL_VMA
+          20e000     80000020e000    10000     1         . += 0x1000 * 16
+          21e000     80000021e000        0     1         __boot_stack_end = . - KERNEL_VMA
+          21e000     80000021e000        0     1         . = ALIGN ( 0x1000 )
+          21e000     80000021e000        0     1         __kernel_end = . - KERNEL_VMA
+               0                0     3595     1 .debug_str
+               0                0     3595     1         <internal>:(.debug_str)
+               0                0     67b9     1 .debug_loc
                0                0      3b3     1         ./build/x86_64/kernel/include/library/string.o:(.debug_loc)
              3b3              3b3      40e     1         ./build/x86_64/kernel/logger.o:(.debug_loc)
-             7c1              7c1      1e3     1         ./build/x86_64/kernel/main.o:(.debug_loc)
-             9a4              9a4     1add     1         ./build/x86_64/kernel/memory_manager.o:(.debug_loc)
-            2481             2481       6c     1         ./build/x86_64/kernel/new.o:(.debug_loc)
-            24ed             24ed     32db     1         ./build/x86_64/kernel/print.o:(.debug_loc)
-            57c8             57c8       c2     1         ./build/x86_64/kernel/process_manager.o:(.debug_loc)
-            588a             588a       c9     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_loc)
-            5953             5953      151     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_loc)
-            5aa4             5aa4      13d     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_loc)
-            5be1             5be1      6dd     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_loc)
-            62be             62be       59     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_loc)
-            6317             6317      174     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_loc)
-            648b             648b       a2     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_loc)
-            652d             652d       ee     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_loc)
-            661b             661b       9f     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_loc)
-            66ba             66ba      283     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_loc)
-               0                0     21a0     1 .debug_abbrev
+             7c1              7c1       a5     1         ./build/x86_64/kernel/main.o:(.debug_loc)
+             866              866     1add     1         ./build/x86_64/kernel/memory_manager.o:(.debug_loc)
+            2343             2343       6c     1         ./build/x86_64/kernel/new.o:(.debug_loc)
+            23af             23af     32db     1         ./build/x86_64/kernel/print.o:(.debug_loc)
+            568a             568a       46     1         ./build/x86_64/kernel/process_manager.o:(.debug_loc)
+            56d0             56d0       c9     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_loc)
+            5799             5799      151     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_loc)
+            58ea             58ea      173     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_loc)
+            5a5d             5a5d      6dd     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_loc)
+            613a             613a       59     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_loc)
+            6193             6193      174     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_loc)
+            6307             6307       a2     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_loc)
+            63a9             63a9       ee     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_loc)
+            6497             6497       9f     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_loc)
+            6536             6536      283     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_loc)
+               0                0     214a     1 .debug_abbrev
                0                0       9b     1         ./build/x86_64/kernel/include/library/string.o:(.debug_abbrev)
               9b               9b      172     1         ./build/x86_64/kernel/kernel.o:(.debug_abbrev)
              20d              20d      204     1         ./build/x86_64/kernel/logger.o:(.debug_abbrev)
-             411              411      2ae     1         ./build/x86_64/kernel/main.o:(.debug_abbrev)
-             6bf              6bf      2e9     1         ./build/x86_64/kernel/memory_manager.o:(.debug_abbrev)
-             9a8              9a8       81     1         ./build/x86_64/kernel/new.o:(.debug_abbrev)
-             a29              a29      2a8     1         ./build/x86_64/kernel/print.o:(.debug_abbrev)
-             cd1              cd1       c5     1         ./build/x86_64/kernel/process.o:(.debug_abbrev)
-             d96              d96      139     1         ./build/x86_64/kernel/process_manager.o:(.debug_abbrev)
-             ecf              ecf       af     1         ./build/x86_64/kernel/scheduler.o:(.debug_abbrev)
-             f7e              f7e      13b     1         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_abbrev)
-            10b9             10b9       70     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_abbrev)
-            1129             1129      1c7     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_abbrev)
-            12f0             12f0      250     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_abbrev)
-            1540             1540      237     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_abbrev)
-            1777             1777      148     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_abbrev)
-            18bf             18bf      243     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_abbrev)
-            1b02             1b02      102     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_abbrev)
-            1c04             1c04      199     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_abbrev)
-            1d9d             1d9d      1cb     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_abbrev)
-            1f68             1f68      238     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_abbrev)
-               0                0     7a31     1 .debug_info
+             411              411      281     1         ./build/x86_64/kernel/main.o:(.debug_abbrev)
+             692              692      2e9     1         ./build/x86_64/kernel/memory_manager.o:(.debug_abbrev)
+             97b              97b       81     1         ./build/x86_64/kernel/new.o:(.debug_abbrev)
+             9fc              9fc      2a8     1         ./build/x86_64/kernel/print.o:(.debug_abbrev)
+             ca4              ca4       c5     1         ./build/x86_64/kernel/process.o:(.debug_abbrev)
+             d69              d69      117     1         ./build/x86_64/kernel/process_manager.o:(.debug_abbrev)
+             e80              e80       af     1         ./build/x86_64/kernel/scheduler.o:(.debug_abbrev)
+             f2f              f2f      13b     1         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_abbrev)
+            106a             106a       70     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_abbrev)
+            10da             10da      1c7     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_abbrev)
+            12a1             12a1      266     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_abbrev)
+            1507             1507      237     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_abbrev)
+            173e             173e      148     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_abbrev)
+            1886             1886      226     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_abbrev)
+            1aac             1aac      102     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_abbrev)
+            1bae             1bae      199     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_abbrev)
+            1d47             1d47      1cb     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_abbrev)
+            1f12             1f12      238     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_abbrev)
+               0                0     77c0     1 .debug_info
                0                0      214     1         ./build/x86_64/kernel/include/library/string.o:(.debug_info)
-             214              214      586     1         ./build/x86_64/kernel/kernel.o:(.debug_info)
-             79a              79a      941     1         ./build/x86_64/kernel/logger.o:(.debug_info)
-            10db             10db      963     1         ./build/x86_64/kernel/main.o:(.debug_info)
-            1a3e             1a3e     12ea     1         ./build/x86_64/kernel/memory_manager.o:(.debug_info)
-            2d28             2d28      11a     1         ./build/x86_64/kernel/new.o:(.debug_info)
-            2e42             2e42     1b8b     1         ./build/x86_64/kernel/print.o:(.debug_info)
-            49cd             49cd      168     1         ./build/x86_64/kernel/process.o:(.debug_info)
-            4b35             4b35      2e3     1         ./build/x86_64/kernel/process_manager.o:(.debug_info)
-            4e18             4e18       f5     1         ./build/x86_64/kernel/scheduler.o:(.debug_info)
-            4f0d             4f0d      178     1         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_info)
-            5085             5085       df     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_info)
-            5164             5164      702     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_info)
-            5866             5866      67e     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_info)
-            5ee4             5ee4      7d6     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_info)
-            66ba             66ba      204     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_info)
-            68be             68be      426     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_info)
-            6ce4             6ce4      178     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_info)
-            6e5c             6e5c      3c0     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_info)
-            721c             721c      2ac     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_info)
-            74c8             74c8      569     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_info)
+             214              214      543     1         ./build/x86_64/kernel/kernel.o:(.debug_info)
+             757              757      941     1         ./build/x86_64/kernel/logger.o:(.debug_info)
+            1098             1098      7b4     1         ./build/x86_64/kernel/main.o:(.debug_info)
+            184c             184c     12ea     1         ./build/x86_64/kernel/memory_manager.o:(.debug_info)
+            2b36             2b36      11a     1         ./build/x86_64/kernel/new.o:(.debug_info)
+            2c50             2c50     1b8b     1         ./build/x86_64/kernel/print.o:(.debug_info)
+            47db             47db      168     1         ./build/x86_64/kernel/process.o:(.debug_info)
+            4943             4943      26b     1         ./build/x86_64/kernel/process_manager.o:(.debug_info)
+            4bae             4bae       f5     1         ./build/x86_64/kernel/scheduler.o:(.debug_info)
+            4ca3             4ca3      178     1         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_info)
+            4e1b             4e1b       df     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_info)
+            4efa             4efa      702     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_info)
+            55fc             55fc      6ae     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_info)
+            5caa             5caa      7d6     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_info)
+            6480             6480      21a     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_info)
+            669a             669a      3d9     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_info)
+            6a73             6a73      178     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_info)
+            6beb             6beb      3c0     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_info)
+            6fab             6fab      2ac     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_info)
+            7257             7257      569     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_info)
                0                0       33     1 .comment
                0                0       33     1         <internal>:(.comment)
-               0                0     1550     8 .debug_frame
+               0                0     1518     8 .debug_frame
                0                0       c0     8         ./build/x86_64/kernel/include/library/string.o:(.debug_frame)
               c0               c0      1e0     8         ./build/x86_64/kernel/logger.o:(.debug_frame)
              2a0              2a0       70     8         ./build/x86_64/kernel/main.o:(.debug_frame)
@@ -343,43 +344,43 @@ ffff800000206ca0           206ca0        8     1                 hal::x86_64::pi
              ba0              ba0       40     8         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_frame)
              be0              be0       30     8         ./build/x86_64/hal/x86_64/boot.o:(.debug_frame)
              c10              c10       50     8         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_frame)
-             c60              c60      1a8     8         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_frame)
-             e08              e08      168     8         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_frame)
-             f70              f70       b8     8         ./build/x86_64/hal/x86_64/pic.o:(.debug_frame)
-            1028             1028      170     8         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_frame)
-            1198             1198       68     8         ./build/x86_64/hal/x86_64/port_io.o:(.debug_frame)
-            1200             1200       e0     8         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_frame)
-            12e0             12e0       e0     8         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_frame)
-            13c0             13c0      190     8         ./build/x86_64/hal/x86_64/serial.o:(.debug_frame)
-               0                0     3430     1 .debug_line
+             c60              c60      1d0     8         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_frame)
+             e30              e30      168     8         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_frame)
+             f98              f98       b8     8         ./build/x86_64/hal/x86_64/pic.o:(.debug_frame)
+            1050             1050      110     8         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_frame)
+            1160             1160       68     8         ./build/x86_64/hal/x86_64/port_io.o:(.debug_frame)
+            11c8             11c8       e0     8         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_frame)
+            12a8             12a8       e0     8         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_frame)
+            1388             1388      190     8         ./build/x86_64/hal/x86_64/serial.o:(.debug_frame)
+               0                0     33f2     1 .debug_line
                0                0      1fb     1         ./build/x86_64/kernel/include/library/string.o:(.debug_line)
              1fb              1fb      100     1         ./build/x86_64/kernel/kernel.o:(.debug_line)
              2fb              2fb      21d     1         ./build/x86_64/kernel/logger.o:(.debug_line)
-             518              518      235     1         ./build/x86_64/kernel/main.o:(.debug_line)
-             74d              74d      6e4     1         ./build/x86_64/kernel/memory_manager.o:(.debug_line)
-             e31              e31       94     1         ./build/x86_64/kernel/new.o:(.debug_line)
-             ec5              ec5     144d     1         ./build/x86_64/kernel/print.o:(.debug_line)
-            2312             2312       be     1         ./build/x86_64/kernel/process.o:(.debug_line)
-            23d0             23d0       f7     1         ./build/x86_64/kernel/process_manager.o:(.debug_line)
-            24c7             24c7       74     1         ./build/x86_64/kernel/scheduler.o:(.debug_line)
-            253b             253b       dc     1         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_line)
-            2617             2617       c0     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_line)
-            26d7             26d7      1da     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_line)
-            28b1             28b1      19d     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_line)
-            2a4e             2a4e      2d7     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_line)
-            2d25             2d25       fd     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_line)
-            2e22             2e22      154     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_line)
-            2f76             2f76       af     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_line)
-            3025             3025      14b     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_line)
-            3170             3170       e7     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_line)
-            3257             3257      1d9     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_line)
+             518              518      205     1         ./build/x86_64/kernel/main.o:(.debug_line)
+             71d              71d      6e4     1         ./build/x86_64/kernel/memory_manager.o:(.debug_line)
+             e01              e01       94     1         ./build/x86_64/kernel/new.o:(.debug_line)
+             e95              e95     144d     1         ./build/x86_64/kernel/print.o:(.debug_line)
+            22e2             22e2       be     1         ./build/x86_64/kernel/process.o:(.debug_line)
+            23a0             23a0       e7     1         ./build/x86_64/kernel/process_manager.o:(.debug_line)
+            2487             2487       74     1         ./build/x86_64/kernel/scheduler.o:(.debug_line)
+            24fb             24fb       de     1         ./build/x86_64/hal/x86_64/arch_initializer.o:(.debug_line)
+            25d9             25d9       c0     1         ./build/x86_64/hal/x86_64/boot.o:(.debug_line)
+            2699             2699      1da     1         ./build/x86_64/hal/x86_64/hal_factory.o:(.debug_line)
+            2873             2873      1a4     1         ./build/x86_64/hal/x86_64/interrupt.o:(.debug_line)
+            2a17             2a17      2d7     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_line)
+            2cee             2cee      10d     1         ./build/x86_64/hal/x86_64/pic.o:(.debug_line)
+            2dfb             2dfb      13d     1         ./build/x86_64/hal/x86_64/pit_timer.o:(.debug_line)
+            2f38             2f38       af     1         ./build/x86_64/hal/x86_64/port_io.o:(.debug_line)
+            2fe7             2fe7      14b     1         ./build/x86_64/hal/x86_64/process_manager.o:(.debug_line)
+            3132             3132       e7     1         ./build/x86_64/hal/x86_64/segment_configurator.o:(.debug_line)
+            3219             3219      1d9     1         ./build/x86_64/hal/x86_64/serial.o:(.debug_line)
                0                0     10d0     1 .debug_ranges
                0                0      310     1         ./build/x86_64/kernel/memory_manager.o:(.debug_ranges)
              310              310      c40     1         ./build/x86_64/kernel/print.o:(.debug_ranges)
              f50              f50      180     1         ./build/x86_64/hal/x86_64/memory_manager.o:(.debug_ranges)
-               0                0     15a8     8 .symtab
-               0                0     15a8     8         <internal>:(.symtab)
+               0                0     15d8     8 .symtab
+               0                0     15d8     8         <internal>:(.symtab)
                0                0       9a     1 .shstrtab
                0                0       9a     1         <internal>:(.shstrtab)
-               0                0     1f5d     1 .strtab
-               0                0     1f5d     1         <internal>:(.strtab)
+               0                0     1efb     1 .strtab
+               0                0     1efb     1         <internal>:(.strtab)

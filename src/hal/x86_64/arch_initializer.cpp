@@ -1,6 +1,7 @@
 #include "arch_initializer.hpp"
 
 #include <library/logger.hpp>
+
 #include "segment_configurator.hpp"
 
 namespace hal::x86_64

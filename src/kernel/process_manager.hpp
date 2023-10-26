@@ -13,8 +13,6 @@ namespace kernel
         public:
             process_manager
             (
-                hal::interface::process_manager &injected_process_manager,
-                hal::interface::interrupt &injected_interrupt
             );
 
             ~process_manager();
@@ -25,8 +23,6 @@ namespace kernel
             void switch_context();
 
         private:
-            hal::interface::process_manager &_process_manager;
-            hal::interface::interrupt &_interrupt;
             scheduler _scheduler;
     };
 }

@@ -8,12 +8,33 @@ interrupt_handler_%1:
 
 %endmacro
 
-; %assign intnum 0
-; %rep 8 - intnum
-    
+global interrupt_handlers
+
+interrupt_handlers:
+    i equ 0
+%assign i 0
+%rep 255
+    %if i == 8 || (10<= i && i <= 14) || i == 17
+    ; Exception { 8, 10, 11, 12, 13, 14, 17 }: with error code.
+    ; cf. wiki.osdev.org/Exceptions
+        align 16
+        cli
+        push i
+        jmp interrupt_handler_common
+        align 16
+    %else
+        align 16
+        cli
+        push 0 ; dummy error code.
+        push i
+        jmp interrupt_handler_common
+        align 16 
+    %endif
+    %assign i i+1
+%endrep
 
 interrupt_handler_common:
-    xchg rdi, [rsp]
+    xchg rdi, [rsp] ; push i (in stack-top) => rdi (1st argument)
     push r15
     push r14
     push r13
@@ -29,9 +50,11 @@ interrupt_handler_common:
     push rbx
     push rax
 
-    extern do_irq
-    ; call do_irq in C with interrupt number as argument.
-    ; call do_irq
+    mov rsi, rsp
+
+    ; call x86_64_do_irq in C with interrupt number as argument.
+    extern x86_64_do_irq
+    call x86_64_do_irq
 
     push rax
     push rbx
@@ -48,4 +71,8 @@ interrupt_handler_common:
     push r14
     push r15
     pop rdi
+    
+    add rsp, 8
+
+    iretq
     
