@@ -12,10 +12,8 @@ namespace hal::x86_64
         // init kernel memory mapping
         kernel::physical_address *kernel_top_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
 
-        /*
         kernel_top_page_table[0] = 0; // reset id-map
         _invalidate_page(0);
-        */
     }
 
     void memory_manager::init_virtual_memory(kernel::physical_address top_page_table_address)
@@ -31,12 +29,13 @@ namespace hal::x86_64
         kernel::virtual_address target_virtual_address
     )
     {
-        kernel::physical_address *current_page_table = reinterpret_cast<kernel::physical_address*>(top_page_table_address);
+        kernel::virtual_address *current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(top_page_table_address));
 
         // search kernel
         if (!top_page_table_address)
         {
-            current_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+            kernel::physical_address kernel_page_table_address = reinterpret_cast<kernel::physical_address>(&__kernel_pml4);
+            current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(kernel_page_table_address));
         }
 
         page current_page_table_entry;
@@ -51,7 +50,7 @@ namespace hal::x86_64
                 return false;
             }
 
-            current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
+            current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(current_page_table_entry.get_physical_address()));
         }
         // offset
 
@@ -68,11 +67,12 @@ namespace hal::x86_64
         kernel::physical_address page_table_address
     )
     {
-        kernel::physical_address *current_page_table = reinterpret_cast<kernel::physical_address*>(top_page_table_address);
+        kernel::virtual_address *current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(top_page_table_address));
 
         if (!top_page_table_address)
         {
-            current_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+            kernel::physical_address kernel_page_table_address = reinterpret_cast<kernel::physical_address>(&__kernel_pml4);
+            current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(kernel_page_table_address));
         }
 
         page current_page_table_entry;
@@ -84,7 +84,7 @@ namespace hal::x86_64
 
             if (current_page_table_entry.present)
             {
-                current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
+                current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(current_page_table_entry.get_physical_address()));
                 continue;
             }
 
@@ -103,11 +103,12 @@ namespace hal::x86_64
         kernel::physical_address target_physical_address
     )
     {
-        kernel::physical_address *current_page_table = reinterpret_cast<kernel::physical_address*>(top_page_table_address);
+        kernel::virtual_address *current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(top_page_table_address));
 
         if (!top_page_table_address)
         {
-            current_page_table = reinterpret_cast<kernel::physical_address*>(&__kernel_pml4);
+            kernel::physical_address kernel_page_table_address = reinterpret_cast<kernel::physical_address>(&__kernel_pml4);
+            current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(kernel_page_table_address));
         }
 
         page current_page_table_entry;
@@ -117,7 +118,7 @@ namespace hal::x86_64
             // present bit is not checked. it is checked by is_table_exists()
             uint16_t current_page_table_index = calculate_page_table_index(target_virtual_address, i);
             current_page_table_entry.all = current_page_table[current_page_table_index];
-            current_page_table = reinterpret_cast<kernel::physical_address*>(current_page_table_entry.get_physical_address());
+            current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(current_page_table_entry.get_physical_address()));
             kernel::utility::logger::printk("hal_map_vm, %d\n", i);
         }
 
