@@ -2,32 +2,34 @@
 #define HAL_HPP
 
 // core services
+#include "interface/memory_manager.hpp"
 #include "process_manager.hpp"
 #include "interrupt.hpp"
 
 // platform services
-#include "arch_initializer.hpp"
+#include "interface/arch_initializer.hpp"
 
 // peripheral drivers
 #include "timer.hpp"
+#include "port_io.hpp"
 #include "serial.hpp"
 
 
 namespace hal::interface
 {
-    class hal
+    struct hal
     {
-        public:
-            // core services
-            virtual process_manager &_process_manager() = 0;
-            virtual interrupt &_interrupt() = 0;
+        memory_manager *_memory_manager;
+        process_manager *_process_manager;
+        interrupt *_interrupt;
 
-            // platform services
-            virtual arch_initializer &_initializer() = 0;
+        // platform services
+        arch_initializer *_arch_initializer;
 
-            // peripheral drivers
-            virtual serial &_serial() = 0;
-            virtual timer &_timer() = 0; 
+        // peripheral drivers
+        port_io *_port_io;
+        serial *_serial;
+        timer *_timer; 
     };
 }
 

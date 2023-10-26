@@ -1,5 +1,5 @@
-#ifndef PIT_TIMER_HPP
-#define PIT_TIMER_HPP
+#ifndef X86_64_PIT_TIMER_HPP
+#define X86_64_PIT_TIMER_HPP
 
 #include <interface/timer.hpp>
 

@@ -29,6 +29,7 @@ interrupt_handler_common:
     push rbx
     push rax
 
+    extern do_irq
     ; call do_irq in C with interrupt number as argument.
     ; call do_irq
 

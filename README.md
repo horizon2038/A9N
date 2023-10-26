@@ -6,6 +6,7 @@
 ![Python](https://img.shields.io/static/v1?style=for-the-badge&message=Python&color=3776AB&logo=Python&logoColor=FFFFFF&label=)
 
 A9N is a kernel built on HAL <Hardware Abstraction Layer> and microkernel.
+
 It combines high portability, stability, and scalability.
 
 ## Requirements
