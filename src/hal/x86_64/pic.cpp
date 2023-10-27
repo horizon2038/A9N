@@ -25,8 +25,8 @@ namespace hal::x86_64
         _port_io.write(PIC_MASTER_COMMAND, 0x11); // send init command to master
         _port_io.write(PIC_SLAVE_COMMAND, 0x11); // send init command to slave
 
-        _port_io.write(PIC_MASTER_DATA, 0x20); // assign master irq
-        _port_io.write(PIC_SLAVE_DATA, 0x28); // assign slave irq
+        _port_io.write(PIC_MASTER_DATA, 32); // assign master irq
+        _port_io.write(PIC_SLAVE_DATA, 40); // assign slave irq
 
         _port_io.write(PIC_MASTER_DATA, 0x04); // notify connection to master
         _port_io.write(PIC_SLAVE_DATA, 0x02); // notify connection to slave
@@ -34,8 +34,10 @@ namespace hal::x86_64
         _port_io.write(PIC_MASTER_DATA, 0x01); // set master to normal mode
         _port_io.write(PIC_SLAVE_DATA, 0x01); // set slave to normal mode
 
-        _port_io.write(0x21, (~0x01) & (~0x04));
-        _port_io.write(0xa1, 0xFF); // set master to normal mode
+        _port_io.write(PIC_MASTER_DATA, 0xfe); // set slave to normal mode
+        _port_io.write(PIC_SLAVE_DATA, 0xff); // set slave to normal mode
+
+
     }
 
     void pic::end_of_interrupt_pic()

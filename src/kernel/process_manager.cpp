@@ -1,24 +1,80 @@
 #include "process_manager.hpp"
 
+#include "common.hpp"
+#include "interface/process_manager.hpp"
+#include "kernel.hpp"
+#include "library/logger.hpp"
+#include "process.hpp"
+
+#include <stdint.h>
+#include <library/string.hpp>
+
 namespace kernel
 {
     process_manager::process_manager
     (
+        hal::interface::process_manager &target_process_manager
     )
-        : _scheduler()
+        : _scheduler(process_list)
+        , _process_manager(target_process_manager)
     {
+        current_process = &process_list[1];
     }
 
     process_manager::~process_manager()
     {
     }
 
-    void process_manager::init_process()
+    void process_manager::create_process(const char *process_name, virtual_address entry_point_address)
     {
+        uint16_t process_id = determine_process_id();
+
+        if (process_id <= 0)
+        {
+            return; // impl error
+        }
+
+        process *current_process = &process_list[process_id];
+        init_process(current_process, process_id, process_name, entry_point_address); 
+        _process_manager.create_process(current_process, entry_point_address);
+        current_process->status = process_status::READY;
+
+        utility::logger::printk("create process\n");
+        utility::logger::printk
+        (
+            "id : %d | name : %s | status : %d | page_table_address : 0x%016llx | stack_pointer : 0x%016llx\n",
+            current_process->id, current_process->name, current_process->status, current_process->page_table, current_process->stack_pointer
+        );
+        utility::logger::split();
     }
 
-    void process_manager::create_process(const char *process_name, uint64_t entry_point_address)
+    void process_manager::init_process(process *process, int32_t id, const char *process_name, virtual_address entry_point_address)
     {
+        process->id = id;
+        std::strcpy(process->name, process_name);
+
+        process->status = process_status::BLOCKED;
+        process->priority = 0;
+        process->quantum = 0;
+
+        std::memset(process->stack, 0, STACK_SIZE_MAX);
+        kernel_object::memory_manager->init_virtual_memory(process);
+    }
+
+    int32_t process_manager::determine_process_id()
+    {
+        // 0 == init_server id (reserved).
+
+        for (uint16_t i = 1; i < PROCESS_COUNT_MAX; i++)
+        {
+            if (process_list[i].status != process_status::UNUSED)
+            {
+                continue;
+            }
+            return i;
+        }
+        
+        return -1;
     }
 
     void process_manager::delete_process(int32_t process_id)
@@ -27,15 +83,22 @@ namespace kernel
 
     void process_manager::switch_context()
     {
+        utility::logger::printk("kernel_switch_context\n");
+        process *temp_current_process = current_process;
+        process *next_process = _scheduler.schedule_next_process();
+        current_process = next_process;
+        utility::logger::printk("current : 0x%llx, next : 0x%llx\n", reinterpret_cast<uint64_t>(temp_current_process), reinterpret_cast<uint64_t>(next_process));
+        _process_manager.switch_context(temp_current_process, next_process);
+    }
 
-        /*
-        process *current_process;
-        process *next_process;
-        next_process = _scheduler.schedule_next_process();
-        // undefined symnbol:
-        _process_manager.switch_context(current_process, next_process);
-        */
+    process *process_manager::search_process_from_id(int32_t process_id)
+    {
+        if (process_id <= 0)
+        {
+            return nullptr;
+        }
 
+        return &process_list[process_id];
     }
 }
 
