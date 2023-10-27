@@ -41,7 +41,8 @@ namespace hal::x86_64
     void pit_timer::clock()
     {
         ticks++;
-        this_timer->_pic.end_of_interrupt_pic();
+        // this_timer->_pic.end_of_interrupt_pic();
+        _pic.end_of_interrupt_pic();
     }
 
     uint32_t pit_timer::get_tick()

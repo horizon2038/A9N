@@ -20,7 +20,17 @@ namespace hal::x86_64
     {
         // copy kernel_page_table.
         // no meltdown vulnerability countermeasures are taken because the page table is not split.
-        std::memcpy(reinterpret_cast<void*>(top_page_table_address), reinterpret_cast<void*>(&__kernel_pml4), kernel::PAGE_SIZE);
+        kernel::virtual_address virtual_top_page_table_address = convert_physical_to_virtual_address(top_page_table_address);
+        kernel::virtual_address virtual_kernel_top_page_address = convert_physical_to_virtual_address
+        (
+            reinterpret_cast<kernel::physical_address>(&__kernel_pml4)
+        );
+        std::memcpy
+        (
+            reinterpret_cast<void*>(virtual_top_page_table_address),
+            reinterpret_cast<void*>(virtual_kernel_top_page_address),
+            kernel::PAGE_SIZE
+        );
     }
 
     bool memory_manager::is_table_exists
@@ -119,7 +129,7 @@ namespace hal::x86_64
             uint16_t current_page_table_index = calculate_page_table_index(target_virtual_address, i);
             current_page_table_entry.all = current_page_table[current_page_table_index];
             current_page_table = reinterpret_cast<kernel::virtual_address*>(convert_physical_to_virtual_address(current_page_table_entry.get_physical_address()));
-            kernel::utility::logger::printk("hal_map_vm, %d\n", i);
+            // kernel::utility::logger::printk("hal::map_virtual_memory page_table_depth : %d\n", i);
         }
 
         uint64_t pt_index = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);

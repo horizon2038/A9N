@@ -138,7 +138,7 @@ namespace kernel
                     true
                 );
                 physical_address start_frame_address = current_memory_block->start_physical_address + (start_frame_index * PAGE_SIZE);
-                kernel::utility::logger::printk("allocate_physical_memory : 0x%0llx , %llu B\n", start_frame_address, aligned_requested_size); 
+                kernel::utility::logger::printk("allocate_physical_memory : 0x%016llx , %llu B\n", start_frame_address, aligned_requested_size); 
                 return start_frame_address;
             }
 
@@ -260,7 +260,7 @@ namespace kernel
         }
 
         target_process->page_table = page_table_address;
-        std::memset(reinterpret_cast<void*>(target_process->page_table), 0, PAGE_SIZE); 
+        std::memset(reinterpret_cast<void*>(convert_physical_to_virtual_address(target_process->page_table)), 0, PAGE_SIZE); 
 
         _memory_manager.init_virtual_memory(target_process->page_table);
 
@@ -282,6 +282,11 @@ namespace kernel
         if (is_kernel)
         {
             target_page_table_address = 0;
+            utility::logger::printk("map_virtual_memory : map for kernel\n");
+        }
+        else
+        {
+            utility::logger::printk("map_virtual_memory : map for user\n");
         }
 
         for (uint64_t i = 0; i < page_count; i++)
