@@ -20,6 +20,8 @@ namespace kernel
 
             ~process_manager();
 
+            process *current_process;
+
             void create_process(const char *process_name, virtual_address entry_point_address);
             void init_process(process *process, int32_t id, const char *process_name, virtual_address entry_point_address);
             void delete_process(int32_t process_id);
@@ -29,7 +31,6 @@ namespace kernel
 
         private:
             process process_list[PROCESS_COUNT_MAX];
-            process *current_process;
 
             scheduler _scheduler;
             hal::interface::process_manager &_process_manager;
