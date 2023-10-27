@@ -45,7 +45,7 @@ ASFLAGS = -f elf64
 # LDFLAGS = --entry kernel_entry -z norelro --image-base 0x100000 --static
 
 # with linker-script (higher-half kernel)
-LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static -no-pie -nostdlib -Map kernel.map
+LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static -no-pie -nostdlib -Map build/kernel.map
 LIBS = 
 
 .PHONY: all kernel boot clean
