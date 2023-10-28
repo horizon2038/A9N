@@ -76,6 +76,7 @@ namespace kernel
             // for ipc
             message message_buffer;
             message_queue send_wait_queue;
+            int32_t receive_from;
 
         private:
 
