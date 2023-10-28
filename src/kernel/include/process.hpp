@@ -7,35 +7,37 @@
 
 namespace kernel
 {
+    class process;
+
     class message_queue
     {
         public:
-            bool enqueue(const message& msg)
+            bool enqueue(process *proc)
             {
                 if (count < QUEUE_SIZE)
                 {
-                    queue[(head + count) % QUEUE_SIZE] = msg;
+                    queue[(head + count) % QUEUE_SIZE] = proc;
                     ++count;
                     return true;
                 }
-                return false;  // Queue is full
+                return false;  // queue is full
             }
 
-            bool dequeue(message& msg)
+            bool dequeue(process*& proc)
             {
                 if (count > 0)
                 {
-                    msg = queue[head];
+                    proc = queue[head];
                     head = (head + 1) % QUEUE_SIZE;
                     --count;
                     return true;
                 }
-                return false;  // Queue is empty
+                return false;  // queue is empty
             }
 
         private:
             static constexpr int QUEUE_SIZE = 256;
-            message queue[QUEUE_SIZE];
+            process* queue[QUEUE_SIZE];
             int head = 0;
             int count = 0;
     };
@@ -72,6 +74,7 @@ namespace kernel
             physical_address page_table;
 
             // for ipc
+            message message_buffer;
             message_queue send_wait_queue;
 
         private:

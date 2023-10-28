@@ -6,7 +6,7 @@
 struct message
 {
     int32_t sender_process_id;
-    char messagge_type[256];
+    char messagge_type[64];
     uint8_t data[1024];
 };
 
