@@ -6,13 +6,14 @@
 
 namespace kernel
 {
+    static constexpr int32_t ANY_PROCESS = -1;
     class ipc_manager
     {
         public:
             ipc_manager() {};
             ~ipc_manager() {};
-            bool send(int32_t receiver_process_id, const message &msg);
-            bool receive(message &msg);
+            void send(int32_t receiver_process_id, message *msg);
+            void receive(int32_t sender_process_id, message *msg);
 
             // void notify();
 

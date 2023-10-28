@@ -18,6 +18,7 @@
 #include <interface/timer.hpp>
 #include "../hal/x86_64/pit_timer.hpp"
 #include "common.hpp"
+#include "ipc_manager.hpp"
 #include "process.hpp"
 
 #include "boot_info.h"
@@ -32,6 +33,8 @@
 
 #include "kernel.hpp"
 #include "process_manager.hpp"
+
+#include <library/string.hpp>
 
 void kernel_main(void);
 
@@ -80,6 +83,7 @@ void exception_handler(void *data, uint64_t error_code)
 
 void process_1()
 {
+    /*
     while(true)
     {
         for (uint32_t i = 0; i < 50000000; i++)
@@ -90,10 +94,21 @@ void process_1()
         kernel::utility::logger::printk("process_1\n");
         kernel::kernel_object::process_manager->switch_context();
     }
+    */
+
+    while (true)
+    {
+        kernel::utility::logger::printk("process_1\n");
+        message m;
+        m.type = 1;
+        std::strcpy(reinterpret_cast<char*>(m.data), "test message");
+        kernel::kernel_object::ipc_manager->send(2, &m);
+    }
 }
 
 void process_2()
 {
+    /*
     while(true)
     {
         for (uint32_t i = 0; i < 50000000; i++)
@@ -103,6 +118,15 @@ void process_2()
 
         kernel::utility::logger::printk("process_2\n");
         kernel::kernel_object::process_manager->switch_context();
+    }
+    */
+
+    while (true)
+    {
+        kernel::utility::logger::printk("process_2\n");
+        message m;
+        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
+        kernel::utility::logger::printk("receive : %s\n", reinterpret_cast<char*>(m.data));
     }
 }
 
@@ -183,9 +207,12 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     kernel::kernel_object::process_manager->create_process("process_1", reinterpret_cast<kernel::virtual_address>(process_1));
     kernel::kernel_object::process_manager->create_process("process_2", reinterpret_cast<kernel::virtual_address>(process_2));
     kernel::kernel_object::process_manager->create_process("process_3", reinterpret_cast<kernel::virtual_address>(process_3));
-    kernel::kernel_object::process_manager->create_process("process_4", reinterpret_cast<kernel::virtual_address>(process_4));
+    // kernel::kernel_object::process_manager->create_process("process_4", reinterpret_cast<kernel::virtual_address>(process_4));
 
     hal_instance->_interrupt->enable_interrupt_all();
+
+    process_1();
+    
     kernel_main();
 
     return 2038;
