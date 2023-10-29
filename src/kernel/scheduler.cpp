@@ -64,8 +64,9 @@ namespace kernel
         process *current_process = priority_groups[highest_priority];
 
         current_process->quantum--;
-        if (current_process->quantum == 0)
+        if (current_process->quantum == 0 || current_process->status == process_status::BLOCKED)
         {
+            utility::logger::printk("%s : %016s [ %04d ]\n", current_process->name, current_process->quantum == 0 ? "TIMEOUT" : "BLOCKED", current_process->quantum);
             current_process->quantum = QUANTUM_MAX;
             move_to_end(current_process, priority_groups[highest_priority]);
         }
@@ -77,6 +78,15 @@ namespace kernel
             return nullptr;
         }
 
+        if (_current_process != nullptr)
+        {
+            _current_process->status = process_status::READY;
+        }
+
+        priority_groups[highest_priority]->status = process_status::RUNNING;
+        _current_process = priority_groups[highest_priority];
+
+        // utility::logger::printk("target_process_status : %llu\n", priority_groups[highest_priority]->status);
         return priority_groups[highest_priority];
     }
 
@@ -84,12 +94,14 @@ namespace kernel
     {
         if (target_process->next == nullptr)
         {
+            utility::logger::printk("Target process is already at the end\n");
             return;
         }
 
         if (head_process == target_process)
         {
             head_process = target_process->next;
+            head_process->preview = nullptr; 
         }
 
         if (target_process->preview != nullptr)

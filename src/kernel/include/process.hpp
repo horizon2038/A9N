@@ -42,7 +42,7 @@ namespace kernel
             int count = 0;
     };
 
-    constexpr static uint32_t QUANTUM_MAX = 8192;
+    constexpr static uint32_t QUANTUM_MAX = 20;
     constexpr static uint32_t STACK_SIZE_MAX = 8192;
     constexpr static uint16_t PROCESS_NAME_MAX = 128;
 

@@ -2,6 +2,8 @@
 
 #include "port_io.hpp"
 
+#include <library/logger.hpp>
+
 namespace hal::x86_64
 {
     namespace
@@ -39,24 +41,16 @@ namespace hal::x86_64
         */
 
         _port_io.write(PIC_MASTER_COMMAND, 0x11); // send init command to master
-        wait();
         _port_io.write(PIC_SLAVE_COMMAND, 0x11); // send init command to slave
-        wait();
 
         _port_io.write(PIC_MASTER_DATA, master_offset); // assign master irq
-        wait();
         _port_io.write(PIC_SLAVE_DATA, slave_offset); // assign slave irq
-        wait();
 
         _port_io.write(PIC_MASTER_DATA, 0x04); // notify connection to master
-        wait();
         _port_io.write(PIC_SLAVE_DATA, 0x02); // notify connection to slave
-        wait();
 
         _port_io.write(PIC_MASTER_DATA, 0x01); // set master to normal mode
-        wait();
         _port_io.write(PIC_SLAVE_DATA, 0x01); // set slave to normal mode
-        wait();
 
         _port_io.write(PIC_MASTER_DATA, 0x0ff);
         _port_io.write(PIC_SLAVE_DATA, 0xff);
@@ -87,5 +81,6 @@ namespace hal::x86_64
         }
         _port_io.write(PIC_MASTER_COMMAND, PIC_EOI);
     }
+
 }
 

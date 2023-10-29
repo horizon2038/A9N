@@ -44,21 +44,10 @@ hal::interface::hal *hal_instance;
 constexpr uint32_t hal_factory_size = sizeof(hal::x86_64::hal_factory);
 alignas(hal::x86_64::hal_factory) static char hal_factory_buffer[hal_factory_size];
 
-static uint32_t clock_count = 0;
-
-__attribute__((interrupt))
-extern "C" void handle_timer(void *data)
+__attribute__((interrupt)) void handle_timer(void *data)
 {
-    kernel::utility::logger::printk("context_switch\n");
-    if (clock_count >= 10)
-    {
-        kernel::utility::logger::printk("context_switch\n");
-        clock_count = 0;
-        kernel::kernel_object::process_manager->switch_context();
-    }
-    clock_count++;
-    kernel::utility::logger::printk("clock_count : %d\n", clock_count);
     hal_instance->_interrupt->ack_interrupt();
+    kernel::kernel_object::process_manager->switch_context();
 }
 
 __attribute__((interrupt))
@@ -99,6 +88,7 @@ void process_1()
 {
     while (true)
     {
+        asm volatile ("sti");
         for (uint32_t i = 0; i < 100000000; i++)
         {
             asm volatile ("nop");
@@ -116,6 +106,11 @@ void process_2()
 {
     while (true)
     {
+        asm volatile ("sti");
+        for (uint32_t i = 0; i < 100000000; i++)
+        {
+            asm volatile ("nop");
+        }
         message m;
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
         kernel::utility::logger::printk("process_2\n");
@@ -128,7 +123,8 @@ void process_3()
 {
     while(true)
     {
-        for (uint32_t i = 0; i < 100000000; i++)
+        asm volatile ("sti");
+        for (uint32_t i = 0; i < 1000000000; i++)
         {
             asm volatile ("nop");
         }
@@ -145,7 +141,8 @@ void process_4()
 {
     while(true)
     {
-        for (uint32_t i = 0; i < 100000000; i++)
+        asm volatile ("sti");
+        for (uint32_t i = 0; i < 1000000000; i++)
         {
             asm volatile ("nop");
         }
@@ -197,11 +194,12 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     
     hal_instance->_interrupt->disable_interrupt_all();
 
-    hal_instance->_timer->init_timer();
 
     hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
-    hal_instance->_interrupt->register_interrupt(14, (hal::interface::interrupt_handler) handle_page_fault);
-    hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) handle_timer);
+    hal_instance->_interrupt->register_interrupt(32, (hal::interface::interrupt_handler) handle_timer);
+    // hal_instance->_interrupt->register_interrupt(14, (hal::interface::interrupt_handler) handle_page_fault);
+    // hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) handle_timer);
+    hal_instance->_timer->init_timer();
 
     // test process_manager
     logger::printk("init process_manager\n");

@@ -19,6 +19,8 @@ namespace kernel
         , _process_manager(target_process_manager)
     {
         current_process = &process_list[0];
+
+        highest_priority = 0;
     }
 
     process_manager::~process_manager()
@@ -60,6 +62,7 @@ namespace kernel
         {
             temp_process = temp_process->next;
         }
+        temp_process->next = current_process;
         current_process->preview = temp_process;
 
     }
@@ -71,7 +74,7 @@ namespace kernel
 
         process->status = process_status::BLOCKED;
         process->priority = 0;
-        process->quantum = 0;
+        process->quantum = QUANTUM_MAX;
 
         std::memset(process->stack, 0, STACK_SIZE_MAX);
         kernel_object::memory_manager->init_virtual_memory(process);
@@ -101,10 +104,16 @@ namespace kernel
     {
         // utility::logger::printk("kernel_switch_context\n");
         process *temp_current_process = current_process;
-        process *next_process = _scheduler.schedule_next_process();
+        // process *next_process = _scheduler.schedule_next_process();
+        process *next_process = _scheduler.schedule_next_process(priority_groups, highest_priority);
+        if (next_process == nullptr)
+        {
+            return;
+        }
+
         current_process = next_process;
-        utility::logger::printk("current : 0x%llx, next : 0x%llx\n", reinterpret_cast<uint64_t>(temp_current_process), reinterpret_cast<uint64_t>(next_process));
-        utility::logger::split();
+        // utility::logger::printk("current : 0x%llx, next : 0x%llx\n", reinterpret_cast<uint64_t>(temp_current_process), reinterpret_cast<uint64_t>(next_process));
+        // utility::logger::split();
         _process_manager.switch_context(temp_current_process, next_process);
     }
 
