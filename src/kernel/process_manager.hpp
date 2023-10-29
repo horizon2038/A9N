@@ -21,6 +21,7 @@ namespace kernel
             ~process_manager();
 
             process *current_process;
+            int32_t highest_priority;
 
             void create_process(const char *process_name, virtual_address entry_point_address);
             void init_process(process *process, int32_t id, const char *process_name, virtual_address entry_point_address);

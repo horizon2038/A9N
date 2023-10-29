@@ -34,10 +34,19 @@ namespace hal::x86_64
 
     void pit_timer::configure_timer(uint16_t hz)
     {
+        /*
         uint32_t pit_rate = CLOCK_RATE / hz;
         _port_io.write(PIT_COMMAND_REGISTER, 0x36);
-        _port_io.write(PIT_CHANNEL_0, pit_rate & 0xff);
+        _port_io.write(PIT_CHANNEL_0, pit_rate & 0x0fe);
         _port_io.write(PIT_CHANNEL_0, pit_rate >> 8);
+        */
+
+        unsigned int divisor = CLOCK_RATE / hz;
+        // _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi byte, rate generator
+        _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi byte, rate generator
+        _port_io.write(PIT_CHANNEL_0, divisor & 0xFF);
+        // _port_io.write(PIT_CHANNEL_0, (divisor >> 8) & 0xFF);
+        _port_io.write(PIT_CHANNEL_0, divisor >> 8);
     }
 
     void pit_timer::clock()
