@@ -37,7 +37,7 @@ namespace hal::x86_64
 
         hal::interface::port_io *port_io_pointer = new (port_io_buffer) port_io();
         hal::interface::serial *serial_pointer = new (serial_buffer) serial(*port_io_pointer);
-        hal::interface::timer *timer_pointer = new (timer_buffer) pit_timer(*port_io_pointer);
+        hal::interface::timer *timer_pointer = new (timer_buffer) pit_timer();
 
         hal_pointer->_memory_manager = memory_manager_pointer;
         hal_pointer->_process_manager = process_manager_pointer;
