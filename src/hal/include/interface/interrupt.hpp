@@ -32,6 +32,7 @@ namespace hal::interface
             virtual void enable_interrupt_all() = 0;
             virtual void disable_interrupt_all() = 0;
             virtual void mask_interrupt(interrupt_mask mask) = 0;
+            virtual void ack_interrupt() = 0;
     };
 
 }

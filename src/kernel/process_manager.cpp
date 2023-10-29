@@ -18,7 +18,7 @@ namespace kernel
         : _scheduler(process_list)
         , _process_manager(target_process_manager)
     {
-        current_process = &process_list[1];
+        current_process = &process_list[0];
     }
 
     process_manager::~process_manager()
@@ -46,6 +46,22 @@ namespace kernel
             current_process->id, current_process->name, current_process->status, current_process->page_table, current_process->stack_pointer
         );
         utility::logger::split();
+
+        // test priority-scheduling
+        int32_t priority = current_process->priority;
+        if (priority_groups[priority] == nullptr)
+        {
+            priority_groups[priority] = current_process;
+            return;
+        }
+
+        process *temp_process = priority_groups[priority];
+        while (temp_process->next != nullptr)
+        {
+            temp_process = temp_process->next;
+        }
+        current_process->preview = temp_process;
+
     }
 
     void process_manager::init_process(process *process, int32_t id, const char *process_name, virtual_address entry_point_address)
@@ -83,11 +99,12 @@ namespace kernel
 
     void process_manager::switch_context()
     {
-        utility::logger::printk("kernel_switch_context\n");
+        // utility::logger::printk("kernel_switch_context\n");
         process *temp_current_process = current_process;
         process *next_process = _scheduler.schedule_next_process();
         current_process = next_process;
         utility::logger::printk("current : 0x%llx, next : 0x%llx\n", reinterpret_cast<uint64_t>(temp_current_process), reinterpret_cast<uint64_t>(next_process));
+        utility::logger::split();
         _process_manager.switch_context(temp_current_process, next_process);
     }
 

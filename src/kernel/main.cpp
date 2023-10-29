@@ -49,6 +49,7 @@ static uint32_t clock_count = 0;
 __attribute__((interrupt))
 extern "C" void handle_timer(void *data)
 {
+    kernel::utility::logger::printk("context_switch\n");
     if (clock_count >= 10)
     {
         kernel::utility::logger::printk("context_switch\n");
@@ -56,8 +57,8 @@ extern "C" void handle_timer(void *data)
         kernel::kernel_object::process_manager->switch_context();
     }
     clock_count++;
-    // kernel::utility::logger::printk("clock_count : %d\n", clock_count);
-    hal_instance->_timer->clock();
+    kernel::utility::logger::printk("clock_count : %d\n", clock_count);
+    hal_instance->_interrupt->ack_interrupt();
 }
 
 __attribute__((interrupt))
@@ -81,52 +82,45 @@ void exception_handler(void *data, uint64_t error_code)
     kernel::utility::logger::printk("exception\n", error_code);
 }
 
+__attribute__((interrupt))
+extern "C" void handle_serial(void *data)
+{
+    uint8_t serial_data = hal_instance->_serial->read_serial();
+    hal_instance->_port_io->write(0x20, 0x20);
+    if (serial_data == 13)
+    {
+        serial_data = '\n';
+    }
+    kernel::utility::logger::printk("%x", serial_data);
+    hal_instance->_port_io->write(0x2F0, serial_data);
+}
+
 void process_1()
 {
-    /*
-    while(true)
+    while (true)
     {
-        for (uint32_t i = 0; i < 50000000; i++)
+        for (uint32_t i = 0; i < 100000000; i++)
         {
             asm volatile ("nop");
         }
-
-        kernel::utility::logger::printk("process_1\n");
-        kernel::kernel_object::process_manager->switch_context();
-    }
-    */
-
-    while (true)
-    {
-        kernel::utility::logger::printk("process_1\n");
         message m;
         m.type = 1;
-        std::strcpy(reinterpret_cast<char*>(m.data), "test message");
+        std::strcpy(reinterpret_cast<char*>(m.data), "hello from process_1");
         kernel::kernel_object::ipc_manager->send(2, &m);
+        kernel::utility::logger::printk("process_1\n");
+        kernel::utility::logger::split();
     }
 }
 
 void process_2()
 {
-    /*
-    while(true)
-    {
-        for (uint32_t i = 0; i < 50000000; i++)
-        {
-            asm volatile ("nop");
-        }
-
-        kernel::utility::logger::printk("process_2\n");
-        kernel::kernel_object::process_manager->switch_context();
-    }
-    */
-
     while (true)
     {
-        kernel::utility::logger::printk("process_2\n");
         message m;
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
+        kernel::utility::logger::printk("process_2\n");
         kernel::utility::logger::printk("receive : %s\n", reinterpret_cast<char*>(m.data));
+        kernel::utility::logger::split();
     }
 }
 
@@ -134,13 +128,16 @@ void process_3()
 {
     while(true)
     {
-        for (uint32_t i = 0; i < 50000000; i++)
+        for (uint32_t i = 0; i < 100000000; i++)
         {
             asm volatile ("nop");
         }
-
+        message m;
+        m.type = 1;
+        std::strcpy(reinterpret_cast<char*>(m.data), "hello from process_3");
+        kernel::kernel_object::ipc_manager->send(2, &m);
         kernel::utility::logger::printk("process_3\n");
-        kernel::kernel_object::process_manager->switch_context();
+        kernel::utility::logger::split();
     }
 }
 
@@ -148,13 +145,16 @@ void process_4()
 {
     while(true)
     {
-        for (uint32_t i = 0; i < 50000000; i++)
+        for (uint32_t i = 0; i < 100000000; i++)
         {
             asm volatile ("nop");
         }
-
+        message m;
+        m.type = 1;
+        std::strcpy(reinterpret_cast<char*>(m.data), "hello from process_4");
+        kernel::kernel_object::ipc_manager->send(2, &m);
         kernel::utility::logger::printk("process_4\n");
-        kernel::kernel_object::process_manager->switch_context();
+        kernel::utility::logger::split();
     }
 }
 
@@ -197,9 +197,11 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     
     hal_instance->_interrupt->disable_interrupt_all();
 
-    // hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
-    // hal_instance->_timer->init_timer();
-    // hal_instance->_interrupt->register_interrupt(14, (hal::interface::interrupt_handler) handle_page_fault);
+    hal_instance->_timer->init_timer();
+
+    hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
+    hal_instance->_interrupt->register_interrupt(14, (hal::interface::interrupt_handler) handle_page_fault);
+    hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) handle_timer);
 
     // test process_manager
     logger::printk("init process_manager\n");
@@ -207,11 +209,11 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     kernel::kernel_object::process_manager->create_process("process_1", reinterpret_cast<kernel::virtual_address>(process_1));
     kernel::kernel_object::process_manager->create_process("process_2", reinterpret_cast<kernel::virtual_address>(process_2));
     kernel::kernel_object::process_manager->create_process("process_3", reinterpret_cast<kernel::virtual_address>(process_3));
-    // kernel::kernel_object::process_manager->create_process("process_4", reinterpret_cast<kernel::virtual_address>(process_4));
+    kernel::kernel_object::process_manager->create_process("process_4", reinterpret_cast<kernel::virtual_address>(process_4));
 
     hal_instance->_interrupt->enable_interrupt_all();
 
-    process_1();
+    // process_1();
     
     kernel_main();
 
@@ -221,12 +223,16 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 void kernel_main(void)
 {
     kernel::utility::logger::printk("start kernel_main\n");
-    process_1();
+    // process_1();
 
     while(1)
     {
         // my_print->printf("\e[15G%d\e[22G", timer->get_tick());
         // kernel::utility::logger::printk("hlt\n");
+        for (uint32_t i = 0; i < 1000000; i++)
+        {
+            asm volatile ("nop");
+        }
         asm volatile ("hlt");
     }
 

@@ -1,5 +1,7 @@
 #include "pit_timer.hpp"
 
+#include "pic.hpp"
+
 namespace hal::x86_64
 {
     namespace
@@ -13,9 +15,8 @@ namespace hal::x86_64
 
     pit_timer *pit_timer::this_timer = nullptr;
 
-    pit_timer::pit_timer(hal::interface::port_io &injected_port_io)
-        : _port_io(injected_port_io)
-        , _pic(injected_port_io)
+    pit_timer::pit_timer()
+        : _port_io()
     {
         this_timer = this;
     }
@@ -26,8 +27,9 @@ namespace hal::x86_64
 
     void pit_timer::init_timer()
     {
-        _pic.init_pic();
         configure_timer(100);
+        pic my_pic;
+        my_pic.mask(false, 0xfe);
     }
 
     void pit_timer::configure_timer(uint16_t hz)
@@ -41,8 +43,6 @@ namespace hal::x86_64
     void pit_timer::clock()
     {
         ticks++;
-        // this_timer->_pic.end_of_interrupt_pic();
-        _pic.end_of_interrupt_pic();
     }
 
     uint32_t pit_timer::get_tick()

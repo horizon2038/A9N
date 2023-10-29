@@ -18,8 +18,6 @@ namespace kernel
 
     process *scheduler::schedule_next_process()
     {
-        utility::logger::printk("schedule_next_process\n");
-
         process *target_process = nullptr;
         uint32_t start_index = current_process_index;
 
@@ -32,6 +30,8 @@ namespace kernel
 
             target_process = &_process_list[current_process_index];
 
+            utility::logger::printk("cpi : %llu\n", current_process_index);
+            utility::logger::printk("target_process_status : %llu\n", target_process->status);
             current_process_index++;
 
         }
@@ -49,11 +49,78 @@ namespace kernel
         }
 
         target_process->status = process_status::RUNNING;
-        utility::logger::printk("set running\n");
         _current_process = target_process;
-        utility::logger::printk("_current_process_index : %d\n", current_process_index);
-        utility::logger::printk("target_process_address : 0x%llx\n", reinterpret_cast<kernel::virtual_address>(target_process));
 
         return target_process;
+    }
+
+    process *scheduler::schedule_next_process(process *priority_groups[], int32_t &highest_priority)
+    {
+        if (highest_priority == -1)
+        {
+            return nullptr;
+        }
+
+        process *current_process = priority_groups[highest_priority];
+
+        current_process->quantum--;
+        if (current_process->quantum == 0)
+        {
+            current_process->quantum = QUANTUM_MAX;
+            move_to_end(current_process, priority_groups[highest_priority]);
+        }
+
+        highest_priority = update_highest_priority(priority_groups);
+
+        if (priority_groups[highest_priority] == nullptr)
+        {
+            return nullptr;
+        }
+
+        return priority_groups[highest_priority];
+    }
+
+    void scheduler::move_to_end(process *target_process, process *&head_process)
+    {
+        if (target_process->next == nullptr)
+        {
+            return;
+        }
+
+        if (head_process == target_process)
+        {
+            head_process = target_process->next;
+        }
+
+        if (target_process->preview != nullptr)
+        {
+            target_process->preview->next = target_process->next;
+        }
+
+        target_process->next->preview = target_process->preview;
+
+        process *temp_process = head_process;
+
+        while (temp_process->next != nullptr)
+        {
+            temp_process = temp_process->next;
+        }
+
+        temp_process->next = target_process;
+        target_process->preview = temp_process;
+        target_process->next = nullptr;
+    }
+
+    int32_t scheduler::update_highest_priority(process *priority_groups[])
+    {
+        for (uint16_t i = (PRIORITY_MAX - 1); i >= 0; i--)
+        {
+            if (priority_groups[i] != nullptr)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }

@@ -42,8 +42,9 @@ namespace kernel
             int count = 0;
     };
 
-    inline constexpr uint32_t STACK_SIZE_MAX = 8192;
-    inline constexpr uint16_t PROCESS_NAME_MAX = 128;
+    constexpr static uint32_t QUANTUM_MAX = 8192;
+    constexpr static uint32_t STACK_SIZE_MAX = 8192;
+    constexpr static uint16_t PROCESS_NAME_MAX = 128;
 
     enum class process_status : uint16_t
     {
@@ -67,6 +68,10 @@ namespace kernel
             process_status status;
             uint32_t priority;
             uint32_t quantum;
+
+            // for priority-scheduling
+            process *preview;
+            process *next;
 
             // hardware-context
             uint8_t stack[STACK_SIZE_MAX];

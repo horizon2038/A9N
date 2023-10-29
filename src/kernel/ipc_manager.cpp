@@ -16,13 +16,9 @@ namespace kernel
         process* current_process = kernel_object::process_manager->current_process;
         std::memcpy(&current_process->message_buffer, msg, sizeof(message));
 
-        if (receiver_process == nullptr)
+        if (receiver_process == nullptr || receiver_process == current_process)
         {
-            return;
-        }
-
-        if (receiver_process->id == current_process->id)
-        {
+            // Handle error: Invalid receiver or trying to send message to itself
             return;
         }
 
@@ -30,7 +26,7 @@ namespace kernel
             (receiver_process->receive_from == ANY_PROCESS || 
              receiver_process->receive_from == current_process->id);
 
-        if (is_ready)
+        if (!is_ready)
         {
             current_process->status = process_status::BLOCKED;
             receiver_process->send_wait_queue.enqueue(current_process);
@@ -41,7 +37,8 @@ namespace kernel
             std::memcpy(&receiver_process->message_buffer, &current_process->message_buffer, sizeof(message));
 
             receiver_process->status = process_status::READY;
-            return;
+
+            // kernel_object::process_manager->switch_context();
         }
     }
 
@@ -52,6 +49,7 @@ namespace kernel
 
         current_process->receive_from = source_process_id;
 
+        // TODO: fix flag
         bool dequeued = current_process->send_wait_queue.dequeue(sender_process);
 
         if (!dequeued || (source_process_id != ANY_PROCESS && sender_process->id != source_process_id))
@@ -61,10 +59,10 @@ namespace kernel
         }
         else
         {
+            utility::logger::printk("ipc_receive : %s <- %s\n", kernel_object::process_manager->current_process->name, sender_process->name);
             std::memcpy(msg, &sender_process->message_buffer, sizeof(message));
 
             sender_process->status = process_status::READY;
-            return;
         }
     }
 }

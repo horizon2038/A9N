@@ -10,7 +10,13 @@ namespace hal::x86_64
     extern "C" void _enable_interrupt_all();
     extern "C" void _disable_interrupt_all();
 
+    __attribute__((interrupt))
+    extern "C" void none_handler(void* data)
+    {
+    }
+
     interrupt::interrupt()
+        : _pic()
     {
     }
 
@@ -76,6 +82,11 @@ namespace hal::x86_64
             idt[i].type = INTERRUPT_GATE | (mask.mask_bool[i] << 7);
         }
     };
+
+    void interrupt::ack_interrupt()
+    {
+        _pic.end_of_interrupt_pic(10);
+    }
 
     extern "C" void x86_64_do_irq(uint8_t irq_number)
     {

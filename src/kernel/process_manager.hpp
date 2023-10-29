@@ -31,6 +31,7 @@ namespace kernel
 
         private:
             process process_list[PROCESS_COUNT_MAX];
+            process *priority_groups[PRIORITY_MAX] = {nullptr};
 
             scheduler _scheduler;
             hal::interface::process_manager &_process_manager;

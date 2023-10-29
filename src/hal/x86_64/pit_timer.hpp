@@ -16,7 +16,7 @@ namespace hal::x86_64
     class pit_timer final : public hal::interface::timer
     {
         public:
-            pit_timer(hal::interface::port_io &injected_port_io);
+            pit_timer();
             ~pit_timer();
 
             void init_timer() override;
@@ -30,8 +30,7 @@ namespace hal::x86_64
 
         private:
             static pit_timer *this_timer;
-            hal::interface::port_io &_port_io;
-            hal::x86_64::pic _pic;
+            hal::x86_64::port_io _port_io;
     };
 }
 

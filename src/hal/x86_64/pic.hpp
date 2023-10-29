@@ -1,7 +1,9 @@
 #ifndef PIC_HPP
 #define PIC_HPP
 
-#include <interface/port_io.hpp>
+// #include <interface/port_io.hpp>
+#include "port_io.hpp"
+#include <stdint.h>
 
 namespace hal::x86_64
 {
@@ -18,13 +20,16 @@ namespace hal::x86_64
     class pic
     {
         public:
-            pic(hal::interface::port_io &injected_port_io);
+            pic();
             ~pic();
             void init_pic();
-            void end_of_interrupt_pic();
+            void remap_pic(uint8_t master_offset, uint8_t slave_offset);
+            void wait();
+            void mask(bool pic_flag, uint8_t mask_flag);
+            void end_of_interrupt_pic(uint8_t irq_number);
 
         private:
-            hal::interface::port_io &_port_io;
+            hal::x86_64::port_io _port_io;
     };
 }
 

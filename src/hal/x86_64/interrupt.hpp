@@ -4,6 +4,8 @@
 #include <interface/interrupt.hpp>
 #include "interrupt_descriptor.hpp"
 
+#include "pic.hpp"
+
 namespace hal::x86_64
 {
     class interrupt final : public hal::interface::interrupt
@@ -18,10 +20,12 @@ namespace hal::x86_64
             void enable_interrupt_all() override;
             void disable_interrupt_all() override;
             void mask_interrupt(hal::interface::interrupt_mask mask) override;
+            void ack_interrupt() override;
 
         private:
             void load_idt();
             interrupt_descriptor_64 idt[256];
+            pic _pic;
 
     };
 
