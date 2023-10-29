@@ -1,8 +1,11 @@
 #include "serial.hpp"
 
+#include "library/print.hpp"
 #include "port_io.hpp"
 #include <interface/port_io.hpp>
 #include <cpp_dependent/new.hpp>
+
+#include <library/logger.hpp>
 
 namespace hal::x86_64
 {
@@ -27,8 +30,10 @@ namespace hal::x86_64
         this->_port_io.write(COM_1 + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
         this->_port_io.write(COM_1 + 1, 0x00);    //                  (hi byte)
         this->_port_io.write(COM_1 + 3, 0x03);    // 8 bits, no parity, one stop bit
-        this->_port_io.write(COM_1 + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
-        this->_port_io.write(COM_1 + 4, 0x0B);    // IRQs enabled, RTS/DSR set
+        this->_port_io.write(COM_1 + 2, 0xc7);    // Enable FIFO, clear them, with 14-byte threshold
+        this->_port_io.write(COM_1 + 4, 0x0b);    // IRQs enabled, RTS/DSR set
+        this->_port_io.write(COM_1 + 4, 0x0f);    // IRQs enabled, RTS/DSR set
+        this->_port_io.write(COM_1 + 1, 0x03);    // IRQs enabled, RTS/DSR set
         // If serial is not faulty set it in normal operation mode
         // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
     }
@@ -36,12 +41,12 @@ namespace hal::x86_64
     uint8_t serial::read_serial()
     {
         while (is_received() == 0);
-        return _port_io.read(COM_1);
+        return this->_port_io.read(COM_1);
     }
 
     int serial::is_received()
     {
-        return _port_io.read(COM_1 + 5) & 1;
+        return this->_port_io.read(COM_1 + 5) & 0x01;
     }
 
     void serial::write_serial(char data)
@@ -52,7 +57,7 @@ namespace hal::x86_64
 
     int serial::is_empty()
     {
-        return this->_port_io.read(COM_1 + 5) & 1;
+        return this->_port_io.read(COM_1 + 5) & 0x20;
     }
 
     void serial::write_string_serial(char *words)

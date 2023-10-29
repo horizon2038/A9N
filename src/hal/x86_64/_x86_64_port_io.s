@@ -2,19 +2,14 @@ section .text
 global _read, _write
 
 _read:
-    mov rax, rdi
-    in al, dx
-;    mov dx, rdi
-;    in al, dx
-;    movzx rax, al
-;    ret
+    mov rdx, rdi
+    in ax, dx
+    nop
+    ret
 
 _write:
     mov rdx, rdi
     mov rax, rsi
     out dx, ax
+    nop
     ret
-;    mov dx, rdi
-;    mov al, sil
-;    out dx, al
-;    ret

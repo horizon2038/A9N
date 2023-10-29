@@ -2,6 +2,8 @@
 
 #include "pic.hpp"
 
+#include <library/logger.hpp>
+
 namespace hal::x86_64
 {
     namespace
@@ -27,9 +29,11 @@ namespace hal::x86_64
 
     void pit_timer::init_timer()
     {
+        kernel::utility::logger::printk("init timer\n");
         configure_timer(100);
         pic my_pic;
-        my_pic.mask(false, 0xfe);
+        my_pic.unmask_irq(0);
+        my_pic.unmask_irq(4);
     }
 
     void pit_timer::configure_timer(uint16_t hz)
@@ -44,7 +48,7 @@ namespace hal::x86_64
         unsigned int divisor = CLOCK_RATE / hz;
         // _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi byte, rate generator
         _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi byte, rate generator
-        _port_io.write(PIT_CHANNEL_0, divisor & 0xFF);
+        _port_io.write(PIT_CHANNEL_0, divisor & 0xEF);
         // _port_io.write(PIT_CHANNEL_0, (divisor >> 8) & 0xFF);
         _port_io.write(PIT_CHANNEL_0, divisor >> 8);
     }
