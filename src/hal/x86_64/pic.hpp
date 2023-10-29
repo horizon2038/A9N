@@ -26,6 +26,8 @@ namespace hal::x86_64
             void remap_pic(uint8_t master_offset, uint8_t slave_offset);
             void wait();
             void mask(bool pic_flag, uint8_t mask_flag);
+            void mask_irq(uint8_t irq_number);
+            void unmask_irq(uint8_t irq_number);
             void end_of_interrupt_pic(uint8_t irq_number);
 
         private:

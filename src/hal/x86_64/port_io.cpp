@@ -7,7 +7,6 @@ namespace hal::x86_64
 
     uint8_t port_io::read(uint16_t address)
     {
-        
         return _read(address);
     }
 

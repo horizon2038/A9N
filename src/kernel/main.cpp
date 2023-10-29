@@ -47,7 +47,7 @@ alignas(hal::x86_64::hal_factory) static char hal_factory_buffer[hal_factory_siz
 __attribute__((interrupt)) void handle_timer(void *data)
 {
     hal_instance->_interrupt->ack_interrupt();
-    kernel::kernel_object::process_manager->switch_context();
+    // kernel::kernel_object::process_manager->switch_context();
 }
 
 __attribute__((interrupt))
@@ -75,13 +75,12 @@ __attribute__((interrupt))
 extern "C" void handle_serial(void *data)
 {
     uint8_t serial_data = hal_instance->_serial->read_serial();
-    hal_instance->_port_io->write(0x20, 0x20);
     if (serial_data == 13)
     {
         serial_data = '\n';
     }
     kernel::utility::logger::printk("%x", serial_data);
-    hal_instance->_port_io->write(0x2F0, serial_data);
+    hal_instance->_interrupt->ack_interrupt();
 }
 
 void process_1()
@@ -157,14 +156,16 @@ void process_4()
 
 extern "C" int kernel_entry(boot_info *target_boot_info)
 {
+    using logger = kernel::utility::logger;
     // make HAL and kernel objects.
     hal::interface::hal_factory *hal_factory_instance = new (hal_factory_buffer) hal::x86_64::hal_factory();
     hal_instance = hal_factory_instance->make();
 
+    hal_instance->_serial->init_serial(115200);
+
     constexpr uint16_t logger_size = sizeof(kernel::utility::logger);
     alignas(kernel::utility::logger) char logger_buf[logger_size];
     kernel::utility::logger *my_logger = new((void*)logger_buf) kernel::utility::logger{*hal_instance->_serial};
-    using logger = kernel::utility::logger;
 
     logger::a9nout();
     logger::printk("start A9N kernel\n");
@@ -196,7 +197,7 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 
 
     hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
-    hal_instance->_interrupt->register_interrupt(32, (hal::interface::interrupt_handler) handle_timer);
+    hal_instance->_interrupt->register_interrupt(4, (hal::interface::interrupt_handler) handle_serial);
     // hal_instance->_interrupt->register_interrupt(14, (hal::interface::interrupt_handler) handle_page_fault);
     // hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) handle_timer);
     hal_instance->_timer->init_timer();
@@ -221,16 +222,41 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 void kernel_main(void)
 {
     kernel::utility::logger::printk("start kernel_main\n");
+    kernel::utility::logger::printk("horizon@A9N > ");
     // process_1();
 
     while(1)
     {
-        // my_print->printf("\e[15G%d\e[22G", timer->get_tick());
-        // kernel::utility::logger::printk("hlt\n");
         for (uint32_t i = 0; i < 1000000; i++)
         {
             asm volatile ("nop");
         }
+        uint8_t serial_data = hal_instance->_serial->read_serial();
+        if (serial_data == 0xd)
+        {
+            hal_instance->_serial->write_serial('\r');
+            hal_instance->_serial->write_serial('\n');
+            kernel::utility::logger::printk("");
+            hal_instance->_serial->write_string_serial("horizon@A9N > ");
+            hal_instance->_interrupt->ack_interrupt();
+            continue;
+        }
+        if (serial_data == 0x7f)
+        {
+            hal_instance->_serial->write_serial('\b');
+            hal_instance->_serial->write_string_serial("\033[K");
+            continue;
+        }
+        hal_instance->_serial->write_serial(serial_data);
+        hal_instance->_interrupt->ack_interrupt();
+        // my_print->printf("\e[15G%d\e[22G", timer->get_tick());
+        // kernel::utility::logger::printk("hlt\n");
+        /*
+        for (uint32_t i = 0; i < 1000000; i++)
+        {
+            asm volatile ("nop");
+        }
+        */
         asm volatile ("hlt");
     }
 
