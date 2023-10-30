@@ -1,4 +1,4 @@
-extern x86_64_do_irq
+extern do_irq
 
 %macro INTERRUPT_HANDLER 1
 
@@ -10,25 +10,25 @@ interrupt_handler_%1:
 
 %endmacro
 
+align 16
 global interrupt_handlers
-
 interrupt_handlers:
     i equ 0
 %assign i 0
-%rep 255
-    %if i == 8 || (10<= i && i <= 14) || i == 17
+%rep 256
+    %if i == 8 || (10<= i && i <= 14) || i == 17 || i == 21 || i = 29 || i = 30
     ; Exception { 8, 10, 11, 12, 13, 14, 17 }: with error code.
     ; cf. wiki.osdev.org/Exceptions
         align 16
         cli
-        push i
+        push qword i
         jmp interrupt_handler_common
         align 16
     %else
         align 16
         cli
-        push 0 ; dummy error code.
-        push i
+        push qword 0 ; dummy error code.
+        push qword i
         jmp interrupt_handler_common
         align 16 
     %endif
@@ -55,27 +55,27 @@ interrupt_handler_common:
     mov rsi, rsp
 
     ; call x86_64_do_irq in C with interrupt number as argument.
-    call x86_64_do_irq
+    call do_irq
 
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push rsi
-    push rbp
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
+    pop rax
+    pop rbx
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rbp
+    pop r8
+    pop r9
+    pop r10
+    pop r11
+    pop r12
+    pop r13
+    pop r14
+    pop r15
     pop rdi
     
     add rsp, 8
 
     ; set current rsp to tss.rsp0
 
-    iretq
+    o64 iret
     

@@ -23,6 +23,7 @@ namespace hal::x86_64
             void ack_interrupt() override;
 
         private:
+            void init_handler();
             void load_idt();
             interrupt_descriptor_64 idt[256];
             pic _pic;

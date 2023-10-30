@@ -34,7 +34,6 @@ namespace hal::x86_64
         pic my_pic;
         my_pic.unmask_irq(0);
         my_pic.unmask_irq(4);
-        my_pic.unmask_irq(5);
     }
 
     void pit_timer::configure_timer(uint16_t hz)

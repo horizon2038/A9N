@@ -22,7 +22,7 @@ _load_segment_register:
     retfq
 
 .reload_cs
-    mov ax, 0x10
+    mov ax, 0x0
     mov ds, ax
     mov es, ax
     mov fs, ax
