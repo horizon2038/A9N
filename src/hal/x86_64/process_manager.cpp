@@ -52,7 +52,6 @@ namespace hal::x86_64
 
         kernel::utility::logger::printk("entry_point_address : %llx\n", entry_point_address);
         kernel::utility::logger::printk("in-stack entry_point_address : %llx\n", *target_stack_pointer);
-
         // target_process->stack_pointer = convert_virtual_to_physical_address(target_process->stack_pointer);
     }
 

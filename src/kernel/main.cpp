@@ -241,19 +241,17 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
     kernel::kernel_object::memory_manager->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
-    logger::printk("init architecture\n");
-    hal_instance->_arch_initializer->init_architecture();
-
     logger::printk("init interrupt\n");
     hal_instance->_interrupt->init_interrupt();
     
     hal_instance->_interrupt->disable_interrupt_all();
 
+    logger::printk("init architecture\n");
+    hal_instance->_arch_initializer->init_architecture();
 
-    hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
+    // hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
     hal_instance->_interrupt->register_interrupt(4, (hal::interface::interrupt_handler) handle_serial);
-    // hal_instance->_interrupt->register_interrupt(14, (hal::interface::interrupt_handler) handle_page_fault);
-    // hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) handle_timer);
+    hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) exception_handler);
     hal_instance->_timer->init_timer();
 
     // test process_manager

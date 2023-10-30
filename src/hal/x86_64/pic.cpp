@@ -58,7 +58,7 @@ namespace hal::x86_64
         _port_io.write(PIC_SLAVE_DATA, 0x01); // set slave to normal mode
         _port_io.io_wait();
 
-        _port_io.write(PIC_MASTER_DATA, 0xef);
+        _port_io.write(PIC_MASTER_DATA, 0xff);
         _port_io.io_wait();
         _port_io.write(PIC_SLAVE_DATA, 0xff);
         _port_io.io_wait();
