@@ -42,6 +42,8 @@ namespace hal::x86_64
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
         uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(target_interrupt_handler);
 
+        kernel::utility::logger::printk("register interrupt : 0x%016llx\n", interrupt_handler_address);
+
         idt_entry->offset_low = interrupt_handler_address & 0xffff;
         idt_entry->kernel_cs = 0x08; // kernel code segment
         idt_entry->ist = 0;

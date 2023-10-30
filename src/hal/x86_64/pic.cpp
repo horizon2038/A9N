@@ -8,13 +8,13 @@ namespace hal::x86_64
 {
     namespace
     {
-        constexpr uint16_t PIC_MASTER = 0x20;
-        constexpr uint16_t PIC_MASTER_COMMAND = 0x20;
-        constexpr uint16_t PIC_MASTER_DATA = 0x21;
-        constexpr uint16_t PIC_SLAVE = 0xa0;
-        constexpr uint16_t PIC_SLAVE_COMMAND = 0xa0;
-        constexpr uint16_t PIC_SLAVE_DATA = 0xa1;
-        constexpr uint16_t PIC_EOI = 0x20;
+        constexpr static uint8_t PIC_MASTER = 0x20;
+        constexpr static uint8_t PIC_MASTER_COMMAND = 0x20;
+        constexpr static uint8_t PIC_MASTER_DATA = 0x21;
+        constexpr static uint8_t PIC_SLAVE = 0xa0;
+        constexpr static uint8_t PIC_SLAVE_COMMAND = 0xa0;
+        constexpr static uint8_t PIC_SLAVE_DATA = 0xa1;
+        constexpr static uint8_t PIC_EOI = 0x20;
     }
 
     pic::pic() : _port_io()
@@ -32,28 +32,43 @@ namespace hal::x86_64
 
     void pic::remap_pic(uint8_t master_offset, uint8_t slave_offset)
     {
-        /* mask
         uint8_t master_mask;
         uint8_t slave_mask;
 
         master_mask = _port_io.read(PIC_MASTER_DATA);
         slave_mask = _port_io.read(PIC_SLAVE_DATA);
-        */
 
         _port_io.write(PIC_MASTER_COMMAND, 0x11); // send init command to master
+        _port_io.io_wait();
         _port_io.write(PIC_SLAVE_COMMAND, 0x11); // send init command to slave
+        _port_io.io_wait();
 
         _port_io.write(PIC_MASTER_DATA, master_offset); // assign master irq
+        _port_io.io_wait();
         _port_io.write(PIC_SLAVE_DATA, slave_offset); // assign slave irq
+        _port_io.io_wait();
 
         _port_io.write(PIC_MASTER_DATA, 0x04); // notify connection to master
+        _port_io.io_wait();
         _port_io.write(PIC_SLAVE_DATA, 0x02); // notify connection to slave
+        _port_io.io_wait();
 
         _port_io.write(PIC_MASTER_DATA, 0x01); // set master to normal mode
+        _port_io.io_wait();
         _port_io.write(PIC_SLAVE_DATA, 0x01); // set slave to normal mode
+        _port_io.io_wait();
 
-        _port_io.write(PIC_MASTER_DATA, 0xff);
+        _port_io.write(PIC_MASTER_DATA, 0xef);
+        _port_io.io_wait();
         _port_io.write(PIC_SLAVE_DATA, 0xff);
+        _port_io.io_wait();
+
+        _port_io.write(PIC_MASTER_COMMAND, 0x20);
+        _port_io.io_wait();
+
+        // _port_io.write(PIC_MASTER_DATA, master_mask);
+        // _port_io.write(PIC_SLAVE_DATA, slave_mask);
+
     }
 
     void pic::wait()
@@ -86,7 +101,7 @@ namespace hal::x86_64
             irq_number -= 8;
         }
 
-        value = _port_io.read(port) | ~(1 << irq_number);
+        value = _port_io.read(port) | (1 << irq_number);
         _port_io.write(port, value);
     }
 

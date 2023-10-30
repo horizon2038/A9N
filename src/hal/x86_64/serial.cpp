@@ -25,17 +25,15 @@ namespace hal::x86_64
 
     void serial::init_serial(uint32_t baud_rate)
     {
-        this->_port_io.write(COM_1 + 1, 0x00);    // Disable all interrupts
-        this->_port_io.write(COM_1 + 3, 0x80);    // Enable DLAB (set baud rate divisor)
-        this->_port_io.write(COM_1 + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
-        this->_port_io.write(COM_1 + 1, 0x00);    //                  (hi byte)
-        this->_port_io.write(COM_1 + 3, 0x03);    // 8 bits, no parity, one stop bit
-        this->_port_io.write(COM_1 + 2, 0xc7);    // Enable FIFO, clear them, with 14-byte threshold
-        this->_port_io.write(COM_1 + 4, 0x0b);    // IRQs enabled, RTS/DSR set
-        this->_port_io.write(COM_1 + 4, 0x0f);    // IRQs enabled, RTS/DSR set
-        this->_port_io.write(COM_1 + 1, 0x03);    // IRQs enabled, RTS/DSR set
-        // If serial is not faulty set it in normal operation mode
-        // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
+        this->_port_io.write(COM_1 + 1, 0x00);
+        this->_port_io.write(COM_1 + 3, 0x80);
+        this->_port_io.write(COM_1 + 0, 0x03);
+        this->_port_io.write(COM_1 + 1, 0x00);
+        this->_port_io.write(COM_1 + 3, 0x03);
+        this->_port_io.write(COM_1 + 2, 0xc7);
+        this->_port_io.write(COM_1 + 4, 0x0b);
+        this->_port_io.write(COM_1 + 4, 0x0f);
+        this->_port_io.write(COM_1 + 1, 0x03);
     }
 
     uint8_t serial::read_serial()
