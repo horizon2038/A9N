@@ -1,3 +1,5 @@
+extern x86_64_do_irq
+
 %macro INTERRUPT_HANDLER 1
 
 global interrupt_handler_%1
@@ -53,7 +55,6 @@ interrupt_handler_common:
     mov rsi, rsp
 
     ; call x86_64_do_irq in C with interrupt number as argument.
-    extern x86_64_do_irq
     call x86_64_do_irq
 
     push rax
@@ -73,6 +74,8 @@ interrupt_handler_common:
     pop rdi
     
     add rsp, 8
+
+    ; set current rsp to tss.rsp0
 
     iretq
     
