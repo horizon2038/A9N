@@ -4,6 +4,8 @@ section .text
 global _load_gdt
 global _load_segment_register
 
+global _load_task_register
+
 gdtr DW 0
     DQ 0
 
@@ -28,3 +30,7 @@ _load_segment_register:
     mov ss, ax
     ret
 ; setup hardware-specific processing.
+
+_load_task_register:
+    ltr di
+    ret

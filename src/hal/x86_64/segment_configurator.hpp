@@ -12,9 +12,10 @@ namespace hal::x86_64
         constexpr static uint16_t KERNEL_DS = 0x10;
         constexpr static uint16_t USER_CS = 0x20;
         constexpr static uint16_t USER_DS = 0x28;
+        constexpr static uint16_t KERNEL_TSS = 0x30;
     };
 
-    struct tast_state_segment
+    struct task_state_segment
     {
         uint32_t reserved_0;
         uint64_t rsp_0;
@@ -31,7 +32,7 @@ namespace hal::x86_64
         uint64_t reserved_2;
         uint16_t reserved_3;
         uint16_t iobp_offset;
-    };
+    }__attribute__((packed));
 
     struct global_descriptor_table
     {
@@ -53,15 +54,18 @@ namespace hal::x86_64
             ~segment_configurator();
 
             void init_gdt();
-            void init_tss();
+            void configure_rsp0(uint64_t kernel_stack_pointer);
 
         private:
             void configure_gdt();
+            void configure_tss();
+
             void load_gdt();
             void load_segment_register(uint16_t code_segment_register);
+            void load_task_register(uint16_t segment_register);
 
             // it needs to be rewritten because it does not take into account mp
-            static tast_state_segment tss;
+            static task_state_segment tss;
             static global_descriptor_table gdt;
 
     };
