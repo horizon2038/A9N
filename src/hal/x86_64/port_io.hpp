@@ -11,6 +11,13 @@ namespace hal::x86_64
         public:
             uint8_t read(uint16_t address) override;
             void write(uint16_t address, uint8_t data) override;
+            static inline void io_wait()
+            {
+                do
+                {
+                }
+                while (0);
+            }
     };
 }
 

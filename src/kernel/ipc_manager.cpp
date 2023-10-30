@@ -28,6 +28,7 @@ namespace kernel
 
         if (!is_ready)
         {
+            std::memset(msg, 0, sizeof(message));
             current_process->status = process_status::BLOCKED;
             receiver_process->send_wait_queue.enqueue(current_process);
             kernel_object::process_manager->switch_context();
@@ -54,6 +55,7 @@ namespace kernel
 
         if (!dequeued || (source_process_id != ANY_PROCESS && sender_process->id != source_process_id))
         {
+            std::memset(msg, 0, sizeof(message));
             current_process->status = process_status::BLOCKED;
             kernel_object::process_manager->switch_context();
         }
