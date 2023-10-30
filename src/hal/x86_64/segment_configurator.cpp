@@ -70,7 +70,7 @@ namespace hal::x86_64
 
     void segment_configurator::load_task_register(uint16_t segment_register)
     {
-        _load_segment_register(segment_register);
+        _load_task_register(segment_register);
     }
 
     void segment_configurator::configure_rsp0(kernel::virtual_address kernel_stack_pointer)
