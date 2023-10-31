@@ -164,6 +164,10 @@ namespace kernel::utility
                 write_uint(destination, __builtin_va_arg(args, unsigned int), width, zero_pad);
                 break;
 
+            case 'c':
+                write_char(destination, __builtin_va_arg(args, int));  // char is promoted to int when passed through ...
+                break;
+
             default:
                 write_char(destination, '%');
                 write_char(destination, **format_pointer);

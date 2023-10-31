@@ -123,9 +123,6 @@ namespace hal::x86_64
 
         uint8_t master_mask = _port_io.read(PIC_MASTER_DATA);
         uint8_t slave_mask = _port_io.read(PIC_SLAVE_DATA);
-
-        kernel::utility::logger::printk("Master PIC mask: 0x%02X\n", master_mask);
-        kernel::utility::logger::printk("Slave PIC mask: 0x%02X\n", slave_mask);
     }
 
     void pic::end_of_interrupt_pic(uint8_t irq_number)

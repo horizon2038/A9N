@@ -10,8 +10,8 @@ namespace kernel
     void ipc_manager::send(int32_t receiver_process_id, message *msg)
     {
         process* receiver_process = kernel_object::process_manager->search_process_from_id(receiver_process_id);
-        utility::logger::printk("ipc_send : %s -> %s\n", kernel_object::process_manager->current_process->name, receiver_process->name);
-        utility::logger::printk("send message | type : %d | data : %s\n", msg->type, reinterpret_cast<const char*>(msg->data));
+        // utility::logger::printk("ipc_send : %s -> %s\n", kernel_object::process_manager->current_process->name, receiver_process->name);
+        // utility::logger::printk("send message | type : %d | data : %s\n", msg->type, reinterpret_cast<const char*>(msg->data));
 
         process* current_process = kernel_object::process_manager->current_process;
         std::memcpy(&current_process->message_buffer, msg, sizeof(message));
@@ -61,7 +61,7 @@ namespace kernel
         }
         else
         {
-            utility::logger::printk("ipc_receive : %s <- %s\n", kernel_object::process_manager->current_process->name, sender_process->name);
+            // utility::logger::printk("ipc_receive : %s <- %s\n", kernel_object::process_manager->current_process->name, sender_process->name);
             std::memcpy(msg, &sender_process->message_buffer, sizeof(message));
 
             sender_process->status = process_status::READY;

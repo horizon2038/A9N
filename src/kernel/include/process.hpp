@@ -83,6 +83,9 @@ namespace kernel
             message_queue send_wait_queue;
             int32_t receive_from;
 
+            // resolver solves various process-related problems.
+            process *resolver;
+
         private:
 
     };

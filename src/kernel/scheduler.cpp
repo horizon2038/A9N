@@ -66,7 +66,7 @@ namespace kernel
         current_process->quantum--;
         if (current_process->quantum == 0 || current_process->status == process_status::BLOCKED)
         {
-            utility::logger::printk("%s : %016s [ %04d ]\n", current_process->name, current_process->quantum == 0 ? "TIMEOUT" : "BLOCKED", current_process->quantum);
+            // utility::logger::printk("%s : %016s [ %04d ]\n", current_process->name, current_process->quantum == 0 ? "TIMEOUT" : "BLOCKED", current_process->quantum);
             current_process->quantum = QUANTUM_MAX;
             move_to_end(current_process, priority_groups[highest_priority]);
         }

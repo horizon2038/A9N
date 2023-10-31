@@ -37,6 +37,8 @@
 
 #include <library/string.hpp>
 
+#include <library/string.hpp>
+
 void kernel_main(void);
 
 
@@ -148,7 +150,7 @@ void read_serial()
         uint8_t serial_data = hal_instance->_serial->read_serial();
         if (serial_data == 0xd)
         {
-            std::strcpy(reinterpret_cast<char*>(m.data), "\r\nhorizon@A9N >");
+            std::strcpy(reinterpret_cast<char*>(m.data), "\r\n");
             kernel::kernel_object::ipc_manager->send(2, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
@@ -171,6 +173,12 @@ void read_serial()
 
 void console()
 {
+    char buffer[256];
+    uint32_t buffer_index = 0;
+    std::memset(buffer, 0, sizeof(buffer));
+
+    kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
+
     while(1)
     {
         asm volatile ("sti");
@@ -180,11 +188,65 @@ void console()
         }
         message m;
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
-        if ((char*)m.data[0] == 0)
+
+        // Assuming that m.data holds ASCII characters
+        char received_char = reinterpret_cast<char*>(m.data)[0];
+
+        if(received_char == '\0')  // no character received
         {
             continue;
         }
-        kernel::utility::logger::printk("horizon@A9N > " "%s\n", reinterpret_cast<char*>(m.data));
+        else if(received_char == '\r')  // Enter key
+        {
+            buffer[buffer_index] = '\0';  // null terminate the string
+
+            // Prepare a message to send buffer content to process 3
+            message buffer_message;
+            buffer_message.type = 1;  // assuming 1 is a generic message type
+
+            // Manually copy buffer content to buffer_message.data
+            for (uint32_t i = 0; i <= buffer_index; ++i)
+            {
+                buffer_message.data[i] = buffer[i];
+            }
+
+            kernel::kernel_object::ipc_manager->send(3, &buffer_message);  // send buffer content to process 3
+            buffer_index = 0;  // reset buffer index
+            std::memset(buffer, 0, sizeof(buffer));  // clear the buffer
+            kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
+        }
+
+        else if(received_char == '\b')  // Backspace key
+        {
+            if(buffer_index > 0)
+            {
+                buffer[--buffer_index] = '\0';  // remove the last character from buffer
+                kernel::utility::logger::printn("\b \b");  // handle backspace on terminal
+            }
+        }
+        else if(buffer_index < sizeof(buffer) - 1)  // buffer not full
+        {
+            buffer[buffer_index++] = received_char;  // store the character in buffer
+            kernel::utility::logger::printn("%c", received_char);  // print the received character
+        }
+    }
+}
+
+void console_out()
+{
+    while(1)
+    {
+        asm volatile ("sti");
+        message m;
+        // Assuming process ID 3 is for console_out
+        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);  
+
+        // Check message type, assuming 1 is the message type for console output
+        if(m.type == 1)
+        {
+            char* received_data = reinterpret_cast<char*>(m.data);
+            kernel::utility::logger::printn("\ncout said : %s\n", received_data);
+        }
     }
 }
 
@@ -210,25 +272,27 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     logger::split();
 
     logger::printk("init hal\n");
-    logger::printk("init port_io\n");
+    logger::printk("init io\n");
     logger::printk("init serial\n");
     logger::printk("init logger\n");
 
-    logger::printk("create memory_manager\n");
+    logger::printk("init memory_manager\n");
     kernel::kernel_object::memory_manager = new(kernel::kernel_object::memory_manager_buffer) kernel::memory_manager(*hal_instance->_memory_manager, target_boot_info->boot_memory_info);
 
     logger::printk("test memory_manager\n");
     kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
     kernel::kernel_object::memory_manager->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
-    logger::printk("create interrupt_manager\n");
+    logger::printk("init interrupt_manager\n");
     kernel::kernel_object::interrupt_manager = new(kernel::kernel_object::interrupt_manager_buffer) kernel::interrupt_manager(*hal_instance->_interrupt);
 
+    logger::printk("init ipc_manager\n");
+    kernel::kernel_object::ipc_manager = new(kernel::kernel_object::ipc_manager_buffer) kernel::ipc_manager();
 
-    logger::printk("init interrupt\n");
+    logger::printk("init interrupt_manager\n");
     kernel::kernel_object::interrupt_manager->init();
     
-    hal_instance->_interrupt->disable_interrupt_all();
+    kernel::kernel_object::interrupt_manager->disable_interrupt_all();
 
     logger::printk("init architecture\n");
     hal_instance->_arch_initializer->init_architecture();
@@ -245,8 +309,9 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     // kernel::kernel_object::process_manager->create_process("process_4", reinterpret_cast<kernel::virtual_address>(process_4));
     kernel::kernel_object::process_manager->create_process("read_serial", reinterpret_cast<kernel::virtual_address>(read_serial));
     kernel::kernel_object::process_manager->create_process("console", reinterpret_cast<kernel::virtual_address>(console));
+    kernel::kernel_object::process_manager->create_process("console_out", reinterpret_cast<kernel::virtual_address>(console_out));
 
-    hal_instance->_interrupt->enable_interrupt_all();
+    kernel::kernel_object::interrupt_manager->enable_interrupt_all();
 
     // process_1();
     

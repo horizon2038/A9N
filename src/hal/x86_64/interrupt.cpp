@@ -17,15 +17,18 @@ namespace hal::x86_64
     extern "C" void do_irq(uint16_t irq_number, uint32_t error_code)
     {
         // kernel::utility::logger::printk("irq_number : %d\n", irq_number);
+        bool is_exception = false;
+        char *exception_type = "TODO : configure exception type";
+
         switch (irq_number)
         {
             case 0:
                 interrupt_handler_table[irq_number]();
+                break;
 
             default:
-                break;
+                kernel::utility::logger::printk("exception %d : error_code\n", exception_type, error_code);
         }
-        // hal::x86_64::interrupt my_interrupt;
     }
 
     interrupt::interrupt()
