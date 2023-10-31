@@ -4,6 +4,9 @@
 #include "common.hpp"
 #include <interface/process_manager.hpp>
 
+#include "segment_configurator.hpp"
+#include "paging.hpp"
+
 namespace hal::x86_64
 {
     class process_manager final : public hal::interface::process_manager
@@ -16,6 +19,7 @@ namespace hal::x86_64
             void delete_process(kernel::process *target_process) override;
         
         private:
+            segment_configurator _segment_configurator;
     };
 }
 
