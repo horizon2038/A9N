@@ -18,6 +18,7 @@
 #include <interface/timer.hpp>
 #include "../hal/x86_64/pit_timer.hpp"
 #include "common.hpp"
+#include "interrupt_manager.hpp"
 #include "ipc_manager.hpp"
 #include "process.hpp"
 
@@ -48,27 +49,6 @@ __attribute__((interrupt)) void handle_timer(void *data)
 {
     hal_instance->_interrupt->ack_interrupt();
     kernel::kernel_object::process_manager->switch_context();
-}
-
-__attribute__((interrupt))
-void handle_page_fault(void *data, uint64_t error_code)
-{
-    kernel::utility::logger::printk("page_fault : %llx\n", error_code);
-    uint64_t cr2_value;
-    asm volatile
-    (
-        "mov %%cr2, %0;"
-        : "=r"(cr2_value)
-        :
-        :
-    );
-    kernel::utility::logger::printk("CR2 : 0x%016llx\n", cr2_value);
-}
-
-__attribute__((interrupt))
-void exception_handler(void *data, uint64_t error_code)
-{
-    kernel::utility::logger::printk("exception\n", error_code);
 }
 
 __attribute__((interrupt))
@@ -241,8 +221,12 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
     kernel::kernel_object::memory_manager->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
+    logger::printk("create interrupt_manager\n");
+    kernel::kernel_object::interrupt_manager = new(kernel::kernel_object::interrupt_manager_buffer) kernel::interrupt_manager(*hal_instance->_interrupt);
+
+
     logger::printk("init interrupt\n");
-    hal_instance->_interrupt->init_interrupt();
+    kernel::kernel_object::interrupt_manager->init();
     
     hal_instance->_interrupt->disable_interrupt_all();
 
@@ -250,8 +234,6 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
     hal_instance->_arch_initializer->init_architecture();
 
     // hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
-    hal_instance->_interrupt->register_interrupt(4, (hal::interface::interrupt_handler) handle_serial);
-    hal_instance->_interrupt->register_interrupt(13, (hal::interface::interrupt_handler) exception_handler);
     hal_instance->_timer->init_timer();
 
     // test process_manager

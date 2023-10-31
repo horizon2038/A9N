@@ -14,20 +14,20 @@ namespace hal::x86_64
     using interrupt_handler_asm = uint8_t[16];
     extern "C" interrupt_handler_asm interrupt_handlers[];
 
-    __attribute__((interrupt))
-    extern "C" void none_handler(void* data)
+    extern "C" void do_irq(uint16_t irq_number, uint32_t error_code)
     {
-    }
-
-    extern "C" void do_irq(uint16_t irq_number)
-    {
-        kernel::utility::logger::printk("irq_number : %d\n", irq_number);
-        if (irq_number == 0)
+        // kernel::utility::logger::printk("irq_number : %d\n", irq_number);
+        switch (irq_number)
         {
-            kernel::kernel_object::process_manager->switch_context();
+            case 0:
+                interrupt_handler_table[irq_number]();
+
+            default:
+                break;
         }
         // hal::x86_64::interrupt my_interrupt;
     }
+
     interrupt::interrupt()
         : _pic()
     {
@@ -51,7 +51,7 @@ namespace hal::x86_64
     {
         for (uint16_t i = 0; i < 256; i++)
         {
-            register_interrupt(i, (hal::interface::interrupt_handler)&interrupt_handlers[i]);
+            register_idt_handler(i, (hal::interface::interrupt_handler)&interrupt_handlers[i]);
         }
     }
 
@@ -63,12 +63,10 @@ namespace hal::x86_64
         disable_interrupt_all();
     }
 
-    void interrupt::register_interrupt(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler)
+    void interrupt::register_idt_handler(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
         uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(target_interrupt_handler);
-
-        kernel::utility::logger::printk("register interrupt : %lu : 0x%016llx\n", irq_number, interrupt_handler_address);
 
         idt_entry->offset_low = interrupt_handler_address & 0xffff;
         idt_entry->kernel_cs = 0x08; // kernel code segment
@@ -78,6 +76,14 @@ namespace hal::x86_64
         idt_entry->offset_high = (interrupt_handler_address >> 32) & 0xffffffff;
         idt_entry->reserved = 0;
     };
+
+    void interrupt::register_handler(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler)
+    {
+        interrupt_handler_table[irq_number] = target_interrupt_handler;
+        uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(target_interrupt_handler);
+
+        kernel::utility::logger::printk("hal_register_interrupt : %lu : 0x%016llx\n", irq_number, interrupt_handler_address);
+    }
 
     void interrupt::enable_interrupt(uint32_t irq_number)
     {
