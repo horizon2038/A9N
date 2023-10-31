@@ -8,13 +8,15 @@
 
 namespace hal::x86_64
 {
+    static inline hal::interface::interrupt_handler interrupt_handler_table[256];
+
     class interrupt final : public hal::interface::interrupt
     {
         public:
             interrupt();
             ~interrupt();
             void init_interrupt() override;
-            void register_interrupt(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler) override;
+            void register_handler(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler) override;
             void enable_interrupt(uint32_t irq_number) override;
             void disable_interrupt(uint32_t irq_number) override;
             void enable_interrupt_all() override;
@@ -25,6 +27,7 @@ namespace hal::x86_64
         private:
             void init_handler();
             void load_idt();
+            void register_idt_handler(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler);
             interrupt_descriptor_64 idt[256];
             pic _pic;
 

@@ -6,8 +6,7 @@
 namespace hal::interface
 {
 
-    using interrupt_handler = void (*)(void*);
-    // typedef void (*interrupt_handler) ();
+    using interrupt_handler = void (*)();
 
     typedef union
     {
@@ -18,15 +17,14 @@ namespace hal::interface
     enum class interrupt_type
     {
         INTERRUPT,
-        EXCEPTION,
-        SYSTEMCALL
+        EXCEPTION
     };
 
     class interrupt
     {
         public:
             virtual void init_interrupt() = 0;
-            virtual void register_interrupt(uint32_t irq_number, interrupt_handler target_interrupt_handler) = 0;
+            virtual void register_handler(uint32_t irq_number, interrupt_handler target_interrupt_handler) = 0;
             virtual void enable_interrupt(uint32_t irq_number) = 0;
             virtual void disable_interrupt(uint32_t irq_number) = 0;
             virtual void enable_interrupt_all() = 0;
