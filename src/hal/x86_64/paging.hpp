@@ -9,6 +9,7 @@
 namespace hal::x86_64
 {
     extern "C" uint64_t __kernel_pml4;
+    extern "C" void _load_cr3(kernel::physical_address cr3_address);
     extern "C" void _flush_tlb();
     extern "C" void _invalidate_page(kernel::virtual_address target_virtual_address);
 

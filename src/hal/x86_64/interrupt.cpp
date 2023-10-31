@@ -26,6 +26,7 @@ namespace hal::x86_64
         {
             kernel::kernel_object::process_manager->switch_context();
         }
+        // hal::x86_64::interrupt my_interrupt;
     }
     interrupt::interrupt()
         : _pic()
@@ -48,7 +49,7 @@ namespace hal::x86_64
 
     void interrupt::init_handler()
     {
-        for (uint16_t i = 0; i < 25; i++)
+        for (uint16_t i = 0; i < 256; i++)
         {
             register_interrupt(i, (hal::interface::interrupt_handler)&interrupt_handlers[i]);
         }

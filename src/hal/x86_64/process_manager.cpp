@@ -5,11 +5,14 @@
 #include <library/string.hpp>
 #include <library/logger.hpp>
 
+#include "paging.hpp"
+
 extern "C" void _switch_context(kernel::virtual_address *preview_stack_pointer, kernel::virtual_address *next_stack_pointer);
 
 namespace hal::x86_64
 {
     process_manager::process_manager()
+        : _segment_configurator()
     {
     }
 
@@ -19,6 +22,8 @@ namespace hal::x86_64
 
     void process_manager::switch_context(kernel::process *preview_process, kernel::process *next_process)
     {
+        _load_cr3(next_process->page_table);
+        _segment_configurator.configure_rsp0(next_process->stack_pointer);
         _switch_context(&preview_process->stack_pointer, &next_process->stack_pointer);
     }
 
