@@ -50,6 +50,7 @@ namespace kernel::utility
             static void debug(const char *message, ...); 
             static void error(const char *message); 
             static void printk(const char *format, ...);
+            static void printn(const char *format, ...);
             static void split(); // for clean-log
             static void a9nout();
         

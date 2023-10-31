@@ -52,6 +52,14 @@ namespace kernel::utility
         __builtin_va_end(args);
     }
 
+    void logger::printn(const char *format, ...)
+    {
+        __builtin_va_list args;
+        __builtin_va_start(args, format);
+        this_logger->_print.vprintf(format, args);
+        __builtin_va_end(args);
+    }
+
     void logger::split()
     {
         this_logger->_print.printf("\n");
