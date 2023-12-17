@@ -102,9 +102,7 @@ namespace kernel
 
     void process_manager::switch_context()
     {
-        // utility::logger::printk("kernel_switch_context\n");
         process *temp_current_process = current_process;
-        // process *next_process = _scheduler.schedule_next_process();
         process *next_process = _scheduler.schedule_next_process(priority_groups, highest_priority);
         if (next_process == nullptr)
         {
@@ -112,8 +110,6 @@ namespace kernel
         }
 
         current_process = next_process;
-        // utility::logger::printk("current : 0x%llx, next : 0x%llx\n", reinterpret_cast<uint64_t>(temp_current_process), reinterpret_cast<uint64_t>(next_process));
-        // utility::logger::split();
         _process_manager.switch_context(temp_current_process, next_process);
     }
 

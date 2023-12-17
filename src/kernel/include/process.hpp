@@ -42,7 +42,7 @@ namespace kernel
             int count = 0;
     };
 
-    constexpr static uint32_t QUANTUM_MAX = 20;
+    constexpr static uint32_t QUANTUM_MAX = 10;
     constexpr static uint32_t STACK_SIZE_MAX = 8192;
     constexpr static uint16_t PROCESS_NAME_MAX = 128;
 
@@ -74,8 +74,11 @@ namespace kernel
             process *next;
 
             // hardware-context
+            void *arch_context;
+
             uint8_t stack[STACK_SIZE_MAX];
             virtual_address stack_pointer;
+
             physical_address page_table;
 
             // for ipc

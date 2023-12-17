@@ -20,13 +20,13 @@ interrupt_handlers:
     ; Exception { 8, 10, 11, 12, 13, 14, 17 }: with error code.
     ; cf. wiki.osdev.org/Exceptions
         align 16
-        cli
+        ; cli
         push qword i
         jmp interrupt_handler_common
         align 16
     %else
         align 16
-        cli
+        ; cli
         push qword 0 ; dummy error code.
         push qword i
         jmp interrupt_handler_common
@@ -52,7 +52,7 @@ interrupt_handler_common:
     push rbx
     push rax
 
-    mov rsi, rsp
+    mov rsi, [rsp + 8 * 15] ; error code (stack [8 + 8 * 15)
 
     ; call x86_64_do_irq in C with interrupt number as argument.
     call do_irq
