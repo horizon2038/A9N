@@ -2,6 +2,8 @@
 
 #include "kernel.hpp"
 
+#include <library/logger.hpp>
+
 namespace kernel
 {
     interrupt_manager::interrupt_manager(hal::interface::interrupt &target_interrupt)
@@ -38,8 +40,9 @@ namespace kernel
     // this handler is required
     extern "C" void handle_timer()
     {
-        kernel::kernel_object::process_manager->switch_context();
+        // kernel::utility::logger::printk("handle_timer\n");
         kernel::kernel_object::interrupt_manager->ack_interrupt();
+        kernel::kernel_object::process_manager->switch_context();
 
     }
 }

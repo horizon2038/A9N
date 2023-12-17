@@ -60,6 +60,8 @@ namespace kernel
             virtual_address convert_physical_to_virtual_address(physical_address target_physical_address);
             physical_address convert_virtual_to_physical_address(virtual_address target_virtual_address);
 
+            void info_physical_memory();
+
 
         private:
             memory_block *head_memory_block;

@@ -47,118 +47,25 @@ hal::interface::hal *hal_instance;
 constexpr uint32_t hal_factory_size = sizeof(hal::x86_64::hal_factory);
 alignas(hal::x86_64::hal_factory) static char hal_factory_buffer[hal_factory_size];
 
-__attribute__((interrupt)) void handle_timer(void *data)
-{
-    hal_instance->_interrupt->ack_interrupt();
-    kernel::kernel_object::process_manager->switch_context();
-}
-
-__attribute__((interrupt))
-extern "C" void handle_serial(void *data)
-{
-    uint8_t serial_data = hal_instance->_serial->read_serial();
-    if (serial_data == 13)
-    {
-        serial_data = '\n';
-    }
-    kernel::utility::logger::printk("%x", serial_data);
-    hal_instance->_interrupt->ack_interrupt();
-}
-
-void process_1()
-{
-    while (true)
-    {
-        asm volatile ("sti");
-        for (uint32_t i = 0; i < 100000000; i++)
-        {
-            asm volatile ("nop");
-        }
-        message m;
-        m.type = 1;
-        std::strcpy(reinterpret_cast<char*>(m.data), "hello from process_1");
-        kernel::kernel_object::ipc_manager->send(2, &m);
-        kernel::utility::logger::printk("process_1\n");
-        kernel::utility::logger::split();
-    }
-}
-
-void process_2()
-{
-    while (true)
-    {
-        asm volatile ("sti");
-        for (uint32_t i = 0; i < 100000000; i++)
-        {
-            asm volatile ("nop");
-        }
-        message m;
-        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
-        kernel::utility::logger::printk("process_2\n");
-        kernel::utility::logger::printk("receive : %s\n", reinterpret_cast<char*>(m.data));
-        kernel::utility::logger::split();
-    }
-}
-
-void process_3()
-{
-    while(true)
-    {
-        asm volatile ("sti");
-        for (uint32_t i = 0; i < 1000000000; i++)
-        {
-            asm volatile ("nop");
-        }
-        message m;
-        m.type = 1;
-        std::strcpy(reinterpret_cast<char*>(m.data), "hello from process_3");
-        kernel::kernel_object::ipc_manager->send(2, &m);
-        kernel::utility::logger::printk("process_3\n");
-        kernel::utility::logger::split();
-    }
-}
-
-void process_4()
-{
-    while(true)
-    {
-        asm volatile ("sti");
-        for (uint32_t i = 0; i < 1000000000; i++)
-        {
-            asm volatile ("nop");
-        }
-        message m;
-        m.type = 1;
-        std::strcpy(reinterpret_cast<char*>(m.data), "hello from process_4");
-        kernel::kernel_object::ipc_manager->send(2, &m);
-        kernel::utility::logger::printk("process_4\n");
-        kernel::utility::logger::split();
-    }
-}
-
 void read_serial()
 {
     while(1)
     {
         asm volatile ("sti");
-        for (uint32_t i = 0; i < 1000; i++)
-        {
-            asm volatile ("nop");
-        }
         message m;
         m.type = 1;
         uint8_t serial_data = hal_instance->_serial->read_serial();
         if (serial_data == 0xd)
         {
             std::strcpy(reinterpret_cast<char*>(m.data), "\r\n");
-            kernel::kernel_object::ipc_manager->send(2, &m);
+            kernel::kernel_object::ipc_manager->send(4, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
         }
         if (serial_data == 0x7f)
         {
             std::strcpy(reinterpret_cast<char*>(m.data), "\b\033[K");
-            kernel::kernel_object::ipc_manager->send(2, &m);
+            kernel::kernel_object::ipc_manager->send(4, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
         }
@@ -166,7 +73,7 @@ void read_serial()
         c[0] = serial_data;
         c[1] = '\0';
         std::strcpy(reinterpret_cast<char*>(m.data), c);
-        kernel::kernel_object::ipc_manager->send(2, &m);
+        kernel::kernel_object::ipc_manager->send(4, &m);
         hal_instance->_interrupt->ack_interrupt();
     }
 }
@@ -182,10 +89,6 @@ void console()
     while(1)
     {
         asm volatile ("sti");
-        for (uint32_t i = 0; i < 1000; i++)
-        {
-            asm volatile ("nop");
-        }
         message m;
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
 
@@ -210,7 +113,7 @@ void console()
                 buffer_message.data[i] = buffer[i];
             }
 
-            kernel::kernel_object::ipc_manager->send(3, &buffer_message);  // send buffer content to process 3
+            kernel::kernel_object::ipc_manager->send(5, &buffer_message);  // send buffer content to process 3
             buffer_index = 0;  // reset buffer index
             std::memset(buffer, 0, sizeof(buffer));  // clear the buffer
             kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
@@ -241,14 +144,82 @@ void console_out()
         // Assuming process ID 3 is for console_out
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);  
 
-        // Check message type, assuming 1 is the message type for console output
-        if(m.type == 1)
+        char* received_data = reinterpret_cast<char*>(m.data);
+
+        if (m.type != 1)
         {
-            char* received_data = reinterpret_cast<char*>(m.data);
-            kernel::utility::logger::printn("\ncout said : %s\n", received_data);
+            continue;
+        }
+        kernel::utility::logger::printn("\ncout said : %s\n", received_data);
+
+        if (std::strcmp(received_data, "about") == 0)
+        {
+            kernel::utility::logger::a9nout();
+        }
+
+        if (std::strcmp(received_data, "syscall") == 0)
+        {
+            asm volatile ("int $0x80" ::: "cc", "memory");
+        }
+        
+        if (std::strcmp(received_data, "info pm") == 0)
+        {
+            message m2;
+            m2.type = 1;
+            // Assuming process ID 3 is for console_out
+            std::strcpy(reinterpret_cast<char*>(m2.data), "info pm");
+            kernel::kernel_object::ipc_manager->send(2, &m2);  
+        }
+        if (std::strcmp(received_data, "mitoujr") == 0)
+        {
+            kernel::utility::logger::mitoujr();
         }
     }
 }
+
+void info_mem()
+{
+    while(1)
+    {
+        asm volatile ("sti");
+        message m;
+        kernel::kernel_object::ipc_manager->receive(3, &m);  
+        if (m.type != 1)
+        {
+            continue;
+        }
+        kernel::kernel_object::memory_manager->info_physical_memory();
+    }
+}
+
+void alpha()
+{
+    asm volatile ("sti");
+    kernel::utility::logger::printn("alpha\n");
+    kernel::kernel_object::process_manager->create_process("read_serial", reinterpret_cast<kernel::virtual_address>(read_serial));
+    kernel::kernel_object::process_manager->create_process("console", reinterpret_cast<kernel::virtual_address>(console));
+    kernel::kernel_object::process_manager->create_process("console_out", reinterpret_cast<kernel::virtual_address>(console_out));
+    // read_serial : 3
+    // console : 4
+    // console_out : 5
+    while (true)
+    {
+        asm volatile ("sti");
+        message m;
+        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
+        if (m.type != 1)
+        {
+            continue;
+        }
+        char* received_data = reinterpret_cast<char*>(m.data);
+        kernel::utility::logger::printk("received : %s\n", received_data);
+        if (std::strcmp(received_data, "info pm") == 0)
+        {
+            kernel::kernel_object::memory_manager->info_physical_memory();
+        }
+    }
+}
+
 
 extern "C" int kernel_entry(boot_info *target_boot_info)
 {
@@ -285,36 +256,37 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 
     logger::printk("init interrupt_manager\n");
     kernel::kernel_object::interrupt_manager = new(kernel::kernel_object::interrupt_manager_buffer) kernel::interrupt_manager(*hal_instance->_interrupt);
+    kernel::kernel_object::interrupt_manager->init();
 
     logger::printk("init ipc_manager\n");
     kernel::kernel_object::ipc_manager = new(kernel::kernel_object::ipc_manager_buffer) kernel::ipc_manager();
 
-    logger::printk("init interrupt_manager\n");
-    kernel::kernel_object::interrupt_manager->init();
-    
     kernel::kernel_object::interrupt_manager->disable_interrupt_all();
 
     logger::printk("init architecture\n");
     hal_instance->_arch_initializer->init_architecture();
 
-    // hal_instance->_interrupt->register_interrupt(0, (hal::interface::interrupt_handler) handle_timer);
     hal_instance->_timer->init_timer();
 
     // test process_manager
     logger::printk("init process_manager\n");
     kernel::kernel_object::process_manager = new(kernel::kernel_object::process_manager_buffer) kernel::process_manager(*hal_instance->_process_manager);
-    // kernel::kernel_object::process_manager->create_process("process_1", reinterpret_cast<kernel::virtual_address>(process_1));
-    // kernel::kernel_object::process_manager->create_process("process_2", reinterpret_cast<kernel::virtual_address>(process_2));
-    // kernel::kernel_object::process_manager->create_process("process_3", reinterpret_cast<kernel::virtual_address>(process_3));
-    // kernel::kernel_object::process_manager->create_process("process_4", reinterpret_cast<kernel::virtual_address>(process_4));
+    logger::split();
+    // 最終成果報告会用バックアップ
+    /*
     kernel::kernel_object::process_manager->create_process("read_serial", reinterpret_cast<kernel::virtual_address>(read_serial));
     kernel::kernel_object::process_manager->create_process("console", reinterpret_cast<kernel::virtual_address>(console));
     kernel::kernel_object::process_manager->create_process("console_out", reinterpret_cast<kernel::virtual_address>(console_out));
+    kernel::kernel_object::process_manager->create_process("info pm", reinterpret_cast<kernel::virtual_address>(info_mem));
+    kernel::kernel_object::process_manager->create_process("idle", reinterpret_cast<kernel::virtual_address>(kernel_main));
+    */
+
+    kernel::kernel_object::process_manager->create_process("idle", reinterpret_cast<kernel::virtual_address>(kernel_main));
+    kernel::kernel_object::process_manager->create_process("alpha", reinterpret_cast<kernel::virtual_address>(alpha));
 
     kernel::kernel_object::interrupt_manager->enable_interrupt_all();
+    kernel::kernel_object::interrupt_manager->ack_interrupt();
 
-    // process_1();
-    
     kernel_main();
 
     return 2038;
@@ -322,35 +294,12 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 
 void kernel_main(void)
 {
-    kernel::utility::logger::printk("start kernel_main\n");
-    kernel::utility::logger::printk("horizon@A9N > ");
-    // process_1();
-
     while(1)
     {
-        for (uint32_t i = 0; i < 1000; i++)
-        {
-            asm volatile ("nop");
-        }
-        uint8_t serial_data = hal_instance->_serial->read_serial();
-        if (serial_data == 0xd)
-        {
-            hal_instance->_serial->write_serial('\r');
-            hal_instance->_serial->write_serial('\n');
-            kernel::utility::logger::printk("");
-            hal_instance->_serial->write_string_serial("horizon@A9N > ");
-            hal_instance->_interrupt->ack_interrupt();
-            continue;
-        }
-        if (serial_data == 0x7f)
-        {
-            hal_instance->_serial->write_serial('\b');
-            hal_instance->_serial->write_string_serial("\033[K");
-            hal_instance->_interrupt->ack_interrupt();
-            continue;
-        }
-        hal_instance->_serial->write_serial(serial_data);
-        hal_instance->_interrupt->ack_interrupt();
+        // kernel::utility::logger::printk("IDLE \n");
+        // kernel::kernel_object::interrupt_manager->ack_interrupt();
+        asm volatile ("sti");
+        kernel::kernel_object::process_manager->switch_context();
         asm volatile ("hlt");
     }
 

@@ -101,6 +101,20 @@ namespace kernel
         logger::split();
     }
 
+    void memory_manager::info_physical_memory()
+    {
+        memory_block *current_memory_block = head_memory_block;
+        while(current_memory_block)
+        {
+            if (current_memory_block->next == nullptr)
+            {
+                return;
+            }
+            print_memory_block_info(*current_memory_block);
+            current_memory_block = current_memory_block->next;
+        }
+    }
+
     void memory_manager::init_memory_frame(memory_block &target_memory_block)
     {
         for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)

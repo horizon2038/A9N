@@ -14,7 +14,7 @@ namespace hal::x86_64
     using interrupt_handler_asm = uint8_t[16];
     extern "C" interrupt_handler_asm interrupt_handlers[];
 
-    extern "C" void do_irq(uint16_t irq_number, uint32_t error_code)
+    extern "C" void do_irq(uint16_t irq_number, uint64_t error_code)
     {
         // kernel::utility::logger::printk("irq_number : %d\n", irq_number);
         bool is_exception = false;
@@ -27,7 +27,7 @@ namespace hal::x86_64
                 break;
 
             default:
-                kernel::utility::logger::printk("exception %d : error_code\n", exception_type, error_code);
+                kernel::utility::logger::printk("%d exception %s : %llu\n", irq_number, exception_type, error_code);
         }
     }
 
@@ -43,11 +43,9 @@ namespace hal::x86_64
     void interrupt::init_interrupt()
     {
         // call asm (initialize IDT)
-        disable_interrupt_all();
         init_handler();
         kernel::utility::logger::printk("handler init\n");
         load_idt();
-        disable_interrupt_all();
     };
 
     void interrupt::init_handler()
@@ -122,7 +120,7 @@ namespace hal::x86_64
 
     void interrupt::ack_interrupt()
     {
-        _pic.end_of_interrupt_pic(13);
+        _pic.end_of_interrupt_pic(0);
     }
 
 }

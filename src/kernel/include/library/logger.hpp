@@ -53,6 +53,8 @@ namespace kernel::utility
             static void printn(const char *format, ...);
             static void split(); // for clean-log
             static void a9nout();
+
+            static void mitoujr();
         
         private:
             static uint32_t log_id;
