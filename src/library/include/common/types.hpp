@@ -16,6 +16,7 @@ namespace library::common
     using virtual_pointer = uintptr_t;
     using physical_pointer = uintptr_t;
 
+    using error = sword;
 }
 
 #endif
