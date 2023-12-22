@@ -10,6 +10,8 @@ namespace kernel
     using virtual_address = uintmax_t;
     using physical_address = uintmax_t;
 
+    using word_t = uintmax_t;
+
     using result = int;
     constexpr static result OK = 0;
     constexpr static result INVALID_ARGUMENT = -1;
