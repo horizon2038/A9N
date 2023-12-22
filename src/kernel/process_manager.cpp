@@ -1,7 +1,6 @@
 #include "process_manager.hpp"
 
-#include "common.hpp"
-#include "interface/process_manager.hpp"
+#include <interface/process_manager.hpp>
 #include "kernel.hpp"
 #include "library/logger.hpp"
 #include "process.hpp"

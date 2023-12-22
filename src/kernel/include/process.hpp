@@ -1,12 +1,14 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include <stdint.h>
-#include <common.hpp>
+#include <common/types.hpp>
+
 #include <message.hpp>
+#include <stdint.h>
 
 namespace kernel
 {
+    namespace common = library::common;
     class process;
 
     class message_queue
@@ -36,15 +38,15 @@ namespace kernel
             }
 
         private:
-            static constexpr int QUEUE_SIZE = 256;
+            static constexpr common::word QUEUE_SIZE = 256;
             process* queue[QUEUE_SIZE];
-            int head = 0;
-            int count = 0;
+            common::sword head = 0;
+            common::sword count = 0;
     };
 
-    constexpr static uint32_t QUANTUM_MAX = 10;
-    constexpr static uint32_t STACK_SIZE_MAX = 8192;
-    constexpr static uint16_t PROCESS_NAME_MAX = 128;
+    constexpr static common::word QUANTUM_MAX = 10;
+    constexpr static common::word STACK_SIZE_MAX = 8192;
+    constexpr static common::word PROCESS_NAME_MAX = 128;
 
     enum class process_status : uint16_t
     {
@@ -54,6 +56,8 @@ namespace kernel
         BLOCKED
     };
 
+    using process_id = common::sword;
+
     class process
     {
         public:
@@ -61,13 +65,13 @@ namespace kernel
             ~process();
 
             // identifier
-            int32_t id;
+            process_id id;
             char name[PROCESS_NAME_MAX];
 
             // for context-switch
             process_status status;
-            uint32_t priority;
-            uint32_t quantum;
+            common::sword priority;
+            common::sword quantum;
 
             // for priority-scheduling
             process *preview;
@@ -77,14 +81,14 @@ namespace kernel
             void *arch_context;
 
             uint8_t stack[STACK_SIZE_MAX];
-            virtual_address stack_pointer;
+            common::virtual_address stack_pointer;
 
             physical_address page_table;
 
             // for ipc
             message message_buffer;
             message_queue send_wait_queue;
-            int32_t receive_from;
+            process_id receive_from;
 
             // resolver solves various process-related problems.
             process *resolver;
