@@ -20,14 +20,9 @@ namespace kernel
 
     struct capability
     {
-        word_t data[2];
+        word_t data[4];
     };
 
-    struct capability_pointer
-    {
-        capability_type type;
-        virtual_address capability_address;
-    };
 }
 
 #endif
