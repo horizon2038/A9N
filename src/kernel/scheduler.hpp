@@ -2,7 +2,8 @@
 #define SCHEDULER_HPP
 
 #include <stdint.h>
-#include <process.hpp>
+#include <common/types.hpp>
+#include <process/process.hpp>
 
 namespace kernel
 {
@@ -12,7 +13,7 @@ namespace kernel
         process_node *next;
     };
 
-    constexpr static int32_t PRIORITY_MAX = 32;
+    constexpr static common::sword PRIORITY_MAX = 32;
 
     class scheduler
     {
@@ -22,15 +23,15 @@ namespace kernel
             ~scheduler();
 
             process *schedule_next_process();
-            process *schedule_next_process(process *priority_groups[], int32_t &priority);
+            process *schedule_next_process(process *priority_groups[], common::sword &priority);
 
         private:
-            process *_process_list; // process array pointer
+            process *_process_list; // process array pointer<
             process *_current_process;
-            uint64_t current_process_index;
+            common::word current_process_index;
 
             void move_to_end(process *target_process,  process *&head_process);
-            int32_t update_highest_priority(process *priority_groups[]); 
+            common::sword update_highest_priority(process *priority_groups[]); 
 
     };
 }
