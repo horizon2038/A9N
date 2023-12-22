@@ -23,8 +23,11 @@ HAL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/hal/, $(addsuffix .o, $(basename $(HA
 OBJS += $(HAL_OBJS)
 DEPS += $(HAL_OBJS:.o=.d)
 
+LIB_INCDIR = $(shell find $(SRCDIR)/library -type -d)
+
 INCDIR = $(shell find $(SRCDIR)/kernel -type d)
 INCDIR += $(ARCH_INCDIR)
+INCDIR += $(LIB_INCDIR)
 INCFLAGS = $(addprefix -I,$(INCDIR))
 
 $(warning SRCS: $(SRCS))
@@ -38,7 +41,7 @@ ASM := nasm
 LD = ld.lld
 CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
-CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include
+CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include -I$(SRCDIR)/library/include
 ASFLAGS = -f elf64
 
 # without linker-script (lower-half kernel)
