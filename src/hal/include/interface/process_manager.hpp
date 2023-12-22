@@ -1,9 +1,7 @@
 #ifndef HAL_CONTEXT_SWITCH_HPP
 #define HAL_CONTEXT_SWITCH_HPP
 
-#include <stdint.h>
-#include <process.hpp>
-#include <common.hpp>
+#include <process/process.hpp>
 
 namespace hal::interface
 {

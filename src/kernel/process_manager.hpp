@@ -1,7 +1,7 @@
 #ifndef PROCESS_MANAGER_HPP
 #define PROCESS_MANAGER_HPP
 
-#include <process.hpp>
+#include <process/process.hpp>
 #include <interface/process_manager.hpp>
 #include <interface/interrupt.hpp>
 #include "scheduler.hpp"
