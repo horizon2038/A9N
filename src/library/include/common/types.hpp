@@ -5,10 +5,12 @@
 
 namespace library::common
 {
-    using word_t = uintmax_t;
+    // architecture-dependent size
+    using word = uintmax_t;
+    using sword = intmax_t;
 
-    using virtual_address = word_t;
-    using physical_address = word_t;
+    using virtual_address = word;
+    using physical_address = word;
 
     using virtual_pointer = uintptr_t;
     using physical_pointer = uintptr_t;
