@@ -1,6 +1,7 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include "common.hpp"
 #include <stdint.h>
 
 namespace library::common
@@ -14,6 +15,7 @@ namespace library::common
 
     using virtual_pointer = uintptr_t;
     using physical_pointer = uintptr_t;
+
 }
 
 #endif

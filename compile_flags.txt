@@ -1,5 +1,6 @@
 -I./src/kernel/include/
 -I./src/hal/include/
+-I./src/library/include/
 -std=c++17
 
 -I./chain/x86_64/edk2/MdePkg/include/
