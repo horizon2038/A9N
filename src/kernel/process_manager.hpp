@@ -1,6 +1,7 @@
 #ifndef PROCESS_MANAGER_HPP
 #define PROCESS_MANAGER_HPP
 
+#include <common/types.hpp>
 #include <process/process.hpp>
 #include <interface/process_manager.hpp>
 #include <interface/interrupt.hpp>
@@ -21,14 +22,14 @@ namespace kernel
             ~process_manager();
 
             process *current_process;
-            int32_t highest_priority;
+            common::sword highest_priority;
 
             void create_process(const char *process_name, virtual_address entry_point_address);
-            void init_process(process *process, int32_t id, const char *process_name, virtual_address entry_point_address);
-            void delete_process(int32_t process_id);
+            void init_process(process *process, process_id target_process_id, const char *process_name, virtual_address entry_point_address);
+            void delete_process(process_id target_process_id);
             void switch_context();
 
-            process *search_process_from_id(int32_t process_id);
+            process *search_process_from_id(process_id target_process_id);
 
         private:
             process process_list[PROCESS_COUNT_MAX];
