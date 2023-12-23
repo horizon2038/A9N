@@ -66,9 +66,9 @@ namespace kernel
 
     }
 
-    void process_manager::init_process(process *process, int32_t id, const char *process_name, virtual_address entry_point_address)
+    void process_manager::init_process(process *process, process_id target_process_id, const char *process_name, virtual_address entry_point_address)
     {
-        process->id = id;
+        process->id = target_process_id;
         std::strcpy(process->name, process_name);
 
         process->status = process_status::BLOCKED;
@@ -95,7 +95,7 @@ namespace kernel
         return -1;
     }
 
-    void process_manager::delete_process(int32_t process_id)
+    void process_manager::delete_process(process_id target_process_id)
     {
     }
 
@@ -112,14 +112,14 @@ namespace kernel
         _process_manager.switch_context(temp_current_process, next_process);
     }
 
-    process *process_manager::search_process_from_id(int32_t process_id)
+    process *process_manager::search_process_from_id(process_id target_process_id)
     {
-        if (process_id <= 0)
+        if (target_process_id <= 0)
         {
             return nullptr;
         }
 
-        return &process_list[process_id];
+        return &process_list[target_process_id];
     }
 }
 
