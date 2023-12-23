@@ -7,7 +7,7 @@
 #include "common.hpp"
 #include "memory_type.h"
 
-#include <process.hpp>
+#include <process/process.hpp>
 #include <interface/memory_manager.hpp>
 
 namespace kernel
