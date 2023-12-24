@@ -3,26 +3,26 @@
 
 #include <stdint.h>
 
-#include <interface/interrupt.hpp>
+#include <hal/interface/interrupt.hpp>
 
 namespace kernel
 {
     class interrupt_manager
     {
-        public:
-            interrupt_manager(hal::interface::interrupt &target_interrupt);
-            ~interrupt_manager();
+      public:
+        interrupt_manager(hal::interface::interrupt &target_interrupt);
+        ~interrupt_manager();
 
-            void init();
+        void init();
 
-            void enable_interrupt_all();
-            void disable_interrupt_all();
-            void ack_interrupt();
+        void enable_interrupt_all();
+        void disable_interrupt_all();
+        void ack_interrupt();
 
-        private:
-            hal::interface::interrupt &_interrupt;
+      private:
+        hal::interface::interrupt &_interrupt;
 
-            void init_handler();
+        void init_handler();
     };
 
     extern "C" void handle_timer();
