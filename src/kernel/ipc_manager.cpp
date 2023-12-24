@@ -1,4 +1,4 @@
-#include "ipc_manager.hpp"
+#include <ipc/ipc_manager.hpp>
 
 #include "kernel.hpp"
 #include <process/process.hpp>
