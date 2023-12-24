@@ -1,7 +1,7 @@
 #ifndef HAL_FACTORY_HPP
 #define HAL_FACTORY_HPP
 
-#include <interface/hal.hpp>
+#include <hal/interface/hal.hpp>
 
 namespace hal::interface
 {
