@@ -1,7 +1,6 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-#include "common.hpp"
 #include <stdint.h>
 
 #ifdef __cplusplus
