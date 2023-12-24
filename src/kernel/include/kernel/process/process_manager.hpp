@@ -47,7 +47,7 @@ namespace kernel
         scheduler _scheduler;
         hal::interface::process_manager &_process_manager;
 
-        int32_t determine_process_id();
+        common::sword determine_process_id();
     };
 }
 

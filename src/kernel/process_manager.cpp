@@ -60,7 +60,7 @@ namespace kernel
         utility::logger::split();
 
         // test priority-scheduling
-        int32_t priority = current_process->priority;
+        common::sword priority = current_process->priority;
         if (priority_groups[priority] == nullptr)
         {
             priority_groups[priority] = current_process;
@@ -94,7 +94,7 @@ namespace kernel
         kernel_object::memory_manager->init_virtual_memory(process);
     }
 
-    int32_t process_manager::determine_process_id()
+    common::sword process_manager::determine_process_id()
     {
         // 0 == init_server id (reserved).
 
