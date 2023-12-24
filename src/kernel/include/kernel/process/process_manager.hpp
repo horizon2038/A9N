@@ -1,11 +1,11 @@
 #ifndef PROCESS_MANAGER_HPP
 #define PROCESS_MANAGER_HPP
 
-#include <common/types.hpp>
-#include <process/process.hpp>
-#include <interface/process_manager.hpp>
-#include <interface/interrupt.hpp>
-#include "scheduler.hpp"
+#include <library/common/types.hpp>
+#include <kernel/process/process.hpp>
+#include <hal/interface/process_manager.hpp>
+#include <hal/interface/interrupt.hpp>
+#include <kernel/process/scheduler.hpp>
 
 namespace kernel
 {
@@ -16,39 +16,38 @@ namespace kernel
 
     class process_manager
     {
-        public:
-            process_manager(
-                hal::interface::process_manager &target_process_manager
-            );
+      public:
+        process_manager(hal::interface::process_manager &target_process_manager
+        );
 
-            ~process_manager();
+        ~process_manager();
 
-            process *current_process;
-            common::sword highest_priority;
+        process *current_process;
+        common::sword highest_priority;
 
-            void create_process(
-                const char *process_name,
-                common::virtual_address entry_point_address
-            );
-            void init_process(
-                process *process,
-                process_id target_process_id,
-                const char *process_name,
-                common::virtual_address entry_point_address
-            );
-            void delete_process(process_id target_process_id);
-            void switch_context();
+        void create_process(
+            const char *process_name,
+            common::virtual_address entry_point_address
+        );
+        void init_process(
+            process *process,
+            process_id target_process_id,
+            const char *process_name,
+            common::virtual_address entry_point_address
+        );
+        void delete_process(process_id target_process_id);
+        void switch_context();
 
-            process *search_process_from_id(process_id target_process_id);
+        process *search_process_from_id(process_id target_process_id);
 
-        private:
-            process process_list[PROCESS_COUNT_MAX];
-            process *priority_groups[PRIORITY_MAX] = { nullptr };
+      private:
+        process process_list[PROCESS_COUNT_MAX];
+        process *priority_groups[PRIORITY_MAX] = { nullptr };
 
-            scheduler _scheduler;
-            hal::interface::process_manager &_process_manager;
+        scheduler _scheduler;
+        hal::interface::process_manager &_process_manager;
 
-            int32_t determine_process_id();
+        int32_t determine_process_id();
     };
 }
 
