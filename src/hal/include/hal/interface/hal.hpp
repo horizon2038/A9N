@@ -2,18 +2,17 @@
 #define HAL_HPP
 
 // core services
-#include <interface/memory_manager.hpp>
-#include <interface/process_manager.hpp>
-#include <interface/interrupt.hpp>
+#include <hal/interface/memory_manager.hpp>
+#include <hal/interface/process_manager.hpp>
+#include <hal/interface/interrupt.hpp>
 
 // platform services
-#include <interface/arch_initializer.hpp>
+#include <hal/interface/arch_initializer.hpp>
 
 // peripheral drivers
-#include <interface/timer.hpp>
-#include <interface/port_io.hpp>
-#include <interface/serial.hpp>
-
+#include <hal/interface/timer.hpp>
+#include <hal/interface/port_io.hpp>
+#include <hal/interface/serial.hpp>
 
 namespace hal::interface
 {
@@ -29,7 +28,7 @@ namespace hal::interface
         // peripheral drivers
         port_io *_port_io;
         serial *_serial;
-        timer *_timer; 
+        timer *_timer;
     };
 }
 
