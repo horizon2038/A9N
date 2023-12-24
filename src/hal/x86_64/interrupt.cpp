@@ -64,7 +64,7 @@ namespace hal::x86_64
         disable_interrupt_all();
     }
 
-    void interrupt::register_idt_handler(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler)
+    void interrupt::register_idt_handler(common::word irq_number, hal::interface::interrupt_handler target_interrupt_handler)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
         uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(target_interrupt_handler);
@@ -78,7 +78,7 @@ namespace hal::x86_64
         idt_entry->reserved = 0;
     };
 
-    void interrupt::register_handler(uint32_t irq_number, hal::interface::interrupt_handler target_interrupt_handler)
+    void interrupt::register_handler(common::word irq_number, hal::interface::interrupt_handler target_interrupt_handler)
     {
         interrupt_handler_table[irq_number] = target_interrupt_handler;
         uint64_t interrupt_handler_address = reinterpret_cast<uint64_t>(target_interrupt_handler);
@@ -86,14 +86,14 @@ namespace hal::x86_64
         kernel::utility::logger::printk("hal_register_interrupt : %lu : 0x%016llx\n", irq_number, interrupt_handler_address);
     }
 
-    void interrupt::enable_interrupt(uint32_t irq_number)
+    void interrupt::enable_interrupt(common::word irq_number)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
 
         idt_entry->type = INTERRUPT_GATE;
     };
 
-    void interrupt::disable_interrupt(uint32_t irq_number)
+    void interrupt::disable_interrupt(common::word irq_number)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
 
@@ -108,14 +108,6 @@ namespace hal::x86_64
     void interrupt::disable_interrupt_all()
     {
         _disable_interrupt_all();
-    };
-
-    void interrupt::mask_interrupt(hal::interface::interrupt_mask mask) // TODO: FIX THIS
-    {
-        for(int i = 0; i < 256; i++)
-        {
-            idt[i].type = INTERRUPT_GATE | (mask.mask_bool[i] << 7);
-        }
     };
 
     void interrupt::ack_interrupt()
