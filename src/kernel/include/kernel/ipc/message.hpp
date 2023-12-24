@@ -11,4 +11,3 @@ struct message
 };
 
 #endif
-
