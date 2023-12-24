@@ -1,4 +1,4 @@
-#include "interrupt_manager.hpp"
+#include <interrupt/interrupt_manager.hpp>
 
 #include "kernel.hpp"
 
