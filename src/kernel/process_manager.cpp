@@ -1,12 +1,12 @@
-#include <process/process_manager.hpp>
+#include <kernel/process/process_manager.hpp>
 
-#include <interface/process_manager.hpp>
+#include <hal/interface/process_manager.hpp>
 #include "kernel.hpp"
-#include "library/logger.hpp"
+#include <kernel/utility/logger.hpp>
 #include <process/process.hpp>
 
 #include <stdint.h>
-#include <library/string.hpp>
+#include <library/libc/string.hpp>
 
 namespace kernel
 {

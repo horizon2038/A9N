@@ -3,8 +3,8 @@
 #include "kernel.hpp"
 #include <process/process.hpp>
 
-#include <library/string.hpp>
-#include <library/logger.hpp>
+#include <library/libc/string.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace kernel
 {
