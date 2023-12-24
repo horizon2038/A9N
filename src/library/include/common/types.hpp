@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include <stdint.h>
 
+#ifdef __cplusplus
 namespace library::common
 {
     // architecture-dependent size
@@ -28,5 +29,18 @@ namespace hal
 {
     namespace common = library::common;
 }
+
+#else
+typedef uintmax_t word;
+typedef intmax_t sword;
+
+typedef word virtual_address;
+typedef word physical_address;
+typedef uintptr_t virtual_pointer;
+typedef uintptr_t physical_pointer;
+
+typedef error = sword;
+
+#endif
 
 #endif
