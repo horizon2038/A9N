@@ -1,4 +1,4 @@
-#include "process_manager.hpp"
+#include <process/process_manager.hpp>
 
 #include <interface/process_manager.hpp>
 #include "kernel.hpp"
@@ -10,8 +10,7 @@
 
 namespace kernel
 {
-    process_manager::process_manager
-    (
+    process_manager::process_manager(
         hal::interface::process_manager &target_process_manager
     )
         : _scheduler(process_list)
@@ -26,7 +25,10 @@ namespace kernel
     {
     }
 
-    void process_manager::create_process(const char *process_name, virtual_address entry_point_address)
+    void process_manager::create_process(
+        const char *process_name,
+        virtual_address entry_point_address
+    )
     {
         uint16_t process_id = determine_process_id();
 
@@ -36,15 +38,24 @@ namespace kernel
         }
 
         process *current_process = &process_list[process_id];
-        init_process(current_process, process_id, process_name, entry_point_address); 
+        init_process(
+            current_process,
+            process_id,
+            process_name,
+            entry_point_address
+        );
         _process_manager.create_process(current_process, entry_point_address);
         current_process->status = process_status::READY;
 
         utility::logger::printk("create process\n");
-        utility::logger::printk
-        (
-            "id : %d | name : %s | status : %d | page_table_address : 0x%016llx | stack_pointer : 0x%016llx\n",
-            current_process->id, current_process->name, current_process->status, current_process->page_table, current_process->stack_pointer
+        utility::logger::printk(
+            "id : %d | name : %s | status : %d | page_table_address : "
+            "0x%016llx | stack_pointer : 0x%016llx\n",
+            current_process->id,
+            current_process->name,
+            current_process->status,
+            current_process->page_table,
+            current_process->stack_pointer
         );
         utility::logger::split();
 
@@ -63,10 +74,14 @@ namespace kernel
         }
         temp_process->next = current_process;
         current_process->preview = temp_process;
-
     }
 
-    void process_manager::init_process(process *process, process_id target_process_id, const char *process_name, virtual_address entry_point_address)
+    void process_manager::init_process(
+        process *process,
+        process_id target_process_id,
+        const char *process_name,
+        virtual_address entry_point_address
+    )
     {
         process->id = target_process_id;
         std::strcpy(process->name, process_name);
@@ -91,7 +106,7 @@ namespace kernel
             }
             return i;
         }
-        
+
         return -1;
     }
 
@@ -102,7 +117,10 @@ namespace kernel
     void process_manager::switch_context()
     {
         process *temp_current_process = current_process;
-        process *next_process = _scheduler.schedule_next_process(priority_groups, highest_priority);
+        process *next_process = _scheduler.schedule_next_process(
+            priority_groups,
+            highest_priority
+        );
         if (next_process == nullptr)
         {
             return;
@@ -112,7 +130,8 @@ namespace kernel
         _process_manager.switch_context(temp_current_process, next_process);
     }
 
-    process *process_manager::search_process_from_id(process_id target_process_id)
+    process *
+        process_manager::search_process_from_id(process_id target_process_id)
     {
         if (target_process_id <= 0)
         {
@@ -122,4 +141,3 @@ namespace kernel
         return &process_list[target_process_id];
     }
 }
-
