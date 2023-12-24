@@ -4,7 +4,7 @@
 #include <interface/memory_manager.hpp>
 
 #include <stdint.h>
-#include "common.hpp"
+#include <common/types.hpp>
 #include "paging.hpp"
 
 namespace hal::x86_64
@@ -14,42 +14,41 @@ namespace hal::x86_64
         public:
             void init_memory() override;
 
-            void init_virtual_memory(kernel::physical_address top_page_table_address) override;
-
-            bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address) override;
-
-            void configure_page_table
-            (
-                kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address,
-                kernel::physical_address page_table_address
+            void init_virtual_memory(
+                common::physical_address top_page_table_address
             ) override;
 
-            void map_virtual_memory
-            (
-                kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address,
-                kernel::physical_address target_physical_address
+            bool is_table_exists(
+                common::physical_address top_page_table,
+                common::virtual_address target_virtual_address
             ) override;
 
-            void unmap_virtual_memory
-            (
-                kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address
+            void configure_page_table(
+                common::physical_address top_page_table_address,
+                common::virtual_address target_virtual_address,
+                common::physical_address page_table_address
             ) override;
 
-            kernel::virtual_address convert_physical_to_virtual_address
-            (
-                const kernel::physical_address target_physical_address
+            void map_virtual_memory(
+                common::physical_address top_page_table_address,
+                common::virtual_address target_virtual_address,
+                common::physical_address target_physical_address
             ) override;
 
-            kernel::physical_address convert_virtual_to_physical_address
-            (
-                const kernel::virtual_address target_virtual_address
+            void unmap_virtual_memory(
+                common::physical_address top_page_table_address,
+                common::virtual_address target_virtual_address
+            ) override;
+
+            common::virtual_address convert_physical_to_virtual_address(
+                const common::physical_address target_physical_address
+            ) override;
+
+            common::physical_address convert_virtual_to_physical_address(
+                const common::virtual_address target_virtual_address
             ) override;
 
         private:
-
     };
 }
 
