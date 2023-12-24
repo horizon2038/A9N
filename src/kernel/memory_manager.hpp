@@ -22,7 +22,7 @@ namespace kernel
 
     struct memory_block
     {
-            physical_address start_physical_address;
+            common::physical_address start_physical_address;
             size_t size;
             memory_block *next;
             uint64_t memory_frame_count;
@@ -44,10 +44,10 @@ namespace kernel
             );
 
             // physical-memory management
-            physical_address
+            common::physical_address
                 allocate_physical_memory(size_t size, process *owner);
             void deallocate_physical_memory(
-                physical_address target_physical_address,
+                common::physical_address target_physical_address,
                 size_t size
             );
 
@@ -65,11 +65,11 @@ namespace kernel
                 uint64_t page_count
             );
 
-            virtual_address convert_physical_to_virtual_address(
-                physical_address target_physical_address
+            common::virtual_address convert_physical_to_virtual_address(
+                common::physical_address target_physical_address
             );
-            physical_address convert_virtual_to_physical_address(
-                virtual_address target_virtual_address
+            common::physical_address convert_virtual_to_physical_address(
+                common::virtual_address target_virtual_address
             );
 
             void info_physical_memory();
@@ -84,7 +84,7 @@ namespace kernel
             void init_memory_frame(memory_block &target_memory_block);
             size_t align_size(size_t size, uint16_t page_size);
             uint64_t align_physical_address(
-                physical_address target_physical_address,
+                common::physical_address target_physical_address,
                 uint16_t page_size
             );
             void configure_memory_frames(
