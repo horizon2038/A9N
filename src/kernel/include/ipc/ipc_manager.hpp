@@ -2,7 +2,7 @@
 #define IPC_HPP
 
 #include <process/process.hpp>
-#include <message.hpp>
+#include <ipc/message.hpp>
 
 namespace kernel
 {
