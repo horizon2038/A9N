@@ -19,6 +19,8 @@ namespace library::common
     using physical_pointer = uintptr_t;
 
     using error = sword;
+
+    constexpr static word PAGE_SIZE = 4096;
 }
 
 namespace kernel
