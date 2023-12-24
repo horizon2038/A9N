@@ -1,7 +1,7 @@
 #ifndef CAPABILITY_NODE_HPP
 #define CAPABILITY_NODE_HPP
 
-#include <capability/capability.hpp>
+#include <kernel/capability/capability.hpp>
 
 namespace kernel
 {

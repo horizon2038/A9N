@@ -1,7 +1,7 @@
 #ifndef CAPABILITY_HPP
 #define CAPABILITY_HPP
 
-#include <common.hpp>
+#include <library/common/types.hpp>
 #include <stdint.h>
 
 namespace kernel
@@ -20,7 +20,7 @@ namespace kernel
 
     struct capability
     {
-        word_t data[4];
+        common::word data[4];
     };
 
 }
