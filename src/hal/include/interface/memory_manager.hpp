@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <process/process.hpp>
+#include <kernel/process/process.hpp>
 #include <common/types.hpp>
 
 namespace hal::interface
