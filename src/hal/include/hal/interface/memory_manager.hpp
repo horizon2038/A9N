@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/process/process.hpp>
-#include <common/types.hpp>
+#include <library/common/types.hpp>
 
 namespace hal::interface
 {
