@@ -46,14 +46,14 @@ namespace kernel
             void map_virtual_memory
             (
                 kernel::process *target_process,
-                kernel::virtual_address target_virtual_address,
-                kernel::physical_address target_physical_address,
+                common::virtual_address target_virtual_address,
+                common::physical_address target_physical_address,
                 uint64_t page_count
             );
             void unmap_virtual_memory
             (
                 kernel::process *target_process,
-                kernel::virtual_address target_virtual_address,
+                common::virtual_address target_virtual_address,
                 uint64_t page_count
             );
 
