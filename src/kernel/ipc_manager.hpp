@@ -1,8 +1,8 @@
 #ifndef IPC_HPP
 #define IPC_HPP
 
-#include <process.hpp>
-#include "message.hpp"
+#include <process/process.hpp>
+#include <message.hpp>
 
 namespace kernel
 {
@@ -12,12 +12,10 @@ namespace kernel
         public:
             ipc_manager() {};
             ~ipc_manager() {};
-            void send(int32_t receiver_process_id, message *msg);
-            void receive(int32_t sender_process_id, message *msg);
+            void send(process_id receiver_process_id, message *msg);
+            void receive(process_id sender_process_id, message *msg);
 
             // void notify();
-
-            // impl IPC-fastpath
     };
 }
 
