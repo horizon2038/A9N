@@ -3,7 +3,7 @@
 
 #include <common/types.hpp>
 
-#include <message.hpp>
+#include <ipc/message.hpp>
 #include <stdint.h>
 
 namespace kernel
@@ -22,10 +22,10 @@ namespace kernel
                     ++count;
                     return true;
                 }
-                return false;  // queue is full
+                return false; // queue is full
             }
 
-            bool dequeue(process*& proc)
+            bool dequeue(process *&proc)
             {
                 if (count > 0)
                 {
@@ -34,12 +34,12 @@ namespace kernel
                     --count;
                     return true;
                 }
-                return false;  // queue is empty
+                return false; // queue is empty
             }
 
         private:
             static constexpr common::word QUEUE_SIZE = 256;
-            process* queue[QUEUE_SIZE];
+            process *queue[QUEUE_SIZE];
             common::sword head = 0;
             common::sword count = 0;
     };
@@ -94,10 +94,8 @@ namespace kernel
             process *resolver;
 
         private:
-
     };
 
 }
 
 #endif
-
