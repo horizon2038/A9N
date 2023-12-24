@@ -1,7 +1,7 @@
 #include "memory_manager.hpp"
 
 #include <library/logger.hpp>
-#include <common.hpp>
+#include <common/types.hpp>
 #include <library/string.hpp>
 
 namespace kernel
