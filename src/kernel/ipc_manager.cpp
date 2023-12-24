@@ -1,13 +1,14 @@
 #include "ipc_manager.hpp"
+
 #include "kernel.hpp"
-#include "process.hpp"
+#include <process/process.hpp>
 
 #include <library/string.hpp>
 #include <library/logger.hpp>
 
 namespace kernel
 {
-    void ipc_manager::send(int32_t receiver_process_id, message *msg)
+    void ipc_manager::send(process_id receiver_process_id, message *msg)
     {
         process* receiver_process = kernel_object::process_manager->search_process_from_id(receiver_process_id);
         utility::logger::printk("ipc_send : %s -> %s\n", kernel_object::process_manager->current_process->name, receiver_process->name);
@@ -43,7 +44,7 @@ namespace kernel
         }
     }
 
-    void ipc_manager::receive(int32_t source_process_id, message *msg)
+    void ipc_manager::receive(process_id source_process_id, message *msg)
     {
         process* current_process = kernel_object::process_manager->current_process;
         process* sender_process = nullptr;
