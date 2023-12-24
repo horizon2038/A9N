@@ -1,7 +1,7 @@
-#include <process/scheduler.hpp>
+#include <kernel/process/scheduler.hpp>
 
-#include <common/types.hpp>
-#include <library/logger.hpp>
+#include <kernel/utility/logger.hpp>
+#include <library/common/types.hpp>
 
 namespace kernel
 {

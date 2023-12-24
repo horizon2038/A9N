@@ -1,11 +1,11 @@
-#include "kernel.hpp"
+#include <kernel/kernel.hpp>
 
-#include <interrupt/interrupt_manager.hpp>
-#include <ipc/ipc_manager.hpp>
-#include <process/process.hpp>
-#include <process/process_manager.hpp>
+#include <kernel/interrupt/interrupt_manager.hpp>
+#include <kernel/ipc/ipc_manager.hpp>
+#include <kernel/process/process.hpp>
+#include <kernel/process/process_manager.hpp>
 
-#include "memory_manager.hpp"
+#include <kernel/memory/memory_manager.hpp>
 
 namespace kernel
 {
