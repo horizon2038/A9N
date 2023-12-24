@@ -1,17 +1,17 @@
 #ifndef TIMER_HPP
 #define TIMER_HPP
 
-#include "interface/timer.hpp"
+#include <hal/interface/timer.hpp>
 
 namespace kernel
 {
     class timer
     {
-        public:
-            timer(hal::interface::timer &timer);
-            ~timer();
+      public:
+        timer(hal::interface::timer &timer);
+        ~timer();
 
-            void clock();
+        void clock();
     };
 }
 
