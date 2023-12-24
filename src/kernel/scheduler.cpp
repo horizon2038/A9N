@@ -1,17 +1,17 @@
-#include "scheduler.hpp"
-#include "common.hpp"
+#include <process/scheduler.hpp>
 
+#include <common/types.hpp>
 #include <library/logger.hpp>
 
 namespace kernel
 {
     scheduler::scheduler(process *process_list)
-    : _process_list(process_list)
-    , _current_process(nullptr)
+        : _process_list(process_list)
+        , _current_process(nullptr)
     {
         current_process_index = 0;
     }
-    
+
     scheduler::~scheduler()
     {
     }
@@ -19,7 +19,7 @@ namespace kernel
     process *scheduler::schedule_next_process()
     {
         process *target_process = nullptr;
-        uint32_t start_index = current_process_index;
+        common::word start_index = current_process_index;
 
         do
         {
@@ -31,11 +31,14 @@ namespace kernel
             target_process = &_process_list[current_process_index];
 
             utility::logger::printk("cpi : %llu\n", current_process_index);
-            utility::logger::printk("target_process_status : %llu\n", target_process->status);
+            utility::logger::printk(
+                "target_process_status : %llu\n",
+                target_process->status
+            );
             current_process_index++;
 
-        }
-        while(target_process->status != process_status::READY && current_process_index != start_index);  
+        } while (target_process->status != process_status::READY
+                 && current_process_index != start_index);
 
         if (target_process->status != process_status::READY)
         {
@@ -54,7 +57,10 @@ namespace kernel
         return target_process;
     }
 
-    process *scheduler::schedule_next_process(process *priority_groups[], int32_t &highest_priority)
+    process *scheduler::schedule_next_process(
+        process *priority_groups[],
+        common::sword &highest_priority
+    )
     {
         if (highest_priority == -1)
         {
@@ -64,10 +70,14 @@ namespace kernel
         process *current_process = priority_groups[highest_priority];
 
         current_process->quantum--;
-        // utility::logger::printk("%s quantum : [ %04d ]\n", current_process->name, current_process->quantum);
-        if (current_process->quantum == 0 || current_process->status == process_status::BLOCKED)
+        // utility::logger::printk("%s quantum : [ %04d ]\n",
+        // current_process->name, current_process->quantum);
+        if (current_process->quantum == 0
+            || current_process->status == process_status::BLOCKED)
         {
-            // utility::logger::printk("%s : %016s [ %04d ]\n", current_process->name, current_process->quantum == 0 ? "TIMEOUT" : "BLOCKED", current_process->quantum);
+            // utility::logger::printk("%s : %016s [ %04d ]\n",
+            // current_process->name, current_process->quantum == 0 ? "TIMEOUT"
+            // : "BLOCKED", current_process->quantum);
             current_process->quantum = QUANTUM_MAX;
             move_to_end(current_process, priority_groups[highest_priority]);
         }
@@ -87,7 +97,8 @@ namespace kernel
         priority_groups[highest_priority]->status = process_status::RUNNING;
         _current_process = priority_groups[highest_priority];
 
-        // utility::logger::printk("target_process_status : %llu\n", priority_groups[highest_priority]->status);
+        // utility::logger::printk("target_process_status : %llu\n",
+        // priority_groups[highest_priority]->status);
         return priority_groups[highest_priority];
     }
 
@@ -102,7 +113,7 @@ namespace kernel
         if (head_process == target_process)
         {
             head_process = target_process->next;
-            head_process->preview = nullptr; 
+            head_process->preview = nullptr;
         }
 
         if (target_process->preview != nullptr)
@@ -124,7 +135,7 @@ namespace kernel
         target_process->next = nullptr;
     }
 
-    int32_t scheduler::update_highest_priority(process *priority_groups[])
+    common::sword scheduler::update_highest_priority(process *priority_groups[])
     {
         for (uint16_t i = (PRIORITY_MAX - 1); i >= 0; i--)
         {
