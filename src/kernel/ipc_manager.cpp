@@ -1,10 +1,10 @@
 #include <kernel/ipc/ipc_manager.hpp>
 
-#include "kernel.hpp"
-#include <process/process.hpp>
+#include <kernel/kernel.hpp>
+#include <kernel/process/process.hpp>
+#include <kernel/utility/logger.hpp>
 
 #include <library/libc/string.hpp>
-#include <kernel/utility/logger.hpp>
 
 namespace kernel
 {
