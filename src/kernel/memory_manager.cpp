@@ -53,9 +53,10 @@ namespace kernel
             common::physical_address adjusted_address
                 = _memory_map_entry->start_physical_address + memory_block_size;
             adjusted_address
-                = align_physical_address(adjusted_address, PAGE_SIZE);
-            size_t adjusted_size = PAGE_SIZE * (_memory_map_entry->page_count)
-                                 - memory_block_size;
+                = align_physical_address(adjusted_address, common::PAGE_SIZE);
+            size_t adjusted_size
+                = common::PAGE_SIZE * (_memory_map_entry->page_count)
+                - memory_block_size;
 
             memory_block *current_memory_block
                 = reinterpret_cast<memory_block *>(
@@ -70,7 +71,7 @@ namespace kernel
             current_memory_block->size = adjusted_size;
             current_memory_block->next = nullptr;
             current_memory_block->memory_frame_count
-                = adjusted_size / PAGE_SIZE;
+                = adjusted_size / common::PAGE_SIZE;
 
             init_memory_frame(*current_memory_block);
 
@@ -103,7 +104,7 @@ namespace kernel
         using logger = kernel::utility::logger;
 
         common::word memory_map_size
-            = target_memory_block.memory_frame_count * PAGE_SIZE;
+            = target_memory_block.memory_frame_count * common::PAGE_SIZE;
         common::word memory_map_size_kb = memory_map_size / 1024;
         common::word memory_map_size_mb = memory_map_size_kb / 1024;
 
@@ -154,8 +155,9 @@ namespace kernel
     common::physical_address
         memory_manager::allocate_physical_memory(size_t size, process *owner)
     {
-        size_t aligned_requested_size = align_size(size, PAGE_SIZE);
-        size_t requested_page_count = aligned_requested_size / PAGE_SIZE;
+        size_t aligned_requested_size = align_size(size, common::PAGE_SIZE);
+        size_t requested_page_count
+            = aligned_requested_size / common::PAGE_SIZE;
         memory_block *current_memory_block = head_memory_block;
         common::word start_frame_index;
         bool has_free_frames;
@@ -184,7 +186,7 @@ namespace kernel
                 );
                 common::physical_address start_frame_address
                     = current_memory_block->start_physical_address
-                    + (start_frame_index * PAGE_SIZE);
+                    + (start_frame_index * common::PAGE_SIZE);
                 kernel::utility::logger::printk(
                     "allocate_physical_memory : 0x%016llx , %llu B\n",
                     start_frame_address,
@@ -262,13 +264,14 @@ namespace kernel
     )
     {
         memory_block *current_memory_block = head_memory_block;
-        common::word page_count = align_size(size, PAGE_SIZE) / PAGE_SIZE;
+        common::word page_count
+            = align_size(size, common::PAGE_SIZE) / common::PAGE_SIZE;
         common::word start_frame_index = 0;
 
         while (current_memory_block)
         {
             common::physical_address end_physical_address
-                = start_physical_address + align_size(size, PAGE_SIZE);
+                = start_physical_address + align_size(size, common::PAGE_SIZE);
             common::physical_address end_memory_block_address
                 = current_memory_block->start_physical_address
                 + current_memory_block->size;
@@ -283,7 +286,7 @@ namespace kernel
 
             start_frame_index = (start_physical_address
                                  - current_memory_block->start_physical_address)
-                              / PAGE_SIZE;
+                              / common::PAGE_SIZE;
             configure_memory_frames(
                 &(current_memory_block->memory_frames[start_frame_index]),
                 page_count,
@@ -338,7 +341,7 @@ namespace kernel
 
         // allocate top_page_table
         common::physical_address page_table_address
-            = allocate_physical_memory(PAGE_SIZE, target_process);
+            = allocate_physical_memory(common::PAGE_SIZE, target_process);
         if (page_table_address == 0)
         {
             return; // error
@@ -350,7 +353,7 @@ namespace kernel
                 convert_physical_to_virtual_address(target_process->page_table)
             ),
             0,
-            PAGE_SIZE
+            common::PAGE_SIZE
         );
 
         _memory_manager.init_virtual_memory(target_process->page_table);
@@ -381,7 +384,7 @@ namespace kernel
 
         for (common::word i = 0; i < page_count; i++)
         {
-            common::word address_offset = i * PAGE_SIZE;
+            common::word address_offset = i * common::PAGE_SIZE;
 
             while (true)
             {
@@ -403,7 +406,7 @@ namespace kernel
 
                 common::physical_address allocated_page_table;
                 allocated_page_table = allocate_physical_memory(
-                    PAGE_SIZE,
+                    common::PAGE_SIZE,
                     is_kernel ? nullptr : target_process
                 );
                 _memory_manager.configure_page_table(

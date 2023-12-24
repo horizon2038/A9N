@@ -1,8 +1,8 @@
 #include <kernel/interrupt/interrupt_manager.hpp>
 
-#include "kernel.hpp"
+#include <kernel/kernel.hpp>
 
-#include <library/logger.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace kernel
 {
