@@ -2,8 +2,8 @@
 #define KERNEL_OBJECT
 
 #include "memory_manager.hpp"
-#include "interrupt_manager.hpp"
-#include "process_manager.hpp"
+#include <interrupt/interrupt_manager.hpp>
+#include <process/process_manager.hpp>
 #include <ipc/ipc_manager.hpp>
 
 #include <interface/hal.hpp>
