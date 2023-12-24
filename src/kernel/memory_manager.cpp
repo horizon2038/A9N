@@ -1,8 +1,8 @@
-#include "memory_manager.hpp"
+#include <kernel/memory/memory_manager.hpp>
 
-#include <library/logger.hpp>
-#include <common/types.hpp>
-#include <library/string.hpp>
+#include <kernel/utility/logger.hpp>
+#include <library/libc/string.hpp>
+#include <library/common/types.hpp>
 
 namespace kernel
 {
@@ -151,7 +151,7 @@ namespace kernel
         }
     }
 
-    physical_address
+    common::physical_address
         memory_manager::allocate_physical_memory(size_t size, process *owner)
     {
         size_t aligned_requested_size = align_size(size, PAGE_SIZE);
@@ -182,7 +182,7 @@ namespace kernel
                     owner,
                     true
                 );
-                physical_address start_frame_address
+                common::physical_address start_frame_address
                     = current_memory_block->start_physical_address
                     + (start_frame_index * PAGE_SIZE);
                 kernel::utility::logger::printk(
@@ -257,7 +257,7 @@ namespace kernel
     }
 
     void memory_manager::deallocate_physical_memory(
-        physical_address start_physical_address,
+        common::physical_address start_physical_address,
         size_t size
     )
     {
@@ -267,9 +267,9 @@ namespace kernel
 
         while (current_memory_block)
         {
-            physical_address end_physical_address
+            common::physical_address end_physical_address
                 = start_physical_address + align_size(size, PAGE_SIZE);
-            physical_address end_memory_block_address
+            common::physical_address end_memory_block_address
                 = current_memory_block->start_physical_address
                 + current_memory_block->size;
 
@@ -311,7 +311,7 @@ namespace kernel
     }
 
     common::virtual_address memory_manager::convert_physical_to_virtual_address(
-        physical_address target_physical_address
+        common::physical_address target_physical_address
     )
     {
         return _memory_manager.convert_physical_to_virtual_address(
@@ -319,9 +319,10 @@ namespace kernel
         );
     }
 
-    physical_address memory_manager::convert_virtual_to_physical_address(
-        common::virtual_address target_virtual_address
-    )
+    common::physical_address
+        memory_manager::convert_virtual_to_physical_address(
+            common::virtual_address target_virtual_address
+        )
     {
         return _memory_manager.convert_virtual_to_physical_address(
             target_virtual_address
@@ -336,7 +337,7 @@ namespace kernel
         }
 
         // allocate top_page_table
-        physical_address page_table_address
+        common::physical_address page_table_address
             = allocate_physical_memory(PAGE_SIZE, target_process);
         if (page_table_address == 0)
         {
