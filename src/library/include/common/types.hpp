@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+
+// for C++
 namespace library::common
 {
     // architecture-dependent size
@@ -31,6 +33,8 @@ namespace hal
 }
 
 #else
+
+// for C
 typedef uintmax_t word;
 typedef intmax_t sword;
 
