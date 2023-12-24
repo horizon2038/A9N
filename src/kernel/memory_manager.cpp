@@ -47,7 +47,7 @@ namespace kernel
                 continue;
             }
 
-            uint64_t memory_block_size
+            common::word memory_block_size
                 = sizeof(memory_block)
                 + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
             common::physical_address adjusted_address
@@ -102,10 +102,10 @@ namespace kernel
     {
         using logger = kernel::utility::logger;
 
-        uint64_t memory_map_size
+        common::word memory_map_size
             = target_memory_block.memory_frame_count * PAGE_SIZE;
-        uint64_t memory_map_size_kb = memory_map_size / 1024;
-        uint64_t memory_map_size_mb = memory_map_size_kb / 1024;
+        common::word memory_map_size_kb = memory_map_size / 1024;
+        common::word memory_map_size_mb = memory_map_size_kb / 1024;
 
         logger::printk("----- memory_block_info\e[60G%16s\n", "-----");
         logger::printk(
@@ -143,7 +143,8 @@ namespace kernel
 
     void memory_manager::init_memory_frame(memory_block &target_memory_block)
     {
-        for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)
+        for (common::word i = 0; i < target_memory_block.memory_frame_count;
+             i++)
         {
             target_memory_block.memory_frames[i].owner = nullptr;
             target_memory_block.memory_frames[i].is_allocated = false;
@@ -156,7 +157,7 @@ namespace kernel
         size_t aligned_requested_size = align_size(size, PAGE_SIZE);
         size_t requested_page_count = aligned_requested_size / PAGE_SIZE;
         memory_block *current_memory_block = head_memory_block;
-        uint64_t start_frame_index;
+        common::word start_frame_index;
         bool has_free_frames;
 
         while (current_memory_block)
@@ -200,8 +201,8 @@ namespace kernel
 
     bool memory_manager::find_free_frames(
         memory_block &target_memory_block,
-        uint64_t page_count,
-        uint64_t &start_frame_index
+        common::word page_count,
+        common::word &start_frame_index
     )
     {
         return find_frames(
@@ -214,14 +215,15 @@ namespace kernel
 
     bool memory_manager::find_frames(
         memory_block &target_memory_block,
-        uint64_t page_count,
-        uint64_t &start_frame_index,
+        common::word page_count,
+        common::word &start_frame_index,
         bool flag
     )
     {
-        uint64_t free_page_count = 0;
+        common::word free_page_count = 0;
 
-        for (uint64_t i = 0; i < target_memory_block.memory_frame_count; i++)
+        for (common::word i = 0; i < target_memory_block.memory_frame_count;
+             i++)
         {
             if (target_memory_block.memory_frames[i].is_allocated != flag)
             {
@@ -242,12 +244,12 @@ namespace kernel
 
     void memory_manager::configure_memory_frames(
         memory_frame *start_frame,
-        uint64_t page_count,
+        common::word page_count,
         process *owner,
         bool flag
     )
     {
-        for (uint64_t i = 0; i < page_count; i++)
+        for (common::word i = 0; i < page_count; i++)
         {
             start_frame[i].is_allocated = flag;
             start_frame[i].owner = owner;
@@ -260,8 +262,8 @@ namespace kernel
     )
     {
         memory_block *current_memory_block = head_memory_block;
-        uint64_t page_count = align_size(size, PAGE_SIZE) / PAGE_SIZE;
-        uint64_t start_frame_index = 0;
+        common::word page_count = align_size(size, PAGE_SIZE) / PAGE_SIZE;
+        common::word start_frame_index = 0;
 
         while (current_memory_block)
         {
@@ -298,12 +300,12 @@ namespace kernel
         return aligned_size;
     }
 
-    uint64_t memory_manager::align_physical_address(
-        uint64_t physical_address,
+    common::word memory_manager::align_physical_address(
+        common::word physical_address,
         uint16_t page_size
     )
     {
-        uint64_t aligned_address
+        common::word aligned_address
             = (physical_address + page_size - 1) & ~(page_size - 1);
         return aligned_address;
     }
@@ -359,7 +361,7 @@ namespace kernel
         kernel::process *target_process,
         common::virtual_address target_virtual_address,
         common::physical_address target_physical_address,
-        uint64_t page_count
+        common::word page_count
     )
     {
         bool is_kernel = !(target_process);
@@ -376,9 +378,9 @@ namespace kernel
             utility::logger::printk("map_virtual_memory : map for user\n");
         }
 
-        for (uint64_t i = 0; i < page_count; i++)
+        for (common::word i = 0; i < page_count; i++)
         {
-            uint64_t address_offset = i * PAGE_SIZE;
+            common::word address_offset = i * PAGE_SIZE;
 
             while (true)
             {
