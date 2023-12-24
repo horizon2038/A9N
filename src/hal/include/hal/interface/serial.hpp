@@ -2,7 +2,7 @@
 #define HAL_SERIAL_HPP
 
 #include <stdint.h>
-#include <common/types.hpp>
+#include <library/common/types.hpp>
 
 namespace hal::interface
 {
