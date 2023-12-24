@@ -25,7 +25,7 @@ namespace kernel
             common::physical_address start_physical_address;
             size_t size;
             memory_block *next;
-            uint64_t memory_frame_count;
+            common::word memory_frame_count;
             memory_frame
                 memory_frames[1]; // C++ uses an array of 1 elements to emulate
                                   // a FAM (Flexible Array Members).
@@ -57,12 +57,12 @@ namespace kernel
                 kernel::process *target_process,
                 common::virtual_address target_virtual_address,
                 common::physical_address target_physical_address,
-                uint64_t page_count
+                common::word page_count
             );
             void unmap_virtual_memory(
                 kernel::process *target_process,
                 common::virtual_address target_virtual_address,
-                uint64_t page_count
+                common::word page_count
             );
 
             common::virtual_address convert_physical_to_virtual_address(
@@ -83,25 +83,25 @@ namespace kernel
             void print_memory_block_info(memory_block &target_memory_block);
             void init_memory_frame(memory_block &target_memory_block);
             size_t align_size(size_t size, uint16_t page_size);
-            uint64_t align_physical_address(
+            common::word align_physical_address(
                 common::physical_address target_physical_address,
                 uint16_t page_size
             );
             void configure_memory_frames(
                 memory_frame *start_frame,
-                uint64_t end_frame_index,
+                common::word end_frame_index,
                 process *owner,
                 bool flag
             );
             bool find_free_frames(
                 memory_block &target_memory_block,
-                uint64_t page_count,
-                uint64_t &start_frame_index
+                common::word page_count,
+                common::word &start_frame_index
             );
             bool find_frames(
                 memory_block &target_memory_block,
-                uint64_t page_count,
-                uint64_t &start_frame_index,
+                common::word page_count,
+                common::word &start_frame_index,
                 bool flag
             );
     };
