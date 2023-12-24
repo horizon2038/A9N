@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "common.hpp"
-#include "memory_type.h"
+#include <common/types.hpp>
+#include <memory/memory_type.hpp>
 
 #include <process/process.hpp>
 #include <interface/memory_manager.hpp>
