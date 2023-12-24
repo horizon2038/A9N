@@ -1,7 +1,7 @@
 #ifndef KERNEL_OBJECT
 #define KERNEL_OBJECT
 
-#include "memory_manager.hpp"
+#include <kernel/memory/memory_manager.hpp>
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/process/process_manager.hpp>
 #include <kernel/ipc/ipc_manager.hpp>
