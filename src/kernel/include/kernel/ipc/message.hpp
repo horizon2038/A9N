@@ -1,13 +1,17 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#include <library/common/types.hpp>
 #include <stdint.h>
 
-struct message
+namespace kernel
 {
-    int32_t sender_process_id;
-    int32_t type;
-    uint8_t data[1024];
-};
+    struct message
+    {
+        common::sword sender_process_id;
+        common::sword type;
+        uint8_t data[1024];
+    };
+}
 
 #endif
