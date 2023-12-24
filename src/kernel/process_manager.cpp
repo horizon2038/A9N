@@ -3,7 +3,7 @@
 #include <interface/process_manager.hpp>
 #include "kernel.hpp"
 #include "library/logger.hpp"
-#include "process.hpp"
+#include <process/process.hpp>
 
 #include <stdint.h>
 #include <library/string.hpp>
