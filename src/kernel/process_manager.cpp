@@ -27,7 +27,7 @@ namespace kernel
 
     void process_manager::create_process(
         const char *process_name,
-        virtual_address entry_point_address
+        common::virtual_address entry_point_address
     )
     {
         uint16_t process_id = determine_process_id();
@@ -80,7 +80,7 @@ namespace kernel
         process *process,
         process_id target_process_id,
         const char *process_name,
-        virtual_address entry_point_address
+        common::virtual_address entry_point_address
     )
     {
         process->id = target_process_id;
