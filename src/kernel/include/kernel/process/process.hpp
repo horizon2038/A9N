@@ -3,7 +3,7 @@
 
 #include <common/types.hpp>
 
-#include <ipc/message.hpp>
+#include <kernel/ipc/message.hpp>
 #include <stdint.h>
 
 namespace kernel
@@ -82,7 +82,7 @@ namespace kernel
             uint8_t stack[STACK_SIZE_MAX];
             common::virtual_address stack_pointer;
 
-            physical_address page_table;
+            common::physical_address page_table;
 
             // for ipc
             message message_buffer;
