@@ -308,7 +308,7 @@ namespace kernel
         return aligned_address;
     }
 
-    virtual_address memory_manager::convert_physical_to_virtual_address(
+    common::virtual_address memory_manager::convert_physical_to_virtual_address(
         physical_address target_physical_address
     )
     {
@@ -318,7 +318,7 @@ namespace kernel
     }
 
     physical_address memory_manager::convert_virtual_to_physical_address(
-        virtual_address target_virtual_address
+        common::virtual_address target_virtual_address
     )
     {
         return _memory_manager.convert_virtual_to_physical_address(
