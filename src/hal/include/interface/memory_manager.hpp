@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <process/process.hpp>
-#include <common.hpp>
+#include <common/types.hpp>
 
 namespace hal::interface
 {
@@ -13,38 +13,38 @@ namespace hal::interface
         public:
             virtual void init_memory() = 0;
 
-            virtual void init_virtual_memory(kernel::physical_address top_page_table_address) = 0;
+            virtual void init_virtual_memory(common::physical_address top_page_table_address) = 0;
 
-            virtual bool is_table_exists(kernel::physical_address top_page_table, kernel::virtual_address target_virtual_address) = 0;
+            virtual bool is_table_exists(common::physical_address top_page_table, common::virtual_address target_virtual_address) = 0;
 
             virtual void configure_page_table
             (
-                kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address,
-                kernel::physical_address page_table_address
+                common::physical_address top_page_table_address,
+                common::virtual_address target_virtual_address,
+                common::physical_address page_table_address
             ) = 0;
 
             virtual void map_virtual_memory
             (
-                kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_addresss,
-                kernel::physical_address target_physical_address
+                common::physical_address top_page_table_address,
+                common::virtual_address target_virtual_addresss,
+                common::physical_address target_physical_address
             ) = 0;
 
             virtual void unmap_virtual_memory
             (
-                kernel::physical_address top_page_table_address,
-                kernel::virtual_address target_virtual_address
+                common::physical_address top_page_table_address,
+                common::virtual_address target_virtual_address
             ) = 0;
 
-            virtual kernel::virtual_address convert_physical_to_virtual_address
+            virtual common::virtual_address convert_physical_to_virtual_address
             (
-                const kernel::physical_address target_physical_address
+                const common::physical_address target_physical_address
             ) = 0;
 
-            virtual kernel::physical_address convert_virtual_to_physical_address
+            virtual common::physical_address convert_virtual_to_physical_address
             (
-                const kernel::virtual_address target_virtual_address
+                const common::virtual_address target_virtual_address
             ) = 0;
     };
 }
