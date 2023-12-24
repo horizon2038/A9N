@@ -6,7 +6,9 @@
 
 namespace kernel
 {
-    interrupt_manager::interrupt_manager(hal::interface::interrupt &target_interrupt)
+    interrupt_manager::interrupt_manager(
+        hal::interface::interrupt &target_interrupt
+    )
         : _interrupt(target_interrupt)
     {
     }
@@ -43,6 +45,5 @@ namespace kernel
         // kernel::utility::logger::printk("handle_timer\n");
         kernel::kernel_object::interrupt_manager->ack_interrupt();
         kernel::kernel_object::process_manager->switch_context();
-
     }
 }
