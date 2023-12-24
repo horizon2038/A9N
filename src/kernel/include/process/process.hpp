@@ -8,7 +8,6 @@
 
 namespace kernel
 {
-    namespace common = library::common;
     class process;
 
     class message_queue

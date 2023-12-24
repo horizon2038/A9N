@@ -19,4 +19,14 @@ namespace library::common
     using error = sword;
 }
 
+namespace kernel
+{
+    namespace common = library::common;
+}
+
+namespace hal
+{
+    namespace common = library::common;
+}
+
 #endif
