@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <common/types.hpp>
+#include <library/common/types.hpp>
 
 namespace kernel
 {
