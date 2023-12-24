@@ -1,10 +1,10 @@
-#include "string.hpp"
+#include <library/libc/string.hpp>
 
-namespace std 
+namespace std
 {
     void *memset(void *buffer, char value, size_t buffer_size)
     {
-        uint8_t *buffer_pointer = reinterpret_cast<uint8_t*>(buffer);
+        uint8_t *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
 
         for (size_t i = 0; i < buffer_size; i++)
         {
@@ -17,9 +17,10 @@ namespace std
 
     void *memcpy(void *buffer, const void *source, size_t size)
     {
-        uint8_t *buffer_pointer = reinterpret_cast<uint8_t*>(buffer);
-        const uint8_t *source_pointer = reinterpret_cast<const uint8_t*>(source);
-        
+        uint8_t *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
+        const uint8_t *source_pointer
+            = reinterpret_cast<const uint8_t *>(source);
+
         for (size_t i = 0; i < size; i++)
         {
             *buffer_pointer = *source_pointer;
@@ -33,7 +34,7 @@ namespace std
     char *strcpy(char *buffer, const char *source)
     {
         char *buffer_pointer = buffer;
-        
+
         while (*source != '\0')
         {
             *buffer_pointer = *source;
@@ -42,7 +43,7 @@ namespace std
         }
 
         *buffer_pointer = '\0';
-        
+
         return buffer;
     }
 
@@ -54,11 +55,11 @@ namespace std
             {
                 break;
             }
-            
+
             source_1++;
             source_2++;
         }
-        return *reinterpret_cast<const unsigned char*>(source_1) - *reinterpret_cast<const unsigned char*>(source_2);
+        return *reinterpret_cast<const unsigned char *>(source_1)
+             - *reinterpret_cast<const unsigned char *>(source_2);
     }
 }
-
