@@ -2,7 +2,7 @@
 #define PROCESS_HPP
 
 #include <library/common/types.hpp>
-#include <kernel/ipc/message.hpp>
+#include <library/ipc/message.hpp>
 
 #include <stdint.h>
 
@@ -85,7 +85,7 @@ namespace kernel
         common::physical_address page_table;
 
         // for ipc
-        message message_buffer;
+        ipc::message message_buffer;
         message_queue send_wait_queue;
         process_id receive_from;
 

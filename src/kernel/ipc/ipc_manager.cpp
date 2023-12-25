@@ -8,7 +8,7 @@
 
 namespace kernel
 {
-    void ipc_manager::send(process_id receiver_process_id, message *msg)
+    void ipc_manager::send(process_id receiver_process_id, ipc::message *msg)
     {
         process *receiver_process
             = kernel_object::process_manager->search_process_from_id(
@@ -27,7 +27,11 @@ namespace kernel
 
         process *current_process
             = kernel_object::process_manager->current_process;
-        std::memcpy(&current_process->message_buffer, msg, sizeof(message));
+        std::memcpy(
+            &current_process->message_buffer,
+            msg,
+            sizeof(ipc::message)
+        );
 
         if (receiver_process == nullptr || receiver_process == current_process)
         {
@@ -43,7 +47,7 @@ namespace kernel
 
         if (!is_ready)
         {
-            std::memset(msg, 0, sizeof(message));
+            std::memset(msg, 0, sizeof(ipc::message));
             current_process->status = process_status::BLOCKED;
             receiver_process->send_wait_queue.enqueue(current_process);
             kernel_object::process_manager->switch_context();
@@ -53,7 +57,7 @@ namespace kernel
             std::memcpy(
                 &receiver_process->message_buffer,
                 &current_process->message_buffer,
-                sizeof(message)
+                sizeof(ipc::message)
             );
 
             receiver_process->status = process_status::READY;
@@ -62,7 +66,7 @@ namespace kernel
         }
     }
 
-    void ipc_manager::receive(process_id source_process_id, message *msg)
+    void ipc_manager::receive(process_id source_process_id, ipc::message *msg)
     {
         process *current_process
             = kernel_object::process_manager->current_process;
@@ -78,7 +82,7 @@ namespace kernel
             || (source_process_id != ANY_PROCESS
                 && sender_process->id != source_process_id))
         {
-            std::memset(msg, 0, sizeof(message));
+            std::memset(msg, 0, sizeof(ipc::message));
             current_process->status = process_status::BLOCKED;
             kernel_object::process_manager->switch_context();
         }
@@ -94,7 +98,11 @@ namespace kernel
                 sender_process->name
             );
             */
-            std::memcpy(msg, &sender_process->message_buffer, sizeof(message));
+            std::memcpy(
+                msg,
+                &sender_process->message_buffer,
+                sizeof(ipc::message)
+            );
 
             sender_process->status = process_status::READY;
         }

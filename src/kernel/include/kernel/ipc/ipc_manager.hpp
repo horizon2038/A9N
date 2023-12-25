@@ -2,7 +2,7 @@
 #define IPC_HPP
 
 #include <kernel/process/process.hpp>
-#include <kernel/ipc/message.hpp>
+#include <library/ipc/message.hpp>
 
 namespace kernel
 {
@@ -14,8 +14,8 @@ namespace kernel
         ipc_manager() {};
         ~ipc_manager() {};
 
-        void send(process_id receiver_process_id, message *msg);
-        void receive(process_id sender_process_id, message *msg);
+        void send(process_id receiver_process_id, ipc::message *msg);
+        void receive(process_id sender_process_id, ipc::message *msg);
         // void notify();
     };
 }

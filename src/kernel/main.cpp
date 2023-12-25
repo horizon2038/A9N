@@ -39,7 +39,7 @@ void read_serial()
     while (1)
     {
         asm volatile("sti");
-        message m;
+        library::ipc::message m;
         m.type = 1;
         uint8_t serial_data = hal_instance->_serial->read_serial();
         if (serial_data == 0xd)
@@ -76,7 +76,7 @@ void console()
     while (1)
     {
         asm volatile("sti");
-        message m;
+        library::ipc::message m;
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
 
         // Assuming that m.data holds ASCII characters
@@ -91,7 +91,7 @@ void console()
             buffer[buffer_index] = '\0'; // null terminate the string
 
             // Prepare a message to send buffer content to process 3
-            message buffer_message;
+            library::ipc::message buffer_message;
             buffer_message.type = 1; // assuming 1 is a generic message type
 
             // Manually copy buffer content to buffer_message.data
@@ -136,7 +136,7 @@ void console_out()
     while (1)
     {
         asm volatile("sti");
-        message m;
+        library::ipc::message m;
         // Assuming process ID 3 is for console_out
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
 
@@ -160,7 +160,7 @@ void console_out()
 
         if (std::strcmp(received_data, "info pm") == 0)
         {
-            message m2;
+            library::ipc::message m2;
             m2.type = 1;
             // Assuming process ID 3 is for console_out
             std::strcpy(reinterpret_cast<char *>(m2.data), "info pm");
@@ -178,7 +178,7 @@ void info_mem()
     while (1)
     {
         asm volatile("sti");
-        message m;
+        library::ipc::message m;
         kernel::kernel_object::ipc_manager->receive(3, &m);
         if (m.type != 1)
         {
@@ -210,7 +210,7 @@ void alpha()
     while (true)
     {
         asm volatile("sti");
-        message m;
+        library::ipc::message m;
         kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
         if (m.type != 1)
         {
