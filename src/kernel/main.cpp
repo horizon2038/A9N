@@ -23,6 +23,7 @@
 #include <kernel/process/process_manager.hpp>
 
 #include <library/libc/string.hpp>
+#include <library/common/types.hpp>
 
 #include <hal/x86_64/factory/hal_factory.hpp>
 
@@ -194,15 +195,15 @@ void alpha()
     kernel::utility::logger::printn("alpha\n");
     kernel::kernel_object::process_manager->create_process(
         "read_serial",
-        reinterpret_cast<kernel::virtual_address>(read_serial)
+        reinterpret_cast<library::common::virtual_address>(read_serial)
     );
     kernel::kernel_object::process_manager->create_process(
         "console",
-        reinterpret_cast<kernel::virtual_address>(console)
+        reinterpret_cast<library::common::virtual_address>(console)
     );
     kernel::kernel_object::process_manager->create_process(
         "console_out",
-        reinterpret_cast<kernel::virtual_address>(console_out)
+        reinterpret_cast<library::common::virtual_address>(console_out)
     );
     // read_serial : 3
     // console : 4
@@ -225,7 +226,7 @@ void alpha()
     }
 }
 
-extern "C" int kernel_entry(boot_info *target_boot_info)
+extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 {
     using logger = kernel::utility::logger;
     // make HAL and kernel objects.
@@ -314,11 +315,11 @@ extern "C" int kernel_entry(boot_info *target_boot_info)
 
     kernel::kernel_object::process_manager->create_process(
         "idle",
-        reinterpret_cast<kernel::virtual_address>(kernel_main)
+        reinterpret_cast<library::common::virtual_address>(kernel_main)
     );
     kernel::kernel_object::process_manager->create_process(
         "alpha",
-        reinterpret_cast<kernel::virtual_address>(alpha)
+        reinterpret_cast<library::common::virtual_address>(alpha)
     );
 
     kernel::kernel_object::interrupt_manager->enable_interrupt_all();
