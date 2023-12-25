@@ -16,11 +16,10 @@ namespace hal::x86_64
 
     class syscall
     {
-        public:
-            void init_syscall();
-            void handle_syscall();
+      public:
+        void init_syscall();
+        void handle_syscall();
     };
 }
-
 
 #endif
