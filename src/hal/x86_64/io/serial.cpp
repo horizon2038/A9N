@@ -1,11 +1,9 @@
-#include "serial.hpp"
+#include <hal/x86_64/io/serial.hpp>
 
-#include "library/print.hpp"
-#include "port_io.hpp"
-#include <interface/port_io.hpp>
-#include <cpp_dependent/new.hpp>
+#include <hal/x86_64/io/port_io.hpp>
+#include <hal/interface/port_io.hpp>
 
-#include <library/logger.hpp>
+#include <library/common/types.hpp>
 
 namespace hal::x86_64
 {
@@ -14,16 +12,16 @@ namespace hal::x86_64
     constexpr static uint16_t COM_3 = 0x3e8;
     constexpr static uint16_t COM_4 = 0x2e8;
 
-    serial::serial(hal::interface::port_io &injected_port_io) : _port_io(injected_port_io)
+    serial::serial(hal::interface::port_io &injected_port_io)
+        : _port_io(injected_port_io)
     {
-        
     }
 
     serial::~serial()
     {
     }
 
-    void serial::init_serial(uint32_t baud_rate)
+    void serial::init_serial(common::word baud_rate)
     {
         this->_port_io.write(COM_1 + 1, 0x00);
         this->_port_io.write(COM_1 + 3, 0x80);
@@ -38,7 +36,8 @@ namespace hal::x86_64
 
     uint8_t serial::read_serial()
     {
-        while (is_received() == 0);
+        while (is_received() == 0)
+            ;
         return this->_port_io.read(COM_1);
     }
 
@@ -49,8 +48,9 @@ namespace hal::x86_64
 
     void serial::write_serial(char data)
     {
-        while (is_empty() == 0);
-        this->_port_io.write(COM_1,data);
+        while (is_empty() == 0)
+            ;
+        this->_port_io.write(COM_1, data);
     }
 
     int serial::is_empty()
@@ -64,13 +64,14 @@ namespace hal::x86_64
         {
             write_serial(words[i]);
         }
-	}
+    }
 
     uint32_t serial::strlen(const char *s)
     {
-      const char* ss;
-      for (ss = s; *ss != '\0'; ss++);
-      return ss - s;
+        const char *ss;
+        for (ss = s; *ss != '\0'; ss++)
+            ;
+        return ss - s;
     }
 
 };
