@@ -1,17 +1,18 @@
 #ifndef X86_64_PAGING_HPP
 #define X86_64_PAGING_HPP
 
-#include "common.hpp"
+#include <library/common/types.hpp>
 #include <stdint.h>
 
-#include <library/logger.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace hal::x86_64
 {
     extern "C" uint64_t __kernel_pml4;
-    extern "C" void _load_cr3(kernel::physical_address cr3_address);
+    extern "C" void _load_cr3(common::physical_address cr3_address);
     extern "C" void _flush_tlb();
-    extern "C" void _invalidate_page(kernel::virtual_address target_virtual_address);
+    extern "C" void
+        _invalidate_page(common::virtual_address target_virtual_address);
 
     constexpr static uint16_t PAGE_TABLE_COUNT = 512;
 
@@ -32,8 +33,8 @@ namespace hal::x86_64
 
     union page
     {
-        uint64_t all; 
-        
+        uint64_t all;
+
         struct
         {
             uint64_t present : 1;
@@ -50,12 +51,14 @@ namespace hal::x86_64
             uint64_t : 12;
         } __attribute__((packed));
 
-        kernel::physical_address get_physical_address()
+        common::physical_address get_physical_address()
         {
-            return reinterpret_cast<kernel::physical_address>(address << 12);
+            return reinterpret_cast<common::physical_address>(address << 12);
         }
 
-        void configure_physical_address(kernel::physical_address target_physical_address)
+        void configure_physical_address(
+            common::physical_address target_physical_address
+        )
         {
             address = (target_physical_address >> 12);
         }
@@ -70,7 +73,10 @@ namespace hal::x86_64
         constexpr static uint16_t OFFSET = 0;
     }
 
-    static inline uint64_t calculate_page_table_index(kernel::virtual_address target_virtual_address, uint16_t table_depth)
+    static inline uint64_t calculate_page_table_index(
+        common::virtual_address target_virtual_address,
+        uint16_t table_depth
+    )
     {
         // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}
         uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 0;
