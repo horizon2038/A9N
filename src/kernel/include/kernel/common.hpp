@@ -16,7 +16,7 @@ namespace kernel
     constexpr static result OK = 0;
     constexpr static result INVALID_ARGUMENT = -1;
     constexpr static result PERMISSION_DENIED = -2;
-    
+
 }
 
 #endif
