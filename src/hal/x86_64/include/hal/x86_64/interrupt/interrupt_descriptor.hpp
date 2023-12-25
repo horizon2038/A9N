@@ -1,7 +1,7 @@
 #ifndef INTERRUPT_DESCRIPTOR_H
 #define INTERRUPT_DESCRIPTOR_H
 
-#include "interface/interrupt.hpp"
+#include <hal/interface/interrupt.hpp>
 #include <stdint.h>
 
 namespace hal::x86_64

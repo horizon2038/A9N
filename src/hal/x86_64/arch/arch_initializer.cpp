@@ -1,8 +1,9 @@
-#include "arch_initializer.hpp"
+#include <hal/x86_64/arch/arch_initializer.hpp>
 
-#include <library/logger.hpp>
+#include <hal/x86_64/interrupt/pic.hpp>
+#include <kernel/utility/logger.hpp>
 
-#include "segment_configurator.hpp"
+#include <hal/x86_64/arch/segment_configurator.hpp>
 
 namespace hal::x86_64
 {
