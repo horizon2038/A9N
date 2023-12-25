@@ -5,11 +5,11 @@
 #include <hal/interface/memory_manager.hpp>
 #include <hal/interface/process_manager.hpp>
 
-#include "pit_timer.hpp"
-#include "port_io.hpp"
+#include <hal/x86_64/time/pit_timer.hpp>
+#include <hal/x86_64/io/port_io.hpp>
 
 #include <library/cpp_dependent/new.hpp>
-#include <library/string.hpp>
+#include <library/libc/string.hpp>
 
 namespace hal::x86_64
 {
