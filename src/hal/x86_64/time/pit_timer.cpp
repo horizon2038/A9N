@@ -1,8 +1,8 @@
-#include "pit_timer.hpp"
+#include <hal/x86_64/time/pit_timer.hpp>
 
-#include "pic.hpp"
+#include <hal/x86_64/interrupt/pic.hpp>
 
-#include <library/logger.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace hal::x86_64
 {
@@ -17,8 +17,7 @@ namespace hal::x86_64
 
     pit_timer *pit_timer::this_timer = nullptr;
 
-    pit_timer::pit_timer()
-        : _port_io()
+    pit_timer::pit_timer() : _port_io()
     {
         this_timer = this;
     }
@@ -46,8 +45,12 @@ namespace hal::x86_64
         */
 
         unsigned int divisor = CLOCK_RATE / hz;
-        // _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi byte, rate generator
-        _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi byte, rate generator
+        // _port_io.write(PIT_COMMAND_REGISTER, 0x36);  // Channel 0, lo/hi
+        // byte, rate generator
+        _port_io.write(
+            PIT_COMMAND_REGISTER,
+            0x36
+        ); // Channel 0, lo/hi byte, rate generator
         _port_io.write(PIT_CHANNEL_0, divisor & 0xEF);
         // _port_io.write(PIT_CHANNEL_0, (divisor >> 8) & 0xFF);
         _port_io.write(PIT_CHANNEL_0, divisor >> 8);
@@ -58,7 +61,7 @@ namespace hal::x86_64
         ticks++;
     }
 
-    uint32_t pit_timer::get_tick()
+    common::word pit_timer::get_tick()
     {
         return ticks;
     }
