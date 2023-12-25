@@ -9,18 +9,13 @@
 #include <hal/interface/timer.hpp>
 
 #include <kernel/utility/logger.hpp>
-
-#include <library/common/types.hpp>
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/ipc/ipc_manager.hpp>
 #include <kernel/process/process.hpp>
-
 #include <kernel/boot/boot_info.hpp>
-
 #include <kernel/memory/memory_manager.hpp>
-
-#include <kernel/kernel.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/kernel.hpp>
 
 #include <library/libc/string.hpp>
 #include <library/common/types.hpp>
