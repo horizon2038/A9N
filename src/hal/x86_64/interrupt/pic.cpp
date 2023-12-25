@@ -1,8 +1,8 @@
-#include "pic.hpp"
+#include <hal/x86_64/interrupt/pic.hpp>
 
-#include "port_io.hpp"
+#include <hal/x86_64/io/port_io.hpp>
 
-#include <library/logger.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace hal::x86_64
 {
@@ -68,7 +68,6 @@ namespace hal::x86_64
 
         // _port_io.write(PIC_MASTER_DATA, master_mask);
         // _port_io.write(PIC_SLAVE_DATA, slave_mask);
-
     }
 
     void pic::wait()
@@ -135,4 +134,3 @@ namespace hal::x86_64
     }
 
 }
-
