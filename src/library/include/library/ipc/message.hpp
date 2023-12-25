@@ -4,7 +4,7 @@
 #include <library/common/types.hpp>
 #include <stdint.h>
 
-namespace kernel
+namespace library::ipc
 {
     struct message
     {
@@ -12,6 +12,11 @@ namespace kernel
         common::sword type;
         uint8_t data[1024];
     };
+}
+
+namespace kernel
+{
+    namespace ipc = library::ipc;
 }
 
 #endif
