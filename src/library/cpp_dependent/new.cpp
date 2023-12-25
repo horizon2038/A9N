@@ -1,11 +1,11 @@
-#include <cpp_dependent/new.hpp>
+#include <library/cpp_dependent/new.hpp>
 
-void* operator new(size_t size, void *buffer) throw()
+void *operator new(size_t size, void *buffer) throw()
 {
     return buffer;
 }
 
-void* operator new[](size_t size, void *buffer) throw()
+void *operator new[](size_t size, void *buffer) throw()
 {
     return buffer;
 }
@@ -17,6 +17,4 @@ void operator delete(void *object, void *buffer) throw()
 
 void operator delete[](void *object, void *buffer) throw()
 {
-
 }
-

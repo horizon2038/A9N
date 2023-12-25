@@ -33,7 +33,7 @@ namespace hal::x86_64
         uint64_t reserved_2;
         uint16_t reserved_3;
         uint16_t iobp_offset;
-    }__attribute__((packed));
+    } __attribute__((packed));
 
     struct global_descriptor_table
     {
@@ -46,29 +46,28 @@ namespace hal::x86_64
         uint64_t tss_low;
         uint64_t tss_high;
 
-    }__attribute__((packed));
+    } __attribute__((packed));
 
     class segment_configurator
     {
-        public:
-            segment_configurator();
-            ~segment_configurator();
+      public:
+        segment_configurator();
+        ~segment_configurator();
 
-            void init_gdt();
-            void configure_rsp0(uint64_t kernel_stack_pointer);
+        void init_gdt();
+        void configure_rsp0(uint64_t kernel_stack_pointer);
 
-        private:
-            void configure_gdt();
-            void configure_tss();
+      private:
+        void configure_gdt();
+        void configure_tss();
 
-            void load_gdt();
-            void load_segment_register(uint16_t code_segment_register);
-            void load_task_register(uint16_t segment_register);
+        void load_gdt();
+        void load_segment_register(uint16_t code_segment_register);
+        void load_task_register(uint16_t segment_register);
 
-            // it needs to be rewritten because it does not take into account mp
-            static task_state_segment tss;
-            static global_descriptor_table gdt;
-
+        // it needs to be rewritten because it does not take into account mp
+        static task_state_segment tss;
+        static global_descriptor_table gdt;
     };
 
 }
