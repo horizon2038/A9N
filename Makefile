@@ -11,7 +11,7 @@ A9NLOADER = a9nloaderPkg
 SCRIPTSDIR = ./scripts
 LLVMDIR = /usr/local/opt/llvm/bin
 
-SRCS  = $(shell find $(SRCDIR)/kernel -path $(SRCDIR)/hal/$(ARCH) -prune -o -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \) -print)
+SRCS  = $(shell find $(SRCDIR)/kernel -path $(SRCDIR)/hal/$(ARCH) -prune -o -path $(SRCDIR)/library -prune -o -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \) -print)
 OBJS = $(patsubst $(SRCDIR)/kernel/%.c,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(SRCS))
 OBJS := $(patsubst $(SRCDIR)/kernel/%.cpp,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
 OBJS := $(patsubst $(SRCDIR)/kernel/%.s,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
@@ -24,6 +24,10 @@ OBJS += $(HAL_OBJS)
 DEPS += $(HAL_OBJS:.o=.d)
 
 LIB_INCDIR = $(shell find $(SRCDIR)/library -type -d)
+LIB_SRCS :=  $(shell find $(SRCDIR)/library -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
+LIB_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/library/, $(addsuffix .o, $(basename $(LIB_SRCS:$(SRCDIR)/library/%=%))))
+OBJS += $(LIB_OBJS)
+DEPS += $(LIB_OBJS:.o=.d)
 
 INCDIR = $(shell find $(SRCDIR)/kernel -type d)
 INCDIR += $(ARCH_INCDIR)
@@ -34,6 +38,8 @@ $(warning SRCS: $(SRCS))
 $(warning OBJS: $(OBJS))
 $(warning HAL_SRCS: $(HAL_SRCS))
 $(warning HAL_OBJS: $(HAL_OBJS))
+$(warning LIB_SRCS: $(LIB_SRCS))
+$(warning LIB_OBJS: $(LIB_SRCS))
 
 CC := clang 
 CXX := clang++
@@ -59,6 +65,7 @@ kernel: $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
 
 boot: $(BUILDDIR)/$(ARCH)/boot/$(BOOT)
 
+#kernel
 $(BUILDDIR)/$(ARCH)/kernel/$(TARGET): $(OBJS) $(LIBS)
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
@@ -75,6 +82,7 @@ $(BUILDDIR)/$(ARCH)/kernel/%.o: $(SRCDIR)/kernel/%.s
 	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) $< -o $@ 
 
+#hal
 $(BUILDDIR)/$(ARCH)/hal/$(TARGET): $(OBJS) $(LIBS)
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
@@ -88,6 +96,23 @@ $(BUILDDIR)/$(ARCH)/hal/%.o: $(SRCDIR)/hal/%.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(BUILDDIR)/$(ARCH)/hal/%.o: $(SRCDIR)/hal/%.s
+	mkdir -p $(dir $@)
+	$(ASM) $(ASFLAGS) $< -o $@ 
+
+#library
+$(BUILDDIR)/$(ARCH)/library/$(TARGET): $(OBJS) $(LIBS)
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+$(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+$(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.s
 	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) $< -o $@ 
 
