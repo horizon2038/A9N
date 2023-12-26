@@ -1,10 +1,12 @@
 #ifndef CAPABILITY_DESCRIPTOR_HPP
 #define CAPABILITY_DESCRIPTOR_HPP
 
-#include <common/types.hpp>
+#include <library/common/types.hpp>
 
 namespace library::capability
 {
+    // capability_descriptors do not directly point to entries.
+    // they are only used for indirect adressing.
     using capability_descriptor = common::word;
 }
 

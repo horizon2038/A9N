@@ -15,7 +15,8 @@ namespace kernel
         GENERIC = 2,
         CAPABILITY_NODE = 4,
         PROCESS_CONTROL_BLOCK = 6,
-        FRAME = 8
+        IPC_OBJECT = 8,
+        FRAME = 10
     };
 
     struct capability

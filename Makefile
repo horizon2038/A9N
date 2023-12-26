@@ -23,7 +23,7 @@ HAL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/hal/, $(addsuffix .o, $(basename $(HA
 OBJS += $(HAL_OBJS)
 DEPS += $(HAL_OBJS:.o=.d)
 
-LIB_INCDIR = $(shell find $(SRCDIR)/library -type -d)
+LIB_INCDIR = $(shell find $(SRCDIR)/library -type d)
 LIB_SRCS :=  $(shell find $(SRCDIR)/library -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
 LIB_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/library/, $(addsuffix .o, $(basename $(LIB_SRCS:$(SRCDIR)/library/%=%))))
 OBJS += $(LIB_OBJS)
