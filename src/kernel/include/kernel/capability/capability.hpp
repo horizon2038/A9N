@@ -19,7 +19,7 @@ namespace kernel
         FRAME = 10
     };
 
-    struct capability
+    struct capability_data
     {
         common::word data[4];
     };
