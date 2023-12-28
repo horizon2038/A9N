@@ -12,6 +12,9 @@ namespace library::common
     using word = uintmax_t;
     using sword = intmax_t;
 
+    constexpr static word BYTE_BITS = 8;
+    constexpr static word WORD_BITS = sizeof(word) * BYTE_BITS;
+
     using virtual_address = word;
     using physical_address = word;
 

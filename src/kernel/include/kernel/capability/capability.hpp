@@ -21,6 +21,7 @@ namespace kernel
 
     struct capability_data
     {
+        capability_type type;
         common::word data[4];
     };
 
