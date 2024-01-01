@@ -62,4 +62,21 @@ namespace std
         return *reinterpret_cast<const unsigned char *>(source_1)
              - *reinterpret_cast<const unsigned char *>(source_2);
     }
+
+    int strncmp(const char *source_1, const char *source_2, size_t size)
+    {
+        char result = 0;
+
+        while (size)
+        {
+            if ((result = *source_1 - *source_2++) != 0 || !(*source_1++))
+            {
+                break;
+            }
+            size--;
+        }
+
+        return result;
+    }
+
 }
