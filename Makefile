@@ -17,21 +17,20 @@ OBJS := $(patsubst $(SRCDIR)/kernel/%.cpp,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS)
 OBJS := $(patsubst $(SRCDIR)/kernel/%.s,$(BUILDDIR)/$(ARCH)/kernel/%.o,$(OBJS))
 DEPS = $(OBJS:.o=.d)
 
-ARCH_INCDIR = $(shell find $(SRCDIR)/hal/$(ARCH) -type d)
 HAL_SRCS :=  $(shell find $(SRCDIR)/hal/$(ARCH) -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
 HAL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/hal/, $(addsuffix .o, $(basename $(HAL_SRCS:$(SRCDIR)/hal/%=%))))
 OBJS += $(HAL_OBJS)
 DEPS += $(HAL_OBJS:.o=.d)
 
-LIB_INCDIR = $(shell find $(SRCDIR)/library -type d)
 LIB_SRCS :=  $(shell find $(SRCDIR)/library -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
 LIB_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/library/, $(addsuffix .o, $(basename $(LIB_SRCS:$(SRCDIR)/library/%=%))))
 OBJS += $(LIB_OBJS)
 DEPS += $(LIB_OBJS:.o=.d)
 
-INCDIR = $(shell find $(SRCDIR)/kernel -type d)
-INCDIR += $(ARCH_INCDIR)
-INCDIR += $(LIB_INCDIR)
+INCDIR = $(SRCDIR)/kernel/include
+INCDIR += $(SRCDIR)/hal/include
+INCDIR += $(SRCDIR)/hal/$(ARCH)/include
+INCDIR += $(SRCDIR)/library/include
 INCFLAGS = $(addprefix -I,$(INCDIR))
 
 $(warning SRCS: $(SRCS))
@@ -47,7 +46,7 @@ ASM := nasm
 LD = ld.lld
 CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
-CPPFLAGS = $(INCFLAGS) -MMD -MP -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include -I$(SRCDIR)/library/include
+CPPFLAGS = $(INCFLAGS) -MMD -MP # -I. -I$(SRCDIR)/kernel/include -I$(SRCDIR)/hal/include -I$(SRCDIR)/library/include
 ASFLAGS = -f elf64
 
 # without linker-script (lower-half kernel)
