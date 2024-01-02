@@ -31,6 +31,23 @@ namespace std
         return buffer;
     }
 
+    int memcmp(const void *source_1, const void *source_2, size_t size)
+    {
+        const uint8_t *pointer_1 = reinterpret_cast<const uint8_t *>(source_1);
+        const uint8_t *pointer_2 = reinterpret_cast<const uint8_t *>(source_2);
+
+        while (size-- > 0)
+        {
+            if (*pointer_1 != *pointer_2)
+            {
+                return (*pointer_1 - *pointer_2);
+            }
+            pointer_1++;
+            pointer_2++;
+        }
+        return 0;
+    }
+
     char *strcpy(char *buffer, const char *source)
     {
         char *buffer_pointer = buffer;
