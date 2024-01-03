@@ -18,14 +18,14 @@ namespace hal::x86_64
         const common::physical_address target_physical_address
     )
     {
-        return target_physical_address + KERNEL_VIRTUAL_BASE;
+        return target_physical_address | KERNEL_VIRTUAL_BASE;
     }
 
     static inline common::physical_address convert_virtual_to_physical_address(
         const common::virtual_address target_virtual_address
     )
     {
-        return target_virtual_address - KERNEL_VIRTUAL_BASE;
+        return target_virtual_address & ~KERNEL_VIRTUAL_BASE;
     }
 
     static inline bool

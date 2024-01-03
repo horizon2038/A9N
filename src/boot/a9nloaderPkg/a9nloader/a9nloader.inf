@@ -18,6 +18,7 @@
   uefi_lifetime.c
   uefi_memory_map.c
   uefi_boot_info_configurator.c
+  acpi.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -28,6 +29,7 @@
 
 [Guids]
   gEfiFileInfoGuid
+  gEfiAcpiTableGuid
 
 [Protocols]
   gEfiLoadedImageProtocolGuid

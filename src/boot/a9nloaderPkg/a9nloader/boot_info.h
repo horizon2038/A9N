@@ -9,6 +9,7 @@
 typedef struct
 {
     memory_info boot_memory_info;
+    uintmax_t arch_info[8];
 } boot_info;
 
 #endif

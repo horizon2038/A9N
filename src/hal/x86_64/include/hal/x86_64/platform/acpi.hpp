@@ -42,8 +42,8 @@ namespace hal::x86_64
     }
     namespace ACPI_MAGIC
     {
-        constexpr static char RSDP[]
-            = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0 };
+        constexpr static char RSDP[8]
+            = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
     }
 }
 

@@ -22,6 +22,8 @@
 
 #include <hal/x86_64/factory/hal_factory.hpp>
 
+#include <hal/x86_64/platform/acpi.hpp>
+
 void kernel_main(void);
 
 hal::interface::hal *hal_instance;
@@ -236,6 +238,18 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     kernel::utility::logger *my_logger = new ((void *)logger_buf)
         kernel::utility::logger { *hal_instance->_serial };
 
+    for (auto i = 0; i < 8; i++)
+    {
+        logger::printk(
+            "arch_info[%d] : 0x%16llx\n",
+            i,
+            target_boot_info->arch_info[i]
+        );
+    }
+
+    hal::x86_64::acpi_configurator acpi;
+    logger::printk("rsdp_address : 0x%016llx\n", acpi.find_rsdp());
+
     logger::a9nout();
     logger::printk("start A9N kernel\n");
     logger::split();
@@ -294,6 +308,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         = new (kernel::kernel_object::process_manager_buffer)
             kernel::process_manager(*hal_instance->_process_manager);
     logger::split();
+
     // 最終成果報告会用バックアップ
     /*
     kernel::kernel_object::process_manager->create_process("read_serial",

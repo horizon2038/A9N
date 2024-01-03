@@ -43,7 +43,7 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     if(EFI_ERROR(efi_status)) return efi_status;
     efi_status = get_uefi_memory_map(&target_uefi_memory_map);
     if(EFI_ERROR(efi_status)) return efi_status;
-    efi_status = make_boot_info(&target_uefi_memory_map, &target_boot_info);
+    efi_status = make_boot_info(system_table, &target_uefi_memory_map, &target_boot_info);
     if(EFI_ERROR(efi_status)) return efi_status;
     efi_status = exit_uefi(image_handle, &target_uefi_memory_map);
     // known issues: checking efi_status in exit_uefi causes "EFI Hard Drive" error.

@@ -7,9 +7,20 @@
 #include "boot_info.h"
 #include "uefi_memory_map.h"
 #include "stdint.h"
+#include "acpi.h"
 
-EFI_STATUS make_boot_info(uefi_memory_map *target_uefi_memory_map, boot_info *target_boot_info)
+EFI_STATUS make_boot_info(
+    EFI_SYSTEM_TABLE *system_table,
+    uefi_memory_map *target_uefi_memory_map,
+    boot_info *target_boot_info
+)
 {
+    for (uintmax_t i = 0; i < 8; i++)
+    {
+        target_boot_info->arch_info[i] = 0xdeadbeaf;
+    }
+    target_boot_info->arch_info[0] = (uintmax_t)(find_rsdp(system_table));
+
     uint16_t entries_count = target_uefi_memory_map->map_size / target_uefi_memory_map->descriptor_size;
     target_boot_info->boot_memory_info.memory_map_count = entries_count;
     target_boot_info->boot_memory_info.memory_size = 0;

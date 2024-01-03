@@ -6,6 +6,10 @@
 #include "uefi_memory_map.h"
 #include "boot_info.h"
 
-EFI_STATUS make_boot_info(uefi_memory_map *target_uefi_memory_map, boot_info *target_boot_info);
+EFI_STATUS make_boot_info(
+    EFI_SYSTEM_TABLE *system_table,
+    uefi_memory_map *target_uefi_memory_map,
+    boot_info *target_boot_info
+);
 
 #endif

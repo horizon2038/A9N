@@ -19,7 +19,7 @@ namespace hal::x86_64
         kernel::utility::logger::printk("ebda_base : 0x%016llx\n", ebda_base);
 
         common::virtual_address ebda_address
-            = *(reinterpret_cast<uint16_t *>(ebda_base)) << 4;
+            = *reinterpret_cast<uint16_t *>(ebda_base) << 4;
         kernel::utility::logger::printk(
             "ebda_address : 0x%016llx\n",
             ebda_address
@@ -42,11 +42,18 @@ namespace hal::x86_64
              address <= reinterpret_cast<uint8_t *>(end_address);
              address += 0x10)
         {
-            if (std::memcmp(address, "RSD PTR ", 8) == 0)
+            if (std::memcmp(address, ACPI_MAGIC::RSDP, 8) == 0)
             {
+                kernel::utility::logger::printk(
+                    "RSDP found at address: 0x%016llx\n",
+                    address
+                );
                 return reinterpret_cast<common::virtual_pointer>(address);
             }
         }
+        kernel::utility::logger::printk(
+            "RSDP not found in the specified range.\n"
+        );
         return reinterpret_cast<common::virtual_address>(nullptr);
     }
 }

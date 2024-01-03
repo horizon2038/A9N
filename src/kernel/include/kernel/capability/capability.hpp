@@ -22,7 +22,15 @@ namespace kernel
     struct capability_data
     {
         capability_type type;
+        common::virtual_address address;
         common::word data[4];
+    };
+
+    class capability
+    {
+      public:
+        virtual const capability_type type() = 0;
+        virtual common::error execute() = 0;
     };
 
 }

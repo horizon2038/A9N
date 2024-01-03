@@ -10,13 +10,7 @@ namespace kernel
 {
     // users never keep the address of capability_entry.
     // capability_descriptors are only used for indirect adressing.
-    struct dependency_node;
-
-    struct capability_entry
-    {
-        capability_data capability;
-        dependency_node *family_node;
-    };
+    struct capability_entry;
 
     struct dependency_node
     {
@@ -28,7 +22,19 @@ namespace kernel
         capability_entry *child_capability_entry;
     };
 
-    class capability_node
+    struct capability_entry
+    {
+        capability *capablity_pointer;
+        dependency_node family_node;
+    };
+
+    struct capability_lookup_result
+    {
+        common::word index;
+        common::word depth_bits;
+    };
+
+    class capability_node final : capability
     {
       public:
         capability_node(
@@ -37,7 +43,10 @@ namespace kernel
             capability_entry *initial_capability_slots
         );
 
-        capability_data lookup_capability_data(
+        const capability_type type() override;
+        common::error execute() override;
+
+        capability_data traverse_capability(
             library::capability::capability_descriptor target_descriptor
         );
 
@@ -50,7 +59,27 @@ namespace kernel
 
         // the number of slots is 2^radix_bits.
         capability_entry *capability_slots;
+
+        capability_lookup_result lookup_capability(
+            library::capability::capability_descriptor target_descriptor,
+            common::word depth_bits
+        );
     };
+
+    inline const common::word calculate_capability_index(
+        library::capability::capability_descriptor descriptor,
+        common::word ignore_bits,
+        common::word radix_bits,
+        common::word depth_bits
+    )
+    {
+        auto mask_bits = (1ull << radix_bits) - 1;
+        auto shift_bits
+            = (common::WORD_BITS - (ignore_bits + radix_bits + depth_bits));
+        auto index = (descriptor >> shift_bits) & mask_bits;
+        return index;
+    }
+
 }
 
 #endif
