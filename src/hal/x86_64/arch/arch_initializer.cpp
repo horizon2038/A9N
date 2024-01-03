@@ -5,6 +5,7 @@
 #include <kernel/boot/boot_info.hpp>
 
 #include <kernel/utility/logger.hpp>
+#include <hal/x86_64/platform/acpi.hpp>
 
 namespace hal::x86_64
 {
@@ -25,11 +26,11 @@ namespace hal::x86_64
                 i,
                 arch_info[i]
             );
-            segment_configurator my_segment_configurator;
-            my_segment_configurator.init_gdt();
-
-            pic my_pic;
-            my_pic.init_pic();
         }
+        segment_configurator my_segment_configurator;
+        my_segment_configurator.init_gdt();
+
+        pic my_pic;
+        my_pic.init_pic();
     }
 }
