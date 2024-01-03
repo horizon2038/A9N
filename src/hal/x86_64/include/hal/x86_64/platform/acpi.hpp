@@ -5,25 +5,16 @@
 
 namespace hal::x86_64
 {
-    class acpi_configurator
-    {
-      public:
-        acpi_configurator();
-        ~acpi_configurator();
-
-        void init_acpi(common::virtual_address rsdp_address);
-
-      private:
-        bool validate_rsdp(common::virtual_address rsdp_address);
-    };
-
     struct rsdp
     {
+        // ACPI v1 field
         uint8_t signature[8];
-        uint16_t checksum;
+        uint8_t checksum;
         uint8_t oem_id[6];
         uint8_t revision;
         uint32_t rsdt_address;
+
+        // ACPI V2 field
         uint32_t length;
         uint64_t xsdt_address;
         uint8_t extended_checksum;
@@ -45,6 +36,19 @@ namespace hal::x86_64
     inline static common::virtual_address rsdp_address;
     inline static common::virtual_address xsdt_address;
     inline static common::virtual_address hpet_address;
+    class acpi_configurator
+    {
+      public:
+        acpi_configurator();
+        ~acpi_configurator();
+
+        void init_acpi(common::virtual_address rsdp_address);
+
+      private:
+        bool validate_rsdp(common::virtual_address rsdp_address);
+        void print_rsdp_info(rsdp *target_rsdp);
+    };
+
 }
 
 #endif
