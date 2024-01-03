@@ -36,12 +36,12 @@ CC := clang
 CXX := clang++
 ASM := nasm
 LD = ld.lld
-CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
-CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -no-pie -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
+CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
+CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
 CPPFLAGS = $(INCFLAGS) -MMD -MP
 ASFLAGS = -f elf64
 
-LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static -no-pie -nostdlib -Map build/kernel.map
+LDFLAGS = -T $(SRCDIR)/hal/$(ARCH)/kernel.ld -z norelro --static -nostdlib -Map build/kernel.map
 LIBS = 
 
 $(info $(make show-targets))
