@@ -9,10 +9,12 @@
 
 namespace kernel
 {
+    constexpr static common::word ARCH_INFO_MAX = 8;
+
     struct boot_info
     {
         memory_info boot_memory_info;
-        common::word arch_info[8];
+        common::word arch_info[ARCH_INFO_MAX];
     } __attribute__((packed));
 }
 
