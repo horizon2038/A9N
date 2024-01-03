@@ -298,7 +298,9 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     kernel::kernel_object::interrupt_manager->disable_interrupt_all();
 
     logger::printk("init architecture\n");
-    hal_instance->_arch_initializer->init_architecture();
+    hal_instance->_arch_initializer->init_architecture(
+        target_boot_info->arch_info
+    );
 
     hal_instance->_timer->init_timer();
 

@@ -11,7 +11,7 @@ namespace hal::x86_64
         arch_initializer();
         ~arch_initializer();
 
-        void init_architecture() override;
+        void init_architecture(common::word arch_info[]) override;
 
       private:
     };
