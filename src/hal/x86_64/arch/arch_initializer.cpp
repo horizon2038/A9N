@@ -2,10 +2,10 @@
 
 #include <hal/x86_64/interrupt/pic.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
-#include <kernel/boot/boot_info.hpp>
-
-#include <kernel/utility/logger.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
+
+#include <kernel/boot/boot_info.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace hal::x86_64
 {

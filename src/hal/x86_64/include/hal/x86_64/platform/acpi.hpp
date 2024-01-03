@@ -12,13 +12,8 @@ namespace hal::x86_64
         ~acpi_configurator();
 
         void init_acpi();
-        common::virtual_address find_rsdp();
 
       private:
-        common::virtual_pointer find_rsdp_range(
-            common::virtual_address start_address,
-            common::virtual_address end_address
-        );
     };
 
     struct rsdp
@@ -29,7 +24,7 @@ namespace hal::x86_64
         uint8_t revision;
         uint32_t rsdt_address;
         uint32_t length;
-        uint8_t xsdt_address[6];
+        uint64_t xsdt_address;
         uint8_t extended_checksum;
         uint8_t reserved[3];
     } __attribute__((packed));
