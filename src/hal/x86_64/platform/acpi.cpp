@@ -18,6 +18,7 @@ namespace hal::x86_64
             return;
         }
         kernel::utility::logger::printk("RSDP is valid\n");
+        ACPI_ADDRESS::rsdp_address = rsdp_address;
 
         auto rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
         print_rsdp_info(rsdp_pointer);

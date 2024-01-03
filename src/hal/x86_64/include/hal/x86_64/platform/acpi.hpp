@@ -21,6 +21,19 @@ namespace hal::x86_64
         uint8_t reserved[3];
     } __attribute__((packed));
 
+    struct xsdt_header
+    {
+        uint8_t signature[8];
+        uint32_t length;
+        uint8_t revision;
+        uint8_t checksum;
+        uint8_t oem_id[6];
+        uint8_t oem_table_id[8];
+        uint32_t oem_regision;
+        uint32_t creatoe_id;
+        uint32_t creator_revision;
+    } __attribute__((packed));
+
     namespace ACPI_REGION
     {
         constexpr static common::physical_address BIOS_MAIN_START = 0x000E0000;
@@ -33,9 +46,13 @@ namespace hal::x86_64
             = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
     }
 
-    inline static common::virtual_address rsdp_address;
-    inline static common::virtual_address xsdt_address;
-    inline static common::virtual_address hpet_address;
+    namespace ACPI_ADDRESS
+    {
+        inline static common::virtual_address rsdp_address;
+        inline static common::virtual_address xsdt_address;
+        inline static common::virtual_address hpet_address;
+    }
+
     class acpi_configurator
     {
       public:
