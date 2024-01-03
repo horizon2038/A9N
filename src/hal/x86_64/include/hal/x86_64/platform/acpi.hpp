@@ -11,9 +11,10 @@ namespace hal::x86_64
         acpi_configurator();
         ~acpi_configurator();
 
-        void init_acpi();
+        void init_acpi(common::virtual_address rsdp_address);
 
       private:
+        bool validate_rsdp(common::virtual_address rsdp_address);
     };
 
     struct rsdp
@@ -40,6 +41,10 @@ namespace hal::x86_64
         constexpr static char RSDP[8]
             = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
     }
+
+    inline static common::virtual_address rsdp_address;
+    inline static common::virtual_address xsdt_address;
+    inline static common::virtual_address hpet_address;
 }
 
 #endif

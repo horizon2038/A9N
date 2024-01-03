@@ -1,3 +1,4 @@
+#include "hal/x86_64/arch/arch_types.hpp"
 #include <hal/x86_64/arch/arch_initializer.hpp>
 
 #include <hal/x86_64/interrupt/pic.hpp>
@@ -32,5 +33,8 @@ namespace hal::x86_64
 
         pic my_pic;
         my_pic.init_pic();
+
+        acpi_configurator acpi;
+        acpi.init_acpi(convert_physical_to_virtual_address(arch_info[0]));
     }
 }
