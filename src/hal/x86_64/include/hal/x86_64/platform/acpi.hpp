@@ -21,9 +21,9 @@ namespace hal::x86_64
         uint8_t reserved[3];
     } __attribute__((packed));
 
-    struct xsdt_header
+    struct sdt_header
     {
-        uint8_t signature[8];
+        uint8_t signature[4];
         uint32_t length;
         uint8_t revision;
         uint8_t checksum;
@@ -32,6 +32,12 @@ namespace hal::x86_64
         uint32_t oem_regision;
         uint32_t creatoe_id;
         uint32_t creator_revision;
+    } __attribute__((packed));
+
+    struct xsdt
+    {
+        sdt_header header;
+        uint64_t *other_sdt;
     } __attribute__((packed));
 
     namespace ACPI_REGION
@@ -64,6 +70,7 @@ namespace hal::x86_64
       private:
         bool validate_rsdp(common::virtual_address rsdp_address);
         void print_rsdp_info(rsdp *target_rsdp);
+        void print_xsdt_info(xsdt *target_xsdt);
     };
 
 }
