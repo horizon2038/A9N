@@ -30,7 +30,7 @@ namespace hal::x86_64
         uint8_t oem_id[6];
         uint8_t oem_table_id[8];
         uint32_t oem_regision;
-        uint32_t creatoe_id;
+        uint32_t creator_id;
         uint32_t creator_revision;
     } __attribute__((packed));
 
