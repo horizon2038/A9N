@@ -95,25 +95,29 @@ namespace hal::x86_64
             xsdt_table_count
         );
 
-        target_xsdt->other_sdt
+        auto other_sdt
             = reinterpret_cast<uint64_t *>(convert_physical_to_virtual_address(
                 reinterpret_cast<uint64_t>(target_xsdt) + (sizeof(uint8_t) * 36)
             ));
+
         kernel::utility::logger::printk(
             "other_sdt\e[50G : 0x%016llx\n",
             reinterpret_cast<uint64_t>(target_xsdt->other_sdt)
         );
 
+        kernel::utility::logger::printk(
+            "calculated_other_sdt\e[50G : 0x%016llx\n",
+            reinterpret_cast<uint64_t>(other_sdt)
+        );
+
         for (auto i = 0; i < xsdt_table_count; i++)
         {
             auto header = reinterpret_cast<sdt_header *>(
-                convert_physical_to_virtual_address(target_xsdt->other_sdt[i])
+                convert_physical_to_virtual_address(other_sdt[i])
             );
             kernel::utility::logger::printk(
                 "xsdt_header\e[50G : 0x%016llx\n",
-                reinterpret_cast<common::physical_address>(
-                    target_xsdt->other_sdt[i]
-                )
+                reinterpret_cast<common::physical_address>(other_sdt[i])
             );
             char signature_fixed[5];
             signature_fixed[4] = '\0';
