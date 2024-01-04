@@ -2,6 +2,9 @@
 /build/
 /chain/
 
+# bin
+*.fd
+
 # Prerequisites
 *.d
 
