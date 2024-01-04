@@ -17,7 +17,7 @@ namespace hal::x86_64
     {
         // kernel::utility::logger::printk("irq_number : %d\n", irq_number);
         bool is_exception = false;
-        char *exception_type = "TODO : configure exception type";
+        const char *exception_type = get_exception_type_string(irq_number);
 
         switch (irq_number)
         {
@@ -27,7 +27,7 @@ namespace hal::x86_64
 
             default :
                 kernel::utility::logger::printk(
-                    "%d exception %s : %llu\n",
+                    "exception [%2d] : %s : %llu\n",
                     irq_number,
                     exception_type,
                     error_code
