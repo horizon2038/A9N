@@ -22,6 +22,11 @@ namespace hal::x86_64
 
         auto rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
         print_rsdp_info(rsdp_pointer);
+
+        xsdt *xsdt_pointer = reinterpret_cast<xsdt *>(
+            convert_physical_to_virtual_address(rsdp_pointer->xsdt_address)
+        );
+        print_xsdt_info(xsdt_pointer);
     };
 
     bool acpi_configurator::validate_rsdp(common::virtual_address rsdp_address)
@@ -67,5 +72,57 @@ namespace hal::x86_64
             "extended_checksum\e[50G : %d\n",
             rsdp_pointer->extended_checksum
         );
+    }
+
+    void acpi_configurator::print_xsdt_info(xsdt *target_xsdt)
+    {
+        kernel::utility::logger::printk(
+            "xsdt_info\e[50G : 0x%016llx\n",
+            reinterpret_cast<uint64_t>(target_xsdt)
+        );
+
+        char signature_fixed[5];
+        std::memcpy(signature_fixed, target_xsdt->header.signature, 4);
+        signature_fixed[4] = '\0';
+        kernel::utility::logger::printk(
+            "xsdt_signature\e[50G : %s\n",
+            signature_fixed
+        );
+        auto xsdt_table_count
+            = (target_xsdt->header.length - sizeof(sdt_header)) / 8;
+        kernel::utility::logger::printk(
+            "xsdt_table_count\e[50G : %d\n",
+            xsdt_table_count
+        );
+
+        target_xsdt->other_sdt
+            = reinterpret_cast<uint64_t *>(convert_physical_to_virtual_address(
+                reinterpret_cast<uint64_t>(target_xsdt) + (sizeof(uint8_t) * 36)
+            ));
+        kernel::utility::logger::printk(
+            "other_sdt\e[50G : 0x%016llx\n",
+            reinterpret_cast<uint64_t>(target_xsdt->other_sdt)
+        );
+
+        for (auto i = 0; i < xsdt_table_count; i++)
+        {
+            auto header = reinterpret_cast<sdt_header *>(
+                convert_physical_to_virtual_address(target_xsdt->other_sdt[i])
+            );
+            kernel::utility::logger::printk(
+                "xsdt_header\e[50G : 0x%016llx\n",
+                reinterpret_cast<common::physical_address>(
+                    target_xsdt->other_sdt[i]
+                )
+            );
+            char signature_fixed[5];
+            signature_fixed[4] = '\0';
+            std::memcpy(signature_fixed, header->signature, 4);
+            kernel::utility::logger::printk(
+                "xsdt_signature [%d]\e[50G : %s\n",
+                i,
+                signature_fixed
+            );
+        }
     }
 }
