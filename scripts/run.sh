@@ -28,9 +28,11 @@ function run_qemu() {
     # QEMUPARAM=("${QEMUFLAGS}" "${GDB_OPTION}")
     # qemu-system-$ARCH "${QEMUPARAM[@]}"
     qemu-system-${ARCH} \
-        -bios OVMF.fd \
+        -drive if=pflash,format=raw,readonly,file=./OVMF_CODE.fd \
+        -drive if=pflash,format=raw,file=./OVMF_VARS.fd \
         -drive format=raw,file=fat:rw:./ \
-        -m 2G -nographic \
+        -m 2G \
+        -nographic \
         -no-shutdown -no-reboot \
         -M hpet=on \
     # -monitor stdio
