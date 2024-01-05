@@ -7,6 +7,29 @@
 
 namespace hal::x86_64
 {
+    uint32_t xsdt::count()
+    {
+        return (header.length - sizeof(sdt_header)) / 8;
+    }
+
+    sdt_header *xsdt::search_sdt_header(uint32_t count)
+    {
+        common::virtual_address *sdt_address_table = calculate_table_head();
+        common::virtual_address sdt_virtual_address
+            = convert_physical_to_virtual_address(sdt_address_table[count]);
+        return reinterpret_cast<sdt_header *>(sdt_virtual_address);
+    }
+
+    common::virtual_address *xsdt::calculate_table_head()
+    {
+        return reinterpret_cast<common::virtual_address *>(
+            convert_physical_to_virtual_address(
+                reinterpret_cast<common::physical_address>(this)
+                + (sizeof(uint8_t) * 36)
+            )
+        );
+    }
+
     acpi_configurator::acpi_configurator() {};
     acpi_configurator::~acpi_configurator() {};
 
@@ -26,7 +49,16 @@ namespace hal::x86_64
         xsdt *xsdt_pointer = reinterpret_cast<xsdt *>(
             convert_physical_to_virtual_address(rsdp_pointer->xsdt_address)
         );
-        print_xsdt_info(xsdt_pointer);
+        kernel::utility::logger::split();
+        print_sdt_header_info(&xsdt_pointer->header);
+
+        auto xsdt_count = xsdt_pointer->count();
+
+        for (auto i = 0; i < xsdt_count; i++)
+        {
+            sdt_header *header = xsdt_pointer->search_sdt_header(i);
+            print_sdt_header_info(header);
+        }
     };
 
     bool acpi_configurator::validate_rsdp(common::virtual_address rsdp_address)
@@ -46,87 +78,86 @@ namespace hal::x86_64
         std::memcpy(signature, rsdp_pointer->signature, 8);
         std::memcpy(oem_id, rsdp_pointer->oem_id, 6);
 
-        kernel::utility::logger::printk("signature\e[50G : %s\n", signature);
+        kernel::utility::logger::printk("signature\e[55G : %s\n", signature);
         kernel::utility::logger::printk(
-            "checksum\e[50G : %d\n",
+            "checksum\e[55G : %d\n",
             rsdp_pointer->checksum
         );
-        kernel::utility::logger::printk("oem_id\e[50G : %s\n", oem_id);
+        kernel::utility::logger::printk("oem_id\e[55G : %s\n", oem_id);
         kernel::utility::logger::printk(
-            "revision\e[50G : %d\n",
+            "revision\e[55G : %d\n",
             rsdp_pointer->revision
         );
         kernel::utility::logger::printk(
-            "rsdt_address\e[50G : 0x%08lx\n",
+            "rsdt_address\e[55G : 0x%08lx\n",
             rsdp_pointer->rsdt_address
         );
         kernel::utility::logger::printk(
-            "length\e[50G : 0x%08lx\n",
+            "length\e[55G : 0x%08lx\n",
             rsdp_pointer->length
         );
         kernel::utility::logger::printk(
-            "xsdt_address\e[50G : 0x%016llx\n",
+            "xsdt_address\e[55G : 0x%016llx\n",
             rsdp_pointer->xsdt_address
         );
         kernel::utility::logger::printk(
-            "extended_checksum\e[50G : %d\n",
+            "extended_checksum\e[55G : %d\n",
             rsdp_pointer->extended_checksum
         );
     }
 
-    void acpi_configurator::print_xsdt_info(xsdt *target_xsdt)
+    void acpi_configurator::print_sdt_header_info(sdt_header *header)
     {
-        kernel::utility::logger::printk(
-            "xsdt_info\e[50G : 0x%016llx\n",
-            reinterpret_cast<uint64_t>(target_xsdt)
-        );
+        char fixed_signature[5];
+        fixed_signature[4] = '\0';
+        std::memcpy(fixed_signature, header->signature, 4);
 
-        char signature_fixed[5];
-        std::memcpy(signature_fixed, target_xsdt->header.signature, 4);
-        signature_fixed[4] = '\0';
-        kernel::utility::logger::printk(
-            "xsdt_signature\e[50G : %s\n",
-            signature_fixed
-        );
-        auto xsdt_table_count
-            = (target_xsdt->header.length - sizeof(sdt_header)) / 8;
-        kernel::utility::logger::printk(
-            "xsdt_table_count\e[50G : %d\n",
-            xsdt_table_count
-        );
+        char fixed_oem_id[7];
+        fixed_oem_id[6] = '\0';
+        std::memcpy(fixed_oem_id, header->oem_id, 6);
 
-        auto other_sdt
-            = reinterpret_cast<uint64_t *>(convert_physical_to_virtual_address(
-                reinterpret_cast<uint64_t>(target_xsdt) + (sizeof(uint8_t) * 36)
-            ));
+        char fixed_oem_table_id[9];
+        fixed_oem_table_id[8] = '\0';
+        std::memcpy(fixed_oem_table_id, header->oem_table_id, 8);
 
         kernel::utility::logger::printk(
-            "other_sdt\e[50G : 0x%016llx\n",
-            reinterpret_cast<uint64_t>(target_xsdt->other_sdt)
+            "signature\e[55G : %s\n",
+            fixed_signature
         );
-
         kernel::utility::logger::printk(
-            "calculated_other_sdt\e[50G : 0x%016llx\n",
-            reinterpret_cast<uint64_t>(other_sdt)
+            "length\e[55G : 0x%08lx\n",
+            header->length
         );
+        kernel::utility::logger::printk(
+            "revision\e[55G : %d\n",
+            header->revision
+        );
+        kernel::utility::logger::printk(
+            "checksum\e[55G : %d\n",
+            header->checksum
+        );
+        kernel::utility::logger::printk("oem_id\e[55G : %s\n", fixed_oem_id);
+        kernel::utility::logger::printk(
+            "oem_table_id\e[55G : %s\n",
+            fixed_oem_table_id
+        );
+        kernel::utility::logger::printk(
+            "oem_revision\e[55G : 0x%08lx\n",
+            header->oem_revision
+        );
+        kernel::utility::logger::printk(
+            "creator_id\e[55G : 0x%08lx\n",
+            header->creator_id
+        );
+        kernel::utility::logger::printk(
+            "creator_revision\e[55G : 0x%08lx\n",
+            header->creator_revision
+        );
+        kernel::utility::logger::split();
+    };
 
-        for (auto i = 0; i < xsdt_table_count; i++)
-        {
-            auto header = reinterpret_cast<sdt_header *>(
-                convert_physical_to_virtual_address(other_sdt[i])
-            );
-            kernel::utility::logger::printk(
-                "xsdt_header\e[50G : 0x%016llx\n",
-                reinterpret_cast<common::physical_address>(other_sdt[i])
-            );
-            char signature_fixed[5];
-            signature_fixed[4] = '\0';
-            std::memcpy(signature_fixed, header->signature, 4);
-            kernel::utility::logger::printk(
-                "xsdt_signature [%d]\e[50G : %s\n",
-                i,
-                signature_fixed
-            );
-        }
+    bool validate_sdt_signature(sdt_header *header, const char *signature)
+    {
+        return ((std::memcmp(header->signature, signature, 4) == 0));
     }
 }

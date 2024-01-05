@@ -1,7 +1,6 @@
 #ifndef HAL_X86_64_ACPI_HPP
 #define HAL_X86_64_ACPI_HPP
 
-#include <cstdint>
 #include <library/common/types.hpp>
 
 namespace hal::x86_64
@@ -30,15 +29,22 @@ namespace hal::x86_64
         uint8_t checksum;
         uint8_t oem_id[6];
         uint8_t oem_table_id[8];
-        uint32_t oem_regision;
+        uint32_t oem_revision;
         uint32_t creator_id;
         uint32_t creator_revision;
     } __attribute__((packed));
 
     struct xsdt
     {
+      public:
         sdt_header header;
-        uint64_t *other_sdt;
+
+        uint32_t count();
+        sdt_header *search_sdt_header(uint32_t count);
+
+      private:
+        uint64_t *calculate_table_head();
+
     } __attribute__((packed));
 
     struct generic_address_structure
@@ -171,7 +177,7 @@ namespace hal::x86_64
       private:
         bool validate_rsdp(common::virtual_address rsdp_address);
         void print_rsdp_info(rsdp *target_rsdp);
-        void print_xsdt_info(xsdt *target_xsdt);
+        void print_sdt_header_info(sdt_header *header);
     };
 
 }
