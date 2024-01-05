@@ -1,6 +1,7 @@
 #ifndef HAL_X86_64_ACPI_HPP
 #define HAL_X86_64_ACPI_HPP
 
+#include <cstdint>
 #include <library/common/types.hpp>
 
 namespace hal::x86_64
@@ -48,6 +49,30 @@ namespace hal::x86_64
         uint8_t access_size;
         uint64_t address;
     } __attribute__((packed));
+
+    enum class GENERIC_ADDRESS_SPACE_TYPE : uint8_t
+    {
+        SYSTEM_MEMORY = 0x00,
+        SYSTEM_IO = 0x01,
+        PCI_CONFIGURATION_SPACE = 0x02,
+        EMBEDDED_CONTROLLER = 0x03,
+        SYSTEM_MANAGEMENT_BUS = 0x04,
+        SYSTEM_CMOS = 0x05,
+        PCI_DEVICE_BAR_TARGET = 0x06,
+        INTELLIGENT_PLATFORM_MANAGEMENT_INFRASTRUCTURE = 0x07,
+        GENERAL_PURPOSE_IO = 0x08,
+        GENERIC_SERIAL_BUS = 0x09,
+        PLATFORM_COMMUNICATION_CHANNEL = 0x0A,
+    };
+
+    enum class GENERIC_ADDRESS_ACCESS_SIZE : uint8_t
+    {
+        UNDEFINED = 0x00,
+        BYTE_ACCESS = 0x01,
+        BIT_16_ACCESS = 0x02,
+        BIT_32_ACCESS = 0x03,
+        BIT_64_ACCESS = 0x04,
+    };
 
     struct fadt
     {
