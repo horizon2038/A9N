@@ -7,6 +7,11 @@
 
 namespace hal::x86_64
 {
+    bool sdt_header::validate_sdt_signature(const char *target_signature)
+    {
+        return ((std::memcmp(signature, target_signature, 4) == 0));
+    }
+
     uint32_t xsdt::count()
     {
         return (header.length - sizeof(sdt_header)) / 8;
@@ -35,13 +40,13 @@ namespace hal::x86_64
 
     void acpi_configurator::init_acpi(common::virtual_address rsdp_address)
     {
+        kernel::utility::logger::printk("init acpi\n");
         if (!validate_rsdp(rsdp_address))
         {
-            kernel::utility::logger::printk("RSDP is invalid\n");
+            kernel::utility::logger::printk("rsdp is invalid\n");
             return;
         }
-        kernel::utility::logger::printk("RSDP is valid\n");
-        ACPI_ADDRESS::rsdp_address = rsdp_address;
+        kernel::utility::logger::printk("rsdp is valid\n");
 
         auto rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
         print_rsdp_info(rsdp_pointer);
@@ -52,12 +57,15 @@ namespace hal::x86_64
         kernel::utility::logger::split();
         print_sdt_header_info(&xsdt_pointer->header);
 
-        auto xsdt_count = xsdt_pointer->count();
-
-        for (auto i = 0; i < xsdt_count; i++)
+        for (auto i = 0; i < xsdt_pointer->count(); i++)
         {
             sdt_header *header = xsdt_pointer->search_sdt_header(i);
             print_sdt_header_info(header);
+            if (header->validate_sdt_signature("FACP"))
+            {
+                kernel::utility::logger::printk("\e[32mFACP found!\e[0m\n");
+                kernel::utility::logger::split();
+            }
         }
     };
 
@@ -156,8 +164,4 @@ namespace hal::x86_64
         kernel::utility::logger::split();
     };
 
-    bool validate_sdt_signature(sdt_header *header, const char *signature)
-    {
-        return ((std::memcmp(header->signature, signature, 4) == 0));
-    }
 }

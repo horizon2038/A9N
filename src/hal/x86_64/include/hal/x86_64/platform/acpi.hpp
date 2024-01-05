@@ -32,6 +32,8 @@ namespace hal::x86_64
         uint32_t oem_revision;
         uint32_t creator_id;
         uint32_t creator_revision;
+
+        bool validate_sdt_signature(const char *target_signature);
     } __attribute__((packed));
 
     struct xsdt

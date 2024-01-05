@@ -28,6 +28,7 @@ namespace hal::x86_64
                 arch_info[i]
             );
         }
+        kernel::utility::logger::split();
         segment_configurator my_segment_configurator;
         my_segment_configurator.init_gdt();
 
