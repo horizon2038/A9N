@@ -155,17 +155,17 @@ namespace hal::x86_64
         constexpr static common::physical_address BIOS_MAIN_END = 0x00100000;
         constexpr static common::physical_address EBDA_SEGMENT = 0x0000040E;
     }
+
     namespace ACPI_MAGIC
     {
         constexpr static char RSDP[8]
             = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
     }
 
-    namespace ACPI_ADDRESS
+    namespace ACPI_STRUCTURES
     {
-        inline static common::virtual_address rsdp_address;
-        inline static common::virtual_address xsdt_address;
-        inline static common::virtual_address hpet_address;
+        inline static rsdp *rsdp_pointer;
+        inline static xsdt *xsdt_pointer;
     }
 
     class acpi_configurator

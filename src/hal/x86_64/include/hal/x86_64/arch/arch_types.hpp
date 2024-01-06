@@ -39,6 +39,13 @@ namespace hal::x86_64
             || (canonical_sign_bit == 1 && canonical_upper_bits == 0xFFFF)
         );
     }
+
+    template<typename T>
+    T *convert_physical_to_virtual_pointer(common::physical_address address)
+    {
+        return reinterpret_cast<T *>(convert_physical_to_virtual_address(address
+        ));
+    }
 }
 
 #endif
