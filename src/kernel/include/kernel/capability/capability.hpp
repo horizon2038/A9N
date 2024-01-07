@@ -20,10 +20,15 @@ namespace kernel
         FRAME = 10
     };
 
+    struct capability_data
+    {
+        common::word data[4];
+    };
+
     class capability
     {
       public:
-        virtual common::error execute() = 0;
+        virtual common::error execute(capability_data data) = 0;
     };
 
 }

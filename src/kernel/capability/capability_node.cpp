@@ -15,7 +15,8 @@ namespace kernel
     {
     }
 
-    common::error capability_node::capability_node::execute()
+    common::error capability_node::capability_node::execute(capability_data data
+    )
     {
         return 1;
     };
