@@ -15,14 +15,12 @@ namespace kernel
     {
     }
 
-    const capability_type capability_node::type() {};
-
     common::error capability_node::capability_node::execute()
     {
         return 1;
     };
 
-    capability_data traverse_capability(
+    capability_entry traverse_capability(
         library::capability::capability_descriptor descriptor
     )
     {

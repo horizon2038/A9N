@@ -9,6 +9,7 @@ namespace kernel
     // currently, capabilities are provided in a hardware-independent manner.
     // however, to make extensions in the hardware-dependent part easier,
     // they take even values, following seL4.
+    // unused.
     enum class capability_type : uint8_t
     {
         UNINITIALIZED = 0,
@@ -19,17 +20,9 @@ namespace kernel
         FRAME = 10
     };
 
-    struct capability_data
-    {
-        capability_type type;
-        common::virtual_address address;
-        common::word data[4];
-    };
-
     class capability
     {
       public:
-        virtual const capability_type type() = 0;
         virtual common::error execute() = 0;
     };
 

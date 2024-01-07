@@ -12,6 +12,11 @@ namespace kernel
     // capability_descriptors are only used for indirect adressing.
     struct capability_entry;
 
+    struct capability_data
+    {
+        common::word data[4];
+    };
+
     struct dependency_node
     {
         // sibling capability_entry
@@ -25,6 +30,7 @@ namespace kernel
     struct capability_entry
     {
         capability *capablity_pointer;
+        capability_data data;
         dependency_node family_node;
     };
 
@@ -43,10 +49,9 @@ namespace kernel
             capability_entry *initial_capability_slots
         );
 
-        const capability_type type() override;
         common::error execute() override;
 
-        capability_data traverse_capability(
+        capability_entry traverse_capability(
             library::capability::capability_descriptor target_descriptor
         );
 
