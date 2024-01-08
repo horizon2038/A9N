@@ -18,6 +18,9 @@ namespace kernel
     common::error capability_node::capability_node::execute(capability_data data
     )
     {
+        // 1. decode operation
+        // 2. dispatch operation
+        // 3.run operation
         return 1;
     };
 
@@ -25,6 +28,7 @@ namespace kernel
         library::capability::capability_descriptor descriptor
     )
     {
+        // TODO : downcast
     }
 
     capability_lookup_result capability_node::lookup_capability(

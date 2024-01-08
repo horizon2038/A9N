@@ -9,7 +9,7 @@ namespace kernel
     // currently, capabilities are provided in a hardware-independent manner.
     // however, to make extensions in the hardware-dependent part easier,
     // they take even values, following seL4.
-    // unused.
+    // [unused].
     enum class capability_type : uint8_t
     {
         UNINITIALIZED = 0,
@@ -20,14 +20,19 @@ namespace kernel
         FRAME = 10
     };
 
+    // capability_data is an essential presence for capability.execute().
+    // This enables providing a common interface for capabilities such as
+    // generic, frame, and others where we do not want to have a physical entity
+    // in memory for each. This enhances extensibility and maintainability.
     struct capability_data
     {
-        common::word data[4];
+        common::word elements[4];
     };
 
     class capability
     {
       public:
+        virtual capability_type type() = 0;
         virtual common::error execute(capability_data data) = 0;
     };
 
