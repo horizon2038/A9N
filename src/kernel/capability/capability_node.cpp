@@ -15,6 +15,11 @@ namespace kernel
     {
     }
 
+    capability_type capability_node::type()
+    {
+        return capability_type::NODE;
+    }
+
     common::error capability_node::capability_node::execute(capability_data data
     )
     {

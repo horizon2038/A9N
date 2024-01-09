@@ -6,18 +6,20 @@
 
 namespace kernel
 {
-    // currently, capabilities are provided in a hardware-independent manner.
-    // however, to make extensions in the hardware-dependent part easier,
-    // they take even values, following seL4.
-    // [unused].
     enum class capability_type : uint8_t
     {
-        UNINITIALIZED = 0,
-        GENERIC = 2,
-        CAPABILITY_NODE = 4,
-        PROCESS_CONTROL_BLOCK = 6,
-        IPC_OBJECT = 8,
-        FRAME = 10
+        // NODE type represents a node that can store capabilities itself.
+        // They are used for exploration and are casted to node.
+        NODE = 0x00,
+
+        // REAL type represents objects that have a separate instance created
+        // in memory, such as process_control_block.
+        REAL = 0x01,
+
+        // VIRTUAL type represents objects that do not have an instance created
+        // in memory, such as frame or generic.
+        // it can also be used for debugging capabilities.
+        VIRTUAL = 0x02,
     };
 
     // capability_data is an essential presence for capability.execute().
