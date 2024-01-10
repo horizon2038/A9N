@@ -31,7 +31,7 @@ namespace kernel
 
     struct capability_lookup_result
     {
-        common::word index;
+        capability_entry *entry;
         common::word depth_bits;
     };
 
@@ -47,7 +47,7 @@ namespace kernel
         capability_type type() override;
         common::error execute(capability_data data) override;
 
-        capability_entry traverse_capability(
+        capability_entry *traverse_capability(
             library::capability::capability_descriptor target_descriptor
         );
 
@@ -65,6 +65,7 @@ namespace kernel
             library::capability::capability_descriptor target_descriptor,
             common::word depth_bits
         );
+        capability_entry *index_to_capability(common::word index);
     };
 
     inline const common::word calculate_capability_index(

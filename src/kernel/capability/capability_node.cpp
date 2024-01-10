@@ -29,11 +29,46 @@ namespace kernel
         return 1;
     };
 
-    capability_entry traverse_capability(
+    // traverse nodes across multiple depths.
+    capability_entry *capability_node::traverse_capability(
         library::capability::capability_descriptor descriptor
     )
     {
-        // TODO : downcast
+        auto depth = 0;
+        capability *target_capability = this;
+        capability_entry *entry;
+
+        while (1)
+        {
+            bool is_node = target_capability->type() == capability_type::NODE;
+            bool is_depth_remain = ((depth < library::common::WORD_BITS));
+
+            if (!is_depth_remain)
+            {
+                return entry;
+            }
+
+            if (!is_node)
+            {
+                // invalid depth
+                return nullptr;
+            }
+
+            auto node = static_cast<capability_node *>(target_capability);
+            auto lookup_result = node->lookup_capability(descriptor, depth);
+
+            entry = lookup_result.entry;
+            depth = lookup_result.depth_bits;
+
+            if (depth > library::common::WORD_BITS)
+            {
+                return nullptr;
+            }
+            target_capability = lookup_result.entry->capablity_pointer;
+        }
+
+        // unreachable
+        return nullptr;
     }
 
     capability_lookup_result capability_node::lookup_capability(
@@ -53,9 +88,20 @@ namespace kernel
             radix_bits,
             depth_bits
         );
-        auto depth = (ignore_bits + radix_bits);
+        auto entry = index_to_capability(index);
+        auto depth = (ignore_bits + radix_bits + depth_bits);
         auto result
-            = capability_lookup_result { .index = index, .depth_bits = 0 };
+            = capability_lookup_result { .entry = entry, .depth_bits = depth };
         return result;
+    }
+
+    capability_entry *capability_node::index_to_capability(common::word index)
+    {
+        auto index_max = 1 << radix_bits;
+        if (index >= index_max)
+        {
+            return nullptr;
+        }
+        return &capability_slots[index];
     }
 }
