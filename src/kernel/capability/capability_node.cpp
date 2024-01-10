@@ -1,6 +1,7 @@
 #include "library/capability/capability_descriptor.hpp"
 #include "library/common/types.hpp"
 #include <kernel/capability/capability_node.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace kernel
 {
@@ -34,23 +35,32 @@ namespace kernel
         library::capability::capability_descriptor descriptor
     )
     {
+        kernel::utility::logger::printk("traverse_capability\n");
+        kernel::utility::logger::printk(
+            "descriptor\e[55G : 0x%016llx\n",
+            descriptor
+        );
         auto depth = 0;
         capability *target_capability = this;
         capability_entry *entry;
 
+        auto i = 0;
         while (1)
         {
+            kernel::utility::logger::printk("traverse_loop [%02d]\n", i);
             auto is_node = target_capability->type() == capability_type::NODE;
             auto is_depth_remain = ((depth < library::common::WORD_BITS));
 
             if (!is_depth_remain)
             {
+                kernel::utility::logger::printk("traverse succeed\n");
                 return entry;
             }
 
             if (!is_node)
             {
                 // invalid depth
+                kernel::utility::logger::error("invalid depth !\n");
                 return nullptr;
             }
 
@@ -60,11 +70,17 @@ namespace kernel
             entry = lookup_result.entry;
             depth = lookup_result.depth_bits;
 
+            kernel::utility::logger::printk(
+                "capability_entry\e[55G : 0x%016llx\n",
+                reinterpret_cast<common::word>(entry)
+            );
+
             if (depth > library::common::WORD_BITS)
             {
                 return nullptr;
             }
-            target_capability = lookup_result.entry->capablity_pointer;
+            target_capability = lookup_result.entry->capability_pointer;
+            i++;
         }
 
         // unreachable
@@ -76,9 +92,16 @@ namespace kernel
         common::word depth_bits
     )
     {
+        kernel::utility::logger::printk("lookup_capability\n");
         auto index = calculate_capability_index(descriptor, depth_bits);
         auto entry = index_to_capability_entry(index);
+        if (entry->capability_pointer == nullptr)
+        {
+            kernel::utility::logger::error("null entry !\n");
+        }
         auto depth = (ignore_bits + radix_bits + depth_bits);
+        kernel::utility::logger::printk("index\e[55G : 0x%08llx\n", index);
+        kernel::utility::logger::printk("depth\e[55G : 0x%02llx\n", depth);
         auto result
             = capability_lookup_result { .entry = entry, .depth_bits = depth };
         return result;
@@ -90,6 +113,7 @@ namespace kernel
         auto index_max = 1 << radix_bits;
         if (index >= index_max)
         {
+            kernel::utility::logger::error("index out of range !\n");
             return nullptr;
         }
         return &capability_slots[index];

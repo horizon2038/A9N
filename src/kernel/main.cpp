@@ -17,6 +17,9 @@
 #include <kernel/process/process_manager.hpp>
 #include <kernel/kernel.hpp>
 
+#include <library/capability/capability_descriptor.hpp>
+#include <kernel/capability/capability_node.hpp>
+
 #include <library/libc/string.hpp>
 #include <library/common/types.hpp>
 
@@ -287,6 +290,43 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     hal_instance->_arch_initializer->init_architecture(
         target_boot_info->arch_info
     );
+
+    kernel::capability_entry entry_1[256];
+    kernel::capability_node node_1(24, 8, entry_1);
+    entry_1[4].data.elements[0] = 0xdeadbeaf;
+    entry_1[4].data.elements[1] = 0xdeadbeaf;
+    entry_1[4].data.elements[2] = 0xdeadbeaf;
+    entry_1[4].data.elements[3] = 0xdeadbeaf;
+
+    kernel::capability_entry entry_2[256];
+    kernel::capability_node node_2(24, 8, entry_2);
+    entry_2[4].data.elements[0] = 0xc0ffee;
+    entry_2[4].data.elements[1] = 0xfeedface;
+    entry_2[4].data.elements[2] = 0xfadedbad;
+    entry_2[4].data.elements[3] = 0xf00dfeed;
+    entry_1[4].capability_pointer = &node_2;
+    entry_2[4].capability_pointer = &node_2;
+
+    library::capability::capability_descriptor descriptor = 0x0000000400000004;
+    auto traversed_entry = node_1.traverse_capability(descriptor);
+
+    if (traversed_entry != nullptr)
+    {
+        logger::printk(
+            "capability_type\e[55G : 0x%x\n",
+            traversed_entry->capability_pointer->type()
+        );
+        for (auto i = 0; i < 4; i++)
+        {
+            logger::printk(
+                "entry_data [%02d]\e[55G : 0x%016llx\n",
+                i,
+                traversed_entry->data.elements[i]
+            );
+        }
+    }
+    logger::split();
+    auto miss_traversed_entry = node_1.traverse_capability(0x10101010101);
 
     hal_instance->_timer->init_timer();
 

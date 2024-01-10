@@ -24,7 +24,7 @@ namespace kernel
 
     struct capability_entry
     {
-        capability *capablity_pointer;
+        capability *capability_pointer;
         capability_data data;
         dependency_node family_node;
     };
@@ -35,7 +35,7 @@ namespace kernel
         common::word depth_bits;
     };
 
-    class capability_node final : capability
+    class capability_node final : public capability
     {
       public:
         capability_node(
