@@ -65,22 +65,21 @@ namespace kernel
             library::capability::capability_descriptor target_descriptor,
             common::word depth_bits
         );
-        capability_entry *index_to_capability(common::word index);
-    };
 
-    inline const common::word calculate_capability_index(
-        library::capability::capability_descriptor descriptor,
-        common::word ignore_bits,
-        common::word radix_bits,
-        common::word depth_bits
-    )
-    {
-        auto mask_bits = (1ull << radix_bits) - 1;
-        auto shift_bits
-            = (common::WORD_BITS - (ignore_bits + radix_bits + depth_bits));
-        auto index = (descriptor >> shift_bits) & mask_bits;
-        return index;
-    }
+        inline const common::word calculate_capability_index(
+            library::capability::capability_descriptor descriptor,
+            common::word depth_bits
+        )
+        {
+            auto mask_bits = (1 << radix_bits) - 1;
+            auto shift_bits
+                = (common::WORD_BITS - (ignore_bits + radix_bits + depth_bits));
+            auto index = (descriptor >> shift_bits) & mask_bits;
+            return index;
+        }
+
+        capability_entry *index_to_capability_entry(common::word index);
+    };
 
 }
 

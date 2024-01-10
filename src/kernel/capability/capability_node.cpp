@@ -40,8 +40,8 @@ namespace kernel
 
         while (1)
         {
-            bool is_node = target_capability->type() == capability_type::NODE;
-            bool is_depth_remain = ((depth < library::common::WORD_BITS));
+            auto is_node = target_capability->type() == capability_type::NODE;
+            auto is_depth_remain = ((depth < library::common::WORD_BITS));
 
             if (!is_depth_remain)
             {
@@ -76,26 +76,16 @@ namespace kernel
         common::word depth_bits
     )
     {
-        /*
-        auto mask_bits = (1ull << radix_bits) - 1;
-        auto shift_bits
-            = (common::WORD_BITS - (ignore_bits + radix_bits + depth_bits));
-        auto index = (descriptor >> shift_bits) & mask_bits;
-        */
-        auto index = calculate_capability_index(
-            descriptor,
-            ignore_bits,
-            radix_bits,
-            depth_bits
-        );
-        auto entry = index_to_capability(index);
+        auto index = calculate_capability_index(descriptor, depth_bits);
+        auto entry = index_to_capability_entry(index);
         auto depth = (ignore_bits + radix_bits + depth_bits);
         auto result
             = capability_lookup_result { .entry = entry, .depth_bits = depth };
         return result;
     }
 
-    capability_entry *capability_node::index_to_capability(common::word index)
+    capability_entry *
+        capability_node::index_to_capability_entry(common::word index)
     {
         auto index_max = 1 << radix_bits;
         if (index >= index_max)
