@@ -31,6 +31,7 @@ namespace kernel
         common::word elements[4];
     };
 
+    // TODO: change to composite / visitor pattern nodes.
     class capability
     {
       public:
