@@ -1,6 +1,7 @@
 #ifndef CAPABILITY_HPP
 #define CAPABILITY_HPP
 
+#include "library/capability/capability_descriptor.hpp"
 #include <library/common/types.hpp>
 #include <stdint.h>
 
@@ -32,11 +33,34 @@ namespace kernel
     };
 
     // TODO: change to composite / visitor pattern nodes.
+    struct capability_entry;
+
     class capability
     {
       public:
         virtual capability_type type() = 0;
         virtual common::error execute(capability_data data) = 0;
+        virtual capability_entry *lookup_entry(
+            library::capability::capability_descriptor descriptor,
+            common::word depth
+        ) = 0;
+    };
+
+    struct dependency_node
+    {
+        // sibling capability_entry
+        capability_entry *next_capability_entry;
+        capability_entry *preview_capability_entry;
+
+        // child capability_entry
+        capability_entry *child_capability_entry;
+    };
+
+    struct capability_entry
+    {
+        capability *capability_pointer;
+        capability_data data;
+        dependency_node family_node;
     };
 
 }

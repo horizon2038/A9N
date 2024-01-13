@@ -30,6 +30,18 @@ namespace kernel
         return 1;
     };
 
+    capability_entry *capability_node::lookup_entry(
+        library::capability::capability_descriptor descriptor,
+        common::word depth
+    )
+    {
+        auto result = lookup_capability(descriptor, depth);
+        return result.entry->capability_pointer->lookup_entry(
+            descriptor,
+            result.depth_bits
+        );
+    }
+
     // traverse nodes across multiple depths.
     capability_entry *capability_node::traverse_capability(
         library::capability::capability_descriptor descriptor

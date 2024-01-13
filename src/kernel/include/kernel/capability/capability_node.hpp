@@ -10,24 +10,6 @@ namespace kernel
 {
     // users never keep the address of capability_entry.
     // capability_descriptors are only used for indirect adressing.
-    struct capability_entry;
-
-    struct dependency_node
-    {
-        // sibling capability_entry
-        capability_entry *next_capability_entry;
-        capability_entry *preview_capability_entry;
-
-        // child capability_entry
-        capability_entry *child_capability_entry;
-    };
-
-    struct capability_entry
-    {
-        capability *capability_pointer;
-        capability_data data;
-        dependency_node family_node;
-    };
 
     struct capability_lookup_result
     {
@@ -46,6 +28,11 @@ namespace kernel
 
         capability_type type() override;
         common::error execute(capability_data data) override;
+
+        capability_entry *lookup_entry(
+            library::capability::capability_descriptor descriptor,
+            common::word depth
+        ) override;
 
         capability_entry *traverse_capability(
             library::capability::capability_descriptor target_descriptor
