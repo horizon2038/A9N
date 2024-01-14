@@ -30,19 +30,27 @@ namespace kernel
         return 1;
     };
 
-    capability_entry *capability_node::lookup_entry(
+    capability_entry *capability_node::traverse_entry(
         library::capability::capability_descriptor descriptor,
         common::word depth
     )
     {
-        auto result = lookup_capability(descriptor, depth);
-        return result.entry->capability_pointer->lookup_entry(
-            descriptor,
-            result.depth_bits
-        );
+        if (descriptor == 0)
+        {
+            return nullptr;
+        }
+
+        if (depth == library::common::WORD_BITS)
+        {
+            return lookup_entry(descriptor, depth);
+        }
+
+        auto new_depth = calculate_depth(depth);
+        return lookup_entry(descriptor, new_depth);
     }
 
     // traverse nodes across multiple depths.
+    /*
     capability_entry *capability_node::traverse_capability(
         library::capability::capability_descriptor descriptor
     )
@@ -77,7 +85,7 @@ namespace kernel
             }
 
             auto node = static_cast<capability_node *>(target_capability);
-            auto lookup_result = node->lookup_capability(descriptor, depth);
+            auto lookup_result = node->lookup_entry(descriptor, depth);
 
             entry = lookup_result.entry;
             depth = lookup_result.depth_bits;
@@ -98,8 +106,9 @@ namespace kernel
         // unreachable
         return nullptr;
     }
+    */
 
-    capability_lookup_result capability_node::lookup_capability(
+    capability_entry *capability_node::lookup_entry(
         library::capability::capability_descriptor descriptor,
         common::word depth_bits
     )
@@ -111,12 +120,7 @@ namespace kernel
         {
             kernel::utility::logger::error("null entry !\n");
         }
-        auto depth = (ignore_bits + radix_bits + depth_bits);
-        kernel::utility::logger::printk("index\e[55G : 0x%08llx\n", index);
-        kernel::utility::logger::printk("depth\e[55G : 0x%02llx\n", depth);
-        auto result
-            = capability_lookup_result { .entry = entry, .depth_bits = depth };
-        return result;
+        return entry;
     }
 
     capability_entry *

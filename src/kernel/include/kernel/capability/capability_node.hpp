@@ -28,8 +28,7 @@ namespace kernel
 
         capability_type type() override;
         common::error execute(capability_data data) override;
-
-        capability_entry *lookup_entry(
+        capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth
         ) override;
@@ -48,7 +47,7 @@ namespace kernel
         // the number of slots is 2^radix_bits.
         capability_entry *capability_slots;
 
-        capability_lookup_result lookup_capability(
+        capability_entry *lookup_entry(
             library::capability::capability_descriptor target_descriptor,
             common::word depth_bits
         );
@@ -63,6 +62,11 @@ namespace kernel
                 = (common::WORD_BITS - (ignore_bits + radix_bits + depth_bits));
             auto index = (descriptor >> shift_bits) & mask_bits;
             return index;
+        }
+
+        inline const common::word calculate_depth(common::word depth_bits)
+        {
+            return (ignore_bits + radix_bits + depth_bits);
         }
 
         capability_entry *index_to_capability_entry(common::word index);

@@ -40,7 +40,7 @@ namespace kernel
       public:
         virtual capability_type type() = 0;
         virtual common::error execute(capability_data data) = 0;
-        virtual capability_entry *lookup_entry(
+        virtual capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth
         ) = 0;
