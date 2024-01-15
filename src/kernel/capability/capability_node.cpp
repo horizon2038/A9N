@@ -30,8 +30,8 @@ namespace kernel
         return 1;
     };
 
-    // Recursively explores entries. This is a Composite pattern that allows
-    // handling single and multiple Capabilities with the same interface.
+    // recursively explores entries. this is a composite pattern that allows
+    // handling single and multiple capabilities with the same interface.
     capability_entry *capability_node::traverse_entry(
         library::capability::capability_descriptor descriptor,
         common::word depth

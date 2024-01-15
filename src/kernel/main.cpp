@@ -308,7 +308,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     entry_2[4].capability_pointer = &node_2;
 
     library::capability::capability_descriptor descriptor = 0x0000000400000004;
-    auto traversed_entry = node_1.traverse_capability(descriptor);
+    auto traversed_entry = node_1.traverse_entry(descriptor, 0);
 
     if (traversed_entry != nullptr)
     {
@@ -326,7 +326,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         }
     }
     logger::split();
-    auto miss_traversed_entry = node_1.traverse_capability(0x10101010101);
+    // auto miss_traversed_entry = node_1.traverse_entry(0x10101010101, 0);
 
     hal_instance->_timer->init_timer();
 

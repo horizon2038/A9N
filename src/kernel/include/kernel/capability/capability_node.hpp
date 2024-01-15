@@ -33,10 +33,6 @@ namespace kernel
             common::word depth
         ) override;
 
-        capability_entry *traverse_capability(
-            library::capability::capability_descriptor target_descriptor
-        );
-
       private:
         common::word ignore_bits;
         common::word radix_bits;
