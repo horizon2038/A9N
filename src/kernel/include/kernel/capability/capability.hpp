@@ -32,13 +32,13 @@ namespace kernel
         common::word elements[4];
     };
 
-    // TODO: change to composite / visitor pattern nodes.
+    // TODO: create operation structure (utilizes capcall argments)
+
     struct capability_entry;
 
     class capability
     {
       public:
-        virtual capability_type type() = 0;
         virtual common::error execute(capability_data data) = 0;
         virtual capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
@@ -59,8 +59,13 @@ namespace kernel
     struct capability_entry
     {
         capability *capability_pointer;
-        capability_data data;
+        capability_data entry_local_data;
         dependency_node family_node;
+
+        common::error execute()
+        {
+            return capability_pointer->execute(entry_local_data);
+        }
     };
 
 }

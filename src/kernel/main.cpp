@@ -293,17 +293,17 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     kernel::capability_entry entry_1[256];
     kernel::capability_node node_1(24, 8, entry_1);
-    entry_1[4].data.elements[0] = 0xdeadbeaf;
-    entry_1[4].data.elements[1] = 0xdeadbeaf;
-    entry_1[4].data.elements[2] = 0xdeadbeaf;
-    entry_1[4].data.elements[3] = 0xdeadbeaf;
+    entry_1[4].entry_local_data.elements[0] = 0x0;
+    entry_1[4].entry_local_data.elements[1] = 0xdeadbeaf;
+    entry_1[4].entry_local_data.elements[2] = 0xdeadbeaf;
+    entry_1[4].entry_local_data.elements[3] = 0xdeadbeaf;
 
     kernel::capability_entry entry_2[256];
     kernel::capability_node node_2(24, 8, entry_2);
-    entry_2[4].data.elements[0] = 0xc0ffee;
-    entry_2[4].data.elements[1] = 0xfeedface;
-    entry_2[4].data.elements[2] = 0xfadedbad;
-    entry_2[4].data.elements[3] = 0xf00dfeed;
+    entry_2[4].entry_local_data.elements[0] = 0x1;
+    entry_2[4].entry_local_data.elements[1] = 0xfeedface;
+    entry_2[4].entry_local_data.elements[2] = 0xfadedbad;
+    entry_2[4].entry_local_data.elements[3] = 0xf00dfeed;
     entry_1[4].capability_pointer = &node_2;
     entry_2[4].capability_pointer = &node_2;
 
@@ -312,18 +312,15 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     if (traversed_entry != nullptr)
     {
-        logger::printk(
-            "capability_type\e[55G : 0x%x\n",
-            traversed_entry->capability_pointer->type()
-        );
         for (auto i = 0; i < 4; i++)
         {
             logger::printk(
                 "entry_data [%02d]\e[55G : 0x%016llx\n",
                 i,
-                traversed_entry->data.elements[i]
+                traversed_entry->entry_local_data.elements[i]
             );
         }
+        traversed_entry->execute();
     }
     logger::split();
     // auto miss_traversed_entry = node_1.traverse_entry(0x10101010101, 0);

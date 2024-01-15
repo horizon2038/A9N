@@ -16,14 +16,24 @@ namespace kernel
     {
     }
 
-    capability_type capability_node::type()
-    {
-        return capability_type::NODE;
-    }
-
     common::error capability_node::capability_node::execute(capability_data data
     )
     {
+        kernel::utility::logger::printk("execute : node\n");
+        switch (data.elements[0])
+        {
+            case 0 :
+                kernel::utility::logger::printk("revoke node\n");
+                break;
+
+            case 1 :
+                kernel::utility::logger::printk("delete node\n");
+                break;
+
+            default :
+                kernel::utility::logger::printk("unexpected operation\n");
+                break;
+        }
         // 1. decode operation
         // 2. dispatch operation
         // 3.run operation

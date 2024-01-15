@@ -4,11 +4,6 @@
 
 namespace kernel
 {
-    capability_type generic::type()
-    {
-        return capability_type::VIRTUAL;
-    }
-
     common::error generic::execute(capability_data data)
     {
     }
@@ -18,5 +13,6 @@ namespace kernel
         common::word depth
     )
     {
+        return nullptr;
     }
 }

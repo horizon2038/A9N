@@ -26,7 +26,6 @@ namespace kernel
             capability_entry *initial_capability_slots
         );
 
-        capability_type type() override;
         common::error execute(capability_data data) override;
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
