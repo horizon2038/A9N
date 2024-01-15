@@ -327,31 +327,14 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         traversed_entry->execute(&mbuf);
     }
     logger::split();
-    // auto miss_traversed_entry = node_1.traverse_entry(0x10101010101, 0);
 
     hal_instance->_timer->init_timer();
 
-    // test process_manager
     logger::printk("init process_manager\n");
     kernel::kernel_object::process_manager
         = new (kernel::kernel_object::process_manager_buffer)
             kernel::process_manager(*hal_instance->_process_manager);
     logger::split();
-
-    // 最終成果報告会用バックアップ
-    /*
-    kernel::kernel_object::process_manager->create_process("read_serial",
-    reinterpret_cast<kernel::virtual_address>(read_serial));
-    kernel::kernel_object::process_manager->create_process("console",
-    reinterpret_cast<kernel::virtual_address>(console));
-    kernel::kernel_object::process_manager->create_process("console_out",
-    reinterpret_cast<kernel::virtual_address>(console_out));
-    kernel::kernel_object::process_manager->create_process("info pm",
-    reinterpret_cast<kernel::virtual_address>(info_mem));
-    kernel::kernel_object::process_manager->create_process("idle",
-    reinterpret_cast<kernel::virtual_address>(kernel_main));
-    */
-
     kernel::kernel_object::process_manager->create_process(
         "idle",
         reinterpret_cast<library::common::virtual_address>(kernel_main)
@@ -373,8 +356,6 @@ void kernel_main(void)
 {
     while (1)
     {
-        // kernel::utility::logger::printk("IDLE \n");
-        // kernel::kernel_object::interrupt_manager->ack_interrupt();
         asm volatile("sti");
         kernel::kernel_object::process_manager->switch_context();
         asm volatile("hlt");
