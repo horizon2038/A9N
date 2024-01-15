@@ -30,83 +30,28 @@ namespace kernel
         return 1;
     };
 
+    // Recursively explores entries. This is a Composite pattern that allows
+    // handling single and multiple Capabilities with the same interface.
     capability_entry *capability_node::traverse_entry(
         library::capability::capability_descriptor descriptor,
         common::word depth
     )
     {
-        if (descriptor == 0)
+        auto entry = lookup_entry(descriptor, depth);
+
+        if (entry == nullptr)
         {
             return nullptr;
         }
 
-        if (depth == library::common::WORD_BITS)
+        if (!is_depth_remain(depth))
         {
-            return lookup_entry(descriptor, depth);
+            return entry;
         }
 
         auto new_depth = calculate_depth(depth);
-        return lookup_entry(descriptor, new_depth);
+        return entry->capability_pointer->traverse_entry(descriptor, new_depth);
     }
-
-    // traverse nodes across multiple depths.
-    /*
-    capability_entry *capability_node::traverse_capability(
-        library::capability::capability_descriptor descriptor
-    )
-    {
-        kernel::utility::logger::printk("traverse_capability\n");
-        kernel::utility::logger::printk(
-            "descriptor\e[55G : 0x%016llx\n",
-            descriptor
-        );
-        auto depth = 0;
-        capability *target_capability = this;
-        capability_entry *entry;
-
-        auto i = 0;
-        while (1)
-        {
-            kernel::utility::logger::printk("traverse_loop [%02d]\n", i);
-            auto is_node = target_capability->type() == capability_type::NODE;
-            auto is_depth_remain = ((depth < library::common::WORD_BITS));
-
-            if (!is_depth_remain)
-            {
-                kernel::utility::logger::printk("traverse succeed\n");
-                return entry;
-            }
-
-            if (!is_node)
-            {
-                // invalid depth
-                kernel::utility::logger::error("invalid depth !\n");
-                return nullptr;
-            }
-
-            auto node = static_cast<capability_node *>(target_capability);
-            auto lookup_result = node->lookup_entry(descriptor, depth);
-
-            entry = lookup_result.entry;
-            depth = lookup_result.depth_bits;
-
-            kernel::utility::logger::printk(
-                "capability_entry\e[55G : 0x%016llx\n",
-                reinterpret_cast<common::word>(entry)
-            );
-
-            if (depth > library::common::WORD_BITS)
-            {
-                return nullptr;
-            }
-            target_capability = lookup_result.entry->capability_pointer;
-            i++;
-        }
-
-        // unreachable
-        return nullptr;
-    }
-    */
 
     capability_entry *capability_node::lookup_entry(
         library::capability::capability_descriptor descriptor,

@@ -52,6 +52,11 @@ namespace kernel
             common::word depth_bits
         );
 
+        inline const bool is_depth_remain(common::word depth)
+        {
+            return (depth < library::common::WORD_BITS);
+        }
+
         inline const common::word calculate_capability_index(
             library::capability::capability_descriptor descriptor,
             common::word depth_bits
