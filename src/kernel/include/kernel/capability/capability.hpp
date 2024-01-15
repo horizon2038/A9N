@@ -1,9 +1,10 @@
 #ifndef CAPABILITY_HPP
 #define CAPABILITY_HPP
 
-#include "library/capability/capability_descriptor.hpp"
+#include <kernel/ipc/message_buffer.hpp>
+#include <library/capability/capability_descriptor.hpp>
 #include <library/common/types.hpp>
-#include <stdint.h>
+#include <library/common/array.hpp>
 
 namespace kernel
 {
@@ -27,19 +28,17 @@ namespace kernel
     // This enables providing a common interface for capabilities such as
     // generic, frame, and others where we do not want to have a physical entity
     // in memory for each. This enhances extensibility and maintainability.
-    struct capability_data
-    {
-        common::word elements[4];
-    };
 
     // TODO: create operation structure (utilizes capcall argments)
+    using entry_data = library::common::bounded_array<common::word, 4>;
 
     struct capability_entry;
 
     class capability
     {
       public:
-        virtual common::error execute(capability_data data) = 0;
+        virtual common::error execute(message_buffer *buffer, entry_data *data)
+            = 0;
         virtual capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth
@@ -59,12 +58,12 @@ namespace kernel
     struct capability_entry
     {
         capability *capability_pointer;
-        capability_data entry_local_data;
+        entry_data entry_local_data;
         dependency_node family_node;
 
-        common::error execute()
+        common::error execute(message_buffer *buffer)
         {
-            return capability_pointer->execute(entry_local_data);
+            return capability_pointer->execute(buffer, &entry_local_data);
         }
     };
 

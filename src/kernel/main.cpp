@@ -1,3 +1,4 @@
+#include "kernel/ipc/message_buffer.hpp"
 #include <stdint.h>
 #include <library/cpp_dependent/new.hpp>
 
@@ -293,22 +294,25 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     kernel::capability_entry entry_1[256];
     kernel::capability_node node_1(24, 8, entry_1);
-    entry_1[4].entry_local_data.elements[0] = 0x0;
-    entry_1[4].entry_local_data.elements[1] = 0xdeadbeaf;
-    entry_1[4].entry_local_data.elements[2] = 0xdeadbeaf;
-    entry_1[4].entry_local_data.elements[3] = 0xdeadbeaf;
+    entry_1[4].entry_local_data.set_element(0, 0x0);
+    entry_1[4].entry_local_data.set_element(1, 0xdeadbeaf);
+    entry_1[4].entry_local_data.set_element(2, 0xdeadbeaf);
+    entry_1[4].entry_local_data.set_element(3, 0xdeadbeaf);
 
     kernel::capability_entry entry_2[256];
     kernel::capability_node node_2(24, 8, entry_2);
-    entry_2[4].entry_local_data.elements[0] = 0x1;
-    entry_2[4].entry_local_data.elements[1] = 0xfeedface;
-    entry_2[4].entry_local_data.elements[2] = 0xfadedbad;
-    entry_2[4].entry_local_data.elements[3] = 0xf00dfeed;
+    entry_2[4].entry_local_data.set_element(0, 0x1);
+    entry_2[4].entry_local_data.set_element(1, 0xfeedface);
+    entry_2[4].entry_local_data.set_element(2, 0xfadedbad);
+    entry_2[4].entry_local_data.set_element(3, 0xf00dfeed);
     entry_1[4].capability_pointer = &node_2;
     entry_2[4].capability_pointer = &node_2;
 
     library::capability::capability_descriptor descriptor = 0x0000000400000004;
     auto traversed_entry = node_1.traverse_entry(descriptor, 0);
+
+    kernel::message_buffer mbuf;
+    mbuf.fill(0);
 
     if (traversed_entry != nullptr)
     {
@@ -317,10 +321,10 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
             logger::printk(
                 "entry_data [%02d]\e[55G : 0x%016llx\n",
                 i,
-                traversed_entry->entry_local_data.elements[i]
+                traversed_entry->entry_local_data.get_element(i)
             );
         }
-        traversed_entry->execute();
+        traversed_entry->execute(&mbuf);
     }
     logger::split();
     // auto miss_traversed_entry = node_1.traverse_entry(0x10101010101, 0);

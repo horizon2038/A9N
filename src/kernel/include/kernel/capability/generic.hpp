@@ -1,6 +1,7 @@
 #ifndef GENERIC_HPP
 #define GENERIC_HPP
 
+#include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/capability.hpp>
 
 namespace kernel
@@ -31,7 +32,8 @@ namespace kernel
     class generic final : public capability
     {
       public:
-        common::error execute(capability_data data) override;
+        common::error
+            execute(message_buffer *buffer, entry_data *data) override;
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth

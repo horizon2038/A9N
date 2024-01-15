@@ -4,7 +4,7 @@
 
 namespace kernel
 {
-    common::error generic::execute(capability_data data)
+    common::error generic::execute(message_buffer *buffer, entry_data *data)
     {
     }
 
