@@ -4,7 +4,20 @@
 
 namespace kernel
 {
-    common::error generic::execute(message_buffer *buffer, entry_data *data)
+    generic::generic(
+        common::physical_address initial_start_address,
+        common::word initial_size,
+        bool initial_flags
+    )
+        : start_address(initial_start_address)
+        , size(initial_size)
+        , flags(initial_flags)
+        , watermark(0)
+    {
+    }
+
+    common::error
+        generic::execute(message_buffer *buffer, capability_entry *stored_entry)
     {
     }
 

@@ -26,8 +26,10 @@ namespace kernel
             capability_entry *initial_capability_slots
         );
 
-        common::error
-            execute(message_buffer *buffer, entry_data *data) override;
+        common::error execute(
+            message_buffer *buffer,
+            capability_entry *stored_entry
+        ) override;
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth

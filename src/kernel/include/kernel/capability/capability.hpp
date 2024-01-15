@@ -37,7 +37,8 @@ namespace kernel
     class capability
     {
       public:
-        virtual common::error execute(message_buffer *buffer, entry_data *data)
+        virtual common::error
+            execute(message_buffer *buffer, capability_entry *stored_entry)
             = 0;
         virtual capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
@@ -58,12 +59,12 @@ namespace kernel
     struct capability_entry
     {
         capability *capability_pointer;
-        entry_data entry_local_data;
+        entry_data local_data;
         dependency_node family_node;
 
         common::error execute(message_buffer *buffer)
         {
-            return capability_pointer->execute(buffer, &entry_local_data);
+            return capability_pointer->execute(buffer, this);
         }
     };
 

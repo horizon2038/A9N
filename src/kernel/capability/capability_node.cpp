@@ -18,7 +18,7 @@ namespace kernel
 
     common::error capability_node::capability_node::execute(
         message_buffer *buffer,
-        entry_data *data
+        capability_entry *stored_entry
     )
     {
         kernel::utility::logger::printk("execute : node\n");

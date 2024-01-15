@@ -1,8 +1,10 @@
 #ifndef GENERIC_HPP
 #define GENERIC_HPP
 
-#include "kernel/ipc/message_buffer.hpp"
+#include <kernel/ipc/message_buffer.hpp>
 #include <kernel/capability/capability.hpp>
+
+#include <library/common/types.hpp>
 
 namespace kernel
 {
@@ -32,14 +34,26 @@ namespace kernel
     class generic final : public capability
     {
       public:
-        common::error
-            execute(message_buffer *buffer, entry_data *data) override;
+        generic(
+            common::physical_address initial_start_address,
+            common::word initial_size,
+            bool initial_flags
+        );
+
+        common::error execute(
+            message_buffer *buffer,
+            capability_entry *stored_entry
+        ) override;
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth
         ) override;
 
       private:
+        const common::physical_address start_address;
+        const common::word size;
+        const bool flags;
+        common::physical_address watermark;
     };
 }
 
