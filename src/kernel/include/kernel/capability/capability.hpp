@@ -38,6 +38,9 @@ namespace kernel
         virtual common::error
             execute(message_buffer *buffer, capability_entry *stored_entry)
             = 0;
+
+        virtual common::error revoke() = 0;
+
         virtual capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth
@@ -73,6 +76,19 @@ namespace kernel
         common::error execute(message_buffer *buffer)
         {
             return capability_pointer->execute(buffer, this);
+        }
+
+        common::error revoke()
+        {
+            capability_pointer = nullptr;
+            state.local_data.fill(0);
+            return 0;
+        }
+
+        // all child nodes are also revoked.
+        common::error revoke_all()
+        {
+            return 0;
         }
     };
 

@@ -19,7 +19,13 @@ namespace kernel
     common::error
         generic::execute(message_buffer *buffer, capability_entry *stored_entry)
     {
+        return 0;
     }
+
+    common::error generic::revoke()
+    {
+        return 0;
+    };
 
     capability_entry *generic::traverse_entry(
         library::capability::capability_descriptor,

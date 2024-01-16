@@ -44,6 +44,9 @@ namespace kernel
             message_buffer *buffer,
             capability_entry *stored_entry
         ) override;
+
+        common::error revoke() override;
+
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
             common::word depth
