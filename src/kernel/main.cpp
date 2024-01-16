@@ -294,17 +294,11 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     kernel::capability_entry entry_1[256];
     kernel::capability_node node_1(24, 8, entry_1);
-    entry_1[4].local_data.set_element(0, 0x0);
-    entry_1[4].local_data.set_element(1, 0xdeadbeaf);
-    entry_1[4].local_data.set_element(2, 0xdeadbeaf);
-    entry_1[4].local_data.set_element(3, 0xdeadbeaf);
+    entry_1[4].state.local_data.fill(0xdeadbeaf);
 
     kernel::capability_entry entry_2[256];
     kernel::capability_node node_2(24, 8, entry_2);
-    entry_2[4].local_data.set_element(0, 0x1);
-    entry_2[4].local_data.set_element(1, 0xfeedface);
-    entry_2[4].local_data.set_element(2, 0xfadedbad);
-    entry_2[4].local_data.set_element(3, 0xf00dfeed);
+    entry_2[4].state.local_data.fill(0xdeadc0ad);
     entry_1[4].capability_pointer = &node_2;
     entry_2[4].capability_pointer = &node_2;
 
@@ -321,7 +315,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
             logger::printk(
                 "entry_data [%02d]\e[55G : 0x%016llx\n",
                 i,
-                traversed_entry->local_data.get_element(i)
+                traversed_entry->state.local_data.get_element(i)
             );
         }
         traversed_entry->execute(&mbuf);

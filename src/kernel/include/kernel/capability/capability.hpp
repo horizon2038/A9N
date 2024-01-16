@@ -24,14 +24,12 @@ namespace kernel
         VIRTUAL = 0x02,
     };
 
-    // capability_data is an essential presence for capability.execute().
+    // capability_entry_state is an essential presence for capability.execute().
     // This enables providing a common interface for capabilities such as
     // generic, frame, and others where we do not want to have a physical entity
     // in memory for each. This enhances extensibility and maintainability.
 
-    // TODO: create operation structure (utilizes capcall argments)
-    using entry_data = library::common::bounded_array<common::word, 4>;
-
+    struct capability_entry_state;
     struct capability_entry;
 
     class capability
@@ -56,11 +54,21 @@ namespace kernel
         capability_entry *child_capability_entry;
     };
 
+    constexpr static common::word ENTRY_DATA_MAX = 4;
+
+    using capability_entry_data
+        = library::common::bounded_array<common::word, ENTRY_DATA_MAX>;
+
+    struct capability_entry_state
+    {
+        capability_entry_data local_data;
+        dependency_node family_node;
+    };
+
     struct capability_entry
     {
         capability *capability_pointer;
-        entry_data local_data;
-        dependency_node family_node;
+        capability_entry_state state;
 
         common::error execute(message_buffer *buffer)
         {
