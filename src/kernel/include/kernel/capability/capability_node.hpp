@@ -33,9 +33,15 @@ namespace kernel
 
         common::error revoke() override;
 
+        capability_type type() override;
+
+        // HACK (horizon2k38):
+        // consider whether capability and node implementation
+        // can be separated.
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
-            common::word depth
+            common::word descriptor_max_bits,
+            common::word descriptor_used_bits
         ) override;
 
       private:
@@ -50,7 +56,7 @@ namespace kernel
 
         capability_entry *lookup_entry(
             library::capability::capability_descriptor target_descriptor,
-            common::word depth_bits
+            common::word descriptor_used_bits
         );
 
         inline const bool is_depth_remain(common::word depth)
@@ -60,19 +66,21 @@ namespace kernel
 
         inline const common::word calculate_capability_index(
             library::capability::capability_descriptor descriptor,
-            common::word depth_bits
+            common::word descriptor_used_bits
         )
         {
             auto mask_bits = (1 << radix_bits) - 1;
             auto shift_bits
-                = (common::WORD_BITS - (ignore_bits + radix_bits + depth_bits));
+                = (common::WORD_BITS
+                   - (ignore_bits + radix_bits + descriptor_used_bits));
             auto index = (descriptor >> shift_bits) & mask_bits;
             return index;
         }
 
-        inline const common::word calculate_depth(common::word depth_bits)
+        inline const common::word
+            calculate_used_bits(common::word old_descriptor_used_bits)
         {
-            return (ignore_bits + radix_bits + depth_bits);
+            return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }
 
         capability_entry *index_to_capability_entry(common::word index);

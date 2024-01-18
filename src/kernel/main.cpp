@@ -303,7 +303,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     entry_2[4].capability_pointer = &node_2;
 
     library::capability::capability_descriptor descriptor = 0x0000000400000004;
-    auto traversed_entry = node_1.traverse_entry(descriptor, 0);
+    auto traversed_entry = node_1.traverse_entry(descriptor, 0, 0);
 
     kernel::message_buffer mbuf;
     mbuf.fill(0);

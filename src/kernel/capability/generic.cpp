@@ -27,9 +27,15 @@ namespace kernel
         return 0;
     };
 
+    capability_type generic::type()
+    {
+        return capability_type::OBJECT;
+    }
+
     capability_entry *generic::traverse_entry(
         library::capability::capability_descriptor,
-        common::word depth
+        common::word descriptor_max_bits,
+        common::word descriptor_used_bits
     )
     {
         return nullptr;

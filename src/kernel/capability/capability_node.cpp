@@ -34,36 +34,48 @@ namespace kernel
         return 0;
     };
 
+    capability_type capability_node::type()
+    {
+        return capability_type::NODE;
+    }
+
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
     capability_entry *capability_node::traverse_entry(
         library::capability::capability_descriptor descriptor,
-        common::word depth
+        common::word descriptor_max_bits, // usually WORD_BITS is used.
+        common::word descriptor_used_bits
     )
     {
-        auto entry = lookup_entry(descriptor, depth);
+        auto entry = lookup_entry(descriptor, descriptor_used_bits);
 
-        if (entry == nullptr)
-        {
-            return nullptr;
-        }
-
-        if (!is_depth_remain(depth))
+        if (entry->capability_pointer->type() != capability_type::NODE)
         {
             return entry;
         }
 
-        auto new_depth = calculate_depth(depth);
-        return entry->capability_pointer->traverse_entry(descriptor, new_depth);
+        if (descriptor_used_bits == library::common::WORD_BITS)
+        {
+            return entry;
+        }
+
+        auto new_used_bits = calculate_used_bits(descriptor_used_bits);
+        if (new_used_bits == descriptor_max_bits)
+        {
+            return entry;
+        }
+        return entry->capability_pointer
+            ->traverse_entry(descriptor, descriptor_max_bits, new_used_bits);
     }
 
     capability_entry *capability_node::lookup_entry(
         library::capability::capability_descriptor descriptor,
-        common::word depth_bits
+        common::word descriptor_used_bits
     )
     {
         kernel::utility::logger::printk("lookup_capability\n");
-        auto index = calculate_capability_index(descriptor, depth_bits);
+        auto index
+            = calculate_capability_index(descriptor, descriptor_used_bits);
         auto entry = index_to_capability_entry(index);
         if (entry->capability_pointer == nullptr)
         {

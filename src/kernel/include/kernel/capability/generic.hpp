@@ -47,9 +47,12 @@ namespace kernel
 
         common::error revoke() override;
 
+        capability_type type() override;
+
         capability_entry *traverse_entry(
             library::capability::capability_descriptor descriptor,
-            common::word depth
+            common::word descriptor_max_bits,
+            common::word descriptor_used_bits
         ) override;
 
       private:
