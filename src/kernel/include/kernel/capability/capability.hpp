@@ -4,7 +4,6 @@
 #include <kernel/ipc/message_buffer.hpp>
 #include <library/capability/capability_descriptor.hpp>
 #include <library/common/types.hpp>
-#include <library/common/array.hpp>
 
 namespace kernel
 {
@@ -56,27 +55,6 @@ namespace kernel
             common::word descriptor_max_bits,
             common::word descriptor_used_bits
         ) = 0;
-    };
-
-    struct dependency_node
-    {
-        // sibling capability_entry
-        capability_entry *next_capability_entry;
-        capability_entry *preview_capability_entry;
-
-        // child capability_entry
-        capability_entry *child_capability_entry;
-    };
-
-    constexpr static common::word ENTRY_DATA_MAX = 4;
-
-    using capability_entry_data
-        = library::common::bounded_array<common::word, ENTRY_DATA_MAX>;
-
-    struct capability_entry_state
-    {
-        capability_entry_data local_data;
-        dependency_node family_node;
     };
 
     struct capability_entry

@@ -70,4 +70,6 @@ process_control_block .u.|> capability_object
 ipc_port .u.|> capability_object
 frame .u.|> capability_object
 
+generic -u-> capability
+
 @enduml

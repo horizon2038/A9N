@@ -10,13 +10,6 @@ namespace kernel
 {
     // users never keep the address of capability_entry.
     // capability_descriptors are only used for indirect adressing.
-
-    struct capability_lookup_result
-    {
-        capability_entry *entry;
-        common::word depth_bits;
-    };
-
     class capability_node final : public capability
     {
       public:
