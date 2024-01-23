@@ -6,7 +6,7 @@ title capability_architecture
 
 rectangle composite {
 
-    interface capability <<composite>>
+    interface capability_composite <<composite>>
     {
         + execute(operation)
         + revoke()
@@ -59,10 +59,10 @@ class frame
 {
 }
 
-capability_node .u.|> capability
-capability_entry .u.|> capability
+capability_node .u.|> capability_composite
+capability_entry .u.|> capability_composite
 
-capability_node o-r-> capability : 0..n
+capability_node o-r-> capability_composite : 0..n
 capability_object <-r- capability_entry
 
 generic .u.|> capability_object
@@ -70,6 +70,13 @@ process_control_block .u.|> capability_object
 ipc_port .u.|> capability_object
 frame .u.|> capability_object
 
-generic -u-> capability
+generic -u-> capability_composite
 
 @enduml
+
+## Unsolved
+- How do we define a common interface for objects that need to track their children
+(e.g. generic) ?
+    - Define methods on local_state ?
+    - Define a method on capability_composite ?
+        - add(free_descriptor, *capability_composite)
