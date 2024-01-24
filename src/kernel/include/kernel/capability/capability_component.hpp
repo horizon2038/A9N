@@ -1,5 +1,5 @@
-#ifndef CAPABILITY_COMPOSITE_HPP
-#define CAPABILITY_COMPOSITE_HPP
+#ifndef CAPABILITY_COMPONENT_HPP
+#define CAPABILITY_COMPONENT_HPP
 
 #include <kernel/ipc/message_buffer.hpp>
 #include <library/common/types.hpp>
@@ -7,15 +7,16 @@
 
 namespace kernel
 {
-    class capability_composite
+    class capability_component
     {
-        virtual ~capability_composite() {};
+      public:
+        virtual ~capability_component() {};
 
         virtual common::error execute(message_buffer *buffer) = 0;
 
         virtual common::error revoke() = 0;
 
-        virtual capability_composite *traverse(
+        virtual capability_component *traverse(
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
             common::word descriptor_used_bits

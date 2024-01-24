@@ -16,10 +16,7 @@ namespace kernel
     {
     }
 
-    common::error capability_node::capability_node::execute(
-        message_buffer *buffer,
-        capability_entry *stored_entry
-    )
+    common::error capability_node::execute(message_buffer *buffer)
     {
         kernel::utility::logger::printk("execute : node\n");
 
@@ -34,14 +31,9 @@ namespace kernel
         return 0;
     };
 
-    capability_type capability_node::type()
-    {
-        return capability_type::NODE;
-    }
-
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
-    capability_entry *capability_node::traverse_entry(
+    capability_component *capability_node::traverse(
         library::capability::capability_descriptor descriptor,
         common::word descriptor_max_bits, // usually WORD_BITS is used.
         common::word descriptor_used_bits
@@ -64,8 +56,7 @@ namespace kernel
         {
             return entry;
         }
-        return entry->capability_pointer
-            ->traverse_entry(descriptor, descriptor_max_bits, new_used_bits);
+        return entry->traverse(descriptor, descriptor_max_bits, new_used_bits);
     }
 
     capability_entry *capability_node::lookup_entry(

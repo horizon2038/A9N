@@ -57,30 +57,6 @@ namespace kernel
         ) = 0;
     };
 
-    struct capability_entry
-    {
-        capability *capability_pointer;
-        capability_entry_state state;
-
-        common::error execute(message_buffer *buffer)
-        {
-            return capability_pointer->execute(buffer, this);
-        }
-
-        common::error revoke()
-        {
-            capability_pointer = nullptr;
-            state.local_data.fill(0);
-            return 0;
-        }
-
-        // all child nodes are also revoked.
-        common::error revoke_all()
-        {
-            return 0;
-        }
-    };
-
 }
 
 #endif
