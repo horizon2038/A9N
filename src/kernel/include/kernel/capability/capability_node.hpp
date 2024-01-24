@@ -1,7 +1,8 @@
 #ifndef CAPABILITY_NODE_HPP
 #define CAPABILITY_NODE_HPP
 
-#include <kernel/capability/capability.hpp>
+#include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/capability_entry.hpp>
 
 #include <library/common/types.hpp>
 #include <library/capability/capability_descriptor.hpp>
@@ -10,7 +11,7 @@ namespace kernel
 {
     // users never keep the address of capability_entry.
     // capability_descriptors are only used for indirect adressing.
-    class capability_node final : public capability
+    class capability_node final : public capability_component
     {
       public:
         capability_node(
@@ -19,19 +20,14 @@ namespace kernel
             capability_entry *initial_capability_slots
         );
 
-        common::error execute(
-            message_buffer *buffer,
-            capability_entry *stored_entry
-        ) override;
+        common::error execute(message_buffer *buffer) override;
 
         common::error revoke() override;
-
-        capability_type type() override;
 
         // HACK (horizon2k38):
         // consider whether capability and node implementation
         // can be separated.
-        capability_entry *traverse_entry(
+        capability_component *traverse(
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
             common::word descriptor_used_bits
