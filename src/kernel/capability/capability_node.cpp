@@ -41,11 +41,6 @@ namespace kernel
     {
         auto entry = lookup_entry(descriptor, descriptor_used_bits);
 
-        if (entry->capability_pointer->type() != capability_type::NODE)
-        {
-            return entry;
-        }
-
         if (descriptor_used_bits == library::common::WORD_BITS)
         {
             return entry;
