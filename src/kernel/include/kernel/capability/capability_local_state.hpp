@@ -5,7 +5,7 @@
 
 namespace kernel
 {
-    constexpr static common::word ENTRY_DATA_MAX = 4;
+    constexpr static common::word ENTRY_DATA_MAX = 3;
 
     using capability_entry_data
         = library::common::bounded_array<common::word, ENTRY_DATA_MAX>;

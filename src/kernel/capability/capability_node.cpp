@@ -1,7 +1,8 @@
-#include "library/capability/capability_descriptor.hpp"
-#include "library/common/types.hpp"
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
+
+#include <library/capability/capability_descriptor.hpp>
+#include <library/common/types.hpp>
 
 namespace kernel
 {

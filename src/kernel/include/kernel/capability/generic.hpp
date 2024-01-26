@@ -1,8 +1,9 @@
 #ifndef GENERIC_HPP
 #define GENERIC_HPP
 
+#include "kernel/capability/capability_entry.hpp"
+#include <kernel/capability/capability_object.hpp>
 #include <kernel/ipc/message_buffer.hpp>
-#include <kernel/capability/capability.hpp>
 
 #include <library/common/types.hpp>
 
@@ -31,7 +32,7 @@ namespace kernel
         RETYPE = 0x00
     };
 
-    class generic final : public capability
+    class generic final : public capability_object
     {
       public:
         generic(
@@ -42,18 +43,10 @@ namespace kernel
 
         common::error execute(
             message_buffer *buffer,
-            capability_entry *stored_entry
+            capability_local_state *local_state
         ) override;
 
         common::error revoke() override;
-
-        capability_type type() override;
-
-        capability_entry *traverse_entry(
-            library::capability::capability_descriptor descriptor,
-            common::word descriptor_max_bits,
-            common::word descriptor_used_bits
-        ) override;
 
       private:
         const common::physical_address start_address;

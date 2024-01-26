@@ -1,3 +1,4 @@
+#include "kernel/capability/capability_local_state.hpp"
 #include <kernel/capability/generic.hpp>
 
 #include <library/common/types.hpp>
@@ -16,8 +17,10 @@ namespace kernel
     {
     }
 
-    common::error
-        generic::execute(message_buffer *buffer, capability_entry *stored_entry)
+    common::error generic::execute(
+        message_buffer *buffer,
+        capability_local_state *local_state
+    )
     {
         return 0;
     }
@@ -27,17 +30,4 @@ namespace kernel
         return 0;
     };
 
-    capability_type generic::type()
-    {
-        return capability_type::OBJECT;
-    }
-
-    capability_entry *generic::traverse_entry(
-        library::capability::capability_descriptor,
-        common::word descriptor_max_bits,
-        common::word descriptor_used_bits
-    )
-    {
-        return nullptr;
-    }
 }
