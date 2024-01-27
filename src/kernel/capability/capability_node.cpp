@@ -1,3 +1,4 @@
+#include "kernel/capability/capability_component.hpp"
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
 
@@ -9,7 +10,7 @@ namespace kernel
     capability_node::capability_node(
         common::word initial_ignore_bits,
         common::word initial_radix_bits,
-        capability_entry *initial_capability_slots
+        capability_component *initial_capability_slots
     )
         : capability_slots(initial_capability_slots)
         , ignore_bits(initial_ignore_bits)
@@ -40,7 +41,7 @@ namespace kernel
         common::word descriptor_used_bits
     )
     {
-        auto entry = lookup_entry(descriptor, descriptor_used_bits);
+        auto entry = lookup_component(descriptor, descriptor_used_bits);
 
         if (descriptor_used_bits == library::common::WORD_BITS)
         {
@@ -55,7 +56,7 @@ namespace kernel
         return entry->traverse(descriptor, descriptor_max_bits, new_used_bits);
     }
 
-    capability_entry *capability_node::lookup_entry(
+    capability_component *capability_node::lookup_component(
         library::capability::capability_descriptor descriptor,
         common::word descriptor_used_bits
     )
@@ -63,16 +64,16 @@ namespace kernel
         kernel::utility::logger::printk("lookup_capability\n");
         auto index
             = calculate_capability_index(descriptor, descriptor_used_bits);
-        auto entry = index_to_capability_entry(index);
-        if (entry->capability_pointer == nullptr)
+        auto component = index_to_capability_component(index);
+        if (component == nullptr)
         {
             kernel::utility::logger::error("null entry !\n");
         }
-        return entry;
+        return component;
     }
 
-    capability_entry *
-        capability_node::index_to_capability_entry(common::word index)
+    capability_component *
+        capability_node::index_to_capability_component(common::word index)
     {
         auto index_max = 1 << radix_bits;
         if (index >= index_max)

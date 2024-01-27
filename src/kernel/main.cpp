@@ -19,7 +19,9 @@
 #include <kernel/kernel.hpp>
 
 #include <library/capability/capability_descriptor.hpp>
+#include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
+#include <kernel/capability/capability_entry.hpp>
 
 #include <library/libc/string.hpp>
 #include <library/common/types.hpp>
@@ -292,19 +294,25 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         target_boot_info->arch_info
     );
 
+    kernel::capability_component *capability_slots_1[256];
+    kernel::capability_node node_1(24, 8, *capability_slots_1);
+
     kernel::capability_entry entry_1[256];
-    kernel::capability_node node_1(24, 8, entry_1);
-    entry_1[4].state.local_data.fill(0xdeadbeaf);
+    capability_slots_1[4] = &entry_1[4];
+    entry_1[4].state.data.fill(0xdeadbeaf);
+
+    kernel::capability_component *capability_slots_2[256];
+    kernel::capability_node node_2(24, 8, *capability_slots_2);
 
     kernel::capability_entry entry_2[256];
-    kernel::capability_node node_2(24, 8, entry_2);
-    entry_2[4].state.local_data.fill(0xdeadc0ad);
-    entry_1[4].capability_pointer = &node_2;
-    entry_2[4].capability_pointer = &node_2;
+    capability_slots_2[4] = &entry_2[4];
+    entry_2[4].state.data.fill(0xdeadc0ad);
+
+    capability_slots_1[4] = &node_2;
 
     library::capability::capability_descriptor descriptor = 0x0000000400000004;
     auto traversed_entry
-        = node_1.traverse_entry(descriptor, library::common::WORD_BITS, 0);
+        = node_1.traverse(descriptor, library::common::WORD_BITS, 0);
 
     kernel::message_buffer mbuf;
     mbuf.fill(0);
@@ -313,13 +321,8 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     {
         for (auto i = 0; i < 4; i++)
         {
-            logger::printk(
-                "entry_data [%02d]\e[55G : 0x%016llx\n",
-                i,
-                traversed_entry->state.local_data.get_element(i)
-            );
         }
-        traversed_entry->execute(&mbuf);
+        auto result = traversed_entry->execute(&mbuf);
     }
     logger::split();
 

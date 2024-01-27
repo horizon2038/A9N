@@ -5,6 +5,8 @@
 #include <kernel/capability/capability_object.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 
+#include <kernel/utility/logger.hpp>
+
 namespace kernel
 {
     struct capability_entry final : public capability_component
@@ -15,7 +17,16 @@ namespace kernel
 
         common::error execute(message_buffer *buffer) override
         {
-            return capability_pointer->execute(buffer, &this->state);
+            for (auto i = 0; i < ENTRY_DATA_MAX; i++)
+            {
+                kernel::utility::logger::printk(
+                    "entry_data [%02d]\e[55G : 0x%016llx\n",
+                    i,
+                    state.data.get_element(i)
+                );
+            }
+            return 0;
+            // return capability_pointer->execute(buffer, &this->state);
         }
 
         common::error revoke() override
@@ -29,7 +40,10 @@ namespace kernel
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
             common::word descriptor_used_bits
-        ) override;
+        ) override
+        {
+            return this;
+        }
 
         // all child nodes are also revoked.
         common::error revoke_all()
