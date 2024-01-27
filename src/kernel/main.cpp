@@ -295,14 +295,14 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     );
 
     kernel::capability_component *capability_slots_1[256];
-    kernel::capability_node node_1(24, 8, *capability_slots_1);
+    kernel::capability_node node_1(24, 8, capability_slots_1);
 
     kernel::capability_entry entry_1[256];
     capability_slots_1[4] = &entry_1[4];
     entry_1[4].state.data.fill(0xdeadbeaf);
 
     kernel::capability_component *capability_slots_2[256];
-    kernel::capability_node node_2(24, 8, *capability_slots_2);
+    kernel::capability_node node_2(24, 8, capability_slots_2);
 
     kernel::capability_entry entry_2[256];
     capability_slots_2[4] = &entry_2[4];
@@ -324,6 +324,10 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         }
         auto result = traversed_entry->execute(&mbuf);
     }
+    logger::printk(
+        "sizeof capability_entry : %llu\n",
+        sizeof(kernel::capability_entry)
+    );
     logger::split();
 
     hal_instance->_timer->init_timer();

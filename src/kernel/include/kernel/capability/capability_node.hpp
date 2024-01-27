@@ -17,7 +17,7 @@ namespace kernel
         capability_node(
             common::word initial_ignore_bits,
             common::word initial_radix_bits,
-            capability_component *initial_capability_slots
+            capability_component **initial_capability_slots
         );
 
         common::error execute(message_buffer *buffer) override;
@@ -41,7 +41,7 @@ namespace kernel
         // and thhe number can be specified when creating it.
 
         // the number of slots is 2^radix_bits.
-        capability_component *capability_slots;
+        capability_component **capability_slots;
 
         capability_component *lookup_component(
             library::capability::capability_descriptor target_descriptor,

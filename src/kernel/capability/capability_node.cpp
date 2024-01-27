@@ -10,7 +10,7 @@ namespace kernel
     capability_node::capability_node(
         common::word initial_ignore_bits,
         common::word initial_radix_bits,
-        capability_component *initial_capability_slots
+        capability_component **initial_capability_slots
     )
         : capability_slots(initial_capability_slots)
         , ignore_bits(initial_ignore_bits)
@@ -42,6 +42,10 @@ namespace kernel
     )
     {
         auto entry = lookup_component(descriptor, descriptor_used_bits);
+        if (entry == nullptr)
+        {
+            kernel::utility::logger::error("null entry !\n");
+        }
 
         if (descriptor_used_bits == library::common::WORD_BITS)
         {
@@ -81,6 +85,6 @@ namespace kernel
             kernel::utility::logger::error("index out of range !\n");
             return nullptr;
         }
-        return &capability_slots[index];
+        return capability_slots[index];
     }
 }
