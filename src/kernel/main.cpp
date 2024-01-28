@@ -310,6 +310,9 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     capability_slots_1[4] = &node_2;
 
+    capability_slots_1[5] = &entry_2[5];
+    entry_2[5].state.data.fill(0xf00ddead);
+
     library::capability::capability_descriptor descriptor = 0x0000000400000004;
     auto traversed_entry
         = node_1.traverse(descriptor, library::common::WORD_BITS, 0);
@@ -319,11 +322,26 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     if (traversed_entry != nullptr)
     {
-        for (auto i = 0; i < 4; i++)
-        {
-        }
         auto result = traversed_entry->execute(&mbuf);
     }
+
+    traversed_entry = node_1.traverse(descriptor, 32, 0);
+
+    if (traversed_entry != nullptr)
+    {
+        auto result = traversed_entry->execute(&mbuf);
+    }
+
+    // remain
+    descriptor = 0x0000000500000004;
+    traversed_entry
+        = node_1.traverse(descriptor, library::common::WORD_BITS, 0);
+
+    if (traversed_entry != nullptr)
+    {
+        auto result = traversed_entry->execute(&mbuf);
+    }
+
     logger::printk(
         "sizeof capability_entry : %llu\n",
         sizeof(kernel::capability_entry)

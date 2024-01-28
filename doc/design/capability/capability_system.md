@@ -62,7 +62,7 @@ class frame
 capability_node .u.|> capability_component
 capability_entry .u.|> capability_component
 
-capability_node o-r-> capability_entry : 0..n
+capability_node o-r-> capability_component : 0..n
 capability_object <-r- capability_entry
 
 generic .u.|> capability_object
@@ -73,6 +73,11 @@ frame .u.|> capability_object
 generic -u-> capability_component
 
 @enduml
+
+## Capability Component
+Capability Component is a Composite pattern. It enables unified operation of node and leaf.
+Node has capability_component_slots with 2^radix capability_components, which contain pointers to entries or nodes.
+Since capability_entry is usually used more, by default there is a 1:1 correspondence between the array of capability_entry and the slots.
 
 ## Unsolved
 - How do we define a common interface for objects that need to track their children

@@ -17,6 +17,7 @@ namespace kernel
 
         common::error execute(message_buffer *buffer) override
         {
+            kernel::utility::logger::printk("execute : entry\n");
             for (auto i = 0; i < ENTRY_DATA_MAX; i++)
             {
                 kernel::utility::logger::printk(
