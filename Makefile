@@ -141,6 +141,7 @@ $(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.s
 $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	ARCH=$(ARCH) LLVMDIR=$(LLVMDIR) $(SCRIPTSDIR)/build_a9nloader.sh
 	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
+	# cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_CLANGPDB/X64/a9nloader.efi $@
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)

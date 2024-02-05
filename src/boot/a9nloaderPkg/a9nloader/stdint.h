@@ -1,7 +1,7 @@
 #ifndef STDINT_H
 #define STDINT_H
 
-#include <uefi.h>
+#include <Uefi.h>
 
 // signed
 typedef short int16_t;

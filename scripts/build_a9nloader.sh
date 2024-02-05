@@ -13,5 +13,6 @@ cd ../chain/$ARCH/edk2
 EDKDIR=`pwd`
 export PATH=$LLVMDIR:$PATH
 export EDK_TOOLS_PATH=$EDKDIR/BaseTools
+export CLANG_BIN=/usr/bin/
 source ./edksetup.sh BaseTools
 build
