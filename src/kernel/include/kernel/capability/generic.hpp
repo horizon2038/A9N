@@ -53,6 +53,8 @@ namespace kernel
         const common::word size;
         const bool flags;
         common::physical_address watermark;
+
+        common::error convert();
     };
 }
 

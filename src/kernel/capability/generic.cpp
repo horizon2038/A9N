@@ -28,6 +28,20 @@ namespace kernel
     common::error generic::revoke()
     {
         return 0;
-    };
+    }
+
+    common::error generic::convert()
+    {
+        common::word type = 0;
+        switch (type)
+        {
+            case 0 :
+                break;
+
+            default :
+                break;
+        }
+        return 0;
+    }
 
 }
