@@ -23,6 +23,7 @@ namespace kernel
         common::error execute(message_buffer *buffer) override;
 
         common::error revoke() override;
+        common::error revoke_all() override;
 
         // HACK (horizon2k38):
         // consider whether capability and node implementation

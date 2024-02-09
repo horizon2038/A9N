@@ -32,8 +32,47 @@ namespace kernel
 
         common::error revoke() override
         {
+            /*
             capability_pointer = nullptr;
             state.data.fill(0);
+            */
+
+            // root
+            if (this->state.family_node.preview_capability_entry == nullptr)
+            {
+                auto next_capability_entry
+                    = this->state.family_node.next_capability_entry;
+                next_capability_entry->state.family_node
+                    .preview_capability_entry
+                    = nullptr;
+                return 0;
+            }
+
+            auto preview_entry
+                = this->state.family_node.preview_capability_entry;
+            auto next_entry = this->state.family_node.next_capability_entry;
+
+            if (preview_entry != nullptr
+                && preview_entry->state.family_node.depth
+                       < this->state.family_node.depth)
+            {
+                preview_entry->state.family_node.next_capability_entry
+                    = next_entry;
+                if (next_entry != nullptr)
+                {
+                    next_entry->state.family_node.preview_capability_entry
+                        = preview_entry;
+                }
+            }
+            else
+            {
+                if (preview_entry != nullptr)
+                {
+                    next_entry->state.family_node.preview_capability_entry
+                        = preview_entry;
+                }
+            }
+
             return 0;
         }
 
@@ -47,8 +86,16 @@ namespace kernel
         }
 
         // all child nodes are also revoked.
-        common::error revoke_all()
+        common::error revoke_all() override
         {
+            auto current_entry = this->state.family_node.next_capability_entry;
+            while (current_entry != nullptr
+                   && current_entry->state.family_node.depth
+                          > this->state.family_node.depth)
+            {
+                current_entry->revoke();
+                current_entry = this->state.family_node.next_capability_entry;
+            }
             return 0;
         }
     };

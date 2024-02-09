@@ -15,6 +15,7 @@ namespace kernel
         virtual common::error execute(message_buffer *buffer) = 0;
 
         virtual common::error revoke() = 0;
+        virtual common::error revoke_all() = 0;
 
         virtual capability_component *traverse(
             library::capability::capability_descriptor descriptor,

@@ -17,7 +17,9 @@ namespace kernel
         struct capability_entry *preview_capability_entry;
 
         // child capability_entry
-        capability_entry *child_capability_entry;
+        // capability_entry *child_capability_entry;
+        common::word depth;
+        // visitor ?
     };
 
     struct capability_local_state

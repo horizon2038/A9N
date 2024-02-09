@@ -30,6 +30,7 @@ namespace kernel
         return 0;
     }
 
+    // generic::convert is a kind of "factory pattern".
     common::error generic::convert()
     {
         common::word type = 0;

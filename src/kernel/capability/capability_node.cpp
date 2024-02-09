@@ -33,6 +33,11 @@ namespace kernel
         return 0;
     };
 
+    common::error capability_node::revoke_all()
+    {
+        return 0;
+    }
+
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
     capability_component *capability_node::traverse(
