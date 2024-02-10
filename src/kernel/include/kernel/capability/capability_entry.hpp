@@ -30,6 +30,11 @@ namespace kernel
             // return capability_pointer->execute(buffer, &this->state);
         }
 
+        common::error update() override
+        {
+            return 0;
+        }
+
         common::error revoke() override
         {
             /*

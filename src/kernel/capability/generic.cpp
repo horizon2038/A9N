@@ -25,6 +25,11 @@ namespace kernel
         return 0;
     }
 
+    common::error generic::update()
+    {
+        return 0;
+    }
+
     common::error generic::revoke()
     {
         return 0;

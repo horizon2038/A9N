@@ -28,6 +28,11 @@ namespace kernel
         return 1;
     };
 
+    common::error capability_node::update()
+    {
+        return 0;
+    }
+
     common::error capability_node::revoke()
     {
         return 0;
