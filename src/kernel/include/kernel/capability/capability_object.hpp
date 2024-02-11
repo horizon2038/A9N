@@ -19,7 +19,7 @@ namespace kernel
 
         virtual common::error update();
 
-        virtual common::error revoke();
+        virtual common::error revoke(capability_local_state *local_state);
     };
 }
 

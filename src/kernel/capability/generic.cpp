@@ -30,7 +30,7 @@ namespace kernel
         return 0;
     }
 
-    common::error generic::revoke()
+    common::error generic::revoke(capability_local_state *local_state)
     {
         return 0;
     }

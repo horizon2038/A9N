@@ -2,6 +2,7 @@
 #define GENERIC_HPP
 
 #include "kernel/capability/capability_entry.hpp"
+#include "kernel/capability/capability_local_state.hpp"
 #include <kernel/capability/capability_object.hpp>
 #include <kernel/ipc/message_buffer.hpp>
 
@@ -48,7 +49,7 @@ namespace kernel
 
         common::error update() override;
 
-        common::error revoke() override;
+        common::error revoke(capability_local_state *local_state) override;
 
       private:
         const common::physical_address start_address;
