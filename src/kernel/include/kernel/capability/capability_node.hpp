@@ -25,7 +25,8 @@ namespace kernel
         common::error update() override;
 
         common::error revoke() override;
-        common::error revoke_all() override;
+
+        common::error remove() override;
 
         // HACK (horizon2k38):
         // consider whether capability and node implementation

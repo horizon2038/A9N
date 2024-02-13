@@ -17,7 +17,7 @@ namespace kernel
         virtual common::error update() = 0;
 
         virtual common::error revoke() = 0;
-        virtual common::error revoke_all() = 0;
+        virtual common::error remove() = 0;
 
         virtual capability_component *traverse(
             library::capability::capability_descriptor descriptor,

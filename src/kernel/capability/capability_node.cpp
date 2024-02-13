@@ -38,7 +38,7 @@ namespace kernel
         return 0;
     };
 
-    common::error capability_node::revoke_all()
+    common::error capability_node::remove()
     {
         return 0;
     }

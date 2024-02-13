@@ -32,9 +32,11 @@ function run_qemu() {
         -drive if=pflash,format=raw,file=./OVMF_VARS.fd \
         -drive format=raw,file=fat:rw:./ \
         -m 2G \
-        -nographic \
         -no-shutdown -no-reboot \
         -M hpet=on \
+        -nographic
+        # -chardev stdio,id=char0,logfile=serial.log \
+        # -serial chardev:char0
     # -monitor stdio
 }
 

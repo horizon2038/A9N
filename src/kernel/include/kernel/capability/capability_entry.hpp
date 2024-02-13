@@ -91,7 +91,7 @@ namespace kernel
         }
 
         // all child nodes are also revoked.
-        common::error revoke_all() override
+        common::error remove() override
         {
             auto current_entry = this->state.family_node.next_capability_entry;
             while (current_entry != nullptr
