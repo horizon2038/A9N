@@ -37,7 +37,7 @@ CXX := clang++
 ASM := nasm
 LD = ld.lld
 CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
-CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++17 -masm=intel
+CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -masm=intel
 CPPFLAGS = $(INCFLAGS) -MMD -MP
 ASFLAGS = -f elf64
 
@@ -46,7 +46,7 @@ LIBS =
 
 $(info $(make show-targets))
 
-.PHONY: all show-targets kernel boot clean
+.PHONY: all show-targets kernel boot clean clean-kernel clean-boot
 
 all: kernel boot
 
@@ -145,6 +145,12 @@ $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
+	rm -f $(BUILDDIR)/$(ARCH)/boot/$(BOOT)
+
+clean-kernel:
+	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
+
+clean-boot:
 	rm -f $(BUILDDIR)/$(ARCH)/boot/$(BOOT)
 
 -include $(DEPS)
