@@ -33,7 +33,9 @@ This bootloader is currently only implemented for the x86_64 by EDK2.
 
 A Hardware Abstraction Layer (HAL) is implemented to provide a portable interface
 to the underlying hardware.  
-The {ARCH} directory is referenced during the `make` process.
+The {ARCH} directory is referenced during the `make` process.  
+> [!NOTE]
+> The bootloader binary is **separated** from the kernel binary.
 
 ### `src/kernel`
 
@@ -48,9 +50,10 @@ Used by the kernel, HAL, and user.
 
 A test root server that is started by the A9N microkernel.  
 
-**Please keep in mind that the initial implementation is a simple one for testing purposes only,  
-and you will need to implement most of the functionality yourself.  
-This implementation will vary depending on the OS that uses the A9N kernel as its core.**
+> [!IMPORTANT]
+> **Please keep in mind that the initial implementation is a simple one for testing purposes only,  
+> and you will need to implement most of the functionality yourself.  
+> This implementation will vary depending on the OS that uses the A9N kernel as its core.**
 
 ## Architecture Status
 
