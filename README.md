@@ -30,14 +30,14 @@ It combines high portability, stability, and scalability.
 
 A basic bootloader implementation is provided to load the kernel.  
 This bootloader is currently only implemented for the x86_64 by EDK2.
+> [!NOTE]
+> The bootloader binary is **separated** from the kernel binary.
 
 ### `src/hal`
 
 A Hardware Abstraction Layer (HAL) is implemented to provide a portable interface
 to the underlying hardware.  
 The {ARCH} directory is referenced during the `make` process.  
-> [!NOTE]
-> The bootloader binary is **separated** from the kernel binary.
 
 ### `src/kernel`
 
@@ -101,8 +101,8 @@ Misskey : [@horizon](https://misskey.io/@horizon)
 ## Acknowledgements
 
 [Mitou Jr](https://jr.mitou.org) : This project was supported by the Mitou Junior program.  
-@kyasbal : My mentor during the Mitou Junior program, who provided valuable advice.  
-@nuta : Gave me a advice on the implementation.  
+[@kyasbal](https://github.com/kyasbal) : My mentor during the Mitou Junior program, who provided valuable advice.  
+[@nuta](https://github.com/nuta) : Gave me a advice on the implementation.  
 
 And I would also like to thank everyone who supported this project.  
 
