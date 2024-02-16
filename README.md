@@ -88,7 +88,7 @@ cd scripts/
 
 horizon2k38 ( Rekka "horizon" Igumi )
 
-email : rekka728@gmail.com  
+email : [address](<mailto:rekka728@gmail.com>)  
 X : [@horizon2k38](https://x.com/horizon2k38)  
 Mastodon : [@horizon2k38@mstdn.jp](https://mstdn.jp/@horizon2k38)  
 Misskey : [@horizon](https://misskey.io/@horizon)  
