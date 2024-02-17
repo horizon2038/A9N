@@ -6,7 +6,7 @@
 
 namespace kernel
 {
-    constexpr static common::word MESSAGE_BUFFER_MAX = 8;
+    constexpr static common::word MESSAGE_BUFFER_MAX = 64;
     using message_buffer
         = library::common::bounded_array<common::word, MESSAGE_BUFFER_MAX>;
 }
