@@ -12,11 +12,23 @@ namespace kernel
       public:
         virtual ~capability_component() {};
 
+        // called from user
         virtual common::error execute(message_buffer *buffer) = 0;
 
-        virtual common::error update() = 0;
+        // called from each capabilities
+        virtual common::error
+            add_child(common::word index, capability_component *component)
+            = 0;
 
+        virtual capability_component *retrieve_child(common::word index) = 0;
+
+        virtual common::error revoke_child(common::word index) = 0;
+
+        virtual common::error remove_child(common::word index) = 0;
+
+        // called from node
         virtual common::error revoke() = 0;
+
         virtual common::error remove() = 0;
 
         virtual capability_component *traverse(
