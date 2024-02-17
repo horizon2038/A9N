@@ -47,7 +47,7 @@ namespace kernel
             capability_local_state *local_state
         ) override;
 
-        common::error update() override;
+        common::error remove() override;
 
         common::error revoke(capability_local_state *local_state) override;
 

@@ -25,7 +25,7 @@ namespace kernel
         return 0;
     }
 
-    common::error generic::update()
+    common::error generic::remove()
     {
         return 0;
     }

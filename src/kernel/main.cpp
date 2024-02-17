@@ -319,17 +319,21 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     kernel::message_buffer mbuf;
     mbuf.fill(0);
+    mbuf.set_element(2, 2);
 
     if (traversed_entry != nullptr)
     {
         auto result = traversed_entry->execute(&mbuf);
+        logger::printk("result : %llu\n", result);
     }
 
     traversed_entry = node_1.traverse(descriptor, 32, 0);
 
     if (traversed_entry != nullptr)
     {
+        mbuf.set_element(2, 2);
         auto result = traversed_entry->execute(&mbuf);
+        logger::printk("result : %llu\n", result);
     }
 
     // remain
