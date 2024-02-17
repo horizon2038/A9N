@@ -30,7 +30,25 @@ namespace kernel
             // return capability_pointer->execute(buffer, &this->state);
         }
 
-        common::error update() override
+        common::error add_child(
+            common::word index,
+            capability_component *component
+        ) override
+        {
+            return 0;
+        };
+
+        capability_component *retrieve_child(common::word index) override
+        {
+            return this;
+        };
+
+        common::error revoke_child(common::word index) override
+        {
+            return 0;
+        }
+
+        common::error remove_child(common::word index) override
         {
             return 0;
         }
@@ -81,15 +99,6 @@ namespace kernel
             return 0;
         }
 
-        capability_component *traverse(
-            library::capability::capability_descriptor descriptor,
-            common::word descriptor_max_bits,
-            common::word descriptor_used_bits
-        ) override
-        {
-            return this;
-        }
-
         // all child nodes are also revoked.
         common::error remove() override
         {
@@ -103,8 +112,16 @@ namespace kernel
             }
             return 0;
         }
-    };
 
+        capability_component *traverse(
+            library::capability::capability_descriptor descriptor,
+            common::word descriptor_max_bits,
+            common::word descriptor_used_bits
+        ) override
+        {
+            return this;
+        }
+    };
 }
 
 #endif
