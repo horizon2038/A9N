@@ -1,8 +1,10 @@
-#include "kernel/capability/capability_component.hpp"
+#include "kernel/ipc/message_buffer.hpp"
+#include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
 
 #include <library/capability/capability_descriptor.hpp>
+#include <library/capability/capability_node_operation.hpp>
 #include <library/common/types.hpp>
 
 namespace kernel
@@ -23,23 +25,216 @@ namespace kernel
         kernel::utility::logger::printk("execute : node\n");
 
         // 1. decode operation
+        auto result = decode_operation(buffer);
         // 2. dispatch operation
         // 3.run operation
-        return 1;
-    };
 
-    common::error capability_node::update()
+        return result;
+    }
+
+    common::error capability_node::decode_operation(message_buffer *buffer)
     {
+        auto operation_type
+            = static_cast<library::capability::node_operation_type>(
+                buffer->get_element(2)
+            );
+        kernel::utility::logger::printk(
+            "operation type : %llu\n",
+            buffer->get_element(2)
+        );
+
+        switch (operation_type)
+        {
+            case library::capability::node_operation_type::COPY :
+                {
+                    kernel::utility::logger::printk("node : copy\n");
+                    auto e = operation_copy(buffer);
+                    return e;
+                    break;
+                }
+
+            case library::capability::node_operation_type::MOVE :
+                {
+                    kernel::utility::logger::printk("node : move\n");
+                    auto e = operation_move(buffer);
+                    return e;
+                    break;
+                }
+
+            case library::capability::node_operation_type::REVOKE :
+                {
+                    // the size of the message_buffer must be the same as one
+                    // entry in the message buffer, so the size of the message
+                    // buffer is the same as the size of a word.
+                    kernel::utility::logger::printk("node : revoke\n");
+                    // auto e = operation_revoke(buffer);
+                    return 0;
+                    break;
+                }
+
+            case library::capability::node_operation_type::REMOVE :
+                {
+                    kernel::utility::logger::printk("node : remove\n");
+                    auto e = operation_remove(buffer);
+                    return 0;
+                }
+
+            default :
+                {
+                    kernel::utility::logger::error("node : illegal operation!\n"
+                    );
+                    break;
+                    // ERROR: illegal operation !
+                }
+        };
+        return 0;
+    }
+
+    common::error capability_node::operation_copy(message_buffer *buffer)
+    {
+        auto destination_index = buffer->get_element(3);
+        auto source_descriptor = buffer->get_element(4);
+        auto source_depth = buffer->get_element(5);
+        auto source_index = buffer->get_element(6);
+        // TODO: create root_node
+        // auto source_root_node = root_node->traverse(source_descriptor,
+        // source_depth, 0);
+        // auto source_component =
+        // source_root_node->retrieve_child(source_index);
+        // auto e =
+        // add_child(destination_index, source_component);
+        //
+        // return e;
+        return 0;
+    }
+
+    common::error capability_node::add_child(
+        common::word index,
+        capability_component *component
+    )
+    {
+        if (component == nullptr)
+        {
+            // invalid component
+            return -1;
+        }
+
+        if (!is_index_valid(index))
+        {
+            return -1;
+        }
+
+        if (capability_slots[index] != nullptr)
+        {
+            // slot is already used.
+            // must delete first.
+            return -1;
+        }
+
+        capability_slots[index] = component;
+
+        return 0;
+    }
+
+    bool capability_node::is_index_valid(common::word index) const
+    {
+        auto index_max = static_cast<common::word>(1 << radix_bits);
+
+        if (index >= index_max)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    capability_component *capability_node::retrieve_child(common::word index)
+    {
+        if (!is_index_valid(index))
+        {
+            return nullptr;
+        }
+
+        auto component = capability_slots[index];
+
+        if (component == nullptr)
+        {
+            return nullptr;
+        }
+
+        return component;
+    }
+
+    common::error capability_node::operation_move(message_buffer *buffer)
+    {
+        auto destination_index = buffer->get_element(3);
+        auto source_descriptor = buffer->get_element(4);
+        auto source_depth = buffer->get_element(5);
+        auto source_index = buffer->get_element(6);
+        // TODO: create root_node
+        // auto source_root_node = root_node->traverse(source_descriptor,
+        // source_depth, 0);
+        // auto source_component =
+        // source_root_node->retrieve_child(source_index);
+        // auto e =
+        // add_child(destination_index, source_component);
+        // e = source_root_node->remove_child(source_index);
+        //
+        // return e;
+        return 0;
+    }
+
+    common::error capability_node::operation_revoke(message_buffer *buffer)
+    {
+        auto target_index = buffer->get_element(3);
+        auto e = revoke_child(target_index);
+        return 0;
+    }
+
+    common::error capability_node::revoke_child(common::word index)
+    {
+        if (!is_index_valid(index))
+        {
+            return -1;
+        }
+
+        auto child_component = retrieve_child(index);
+        child_component->revoke();
+        return 0;
+    }
+
+    common::error capability_node::operation_remove(message_buffer *buffer)
+    {
+        auto target_index = buffer->get_element(3);
+        remove_child(target_index);
+        return 0;
+    }
+
+    common::error capability_node::remove_child(common::word index)
+    {
+        if (!is_index_valid(index))
+        {
+            return -1;
+        }
+
+        auto child_component = retrieve_child(index);
+        child_component->remove();
         return 0;
     }
 
     common::error capability_node::revoke()
     {
+        auto index_max = static_cast<common::word>(1 << radix_bits);
+        for (auto i = 0; i < index_max; i++)
+        {
+            capability_slots[i] = nullptr;
+        }
         return 0;
-    };
+    }
 
     common::error capability_node::remove()
     {
+        // node destructor
         return 0;
     }
 
