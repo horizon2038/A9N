@@ -1,6 +1,7 @@
 #ifndef CAPABILITY_NODE_HPP
 #define CAPABILITY_NODE_HPP
 
+#include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_entry.hpp>
 
@@ -22,15 +23,21 @@ namespace kernel
 
         common::error execute(message_buffer *buffer) override;
 
-        common::error update() override;
+        common::error add_child(
+            common::word index,
+            capability_component *component
+        ) override;
+
+        capability_component *retrieve_child(common::word index) override;
+
+        common::error revoke_child(common::word index) override;
+
+        common::error remove_child(common::word index) override;
 
         common::error revoke() override;
 
         common::error remove() override;
 
-        // HACK (horizon2k38):
-        // consider whether capability and node implementation
-        // can be separated.
         capability_component *traverse(
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
@@ -47,6 +54,18 @@ namespace kernel
         // the number of slots is 2^radix_bits.
         capability_component **capability_slots;
 
+        common::error decode_operation(message_buffer *buffer);
+
+        common::error operation_copy(message_buffer *buffer);
+
+        bool is_index_valid(common::word index) const;
+
+        common::error operation_move(message_buffer *buffer);
+
+        common::error operation_revoke(message_buffer *buffer);
+
+        common::error operation_remove(message_buffer *buffer);
+
         capability_component *lookup_component(
             library::capability::capability_descriptor target_descriptor,
             common::word descriptor_used_bits
@@ -62,7 +81,7 @@ namespace kernel
             common::word descriptor_used_bits
         )
         {
-            auto mask_bits = (1 << radix_bits) - 1;
+            auto mask_bits = static_cast<common::word>((1 << radix_bits) - 1);
             auto shift_bits
                 = (common::WORD_BITS
                    - (ignore_bits + radix_bits + descriptor_used_bits));
