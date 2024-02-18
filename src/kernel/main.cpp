@@ -22,6 +22,7 @@
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/capability_entry.hpp>
+#include <kernel/capability/generic.hpp>
 
 #include <library/libc/string.hpp>
 #include <library/common/types.hpp>
@@ -312,6 +313,9 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     capability_slots_1[5] = &entry_2[5];
     entry_2[5].state.data.fill(0xf00ddead);
+    kernel::generic test_generic(0, 0, 0);
+    entry_2[5].capability_pointer
+        = static_cast<kernel::capability_object *>(&test_generic);
 
     library::capability::capability_descriptor descriptor = 0x0000000400000004;
     auto traversed_entry
@@ -331,7 +335,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     if (traversed_entry != nullptr)
     {
-        mbuf.set_element(2, 2);
+        mbuf.set_element(2, 0);
         auto result = traversed_entry->execute(&mbuf);
         logger::printk("result : %llu\n", result);
     }

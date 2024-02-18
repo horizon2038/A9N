@@ -26,6 +26,11 @@ namespace kernel
                     state.data.get_element(i)
                 );
             }
+            if (capability_pointer == nullptr)
+            {
+                return -1;
+            }
+            capability_pointer->execute(buffer, &state);
             return 0;
             // return capability_pointer->execute(buffer, &this->state);
         }

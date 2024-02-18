@@ -1,8 +1,8 @@
 #ifndef GENERIC_HPP
 #define GENERIC_HPP
 
-#include "kernel/capability/capability_entry.hpp"
-#include "kernel/capability/capability_local_state.hpp"
+#include <kernel/capability/capability_entry.hpp>
+#include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_object.hpp>
 #include <kernel/ipc/message_buffer.hpp>
 
@@ -44,7 +44,7 @@ namespace kernel
 
         common::error execute(
             message_buffer *buffer,
-            capability_local_state *local_state
+            capability_local_state *state
         ) override;
 
         common::error remove() override;
@@ -57,7 +57,13 @@ namespace kernel
         const bool flags;
         common::physical_address watermark;
 
-        common::error convert();
+        common::error decode_operation(
+            message_buffer *buffer,
+            capability_local_state *state
+        );
+
+        common::error
+            convert(message_buffer *buffer, capability_local_state *state);
     };
 }
 

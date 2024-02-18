@@ -8,17 +8,17 @@ namespace library::capability
     enum class capability_type : uint16_t
     {
         // memory
-        generic,
-        page_table,
-        frame,
+        GENERIC,
+        PAGE_TABLE,
+        FRAME,
 
         // process
-        domain,
-        process_control_block,
+        DOMAIN,
+        PROCESS_CONTROL_BLOCK,
 
         // communication
-        ipc_port,
-        interrupt,
+        IPC_PORT,
+        INTERRUPT,
     };
 }
 
