@@ -1,3 +1,4 @@
+#include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/generic.hpp>
 
 #include <kernel/capability/capability_local_state.hpp>
@@ -67,6 +68,15 @@ namespace kernel
         {
             case library::capability::capability_type::GENERIC :
                 kernel::utility::logger::printk("generic.convert -> generic\n");
+                create_generic(buffer, state);
+                break;
+
+            case library::capability::capability_type::PAGE_TABLE :
+                kernel::utility::logger::printk("generic.convert -> generic\n");
+                break;
+
+            case library::capability::capability_type::FRAME :
+                kernel::utility::logger::printk("generic.convert -> generic\n");
                 break;
 
             default :
@@ -75,6 +85,11 @@ namespace kernel
         }
         return 0;
     }
+
+    common::error generic::create_generic(
+        message_buffer *buffer,
+        capability_local_state *state
+    ) {};
 
     common::error generic::remove()
     {

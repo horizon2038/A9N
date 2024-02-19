@@ -7,6 +7,8 @@ namespace library::capability
 {
     enum class capability_type : uint16_t
     {
+        NODE,
+
         // memory
         GENERIC,
         PAGE_TABLE,

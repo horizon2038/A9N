@@ -64,6 +64,11 @@ namespace kernel
 
         common::error
             convert(message_buffer *buffer, capability_local_state *state);
+
+        common::error create_generic(
+            message_buffer *buffer,
+            capability_local_state *state
+        );
     };
 }
 

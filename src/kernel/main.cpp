@@ -295,6 +295,8 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         target_boot_info->arch_info
     );
 
+    // TEST Capability
+
     kernel::capability_component *capability_slots_1[256];
     kernel::capability_node node_1(24, 8, capability_slots_1);
 
