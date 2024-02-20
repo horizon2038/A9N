@@ -4,6 +4,11 @@ SRCDIR := ./src
 BUILDDIR := ./build
 SCRIPTDIR := ../scripts
 
+INCDIR := ../src/kernel/include
+INCDIR += ../src/hal/include
+INCDIR += ../src/library/include
+INCFLAGS = $(addprefix -I,$(INCDIR))
+
 TEST_SRCS := $(shell find $(SRCDIR) -type f -name "*.cpp")
 
 
@@ -23,7 +28,7 @@ all: $(TARGETS)
 	@$(SCRIPTDIR)/test_all.sh $(realpath $(TARGETS))
 
 $(TARGETS): $(TEST_SRCS)
-	$(CXX) $(CXXFLAGS) $(CXXTESTFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(CXXTESTFLAGS) $(INCFLAGS) $^ -o $@
 
 clean:
 	rm -f $(TARGETS)
