@@ -1,6 +1,7 @@
 # dirs
 /build/
 /chain/
+/test/build/
 
 # bin
 *.fd
