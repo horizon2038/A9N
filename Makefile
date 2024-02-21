@@ -9,6 +9,7 @@ export ARCH
 CHAINDIR = ./chain
 A9NLOADER = a9nloaderPkg
 SCRIPTSDIR = ./scripts
+TESTDIR := ./test
 LLVMDIR = /usr/local/opt/llvm/bin
 
 KERNEL_SRCS :=  $(shell find $(SRCDIR)/kernel -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
@@ -46,9 +47,9 @@ LIBS =
 
 $(info $(make show-targets))
 
-.PHONY: all show-targets kernel boot clean clean-kernel clean-boot
+.PHONY: all show-targets kernel boot test clean clean-kernel clean-boot clean-test
 
-all: kernel boot
+all: kernel boot test
 
 show-targets:
 	@echo -e "\e[44mTOOLS\e[0m :"
@@ -142,16 +143,23 @@ $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	ARCH=$(ARCH) LLVMDIR=$(LLVMDIR) $(SCRIPTSDIR)/build_a9nloader.sh
 	mkdir -p $(BUILDDIR)/$(ARCH)/boot
 	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
-	# cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_CLANGPDB/X64/a9nloader.efi $@
+
+test:
+	make -C $(TESTDIR)
+	$(TESTDIR)/build/test
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
 	rm -f $(BUILDDIR)/$(ARCH)/boot/$(BOOT)
+	make -C $(TESTDIR) clean
 
 clean-kernel:
 	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
 
 clean-boot:
 	rm -f $(BUILDDIR)/$(ARCH)/boot/$(BOOT)
+
+clean-test:
+	make -C $(TESTDIR) clean
 
 -include $(DEPS)
