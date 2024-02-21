@@ -1,4 +1,4 @@
-SHELL=/usr/bin/bash
+# SHELL=/usr/bin/bash
 
 TARGET = kernel.elf
 BOOT = BOOTX64.EFI
@@ -140,6 +140,7 @@ $(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.s
 # boot
 $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	ARCH=$(ARCH) LLVMDIR=$(LLVMDIR) $(SCRIPTSDIR)/build_a9nloader.sh
+	mkdir -p $(BUILDDIR)/$(ARCH)/boot
 	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
 	# cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_CLANGPDB/X64/a9nloader.efi $@
 
