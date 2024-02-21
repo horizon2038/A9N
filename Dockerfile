@@ -9,6 +9,7 @@ RUN apt-get update && \
         lld \
         nasm \
         make \
+        cmake \
         build-essential \
         uuid-dev \
         iasl \

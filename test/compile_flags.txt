@@ -1,0 +1,11 @@
+-I../src/kernel/include/
+-I../src/hal/include/
+-I../src/library/include/
+-std=c++20
+
+-I../src/hal/x86_64/include/
+
+-I./library/include/
+-I./src/include/
+
+--target=x86_64-elf

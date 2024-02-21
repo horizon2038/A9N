@@ -1,10 +1,12 @@
-#include <stdio.h>
+#include <gtest/gtest.h>
 
-#include <library/common/types.hpp>
-
-int main(int argc, const char *argv[])
+bool is_even(int x)
 {
-    library::common::word n = 0;
-    printf("hello, test world!\n");
-    return 0;
+    return x % 2 == 0;
+}
+
+TEST(IsEvenTest, Negative)
+{
+    EXPECT_FALSE(is_even(-1));
+    EXPECT_TRUE(is_even(-2));
 }
