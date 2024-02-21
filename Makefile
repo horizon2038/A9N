@@ -1,4 +1,4 @@
-# SHELL=/usr/bin/bash
+SHELL=/bin/bash
 
 TARGET = kernel.elf
 BOOT = BOOTX64.EFI
