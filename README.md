@@ -76,10 +76,11 @@ Currently supported architectures:
 - NASM
 - [EDK2](https://github.com/tianocore/edk2)
 
-## Build
+## Build (with Docker Container)
 
 ```bash
-make
+docker build -t a9n-build .
+docker run --rm -v $(pwd):/A9N a9n-build bash -c "./scripts/setup.sh && make"
 ```
 
 ## Usage
