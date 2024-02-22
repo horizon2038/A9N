@@ -3,7 +3,6 @@
 
 #include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/capability_component.hpp>
-#include <kernel/capability/capability_entry.hpp>
 
 #include <library/common/types.hpp>
 #include <library/capability/capability_descriptor.hpp>
@@ -18,7 +17,7 @@ namespace kernel
         capability_node(
             common::word initial_ignore_bits,
             common::word initial_radix_bits,
-            capability_component **initial_capability_slots
+            capability_slot *initial_capability_slots
         );
 
         common::error execute(message_buffer *buffer) override;
@@ -28,7 +27,7 @@ namespace kernel
             capability_component *component
         ) override;
 
-        capability_component *retrieve_child(common::word index) override;
+        capability_slot *retrieve_child(common::word index) override;
 
         common::error revoke_child(common::word index) override;
 
@@ -38,7 +37,7 @@ namespace kernel
 
         common::error remove() override;
 
-        capability_component *traverse(
+        capability_slot *traverse(
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
             common::word descriptor_used_bits
@@ -52,7 +51,7 @@ namespace kernel
         // and thhe number can be specified when creating it.
 
         // the number of slots is 2^radix_bits.
-        capability_component **capability_slots;
+        capability_slot *capability_slots;
 
         common::error decode_operation(message_buffer *buffer);
 
@@ -66,7 +65,7 @@ namespace kernel
 
         common::error operation_remove(message_buffer *buffer);
 
-        capability_component *lookup_component(
+        capability_slot *lookup_slot(
             library::capability::capability_descriptor target_descriptor,
             common::word descriptor_used_bits
         );
@@ -95,7 +94,7 @@ namespace kernel
             return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }
 
-        capability_component *index_to_capability_component(common::word index);
+        capability_slot *index_to_capability_slot(common::word index);
     };
 
 }

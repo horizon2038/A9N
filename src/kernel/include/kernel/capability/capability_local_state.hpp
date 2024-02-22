@@ -13,8 +13,8 @@ namespace kernel
     struct dependency_node
     {
         // sibling capability_entry
-        struct capability_entry *next_capability_entry;
-        struct capability_entry *preview_capability_entry;
+        struct capability_slot *next_capability_entry;
+        struct capability_slot *preview_capability_entry;
 
         // child capability_entry
         // capability_entry *child_capability_entry;

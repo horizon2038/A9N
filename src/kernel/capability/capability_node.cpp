@@ -12,7 +12,7 @@ namespace kernel
     capability_node::capability_node(
         common::word initial_ignore_bits,
         common::word initial_radix_bits,
-        capability_component **initial_capability_slots
+        capability_slot *initial_capability_slots
     )
         : capability_slots(initial_capability_slots)
         , ignore_bits(initial_ignore_bits)
@@ -240,32 +240,45 @@ namespace kernel
 
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
-    capability_component *capability_node::traverse(
+    capability_slot *capability_node::traverse(
         library::capability::capability_descriptor descriptor,
         common::word descriptor_max_bits, // usually WORD_BITS is used.
         common::word descriptor_used_bits
     )
     {
-        auto entry = lookup_component(descriptor, descriptor_used_bits);
-        if (entry == nullptr)
+        auto slot = lookup_slot(descriptor, descriptor_used_bits);
+        if (slot == nullptr)
         {
             kernel::utility::logger::error("null entry !\n");
         }
 
         if (descriptor_used_bits == library::common::WORD_BITS)
         {
-            return entry;
+            return slot;
         }
 
         auto new_used_bits = calculate_used_bits(descriptor_used_bits);
         if (new_used_bits == descriptor_max_bits)
         {
-            return entry;
+            return slot;
         }
-        return entry->traverse(descriptor, descriptor_max_bits, new_used_bits);
+
+        auto next_slot = slot->component->traverse(
+            descriptor,
+            descriptor_max_bits,
+            new_used_bits
+        );
+
+        // if next_slot has no children (i.e., it is a terminal)
+        if (next_slot == nullptr)
+        {
+            return slot;
+        }
+
+        return next_slot;
     }
 
-    capability_component *capability_node::lookup_component(
+    capability_slot *capability_node::lookup_slot(
         library::capability::capability_descriptor descriptor,
         common::word descriptor_used_bits
     )
@@ -273,16 +286,16 @@ namespace kernel
         kernel::utility::logger::printk("lookup_capability\n");
         auto index
             = calculate_capability_index(descriptor, descriptor_used_bits);
-        auto component = index_to_capability_component(index);
-        if (component == nullptr)
+        auto slot = index_to_capability_slot(index);
+        if (slot == nullptr)
         {
             kernel::utility::logger::error("null entry !\n");
         }
-        return component;
+        return slot;
     }
 
-    capability_component *
-        capability_node::index_to_capability_component(common::word index)
+    capability_slot *
+        capability_node::index_to_capability_slot(common::word index)
     {
         auto index_max = 1 << radix_bits;
         if (index >= index_max)
@@ -290,6 +303,6 @@ namespace kernel
             kernel::utility::logger::error("index out of range !\n");
             return nullptr;
         }
-        return capability_slots[index];
+        return &capability_slots[index];
     }
 }

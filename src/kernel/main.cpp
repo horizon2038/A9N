@@ -297,6 +297,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     // TEST Capability
 
+    /*
     kernel::capability_component *capability_slots_1[256];
     kernel::capability_node node_1(24, 8, capability_slots_1);
 
@@ -357,6 +358,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
         sizeof(kernel::capability_entry)
     );
     logger::split();
+    */
 
     hal_instance->_timer->init_timer();
 
