@@ -27,7 +27,7 @@ namespace kernel
             capability_component *component
         ) override;
 
-        capability_slot *retrieve_child(common::word index) override;
+        capability_slot *retrieve_slot(common::word index) override;
 
         common::error revoke_child(common::word index) override;
 
@@ -37,7 +37,7 @@ namespace kernel
 
         common::error remove() override;
 
-        capability_slot *traverse(
+        capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
             common::word descriptor_used_bits

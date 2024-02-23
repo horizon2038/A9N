@@ -148,7 +148,7 @@ namespace kernel
         return true;
     }
 
-    capability_component *capability_node::retrieve_child(common::word index)
+    capability_component *capability_node::retrieve_slot(common::word index)
     {
         if (!is_index_valid(index))
         {
@@ -186,49 +186,26 @@ namespace kernel
 
     common::error capability_node::operation_revoke(message_buffer *buffer)
     {
-        auto target_index = buffer->get_element(3);
-        auto e = revoke_child(target_index);
         return 0;
     }
 
     common::error capability_node::revoke_child(common::word index)
     {
-        if (!is_index_valid(index))
-        {
-            return -1;
-        }
-
-        auto child_component = retrieve_child(index);
-        child_component->revoke();
         return 0;
     }
 
     common::error capability_node::operation_remove(message_buffer *buffer)
     {
-        auto target_index = buffer->get_element(3);
-        remove_child(target_index);
         return 0;
     }
 
     common::error capability_node::remove_child(common::word index)
     {
-        if (!is_index_valid(index))
-        {
-            return -1;
-        }
-
-        auto child_component = retrieve_child(index);
-        child_component->remove();
         return 0;
     }
 
     common::error capability_node::revoke()
     {
-        auto index_max = static_cast<common::word>(1 << radix_bits);
-        for (auto i = 0; i < index_max; i++)
-        {
-            capability_slots[i] = nullptr;
-        }
         return 0;
     }
 
@@ -238,9 +215,14 @@ namespace kernel
         return 0;
     }
 
+    // USECASE of Generic::Convert
+    // convert -> create new slot(component and local_state)
+    // target_node.add_slot(index, new_slot)
+    //
+
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
-    capability_slot *capability_node::traverse(
+    capability_slot *capability_node::traverse_slot(
         library::capability::capability_descriptor descriptor,
         common::word descriptor_max_bits, // usually WORD_BITS is used.
         common::word descriptor_used_bits
@@ -263,7 +245,7 @@ namespace kernel
             return slot;
         }
 
-        auto next_slot = slot->component->traverse(
+        auto next_slot = slot->component->traverse_slot(
             descriptor,
             descriptor_max_bits,
             new_used_bits

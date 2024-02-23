@@ -29,7 +29,7 @@ namespace kernel
             add_child(common::word index, capability_component *component)
             = 0;
 
-        virtual capability_slot *retrieve_child(common::word index) = 0;
+        virtual capability_slot *retrieve_slot(common::word index) = 0;
 
         virtual common::error revoke_child(common::word index) = 0;
 
@@ -40,7 +40,7 @@ namespace kernel
 
         virtual common::error remove() = 0;
 
-        virtual capability_slot *traverse(
+        virtual capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
             common::word descriptor_max_bits,
             common::word descriptor_used_bits
