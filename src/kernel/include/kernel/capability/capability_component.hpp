@@ -6,6 +6,8 @@
 #include <library/common/types.hpp>
 #include <library/capability/capability_descriptor.hpp>
 
+#include <library/libc/string.hpp>
+
 namespace kernel
 {
     class capability_component;
@@ -14,6 +16,36 @@ namespace kernel
     {
         capability_component *component;
         capability_local_state *state;
+
+        bool has_child()
+        {
+            return (
+                state->family_node.depth
+                > state->family_node.next_slot->state->family_node.depth
+            );
+        }
+
+        bool is_same_slot(capability_slot *rhs)
+        {
+            auto is_same_data = std::memcmp(
+                &state->data,
+                &rhs->state->data,
+                sizeof(capability_slot_data)
+            );
+
+            if (is_same_data != 0)
+            {
+                return false;
+            }
+
+            // for memory object (e.g. generic, frame, page_table ...)
+            if (component != rhs->component)
+            {
+                return false;
+            }
+
+            return true;
+        }
     };
 
     class capability_component
@@ -22,23 +54,15 @@ namespace kernel
         virtual ~capability_component() {};
 
         // called from user
-        virtual common::error execute(message_buffer *buffer) = 0;
-
-        // called from each capabilities
         virtual common::error
-            add_child(common::word index, capability_component *component)
+            execute(capability_slot *this_slot, message_buffer *buffer)
             = 0;
-
-        virtual capability_slot *retrieve_slot(common::word index) = 0;
-
-        virtual common::error revoke_child(common::word index) = 0;
-
-        virtual common::error remove_child(common::word index) = 0;
 
         // called from node
         virtual common::error revoke() = 0;
 
-        virtual common::error remove() = 0;
+        // for tree
+        virtual capability_slot *retrieve_slot(common::word index) = 0;
 
         virtual capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,

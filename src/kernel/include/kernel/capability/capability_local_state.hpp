@@ -7,14 +7,14 @@ namespace kernel
 {
     constexpr static common::word ENTRY_DATA_MAX = 3;
 
-    using capability_entry_data
+    using capability_slot_data
         = library::common::bounded_array<common::word, ENTRY_DATA_MAX>;
 
     struct dependency_node
     {
         // sibling capability_entry
-        struct capability_slot *next_capability_entry;
-        struct capability_slot *preview_capability_entry;
+        struct capability_slot *next_slot;
+        struct capability_slot *preview_slot;
 
         // child capability_entry
         // capability_entry *child_capability_entry;
@@ -24,7 +24,7 @@ namespace kernel
 
     struct capability_local_state
     {
-        capability_entry_data data;
+        capability_slot_data data;
         dependency_node family_node;
     };
 

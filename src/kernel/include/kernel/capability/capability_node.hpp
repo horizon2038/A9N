@@ -20,22 +20,14 @@ namespace kernel
             capability_slot *initial_capability_slots
         );
 
-        common::error execute(message_buffer *buffer) override;
-
-        common::error add_child(
-            common::word index,
-            capability_component *component
+        common::error execute(
+            capability_slot *this_slot,
+            message_buffer *buffer
         ) override;
-
-        capability_slot *retrieve_slot(common::word index) override;
-
-        common::error revoke_child(common::word index) override;
-
-        common::error remove_child(common::word index) override;
 
         common::error revoke() override;
 
-        common::error remove() override;
+        capability_slot *retrieve_slot(common::word index) override;
 
         capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
@@ -57,8 +49,6 @@ namespace kernel
 
         common::error operation_copy(message_buffer *buffer);
 
-        bool is_index_valid(common::word index) const;
-
         common::error operation_move(message_buffer *buffer);
 
         common::error operation_revoke(message_buffer *buffer);
@@ -69,6 +59,19 @@ namespace kernel
             library::capability::capability_descriptor target_descriptor,
             common::word descriptor_used_bits
         );
+
+        // inline section
+        inline const bool is_index_valid(common::word index)
+        {
+            auto index_max = static_cast<common::word>(1 << radix_bits);
+
+            if (index >= index_max)
+            {
+                return false;
+            }
+
+            return true;
+        }
 
         inline const bool is_depth_remain(common::word depth)
         {
@@ -93,8 +96,6 @@ namespace kernel
         {
             return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }
-
-        capability_slot *index_to_capability_slot(common::word index);
     };
 
 }

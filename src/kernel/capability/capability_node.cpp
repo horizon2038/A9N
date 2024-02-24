@@ -20,7 +20,10 @@ namespace kernel
     {
     }
 
-    common::error capability_node::execute(message_buffer *buffer)
+    common::error capability_node::execute(
+        capability_slot *this_slot,
+        message_buffer *buffer
+    )
     {
         kernel::utility::logger::printk("execute : node\n");
 
@@ -108,61 +111,16 @@ namespace kernel
         return 0;
     }
 
-    common::error capability_node::add_child(
-        common::word index,
-        capability_component *component
-    )
+    // return of empty slots is allowed
+    capability_slot *capability_node::retrieve_slot(common::word index)
     {
-        if (component == nullptr)
-        {
-            // invalid component
-            return -1;
-        }
-
-        if (!is_index_valid(index))
-        {
-            return -1;
-        }
-
-        if (capability_slots[index] != nullptr)
-        {
-            // slot is already used.
-            // must delete first.
-            return -1;
-        }
-
-        capability_slots[index] = component;
-
-        return 0;
-    }
-
-    bool capability_node::is_index_valid(common::word index) const
-    {
-        auto index_max = static_cast<common::word>(1 << radix_bits);
-
+        auto index_max = 1 << radix_bits;
         if (index >= index_max)
         {
-            return false;
-        }
-
-        return true;
-    }
-
-    capability_component *capability_node::retrieve_slot(common::word index)
-    {
-        if (!is_index_valid(index))
-        {
+            kernel::utility::logger::error("index out of range !\n");
             return nullptr;
         }
-
-        auto component = capability_slots[index];
-
-        if (component == nullptr)
-        {
-            return nullptr;
-        }
-
-        return component;
+        return &capability_slots[index];
     }
 
     common::error capability_node::operation_move(message_buffer *buffer)
@@ -181,37 +139,6 @@ namespace kernel
         // e = source_root_node->remove_child(source_index);
         //
         // return e;
-        return 0;
-    }
-
-    common::error capability_node::operation_revoke(message_buffer *buffer)
-    {
-        return 0;
-    }
-
-    common::error capability_node::revoke_child(common::word index)
-    {
-        return 0;
-    }
-
-    common::error capability_node::operation_remove(message_buffer *buffer)
-    {
-        return 0;
-    }
-
-    common::error capability_node::remove_child(common::word index)
-    {
-        return 0;
-    }
-
-    common::error capability_node::revoke()
-    {
-        return 0;
-    }
-
-    common::error capability_node::remove()
-    {
-        // node destructor
         return 0;
     }
 
@@ -268,23 +195,12 @@ namespace kernel
         kernel::utility::logger::printk("lookup_capability\n");
         auto index
             = calculate_capability_index(descriptor, descriptor_used_bits);
-        auto slot = index_to_capability_slot(index);
+        auto slot = retrieve_slot(index);
         if (slot == nullptr)
         {
             kernel::utility::logger::error("null entry !\n");
         }
-        return slot;
-    }
 
-    capability_slot *
-        capability_node::index_to_capability_slot(common::word index)
-    {
-        auto index_max = 1 << radix_bits;
-        if (index >= index_max)
-        {
-            kernel::utility::logger::error("index out of range !\n");
-            return nullptr;
-        }
-        return &capability_slots[index];
+        return slot;
     }
 }
