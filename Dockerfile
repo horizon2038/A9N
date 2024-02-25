@@ -1,6 +1,8 @@
 FROM --platform=linux/amd64 debian:bullseye
 LABEL maintainer="horizon2k38"
 
+ENV TERM xterm-256color
+
 RUN apt-get update && \
     apt-get install -y \
         bash \
