@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include <kernel/capability/capability_node.hpp>
+
 class capability_node_test : public ::testing::Test
 {
   public:
@@ -15,3 +17,7 @@ class capability_node_test : public ::testing::Test
 
   private:
 };
+
+TEST_F(capability_node_test, is_same_slot)
+{
+}

@@ -7,24 +7,14 @@
 #include <library/capability/capability_types.hpp>
 #include <library/common/types.hpp>
 
+#include <kernel/utility/logger.hpp>
+
 namespace kernel
 {
-    generic::generic(
-        common::physical_address initial_start_address,
-        common::word initial_size,
-        bool initial_flags
-    )
-        : start_address(initial_start_address)
-        , size(initial_size)
-        , flags(initial_flags)
-        , watermark(0)
-    {
-    }
-
     common::error
-        generic::execute(message_buffer *buffer, capability_local_state *state)
+        generic::execute(capability_slot *this_slot, message_buffer *buffer)
     {
-        auto e = decode_operation(buffer, state);
+        auto e = decode_operation(buffer, this_slot->state);
         return e;
     }
 
@@ -91,12 +81,7 @@ namespace kernel
         capability_local_state *state
     ) {};
 
-    common::error generic::remove()
-    {
-        return 0;
-    }
-
-    common::error generic::revoke(capability_local_state *local_state)
+    common::error generic::revoke()
     {
         return 0;
     }

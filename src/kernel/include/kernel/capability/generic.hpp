@@ -1,9 +1,8 @@
 #ifndef GENERIC_HPP
 #define GENERIC_HPP
 
-#include <kernel/capability/capability_entry.hpp>
 #include <kernel/capability/capability_local_state.hpp>
-#include <kernel/capability/capability_object.hpp>
+#include <kernel/capability/capability_component.hpp>
 #include <kernel/ipc/message_buffer.hpp>
 
 #include <library/common/types.hpp>
@@ -33,29 +32,39 @@ namespace kernel
         RETYPE = 0x00
     };
 
-    class generic final : public capability_object
+    class generic final : public capability_component
     {
       public:
-        generic(
-            common::physical_address initial_start_address,
-            common::word initial_size,
-            bool initial_flags
-        );
-
         common::error execute(
-            message_buffer *buffer,
-            capability_local_state *state
+            capability_slot *this_slot,
+            message_buffer *buffer
         ) override;
 
-        common::error remove() override;
+        common::error revoke() override;
 
-        common::error revoke(capability_local_state *local_state) override;
+        // empty implements (for composite-pattern)
+        capability_slot *retrieve_slot(common::word index) override
+        {
+            return nullptr;
+        }
+
+        capability_slot *traverse_slot(
+            library::capability::capability_descriptor descriptor,
+            common::word max_bits,
+            common::word used_bits
+        ) override
+        {
+            return nullptr;
+        };
 
       private:
+        // these members passed from execute() argment.
+        /*
         const common::physical_address start_address;
         const common::word size;
         const bool flags;
         common::physical_address watermark;
+         */
 
         common::error decode_operation(
             message_buffer *buffer,
