@@ -39,6 +39,7 @@ cmake ..
 make
 cd $CURRENT/$TESTDIR
 cp -r library/googletest/googletest/include/gtest library/include
+cp -r library/googletest/googlemock/include/gmock library/include
 pwd
 cp library/googletest/build/lib/*.a library/
 

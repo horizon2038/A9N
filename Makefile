@@ -146,7 +146,7 @@ $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 
 test:
 	make -C $(TESTDIR)
-	$(TESTDIR)/build/test
+	$(TESTDIR)/build/test --gtest_color=yes
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
