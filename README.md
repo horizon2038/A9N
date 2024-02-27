@@ -16,22 +16,21 @@ It combines high portability, stability, and scalability.
 
 <pre>
 .
-└── src
-    ├── boot
-    ├── hal
-    │    └── include/hal/interface
-    │    └── {ARCH}
-    ├── kernel
-    ├── library
-    └── servers
+├── src
+│   ├── kernel
+│   ├── hal
+│   │    └── include/hal/interface
+│   │    └── {ARCH}
+│   ├── boot
+│   ├── library
+│   └── servers
+└── test
+
 </pre>
 
-### `src/boot`
+### `src/kernel`
 
-A basic bootloader implementation is provided to load the kernel.  
-This bootloader is currently only implemented for the x86_64 by EDK2.
-> [!NOTE]
-> The bootloader binary is **separated** from the kernel binary.
+The main hardware-independent part of the A9N microkernel.
 
 ### `src/hal`
 
@@ -39,9 +38,12 @@ A Hardware Abstraction Layer (HAL) is implemented to provide a portable interfac
 to the underlying hardware.  
 The {ARCH} directory is referenced during the `make` process.  
 
-### `src/kernel`
+### `src/boot`
 
-The main hardware-independent part of the A9N microkernel.
+A basic bootloader implementation is provided to load the kernel.  
+This bootloader is currently only implemented for the x86_64 by EDK2.
+> [!NOTE]
+> The bootloader binary is **separated** from the kernel binary.
 
 ### `src/library`
 
@@ -57,6 +59,12 @@ A test root server that is started by the A9N microkernel.
 > and you will need to implement most of the functionality yourself.  
 > This implementation will vary depending on the OS that uses the A9N kernel as its core.**
 
+### `test`
+
+This directory contains the kernel test code, which uses the *Google Test* framework.  
+The tests are automatically built and run when you run `make`.  
+You can also build them explicitly by running `make test`.
+
 ## Architecture Status
 
 Currently supported architectures:
@@ -65,29 +73,63 @@ Currently supported architectures:
 
 ## Requirements
 
-#### Kernel ( Hardware Independent )
+### Kernel
 
-- clang
-- clang++
+- Clang
+- Clang++
 - lld
 
-#### x86_64
+### HAL
 
+**x86_64**
 - NASM
+
+### Boot
+
+**x86_64**
 - [EDK2](https://github.com/tianocore/edk2)
 
-## Build (with Docker Container)
+### Test
+
+- [Google Test](https://github.com/google/googletest)
+
+### Run
+- QEMU
+
+## Build (with Docker)
 
 ```bash
 docker build -t a9n-build .
-docker run --rm -v $(pwd):/A9N a9n-build bash -c "./scripts/setup.sh && make"
+docker run --rm -v $(pwd):/A9N a9n-build bash -c "./scripts/setup.sh && make -j8"
+```
+
+## Build (Local)
+
+Building with Docker is recommended; This method is **deprecated**.
+
+``` bash
+sudo apt update && sudo apt install -y \
+    bash \
+    llvm \
+    clang \
+    lld \
+    nasm \
+    make \
+    cmake \
+    build-essential \
+    uuid-dev \
+    iasl \
+    git \
+    python-is-python3 \
+    ovmf
+./scripts/setup.sh
+make -j8
 ```
 
 ## Usage
 
 ```bash
-cd scripts/
-./run.sh
+./scripts/run.sh
 ```
 
 ## Author
