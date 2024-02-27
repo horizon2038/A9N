@@ -14,7 +14,7 @@ namespace kernel
     common::error
         generic::execute(capability_slot *this_slot, message_buffer *buffer)
     {
-        auto e = decode_operation(buffer, this_slot->state);
+        auto e = decode_operation(buffer, &(this_slot->state));
         return e;
     }
 
