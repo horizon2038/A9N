@@ -21,7 +21,6 @@
 #include <library/capability/capability_descriptor.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
-#include <kernel/capability/capability_entry.hpp>
 #include <kernel/capability/generic.hpp>
 
 #include <library/libc/string.hpp>
@@ -294,71 +293,6 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     hal_instance->_arch_initializer->init_architecture(
         target_boot_info->arch_info
     );
-
-    // TEST Capability
-
-    /*
-    kernel::capability_component *capability_slots_1[256];
-    kernel::capability_node node_1(24, 8, capability_slots_1);
-
-    kernel::capability_entry entry_1[256];
-    capability_slots_1[4] = &entry_1[4];
-    entry_1[4].state.data.fill(0xdeadbeaf);
-
-    kernel::capability_component *capability_slots_2[256];
-    kernel::capability_node node_2(24, 8, capability_slots_2);
-
-    kernel::capability_entry entry_2[256];
-    capability_slots_2[4] = &entry_2[4];
-    entry_2[4].state.data.fill(0xdeadc0ad);
-
-    capability_slots_1[4] = &node_2;
-
-    capability_slots_1[5] = &entry_2[5];
-    entry_2[5].state.data.fill(0xf00ddead);
-    kernel::generic test_generic(0, 0, 0);
-    entry_2[5].capability_pointer
-        = static_cast<kernel::capability_object *>(&test_generic);
-
-    library::capability::capability_descriptor descriptor = 0x0000000400000004;
-    auto traversed_entry
-        = node_1.traverse(descriptor, library::common::WORD_BITS, 0);
-
-    kernel::message_buffer mbuf;
-    mbuf.fill(0);
-    mbuf.set_element(2, 2);
-
-    if (traversed_entry != nullptr)
-    {
-        auto result = traversed_entry->execute(&mbuf);
-        logger::printk("result : %llu\n", result);
-    }
-
-    traversed_entry = node_1.traverse(descriptor, 32, 0);
-
-    if (traversed_entry != nullptr)
-    {
-        mbuf.set_element(2, 0);
-        auto result = traversed_entry->execute(&mbuf);
-        logger::printk("result : %llu\n", result);
-    }
-
-    // remain
-    descriptor = 0x0000000500000004;
-    traversed_entry
-        = node_1.traverse(descriptor, library::common::WORD_BITS, 0);
-
-    if (traversed_entry != nullptr)
-    {
-        auto result = traversed_entry->execute(&mbuf);
-    }
-
-    logger::printk(
-        "sizeof capability_entry : %llu\n",
-        sizeof(kernel::capability_entry)
-    );
-    logger::split();
-    */
 
     hal_instance->_timer->init_timer();
 
