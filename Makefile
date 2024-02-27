@@ -145,7 +145,7 @@ $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
 
 test:
-	make -C $(TESTDIR)
+	$(MAKE) -C $(TESTDIR)
 	$(TESTDIR)/build/test --gtest_color=yes
 
 clean:
