@@ -25,7 +25,10 @@ namespace kernel
             message_buffer *buffer
         ) override;
 
-        common::error revoke() override;
+        common::error revoke() override
+        {
+            return 0;
+        };
 
         capability_slot *retrieve_slot(common::word index) override;
 
