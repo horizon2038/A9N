@@ -36,6 +36,8 @@ CXX = clang++
 CXXFLAGS = -Wall -Wextra -O2 -std=c++20
 CXXTESTFLAGS = -pthread -lgtest_main -lgtest -lgmock_main -lgmock
 
+CPPFLAGS = $(INCFLAGS) -MMD -MP
+
 .PHONY: all clean
 
 all: executable
@@ -44,16 +46,16 @@ executable: $(BUILDDIR)/$(TARGET)
 
 $(BUILDDIR)/$(TARGET): $(TEST_OBJS) $(OBJS)
 	mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(INCFLAGS) $(LIBFLAGS) $(CXXTESTFLAGS) $^ -o $@
+	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(LIBFLAGS) $(CXXTESTFLAGS) $^ -o $@
 #	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
 $(BUILDDIR)/%.o: $(TESTSRCDIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BUILDDIR)/*
