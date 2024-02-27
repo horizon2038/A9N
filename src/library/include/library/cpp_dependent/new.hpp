@@ -1,5 +1,5 @@
-#ifndef CPPNEW
-#define CPPNEW
+#ifndef _LIBCPP_NEW
+#define _LIBCPP_NEW
 
 #include <stddef.h>
 
