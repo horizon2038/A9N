@@ -1,7 +1,6 @@
+#include "library/common/types.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include <stdio.h>
 
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
@@ -17,10 +16,47 @@ class capability_node_test : public ::testing::Test
     kernel::capability_slot *slots_1;
     kernel::capability_slot *slots_2;
 
+    constexpr static library::common::word NODE_ROOT_RADIX = 8;
+    constexpr static library::common::word NODE_1_RADIX = 12;
+    constexpr static library::common::word NODE_2_RADIX = 12;
+
+    constexpr static library::common::word NODE_ROOT_IGNORE = 24;
+    constexpr static library::common::word NODE_1_IGNORE = 4;
+    constexpr static library::common::word NODE_2_IGNORE = 4;
+
+    constexpr static library::common::word NODE_ROOT_ALLBITS
+        = (NODE_ROOT_RADIX + NODE_ROOT_IGNORE);
+    static_assert(NODE_ROOT_ALLBITS == 32, "NODE_ROOT_ALLBITS");
+
+    constexpr static library::common::word NODE_1_ALLBITS
+        = (NODE_ROOT_ALLBITS + NODE_1_RADIX + NODE_1_IGNORE);
+    static_assert(NODE_1_ALLBITS == 48, "NODE_1_ALLBITS");
+
+    constexpr static library::common::word NODE_2_ALLBITS
+        = (NODE_1_ALLBITS + NODE_2_RADIX + NODE_1_IGNORE);
+    static_assert(NODE_2_ALLBITS == 64, "NODE_2_ALLBITS");
+
     void SetUp() override
     {
-        slots_root = new kernel::capability_slot[256];
-        node_root = new kernel::capability_node(24, 8, slots_root);
+        // node_root
+        slots_root = new kernel::capability_slot[1 << NODE_ROOT_RADIX];
+        node_root = new kernel::capability_node(
+            NODE_ROOT_IGNORE,
+            NODE_ROOT_RADIX,
+            slots_root
+        );
+
+        // node_1
+        slots_1 = new kernel::capability_slot[1 << NODE_1_RADIX];
+        node_1
+            = new kernel::capability_node(NODE_1_IGNORE, NODE_1_RADIX, slots_1);
+        slots_root[0].component = node_1;
+
+        // node_2
+        slots_2 = new kernel::capability_slot[1 << NODE_2_RADIX];
+        node_2
+            = new kernel::capability_node(NODE_2_IGNORE, NODE_2_RADIX, slots_2);
+        slots_1[0].component = node_2;
     }
 
     void TearDown() override
@@ -28,25 +64,7 @@ class capability_node_test : public ::testing::Test
     }
 };
 
-TEST_F(capability_node_test, slot_data_get_element_test)
-{
-    auto slot = new kernel::capability_slot;
-
-    slot->state.data.set_element(0, 0xdeadbeaf);
-
-    ASSERT_EQ(slot->state.data.get_element(0), 0xdeadbeaf);
-}
-
-TEST_F(capability_node_test, slot_data_out_of_range_test)
-{
-    auto slot = new kernel::capability_slot;
-
-    slot->state.data.set_element(4, 0xdeadbeaf);
-
-    ASSERT_NE(slot->state.data.get_element(4), 0xdeadbeaf);
-}
-
-TEST_F(capability_node_test, root_retrieve_slot_min_test)
+TEST_F(capability_node_test, retrieve_slot_index_min_test)
 {
     slots_root[0].state.data.set_element(0, 0xdeadbeaf);
 
@@ -55,7 +73,7 @@ TEST_F(capability_node_test, root_retrieve_slot_min_test)
     ASSERT_EQ(slot->state.data.get_element(0), 0xdeadbeaf);
 }
 
-TEST_F(capability_node_test, root_retrieve_slot_max_test)
+TEST_F(capability_node_test, retrieve_slot_index_max_test)
 {
     slots_root[255].state.data.set_element(0, 0xdeadbeaf);
 
@@ -64,9 +82,63 @@ TEST_F(capability_node_test, root_retrieve_slot_max_test)
     ASSERT_EQ(slot->state.data.get_element(0), 0xdeadbeaf);
 }
 
-TEST_F(capability_node_test, root_retrieve_slot_out_of_range_test)
+TEST_F(capability_node_test, retrieve_slot_index_out_of_range_test)
 {
     auto slot = node_root->retrieve_slot(256);
 
     ASSERT_EQ(slot, nullptr);
+}
+
+TEST_F(capability_node_test, traverse_slot_index_min_depth_root_test)
+{
+    library::capability::capability_descriptor descriptor = 0x0000000000000000;
+
+    auto slot = node_root->traverse_slot(descriptor, 32, 0);
+
+    ASSERT_EQ(slot, &(slots_root[0]));
+}
+
+TEST_F(capability_node_test, traverse_slot_index_max_depth_root_test)
+{
+    library::capability::capability_descriptor descriptor = 0x000000ff00000000;
+
+    auto slot = node_root->traverse_slot(descriptor, NODE_ROOT_ALLBITS, 0);
+
+    ASSERT_EQ(slot, &(slots_root[(1 << NODE_ROOT_RADIX) - 1]));
+}
+
+TEST_F(capability_node_test, traverse_slot_index_min_depth_1_test)
+{
+    library::capability::capability_descriptor descriptor = 0x0000000000000000;
+
+    auto slot = node_root->traverse_slot(descriptor, NODE_1_ALLBITS, 0);
+
+    ASSERT_EQ(slot, &(slots_1[0]));
+}
+
+TEST_F(capability_node_test, traverse_slot_index_max_depth_1_test)
+{
+    library::capability::capability_descriptor descriptor = 0x000000000fff0000;
+
+    auto slot = node_root->traverse_slot(descriptor, NODE_1_ALLBITS, 0);
+
+    ASSERT_EQ(slot, &(slots_1[(1 << NODE_1_RADIX) - 1]));
+}
+
+TEST_F(capability_node_test, traverse_slot_index_min_depth_2_test)
+{
+    library::capability::capability_descriptor descriptor = 0x0000000000000000;
+
+    auto slot = node_root->traverse_slot(descriptor, NODE_2_ALLBITS, 0);
+
+    ASSERT_EQ(slot, &(slots_2[0]));
+}
+
+TEST_F(capability_node_test, traverse_slot_index_max_depth_2_test)
+{
+    library::capability::capability_descriptor descriptor = 0x0000000000000fff;
+
+    auto slot = node_root->traverse_slot(descriptor, NODE_2_ALLBITS, 0);
+
+    ASSERT_EQ(slot, &(slots_2[(1 << NODE_2_RADIX) - 1]));
 }
