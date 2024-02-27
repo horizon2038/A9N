@@ -15,21 +15,21 @@ namespace kernel
     struct capability_slot
     {
         capability_component *component;
-        capability_local_state *state;
+        capability_local_state state;
 
         bool has_child()
         {
             return (
-                state->family_node.depth
-                > state->family_node.next_slot->state->family_node.depth
+                state.family_node.depth
+                > state.family_node.next_slot->state.family_node.depth
             );
         }
 
         bool is_same_slot(capability_slot *rhs)
         {
             auto is_same_data = std::memcmp(
-                &state->data,
-                &rhs->state->data,
+                &state.data,
+                &rhs->state.data,
                 sizeof(capability_slot_data)
             );
 
