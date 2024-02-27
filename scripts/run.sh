@@ -1,5 +1,9 @@
 #!/bin/zsh
 
+CURRENT=`dirname $0`
+CURRENT=$(cd $(dirname $0);pwd)
+cd $CURRENT
+
 ARCH=${ARCH}
 : ${ARCH:="x86_64"}
 QEMU="qemu-system-"
