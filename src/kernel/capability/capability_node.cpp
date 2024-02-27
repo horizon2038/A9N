@@ -78,7 +78,6 @@ namespace kernel
             case library::capability::node_operation_type::REMOVE :
                 {
                     kernel::utility::logger::printk("node : remove\n");
-                    auto e = operation_remove(buffer);
                     return 0;
                 }
 
@@ -117,10 +116,10 @@ namespace kernel
         auto index_max = 1 << radix_bits;
         if (index >= index_max)
         {
-            kernel::utility::logger::error("index out of range !\n");
+            kernel::utility::logger::debug("index out of range !\n");
             return nullptr;
         }
-        return &capability_slots[index];
+        return &(capability_slots[index]);
     }
 
     common::error capability_node::operation_move(message_buffer *buffer)
