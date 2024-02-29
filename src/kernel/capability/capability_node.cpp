@@ -22,6 +22,7 @@ namespace kernel
 
     common::error capability_node::execute(
         capability_slot *this_slot,
+        capability_slot *root_slot,
         message_buffer *buffer
     )
     {

@@ -66,20 +66,20 @@ class capability_node_test : public ::testing::Test
 
 TEST_F(capability_node_test, retrieve_slot_index_min_test)
 {
-    slots_root[0].state.data.set_element(0, 0xdeadbeaf);
+    slots_root[0].data.set_element(0, 0xdeadbeaf);
 
     auto slot = node_root->retrieve_slot(0);
 
-    ASSERT_EQ(slot->state.data.get_element(0), 0xdeadbeaf);
+    ASSERT_EQ(slot->data.get_element(0), 0xdeadbeaf);
 }
 
 TEST_F(capability_node_test, retrieve_slot_index_max_test)
 {
-    slots_root[255].state.data.set_element(0, 0xdeadbeaf);
+    slots_root[255].data.set_element(0, 0xdeadbeaf);
 
     auto slot = node_root->retrieve_slot(255);
 
-    ASSERT_EQ(slot->state.data.get_element(0), 0xdeadbeaf);
+    ASSERT_EQ(slot->data.get_element(0), 0xdeadbeaf);
 }
 
 TEST_F(capability_node_test, retrieve_slot_index_out_of_range_test)
