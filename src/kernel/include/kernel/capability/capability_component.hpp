@@ -15,23 +15,21 @@ namespace kernel
     struct capability_slot
     {
         capability_component *component;
-        capability_local_state state;
+
+        capability_slot_data data;
+        dependency_node family_node;
 
         bool has_child()
         {
             return (
-                state.family_node.depth
-                > state.family_node.next_slot->state.family_node.depth
+                family_node.depth > family_node.next_slot->family_node.depth
             );
         }
 
         bool is_same_slot(capability_slot *rhs)
         {
-            auto is_same_data = std::memcmp(
-                &state.data,
-                &rhs->state.data,
-                sizeof(capability_slot_data)
-            );
+            auto is_same_data
+                = std::memcmp(&data, &rhs->data, sizeof(capability_slot_data));
 
             if (is_same_data != 0)
             {
@@ -54,9 +52,11 @@ namespace kernel
         virtual ~capability_component() {};
 
         // called from user
-        virtual common::error
-            execute(capability_slot *this_slot, message_buffer *buffer)
-            = 0;
+        virtual common::error execute(
+            capability_slot *this_slot,
+            capability_slot *root_slot,
+            message_buffer *buffer
+        ) = 0;
 
         // called from node
         virtual common::error revoke() = 0;
