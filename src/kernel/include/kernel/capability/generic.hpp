@@ -37,6 +37,7 @@ namespace kernel
       public:
         common::error execute(
             capability_slot *this_slot,
+            capability_slot *root_slot,
             message_buffer *buffer
         ) override;
 
@@ -67,16 +68,32 @@ namespace kernel
          */
 
         common::error decode_operation(
-            message_buffer *buffer,
-            capability_local_state *state
+            capability_slot *this_slot,
+            capability_slot *root_slot,
+            message_buffer *buffer
         );
 
-        common::error
-            convert(message_buffer *buffer, capability_local_state *state);
+        common::error convert(
+            capability_slot *this_slot,
+            capability_slot *root_slot,
+            message_buffer *buffer
+        );
+
+        inline bool is_device(common::word flags)
+        {
+            return (flags >> 7) & 1;
+        }
+
+        inline common::word calculate_size(common::word flags)
+        {
+            common::word size_mask = (1 << (7)) - 1;
+            return static_cast<common::word>(1) << (flags & size_mask);
+        }
 
         common::error create_generic(
-            message_buffer *buffer,
-            capability_local_state *state
+            capability_slot *this_slot,
+            capability_slot *root_slot,
+            message_buffer *buffer
         );
     };
 }

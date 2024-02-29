@@ -6,21 +6,26 @@
 #include <library/capability/generic_operation.hpp>
 #include <library/capability/capability_types.hpp>
 #include <library/common/types.hpp>
+#include <library/common/calculate.hpp>
 
 #include <kernel/utility/logger.hpp>
 
 namespace kernel
 {
-    common::error
-        generic::execute(capability_slot *this_slot, message_buffer *buffer)
+    common::error generic::execute(
+        capability_slot *this_slot,
+        capability_slot *root_slot,
+        message_buffer *buffer
+    )
     {
-        auto e = decode_operation(buffer, &(this_slot->state));
+        auto e = decode_operation(this_slot, root_slot, buffer);
         return e;
     }
 
     common::error generic::decode_operation(
-        message_buffer *buffer,
-        capability_local_state *state
+        capability_slot *this_slot,
+        capability_slot *root_slot,
+        message_buffer *buffer
     )
     {
         auto operation_type
@@ -33,8 +38,8 @@ namespace kernel
             case library::capability::generic_operation::CONVERT :
                 {
                     kernel::utility::logger::printk("generic : CONVERT\n");
-                    convert(buffer, state);
-                    break;
+                    auto e = convert(this_slot, root_slot, buffer);
+                    return e;
                 }
 
             default :
@@ -48,8 +53,11 @@ namespace kernel
     }
 
     // generic::convert is a kind of "factory pattern".
-    common::error
-        generic::convert(message_buffer *buffer, capability_local_state *state)
+    common::error generic::convert(
+        capability_slot *this_slot,
+        capability_slot *root_slot,
+        message_buffer *buffer
+    )
     {
         auto target_type = static_cast<library::capability::capability_type>(
             buffer->get_element(3)
@@ -57,9 +65,13 @@ namespace kernel
         switch (target_type)
         {
             case library::capability::capability_type::GENERIC :
-                kernel::utility::logger::printk("generic.convert -> generic\n");
-                create_generic(buffer, state);
-                break;
+                {
+                    kernel::utility::logger::printk(
+                        "generic.convert -> generic\n"
+                    );
+                    auto e = create_generic(this_slot, root_slot, buffer);
+                    return e;
+                }
 
             case library::capability::capability_type::PAGE_TABLE :
                 kernel::utility::logger::printk("generic.convert -> generic\n");
@@ -77,9 +89,59 @@ namespace kernel
     }
 
     common::error generic::create_generic(
-        message_buffer *buffer,
-        capability_local_state *state
-    ) {};
+        capability_slot *this_slot,
+        capability_slot *root_slot,
+        message_buffer *buffer
+    )
+    {
+        auto this_base_address = this_slot->data.get_element(0);
+        auto this_size = calculate_size(this_slot->data.get_element(1));
+        auto this_watermark = this_slot->data.get_element(2);
+        kernel::utility::logger::debug("watermark : %llu\n", this_watermark);
+
+        auto target_size
+            = (static_cast<common::word>(1) << buffer->get_element(4));
+        kernel::utility::logger::debug("target_size : %llu\n", target_size);
+        auto target_index = buffer->get_element(5);
+
+        auto aligned_target_address
+            = library::common::align_value(this_watermark, target_size);
+
+        kernel::utility::logger::debug(
+            "aligned_target_address : %llu\n",
+            aligned_target_address
+        );
+
+        kernel::utility::logger::debug(
+            "this_base_address : %llu\n",
+            this_base_address
+        );
+        kernel::utility::logger::debug("this_size : %llu\n", this_size);
+
+        if ((aligned_target_address + target_size)
+            > this_base_address + this_size)
+        {
+            kernel::utility::logger::debug("free space does not exist\n");
+            return -1;
+        }
+
+        // auto target_slot = root_slot->component->retrieve_slot(target_index);
+        auto target_node_slot = root_slot->component->traverse_slot(
+            buffer->get_element(6),
+            buffer->get_element(7),
+            0
+        );
+
+        auto target_slot
+            = target_node_slot->component->retrieve_slot(target_index);
+
+        this_slot->data.set_element(2, aligned_target_address + target_size);
+
+        target_slot->data.set_element(0, aligned_target_address);
+        target_slot->data.set_element(1, buffer->get_element(4));
+        target_slot->data.set_element(2, aligned_target_address);
+        return 0;
+    };
 
     common::error generic::revoke()
     {
