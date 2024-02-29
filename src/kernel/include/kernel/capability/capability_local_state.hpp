@@ -22,12 +22,6 @@ namespace kernel
         // visitor ?
     };
 
-    struct capability_local_state
-    {
-        capability_slot_data data;
-        dependency_node family_node;
-    };
-
 }
 
 #endif
