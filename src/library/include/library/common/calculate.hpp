@@ -17,6 +17,11 @@ namespace library::common
 
     inline word align_value(word value, word base)
     {
+        if (base == 0)
+        {
+            return 0;
+        }
+
         word aligned_value = (value + base - 1) / base * base;
         return aligned_value;
     }
