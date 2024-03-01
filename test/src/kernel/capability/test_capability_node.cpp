@@ -1,9 +1,10 @@
-#include "library/common/types.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
+
+#include <library/common/types.hpp>
 
 class capability_node_test : public ::testing::Test
 {
@@ -61,6 +62,13 @@ class capability_node_test : public ::testing::Test
 
     void TearDown() override
     {
+        delete node_root;
+        delete node_1;
+        delete node_2;
+
+        delete[] slots_root;
+        delete[] slots_1;
+        delete[] slots_2;
     }
 };
 
