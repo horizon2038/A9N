@@ -28,6 +28,7 @@ namespace kernel
         message_buffer *buffer
     )
     {
+        kernel::utility::logger::printk("generic : decode_operation\n");
         auto operation_type
             = static_cast<library::capability::generic_operation>(
                 buffer->get_element(2)
@@ -102,7 +103,10 @@ namespace kernel
         auto target_size
             = (static_cast<common::word>(1) << buffer->get_element(4));
         kernel::utility::logger::debug("target_size : %llu\n", target_size);
-        auto target_index = buffer->get_element(5);
+        auto target_count = buffer->get_element(5);
+        auto target_descriptor = buffer->get_element(6);
+        auto target_depth = buffer->get_element(7);
+        auto target_index = buffer->get_element(8);
 
         auto aligned_target_address
             = library::common::align_value(this_watermark, target_size);
@@ -126,16 +130,40 @@ namespace kernel
         }
 
         // auto target_slot = root_slot->component->retrieve_slot(target_index);
-        auto target_node_slot = root_slot->component->traverse_slot(
-            buffer->get_element(6),
-            buffer->get_element(7),
-            0
+
+        capability_slot *target_node_slot;
+        if (target_depth == 0)
+        {
+            target_node_slot = root_slot;
+        }
+        else
+        {
+            auto target_node_slot = root_slot->component->traverse_slot(
+                target_descriptor,
+                target_depth,
+                0
+            );
+        }
+
+        kernel::utility::logger::debug(
+            "index : %llu\n",
+            buffer->get_element(6)
         );
+        kernel::utility::logger::debug(
+            "max_bits : %llu\n",
+            buffer->get_element(7)
+        );
+
+        this_slot->data.set_element(2, aligned_target_address + target_size);
 
         auto target_slot
             = target_node_slot->component->retrieve_slot(target_index);
 
-        this_slot->data.set_element(2, aligned_target_address + target_size);
+        if (target_slot == nullptr)
+        {
+            kernel::utility::logger::debug("target slot is nullptr\n");
+            return -1;
+        }
 
         target_slot->data.set_element(0, aligned_target_address);
         target_slot->data.set_element(1, buffer->get_element(4));
