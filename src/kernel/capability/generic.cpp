@@ -89,6 +89,31 @@ namespace kernel
         return 0;
     }
 
+    capability_slot *generic::retrieve_target_slot(
+        capability_slot *root_slot,
+        message_buffer *buffer
+    )
+    {
+        using namespace library::capability::convert_argument;
+
+        auto target_descriptor = buffer->get_element(ROOT_DESCRIPTOR);
+        auto target_depth = buffer->get_element(ROOT_DEPTH);
+        auto target_index = buffer->get_element(SLOT_INDEX);
+
+        if (target_depth == 0)
+        {
+            return root_slot;
+        }
+
+        auto target_slot = root_slot->component->traverse_slot(
+            target_descriptor,
+            target_depth,
+            0
+        );
+
+        return target_slot->component->retrieve_slot(target_index);
+    }
+
     common::error generic::create_generic(
         capability_slot *this_slot,
         capability_slot *root_slot,
@@ -98,11 +123,11 @@ namespace kernel
         auto this_base_address = this_slot->data.get_element(0);
         auto this_size = calculate_size(this_slot->data.get_element(1));
         auto this_watermark = this_slot->data.get_element(2);
-        kernel::utility::logger::debug("watermark : %llu\n", this_watermark);
+        kernel::utility::logger::debug("watermark : %llu", this_watermark);
 
         auto target_size
             = (static_cast<common::word>(1) << buffer->get_element(4));
-        kernel::utility::logger::debug("target_size : %llu\n", target_size);
+        kernel::utility::logger::debug("target_size : %llu", target_size);
         auto target_count = buffer->get_element(5);
         auto target_descriptor = buffer->get_element(6);
         auto target_depth = buffer->get_element(7);
@@ -112,20 +137,20 @@ namespace kernel
             = library::common::align_value(this_watermark, target_size);
 
         kernel::utility::logger::debug(
-            "aligned_target_address : %llu\n",
+            "aligned_target_address : %llu",
             aligned_target_address
         );
 
         kernel::utility::logger::debug(
-            "this_base_address : %llu\n",
+            "this_base_address : %llu",
             this_base_address
         );
-        kernel::utility::logger::debug("this_size : %llu\n", this_size);
+        kernel::utility::logger::debug("this_size : %llu", this_size);
 
         if ((aligned_target_address + target_size)
             > this_base_address + this_size)
         {
-            kernel::utility::logger::debug("free space does not exist\n");
+            kernel::utility::logger::debug("free space does not exist");
             return -1;
         }
 
@@ -145,12 +170,9 @@ namespace kernel
             );
         }
 
+        kernel::utility::logger::debug("index : %llu", buffer->get_element(6));
         kernel::utility::logger::debug(
-            "index : %llu\n",
-            buffer->get_element(6)
-        );
-        kernel::utility::logger::debug(
-            "max_bits : %llu\n",
+            "max_bits : %llu",
             buffer->get_element(7)
         );
 
@@ -161,12 +183,15 @@ namespace kernel
 
         if (target_slot == nullptr)
         {
-            kernel::utility::logger::debug("target slot is nullptr\n");
+            kernel::utility::logger::debug("target slot is nullptr");
             return -1;
         }
 
         target_slot->data.set_element(0, aligned_target_address);
-        target_slot->data.set_element(1, buffer->get_element(4));
+        target_slot->data.set_element(
+            1,
+            calculate_generic_flags(0, buffer->get_element(4))
+        );
         target_slot->data.set_element(2, aligned_target_address);
         return 0;
     };

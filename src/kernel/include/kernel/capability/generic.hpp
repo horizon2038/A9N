@@ -9,28 +9,6 @@
 
 namespace kernel
 {
-    enum class generic_data_offset : uint8_t
-    {
-        ADDRESS = 0x00,
-        SIZE_BITS = 0x01,
-        WATERMARK = 0x02,
-        FLAGS = 0x03,
-    };
-
-    enum class generic_flags_shift : uint8_t
-    {
-        IS_DEVICE = 0x00,
-    };
-
-    enum class generic_flags_mask : common::word
-    {
-        IS_DEVICE = 1,
-    };
-
-    enum class generic_operation
-    {
-        RETYPE = 0x00
-    };
 
     class generic final : public capability_component
     {
@@ -59,14 +37,6 @@ namespace kernel
         };
 
       private:
-        // these members passed from execute() argment.
-        /*
-        const common::physical_address start_address;
-        const common::word size;
-        const bool flags;
-        common::physical_address watermark;
-         */
-
         common::error decode_operation(
             capability_slot *this_slot,
             capability_slot *root_slot,
@@ -89,6 +59,25 @@ namespace kernel
             common::word size_mask = (1 << (7)) - 1;
             return static_cast<common::word>(1) << (flags & size_mask);
         }
+
+        inline library::common::word calculate_generic_flags(
+            bool is_device,
+            library::common::word size_bits
+        )
+        {
+            library::common::word generic_flags {};
+
+            generic_flags |= (is_device << 7);
+            auto size_bits_mask = (1 << 7) - 1;
+            generic_flags |= (size_bits & size_bits_mask);
+
+            return generic_flags;
+        }
+
+        capability_slot *retrieve_target_slot(
+            capability_slot *root_slot,
+            message_buffer *buffer
+        );
 
         common::error create_generic(
             capability_slot *this_slot,

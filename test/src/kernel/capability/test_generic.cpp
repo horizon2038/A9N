@@ -43,6 +43,17 @@ library::common::word
     return generic_flags;
 }
 
+inline bool is_device(library::common::word flags)
+{
+    return (flags >> 7) & 1;
+}
+
+inline library::common::word calculate_size(library::common::word flags)
+{
+    library::common::word size_mask = (1 << (7)) - 1;
+    return static_cast<library::common::word>(1) << (flags & size_mask);
+}
+
 TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
 {
     kernel::generic g;
@@ -78,6 +89,10 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
 
     auto watermark = generic_slot->data.get_element(2);
     ASSERT_EQ(watermark, (0x1000 + 0x100));
+
+    auto child = root_slot.component->retrieve_slot(1);
+    auto child_size = calculate_size(child->data.get_element(1));
+    ASSERT_EQ(0x100, child_size);
 }
 
 TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
