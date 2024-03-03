@@ -92,6 +92,11 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
 
     auto child = root_slot.component->retrieve_slot(1);
     auto child_size = calculate_size(child->data.get_element(1));
+    printf("element_1 : %llu\n", child->data.get_element(1));
+    printf(
+        "child_slot_address : 0x%llx",
+        reinterpret_cast<library::common::word>(child)
+    );
     ASSERT_EQ(0x100, child_size);
 }
 

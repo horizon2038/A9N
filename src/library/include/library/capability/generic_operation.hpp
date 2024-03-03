@@ -25,7 +25,7 @@ namespace library::capability
         // 8 : target node index
 
         constexpr inline common::word CAPABILITY_TYPE = 3;
-        constexpr inline common::word CAPABILITY_SIZE = 4;
+        constexpr inline common::word CAPABILITY_SIZE_BITS = 4;
         constexpr inline common::word CAPABILITY_COUNT = 5;
         constexpr inline common::word ROOT_DESCRIPTOR = 6;
         constexpr inline common::word ROOT_DEPTH = 7;
