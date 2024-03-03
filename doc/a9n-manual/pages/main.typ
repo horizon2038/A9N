@@ -1,2 +1,5 @@
 #include "title.typ"
+#include "toc.typ"
+#include "introduction.typ"
+#include "node.typ"
 #include "generic.typ"

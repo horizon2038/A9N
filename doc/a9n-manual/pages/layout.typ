@@ -1,17 +1,17 @@
 #let template(title, doc) = {
 
     show heading.where(level: 1): it => block(width:100%)[
-        #v(1em)
         #set align(left)
         #set text(20pt, weight: "bold")
         #it
     ]
 
     show heading.where(level: 2): it => block(width:100%)[
-        #v(1em)
+        #v(10.5pt)
         #set align(left)
         #set text(15pt, weight: "regular")
         #it
+        #v(5pt)
     ]
 
     set heading(numbering: "1.")
@@ -32,7 +32,7 @@
     )
 
     set par(
-        leading: 0.8em,
+        leading: 1.24em,
         first-line-indent: 0em,
     )
 
