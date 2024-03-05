@@ -1,7 +1,8 @@
-#include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/generic.hpp>
 
+#include <kernel/ipc/message_buffer.hpp>
 #include <kernel/capability/capability_local_state.hpp>
+#include <kernel/capability/capability_factory.hpp>
 
 #include <library/capability/generic_operation.hpp>
 #include <library/capability/capability_types.hpp>
@@ -60,32 +61,14 @@ namespace kernel
         message_buffer *buffer
     )
     {
-        auto target_type = static_cast<library::capability::capability_type>(
-            buffer->get_element(3)
-        );
-        switch (target_type)
-        {
-            case library::capability::capability_type::GENERIC :
-                {
-                    kernel::utility::logger::printk(
-                        "generic.convert -> generic\n"
-                    );
-                    auto e = create_generic(this_slot, root_slot, buffer);
-                    return e;
-                }
+        using namespace library::capability::convert_argument;
 
-            case library::capability::capability_type::PAGE_TABLE :
-                kernel::utility::logger::printk("generic.convert -> generic\n");
-                break;
+        auto this_info = create_generic_info(&(this_slot->data));
+        capability_factory factory {};
+        auto target_type = buffer->get_element(CAPABILITY_TYPE);
+        auto size_bits = buffer->get_element(CAPABILITY_SIZE_BITS);
+        auto size = factory.calculate_memory_size(target_type, size_bits);
 
-            case library::capability::capability_type::FRAME :
-                kernel::utility::logger::printk("generic.convert -> generic\n");
-                break;
-
-            default :
-                kernel::utility::logger::printk("illegal type\n");
-                break;
-        }
         return 0;
     }
 
@@ -95,7 +78,7 @@ namespace kernel
         message_buffer *buffer
     )
     {
-        auto this_info = calculate_generic_info(&(this_slot->data));
+        auto this_info = create_generic_info(&(this_slot->data));
         auto child_info = create_child_generic_info(&this_info, buffer);
 
         if (!is_valid_size(&this_info, &child_info))
@@ -121,18 +104,16 @@ namespace kernel
         return 0;
     };
 
-    generic_info generic::calculate_generic_info(capability_slot_data *data)
+    generic_info generic::create_generic_info(capability_slot_data *data)
     {
-        generic_info info;
-
-        info.base_address = data->get_element(0);
-        info.size_bits = calculate_generic_size_bits(data->get_element(1));
-        info.is_device = is_device(data->get_element(1));
-        info.watermark = data->get_element(2);
-
-        return info;
+        return generic_info {
+            .base_address = data->get_element(0),
+            .flags = generic_flags(data->get_element(1)),
+            .watermark = data->get_element(2),
+        };
     }
 
+    /*
     generic_info generic::create_child_generic_info(
         generic_info *parent_info,
         message_buffer *buffer
@@ -157,6 +138,7 @@ namespace kernel
 
         return info;
     }
+    */
 
     capability_slot *generic::retrieve_target_slot(
         capability_slot *root_slot,
@@ -183,20 +165,16 @@ namespace kernel
         return target_slot->component->retrieve_slot(target_index);
     }
 
-    bool generic::is_valid_size(
-        generic_info *parent_info,
-        generic_info *child_info
-    )
+    bool generic::is_allocatable(generic_info *parent_info, common::word size)
     {
-        auto parent_size = static_cast<common::word>(1)
-                        << parent_info->size_bits;
-        auto child_size = static_cast<common::word>(1) << child_info->size_bits;
+        auto parent_size = parent_info->flags.size();
         return (
             (parent_info->base_address + parent_size)
             > (child_info->base_address + child_size)
         );
     }
 
+    /*
     generic_info generic::update_parent_generic_info(
         generic_info *parent_info,
         generic_info *child_info
@@ -218,15 +196,15 @@ namespace kernel
     {
         capability_slot_data data;
 
+        auto flags = create_generic_flags(info->is_device, info->size_bits);
+
         data.set_element(0, info->base_address);
-        data.set_element(
-            1,
-            create_generic_flags(info->is_device, info->size_bits)
-        );
+        data.set_element(1, flags.value);
         data.set_element(2, info->watermark);
 
         return data;
     }
+    */
 
     common::error generic::revoke()
     {
