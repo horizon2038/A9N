@@ -8,20 +8,18 @@
 
 namespace kernel
 {
-    common::word capability_factory::calculate_memory_size(
-        common::word type,
-        common::word size_flags
+    common::word capability_factory::calculate_memory_size_bits(
+        library::capability::capability_type type,
+        common::word size_bits
     )
     {
         using namespace library::capability;
 
-        auto target_type = static_cast<capability_type>(type);
-
-        switch (target_type)
+        switch (type)
         {
             case capability_type::GENERIC :
                 {
-                    return static_cast<common::word>(1) << size_flags;
+                    return size_bits;
                 }
 
             case capability_type::FRAME :
@@ -38,23 +36,25 @@ namespace kernel
     }
 
     capability_slot capability_factory::make(
-        common::word type,
-        common::word size_flags,
+        library::capability::capability_type type,
+        common::word size_bits,
         common::virtual_address target_address
     )
     {
-        using namespace library::capability;
+        using capability_type = library::capability::capability_type;
 
         capability_slot slot;
 
-        auto target_type = static_cast<capability_type>(type);
-
-        switch (target_type)
+        switch (type)
         {
             case capability_type::GENERIC :
                 {
                     // generic ptr
                     slot.data.set_element(0, target_address);
+                    slot.data.set_element(
+                        1,
+                        serialize_generic_flags(false, size_bits)
+                    );
                     slot.data.set_element(2, target_address);
                     break;
                 }

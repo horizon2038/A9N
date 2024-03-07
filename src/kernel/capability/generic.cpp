@@ -13,26 +13,74 @@
 
 namespace kernel
 {
+    common::physical_address generic_info::current_watermark() const
+    {
+        return watermark;
+    }
+
+    bool generic_info::is_device() const
+    {
+        return device;
+    }
+
+    bool generic_info::is_allocatable(
+        common::word memory_size_bits,
+        common::word count
+    ) const
+    {
+        auto end_address = base_address + size();
+        auto request_unit_size
+            = (static_cast<common::word>(1) << memory_size_bits);
+        auto aligned_watermark
+            = library::common::align_value(watermark, request_unit_size);
+        auto target_end_address
+            = aligned_watermark + (request_unit_size * count);
+
+        return (target_end_address < end_address);
+    }
+
+    common::error generic_info::apply_allocate(common::word memory_size_bits)
+    {
+        auto request_unit_size
+            = (static_cast<common::word>(1) << memory_size_bits);
+        auto aligned_watermark
+            = library::common::align_value(watermark, request_unit_size);
+        watermark = aligned_watermark + request_unit_size;
+
+        return 0;
+    }
+
+    capability_slot_data generic_info::dump_slot_data() const
+    {
+        capability_slot_data data;
+
+        data.set_element(0, base_address);
+        data.set_element(1, serialize_generic_flags(device, size_bits));
+        data.set_element(2, watermark);
+
+        return data;
+    }
+
     common::error generic::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         message_buffer *buffer
     )
     {
-        auto e = decode_operation(this_slot, root_slot, buffer);
+        auto e = decode_operation(*this_slot, *root_slot, *buffer);
         return e;
     }
 
     common::error generic::decode_operation(
-        capability_slot *this_slot,
-        capability_slot *root_slot,
-        message_buffer *buffer
+        capability_slot &this_slot,
+        capability_slot &root_slot,
+        const message_buffer &buffer
     )
     {
         kernel::utility::logger::printk("generic : decode_operation\n");
         auto operation_type
             = static_cast<library::capability::generic_operation>(
-                buffer->get_element(2)
+                buffer.get_element(2)
             );
 
         switch (operation_type)
@@ -54,157 +102,90 @@ namespace kernel
         return 0;
     }
 
-    // generic::convert is a kind of "factory pattern".
     common::error generic::convert(
-        capability_slot *this_slot,
-        capability_slot *root_slot,
-        message_buffer *buffer
+        capability_slot &this_slot,
+        capability_slot &root_slot,
+        const message_buffer &buffer
     )
     {
         using namespace library::capability::convert_argument;
 
-        auto this_info = create_generic_info(&(this_slot->data));
+        auto this_info = create_generic_info(this_slot.data);
         capability_factory factory {};
-        auto target_type = buffer->get_element(CAPABILITY_TYPE);
-        auto size_bits = buffer->get_element(CAPABILITY_SIZE_BITS);
-        auto size = factory.calculate_memory_size(target_type, size_bits);
+        auto target_type = static_cast<library::capability::capability_type>(
+            buffer.get_element(CAPABILITY_TYPE)
+        );
+        auto size_bits = buffer.get_element(CAPABILITY_SIZE_BITS);
+        auto memory_size_bits
+            = factory.calculate_memory_size_bits(target_type, size_bits);
+
+        // "device" Generic can only be converted to a frame object.
+        if (this_info.is_device()
+            && target_type != library::capability::capability_type::FRAME)
+        {
+            return -1;
+        };
+
+        auto target_root_slot = retrieve_target_root_slot(root_slot, buffer);
+
+        auto count = buffer.get_element(CAPABILITY_COUNT);
+        auto base_index = buffer.get_element(SLOT_INDEX);
+
+        for (auto i = 0; i < count; i++)
+        {
+            if (!this_info.is_allocatable(memory_size_bits, 1))
+            {
+                return -1;
+            }
+            this_info.apply_allocate(memory_size_bits);
+            auto target_empty_slot
+                = target_root_slot->component->retrieve_slot(base_index + i);
+            *target_empty_slot = factory.make(
+                target_type,
+                size_bits,
+                this_info.current_watermark()
+            );
+        }
+
+        this_slot.data = this_info.dump_slot_data();
 
         return 0;
     }
 
-    common::error generic::create_generic(
-        capability_slot *this_slot,
-        capability_slot *root_slot,
-        message_buffer *buffer
-    )
-    {
-        auto this_info = create_generic_info(&(this_slot->data));
-        auto child_info = create_child_generic_info(&this_info, buffer);
-
-        if (!is_valid_size(&this_info, &child_info))
-        {
-            // invalid size
-            kernel::utility::logger::debug("invalid size!");
-            return -1;
-        }
-
-        auto new_info = update_parent_generic_info(&this_info, &child_info);
-        this_slot->data = create_generic_slot_data(&new_info);
-
-        auto child_slot = retrieve_target_slot(root_slot, buffer);
-
-        if (child_slot == nullptr)
-        {
-            // null slot
-            return -1;
-        }
-
-        child_slot->data = create_generic_slot_data(&child_info);
-
-        return 0;
-    };
-
-    generic_info generic::create_generic_info(capability_slot_data *data)
+    generic_info generic::create_generic_info(const capability_slot_data &data)
     {
         return generic_info {
-            .base_address = data->get_element(0),
-            .flags = generic_flags(data->get_element(1)),
-            .watermark = data->get_element(2),
+            data.get_element(0),
+            generic_flags_size_bits(data.get_element(1)),
+            generic_flags_is_device(data.get_element(1)),
+            data.get_element(2),
         };
     }
 
-    /*
-    generic_info generic::create_child_generic_info(
-        generic_info *parent_info,
-        message_buffer *buffer
-    )
+    capability_slot *generic::retrieve_target_root_slot(
+        const capability_slot &root_slot,
+        const message_buffer &buffer
+    ) const
     {
         using namespace library::capability::convert_argument;
 
-        generic_info info;
-
-        auto target_size_bits = calculate_generic_size_bits(
-            buffer->get_element(CAPABILITY_SIZE_BITS)
-        );
-
-        auto target_size = static_cast<common::word>(1) << target_size_bits;
-        auto aligned_target_address
-            = library::common::align_value(parent_info->watermark, target_size);
-
-        info.base_address = aligned_target_address;
-        info.size_bits = target_size_bits;
-        info.is_device = 0;
-        info.watermark = aligned_target_address;
-
-        return info;
-    }
-    */
-
-    capability_slot *generic::retrieve_target_slot(
-        capability_slot *root_slot,
-        message_buffer *buffer
-    )
-    {
-        using namespace library::capability::convert_argument;
-
-        auto target_descriptor = buffer->get_element(ROOT_DESCRIPTOR);
-        auto target_depth = buffer->get_element(ROOT_DEPTH);
-        auto target_index = buffer->get_element(SLOT_INDEX);
+        auto target_descriptor = buffer.get_element(ROOT_DESCRIPTOR);
+        auto target_depth = buffer.get_element(ROOT_DEPTH);
+        auto target_index = buffer.get_element(SLOT_INDEX);
 
         if (target_depth == 0)
         {
-            return root_slot->component->retrieve_slot(target_index);
+            return const_cast<capability_slot *>(&root_slot);
         }
 
-        auto target_slot = root_slot->component->traverse_slot(
+        auto target_slot = root_slot.component->traverse_slot(
             target_descriptor,
             target_depth,
             0
         );
 
-        return target_slot->component->retrieve_slot(target_index);
+        return target_slot;
     }
-
-    bool generic::is_allocatable(generic_info *parent_info, common::word size)
-    {
-        auto parent_size = parent_info->flags.size();
-        return (
-            (parent_info->base_address + parent_size)
-            > (child_info->base_address + child_size)
-        );
-    }
-
-    /*
-    generic_info generic::update_parent_generic_info(
-        generic_info *parent_info,
-        generic_info *child_info
-    )
-    {
-        generic_info info;
-
-        auto child_size = static_cast<common::word>(1) << child_info->size_bits;
-
-        info.base_address = parent_info->base_address;
-        info.size_bits = parent_info->size_bits;
-        info.is_device = parent_info->is_device;
-        info.watermark = child_info->base_address + child_size;
-
-        return info;
-    }
-
-    capability_slot_data generic::create_generic_slot_data(generic_info *info)
-    {
-        capability_slot_data data;
-
-        auto flags = create_generic_flags(info->is_device, info->size_bits);
-
-        data.set_element(0, info->base_address);
-        data.set_element(1, flags.value);
-        data.set_element(2, info->watermark);
-
-        return data;
-    }
-    */
 
     common::error generic::revoke()
     {
