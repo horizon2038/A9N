@@ -3,12 +3,14 @@
 
 #include <library/libcxx/__type_traits/remove_reference.hpp>
 
-namespace std
+namespace library::std
 {
     template<typename T>
-    typename std::remove_reference<T>::type &&move(T &&t) noexcept
+    typename library::std::remove_reference<T>::type &&move(T &&t) noexcept
     {
-        return static_cast<typename std::remove_reference<T>::type &&>(t);
+        return static_cast<typename library::std::remove_reference<T>::type &&>(
+            t
+        );
     }
 }
 

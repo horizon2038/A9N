@@ -1,7 +1,7 @@
 #ifndef LIBCXX_REMOVE_REFERENCE_HPP
 #define LIBCXX_REMOVE_REFERENCE_HPP
 
-namespace std
+namespace library::std
 {
     template<typename T>
     struct remove_reference

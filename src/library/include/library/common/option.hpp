@@ -1,5 +1,5 @@
-#ifndef LIBH5N_OPTION_HPP
-#define LIBH5N_OPTION_HPP
+#ifndef LIBRARY_OPTION_HPP
+#define LIBRARY_OPTION_HPP
 
 #include <library/libcxx/utility>
 
@@ -14,7 +14,7 @@ namespace library::common
         }
 
         explicit option(T value, bool has_value = false) noexcept
-            : value_(std::move(value))
+            : value_(library::std::move(value))
             , has_value_(has_value)
         {
         }
@@ -33,14 +33,14 @@ namespace library::common
         }
 
         option(option &&other) noexcept
-            : value_(std::move(other.value_))
+            : value_(library::std::move(other.value_))
             , has_value_(other.has_value_)
         {
         }
 
         option &operator=(option &&other) noexcept
         {
-            value_ = std::move(other.value_);
+            value_ = library::std::move(other.value_);
             has_value_ = other.has_value_;
             return *this;
         }
@@ -76,22 +76,21 @@ namespace library::common
             return has_value_ ? value_ : default_value;
         }
 
+        static option<T> some(T value)
+        {
+            return option<T>(library::std::move(value), true);
+        }
+
+        static option<T> none()
+        {
+            return option<T>();
+        }
+
       private:
         bool has_value_;
         T value_;
     };
 
-    template<typename T>
-    option<T> some(T value)
-    {
-        return option<T>(std::move(value), true);
-    }
-
-    template<typename T>
-    option<T> none()
-    {
-        return option<T>();
-    }
 }
 
 #endif

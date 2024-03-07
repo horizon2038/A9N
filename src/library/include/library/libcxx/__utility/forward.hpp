@@ -1,7 +1,7 @@
 #ifndef LIBCXX_FORWARD_HPP
 #define LIBCXX_FORWARD_HPP
 
-namespace std
+namespace library::std
 {
     template<typename T>
     constexpr decltype(auto) forward(T &&t) noexcept

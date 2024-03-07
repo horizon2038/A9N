@@ -1,5 +1,5 @@
-#ifndef LIBH5N_RESULT_HPP
-#define LIBH5N_RESULT_HPP
+#ifndef LIBRARY_RESULT_HPP
+#define LIBRARY_RESULT_HPP
 
 #include <library/libcxx/utility>
 
@@ -20,7 +20,7 @@ namespace library::common
         }
         explicit result(T value) noexcept
             : state_(result_state::VALUE_TYPE)
-            , value_(std::move(value))
+            , value_(library::std::move(value))
         {
         }
         explicit result(const E &error) noexcept
@@ -72,7 +72,7 @@ namespace library::common
 
         static result<T, E> ok(T value) noexcept
         {
-            return result<T, E>(std::move(value));
+            return result<T, E>(library::std::move(value));
         }
         static result<T, E> error(const E &error) noexcept
         {
