@@ -9,7 +9,7 @@ namespace library::common
     class bounded_array
     {
       public:
-        const T get_element(common::word index)
+        const T get_element(common::word index) const
         {
             if (index >= size)
             {
