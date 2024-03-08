@@ -6,11 +6,9 @@
 namespace library::std
 {
     template<typename T>
-    typename library::std::remove_reference<T>::type &&move(T &&t) noexcept
+    remove_reference_t<T> &&move(T &&t) noexcept
     {
-        return static_cast<typename library::std::remove_reference<T>::type &&>(
-            t
-        );
+        return static_cast<remove_reference_t<T> &&>(t);
     }
 }
 
