@@ -11,7 +11,7 @@ namespace library::std
         using value_type = T;
         using type = integral_constant<T, v>;
 
-        constexpr operator value_type() noexcept
+        constexpr operator value_type() const noexcept
         {
             return value;
         }
