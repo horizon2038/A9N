@@ -9,4 +9,6 @@
 #include <library/libcxx/__type_traits/integral_constant.hpp>
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
+#include <library/libcxx/__type_traits/is_same.hpp>
+
 #endif
