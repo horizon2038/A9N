@@ -10,5 +10,19 @@
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
 #include <library/libcxx/__type_traits/is_same.hpp>
+#include <library/libcxx/__type_traits/is_integral.hpp>
+#include <library/libcxx/__type_traits/is_floating_point.hpp>
+#include <library/libcxx/__type_traits/is_arithmetic.hpp>
+#include <library/libcxx/__type_traits/is_enum.hpp>
+#include <library/libcxx/__type_traits/is_pointer.hpp>
+#include <library/libcxx/__type_traits/is_member_pointer.hpp>
+#include <library/libcxx/__type_traits/is_null_pointer.hpp>
+#include <library/libcxx/__type_traits/is_scalar.hpp>
+#include <library/libcxx/__type_traits/is_array.hpp>
+#include <library/libcxx/__type_traits/is_union.hpp>
+#include <library/libcxx/__type_traits/is_class.hpp>
+#include <library/libcxx/__type_traits/is_object.hpp>
+
+#include <library/libcxx/__type_traits/enable_if.hpp>
 
 #endif

@@ -1,0 +1,11 @@
+#ifndef LIBCXX_CSTDDEF
+#define LIBCXX_CSTDDEF
+
+#include <stddef.h>
+
+namespace library::std
+{
+    using nullptr_t = decltype(nullptr);
+}
+
+#endif
