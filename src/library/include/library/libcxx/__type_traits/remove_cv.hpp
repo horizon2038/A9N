@@ -27,7 +27,7 @@ namespace library::std
         using type = T;
     };
 
-    template<class T>
+    template<typename T>
     using remove_cv_t = typename remove_cv<T>::type;
 
 }
