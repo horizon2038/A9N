@@ -2,94 +2,85 @@
 #define LIBRARY_OPTION_HPP
 
 #include <library/libcxx/utility>
+#include <library/libcxx/type_traits>
+
+#include <kernel/utility/logger.hpp>
 
 namespace library::common
 {
+    struct option_none
+    {
+    };
+
     template<typename T>
     class option
     {
       public:
-        option() noexcept
+        option() : has_value_flag(false)
         {
         }
 
-        explicit option(T value, bool has_value = false) noexcept
-            : value_(library::std::move(value))
-            , has_value_(has_value)
+        option([[maybe_unused]] option_none n) : has_value_flag(false)
         {
         }
 
-        option(const option &other) noexcept
-            : value_(other.value_)
-            , has_value_(other.has_value_)
+        option(T &&t) : has_value_flag(true), value(library::std::forward<T>(t))
         {
         }
 
-        option &operator=(const option &other) noexcept
-        {
-            value_ = other.value_;
-            has_value_ = other.has_value_;
-            return *this;
-        }
-
-        option(option &&other) noexcept
-            : value_(library::std::move(other.value_))
-            , has_value_(other.has_value_)
+        option(const T &t) : has_value_flag(true), value(t)
         {
         }
 
-        option &operator=(option &&other) noexcept
+        option(const option &other) : has_value_flag(other.has_value_flag)
         {
-            value_ = library::std::move(other.value_);
-            has_value_ = other.has_value_;
-            return *this;
-        }
-
-        bool is_none() const noexcept
-        {
-            return !has_value_;
-        }
-
-        bool has_value() const noexcept
-        {
-            return has_value_;
-        }
-
-        T &unwrap() &
-        {
-            if (!has_value_)
+            if (other.has_value_flag)
             {
+                value = other.value;
             }
-            return value_;
         }
 
-        const T &unwrap() const &
+        option(option &&other) : has_value_flag(other.has_value_flag)
         {
-            if (!has_value_)
+            if (other.has_value_flag)
             {
+                value = library::std::move(other.value);
             }
-            return value_;
         }
 
-        T unwrap_or(T default_value) const &
+        const T &unwrap() const
         {
-            return has_value_ ? value_ : default_value;
+            return value;
         }
 
-        static option<T> some(T value)
+        T &unwrap()
         {
-            return option<T>(library::std::move(value), true);
+            return value;
         }
 
-        static option<T> none()
+        bool has_value()
         {
-            return option<T>();
+            return has_value_flag;
         }
+
+        // TODO: add monadic operations :
+        // e.g. and_then(), transform(), or_else()
 
       private:
-        bool has_value_;
-        T value_;
+        bool has_value_flag;
+        T value;
     };
+
+    template<typename T>
+    auto make_option_some(T &&t) -> option<library::std::remove_reference_t<T>>
+    {
+        return library::std::forward<T>(t);
+    }
+
+    inline auto make_option_none() -> decltype(auto)
+    {
+        return option_none();
+    }
 
 }
 
