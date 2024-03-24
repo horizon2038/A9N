@@ -24,11 +24,9 @@ namespace library::common
         {
         }
 
-        option(T &&t) : has_value_flag(true), value(library::std::forward<T>(t))
-        {
-        }
-
-        option(const T &t) : has_value_flag(true), value(t)
+        template<typename U>
+        option(U &&u) : has_value_flag(true)
+                      , value(library::std::forward<U>(u))
         {
         }
 
