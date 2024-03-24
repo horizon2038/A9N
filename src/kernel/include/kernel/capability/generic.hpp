@@ -20,7 +20,7 @@ namespace kernel
     {
         library::common::word value {};
 
-        value |= (is_device << 7);
+        value |= (static_cast<library::common::word>(is_device) << 7);
         auto size_bits_mask = (1 << 7) - 1;
         value |= (size_bits & size_bits_mask);
 
@@ -47,10 +47,10 @@ namespace kernel
             const bool initial_device,
             const common::physical_address initial_watermark
         )
-            : base_address(initial_base_address)
+            : base_address { initial_base_address }
             , size_bits { initial_size_bits }
-            , device { initial_device }
             , watermark { initial_watermark }
+            , device { initial_device }
         {
         }
 
