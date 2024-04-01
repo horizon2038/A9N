@@ -5,7 +5,7 @@
 
 namespace library::common
 {
-    inline word round_up_power_of_two(word value)
+    inline word round_up_power_of_2(word value)
     {
         word power = 1;
         while (power < value)
@@ -24,6 +24,18 @@ namespace library::common
 
         word aligned_value = (value + base - 1) / base * base;
         return aligned_value;
+    }
+
+    inline word align_down_power_of_2(word value, word base)
+    {
+        value &= ~(base - 1);
+        return value;
+    }
+
+    inline word aligne_up_power_of_2(word value, word base)
+    {
+        value += (base - 1);
+        return align_down_power_of_2(value, base);
     }
 }
 
