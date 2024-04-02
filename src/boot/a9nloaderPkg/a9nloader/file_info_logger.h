@@ -5,6 +5,6 @@
 #include <Library/UefiLib.h>
 #include <Protocol/SimpleFileSystem.h>
 
-EFI_STATUS print_file_info(EFI_FILE_PROTOCOL**);
+EFI_STATUS print_file_info(EFI_FILE_PROTOCOL **);
 
 #endif

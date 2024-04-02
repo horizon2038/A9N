@@ -7,7 +7,7 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Guid/FileInfo.h>
 
-#include "elf.h"    
+#include "elf.h"
 #include "kernel_opener.h"
 #include "file_info_logger.h"
 #include "kernel_loader.h"
@@ -19,7 +19,8 @@
 #include "boot_info.h"
 #include "uefi_boot_info_configurator.h"
 
-EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
+EFI_STATUS EFIAPI
+    efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
     EFI_STATUS efi_status = EFI_SUCCESS;
     EFI_FILE_PROTOCOL *root_directory;
@@ -36,22 +37,33 @@ EFI_STATUS EFIAPI efi_main (IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
     Print(L"\r\n");
 
     efi_status = open_kernel(image_handle, &root_directory, &kernel);
-    if(EFI_ERROR(efi_status)) return efi_status;
+    if (EFI_ERROR(efi_status))
+        return efi_status;
     efi_status = print_file_info(&kernel);
-    if(EFI_ERROR(efi_status)) return efi_status;
+    if (EFI_ERROR(efi_status))
+        return efi_status;
     efi_status = load_kernel(kernel, &entry_point_address);
-    if(EFI_ERROR(efi_status)) return efi_status;
+    if (EFI_ERROR(efi_status))
+        return efi_status;
     efi_status = get_uefi_memory_map(&target_uefi_memory_map);
-    if(EFI_ERROR(efi_status)) return efi_status;
-    efi_status = make_boot_info(system_table, &target_uefi_memory_map, &target_boot_info);
-    if(EFI_ERROR(efi_status)) return efi_status;
+    if (EFI_ERROR(efi_status))
+        return efi_status;
+    efi_status = make_boot_info(
+        system_table,
+        &target_uefi_memory_map,
+        &target_boot_info
+    );
+    if (EFI_ERROR(efi_status))
+        return efi_status;
     efi_status = exit_uefi(image_handle, &target_uefi_memory_map);
-    // known issues: checking efi_status in exit_uefi causes "EFI Hard Drive" error.
+    // known issues: checking efi_status in exit_uefi causes "EFI Hard Drive"
+    // error.
 
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_GREEN);
-    
+
     jump_kernel(entry_point_address, &target_boot_info);
 
-    while(1);
+    while (1)
+        ;
     return efi_status;
 }

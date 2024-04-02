@@ -4,6 +4,6 @@
 #include "stdint.h"
 #include "boot_info.h"
 
-void jump_kernel(uint64_t, boot_info*);
+void jump_kernel(uint64_t, boot_info *);
 
 #endif

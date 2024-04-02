@@ -30,11 +30,11 @@ typedef struct
     elf64_half section_header_string_table_index;
 } elf64_header;
 
-#define	ET_NONE 0
-#define	ET_REL 1
-#define	ET_EXEC 2
-#define	ET_DYN 3
-#define	ET_CORE 4
+#define ET_NONE 0
+#define ET_REL 1
+#define ET_EXEC 2
+#define ET_DYN 3
+#define ET_CORE 4
 
 typedef struct
 {

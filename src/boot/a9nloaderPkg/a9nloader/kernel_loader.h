@@ -7,6 +7,6 @@
 
 #include "elf.h"
 
-EFI_STATUS load_kernel(EFI_FILE_PROTOCOL*, uint64_t*);
+EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *, uint64_t *);
 
 #endif

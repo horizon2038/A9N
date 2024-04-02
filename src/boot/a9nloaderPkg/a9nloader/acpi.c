@@ -7,7 +7,10 @@ void *find_rsdp(EFI_SYSTEM_TABLE *system_table)
 {
     for (uintmax_t i = 0; i < system_table->NumberOfTableEntries; i++)
     {
-        if (!CompareGuid(&gEfiAcpiTableGuid, &system_table->ConfigurationTable[i].VendorGuid))
+        if (!CompareGuid(
+                &gEfiAcpiTableGuid,
+                &system_table->ConfigurationTable[i].VendorGuid
+            ))
         {
             continue;
         }

@@ -5,6 +5,6 @@
 #include <Protocol/LoadedImage.h>
 #include <Protocol/SimpleFileSystem.h>
 
-EFI_STATUS open_kernel(EFI_HANDLE, EFI_FILE_PROTOCOL**, EFI_FILE_PROTOCOL**);
+EFI_STATUS open_kernel(EFI_HANDLE, EFI_FILE_PROTOCOL **, EFI_FILE_PROTOCOL **);
 
 #endif

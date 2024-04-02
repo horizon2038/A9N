@@ -7,8 +7,9 @@
 #include "stdint.h"
 
 static uint64_t calculate_file_size();
-static EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **, uint64_t*, EFI_FILE_INFO*);
-static void print_info(EFI_FILE_INFO*);
+static EFI_STATUS
+    get_file_info(EFI_FILE_PROTOCOL **, uint64_t *, EFI_FILE_INFO *);
+static void print_info(EFI_FILE_INFO *);
 
 EFI_STATUS print_file_info(EFI_FILE_PROTOCOL **file)
 {
@@ -29,20 +30,26 @@ static uint64_t calculate_file_size()
     return file_size;
 }
 
-static EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **file, uint64_t *file_size, EFI_FILE_INFO *file_info)
+static EFI_STATUS get_file_info(
+    EFI_FILE_PROTOCOL **file,
+    uint64_t *file_size,
+    EFI_FILE_INFO *file_info
+)
 {
     EFI_STATUS efi_status;
-    efi_status = (*file)->GetInfo(*file, &gEfiFileInfoGuid, file_size, (VOID*)file_info);
+    efi_status
+        = (*file)
+              ->GetInfo(*file, &gEfiFileInfoGuid, file_size, (VOID *)file_info);
     return efi_status;
 }
 
 static void print_info(EFI_FILE_INFO *file_info)
 {
-    Print
-    (
-        L"[ INFO ] file_name: %s\r\n[ INFO ] file_size: %llu bytes\r\n[ INFO ] file_physical_size: %llu bytes\r\n", 
-        file_info->FileName, 
-        file_info->FileSize, 
+    Print(
+        L"[ INFO ] file_name: %s\r\n[ INFO ] file_size: %llu bytes\r\n[ INFO ] "
+        L"file_physical_size: %llu bytes\r\n",
+        file_info->FileName,
+        file_info->FileSize,
         file_info->PhysicalSize
     );
     Print(L"\r\n");

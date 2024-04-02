@@ -10,7 +10,7 @@
 typedef struct
 {
     uint64_t buffer_size;
-    void* buffer;
+    void *buffer;
     uint64_t map_size;
     uint64_t map_key;
     uint64_t descriptor_size;
