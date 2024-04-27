@@ -1,3 +1,6 @@
+#ifndef LIBCXX_CONDITIONAL_HPP
+#define LIBCXX_CONDITIONAL_HPP
+
 namespace library::std
 {
     template<bool B, typename T, typename F>
@@ -15,3 +18,5 @@ namespace library::std
     template<bool B, typename T, typename F>
     using conditional_t = conditional<B, T, F>::type;
 }
+
+#endif
