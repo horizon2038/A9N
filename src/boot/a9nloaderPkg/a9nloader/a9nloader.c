@@ -38,23 +38,33 @@ EFI_STATUS EFIAPI
 
     efi_status = open_kernel(image_handle, &root_directory, &kernel);
     if (EFI_ERROR(efi_status))
+    {
         return efi_status;
+    }
     efi_status = print_file_info(&kernel);
     if (EFI_ERROR(efi_status))
+    {
         return efi_status;
+    }
     efi_status = load_kernel(kernel, &entry_point_address);
     if (EFI_ERROR(efi_status))
+    {
         return efi_status;
+    }
     efi_status = get_uefi_memory_map(&target_uefi_memory_map);
     if (EFI_ERROR(efi_status))
+    {
         return efi_status;
+    }
     efi_status = make_boot_info(
         system_table,
         &target_uefi_memory_map,
         &target_boot_info
     );
     if (EFI_ERROR(efi_status))
+    {
         return efi_status;
+    }
     efi_status = exit_uefi(image_handle, &target_uefi_memory_map);
     // known issues: checking efi_status in exit_uefi causes "EFI Hard Drive"
     // error.
