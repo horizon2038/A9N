@@ -1,14 +1,17 @@
 #ifndef LIBCXX_TYPE_TRAITS
 #define LIBCXX_TYPE_TRAITS
 
+// remove
 #include <library/libcxx/__type_traits/remove_reference.hpp>
 #include <library/libcxx/__type_traits/remove_cv.hpp>
 #include <library/libcxx/__type_traits/remove_cvref.hpp>
 #include <library/libcxx/__type_traits/remove_pointer.hpp>
 
+// constant
 #include <library/libcxx/__type_traits/integral_constant.hpp>
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
+// type constaint
 #include <library/libcxx/__type_traits/is_same.hpp>
 #include <library/libcxx/__type_traits/is_integral.hpp>
 #include <library/libcxx/__type_traits/is_floating_point.hpp>
@@ -19,11 +22,21 @@
 #include <library/libcxx/__type_traits/is_null_pointer.hpp>
 #include <library/libcxx/__type_traits/is_scalar.hpp>
 #include <library/libcxx/__type_traits/is_array.hpp>
-#include <library/libcxx/__type_traits/is_union.hpp>
 #include <library/libcxx/__type_traits/is_class.hpp>
 #include <library/libcxx/__type_traits/is_object.hpp>
+#include <library/libcxx/__type_traits/is_void.hpp>
+#include <library/libcxx/__type_traits/is_reference.hpp>
 
+// add
+#include <library/libcxx/__type_traits/add_value_reference.hpp>
+
+// condition
 #include <library/libcxx/__type_traits/enable_if.hpp>
 #include <library/libcxx/__type_traits/conditional.hpp>
+
+// NOTE: headers using compiler extensions
+#include <library/libcxx/__type_traits/is_union.hpp>
+#include <library/libcxx/__type_traits/is_convertible.hpp>
+#include <library/libcxx/__type_traits/is_trivially.hpp>
 
 #endif

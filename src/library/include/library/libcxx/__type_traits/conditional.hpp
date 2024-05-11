@@ -16,7 +16,7 @@ namespace library::std
     };
 
     template<bool B, typename T, typename F>
-    using conditional_t = conditional<B, T, F>::type;
+    using conditional_t = typename conditional<B, T, F>::type;
 }
 
 #endif
