@@ -1,48 +1,48 @@
 #ifndef LIBCXX_REFERENCE_WRAPPER_HPP
 #define LIBCXX_REFERENCE_WRAPPER_HPP
 
+#include <library/libcxx/__memory/addressof.hpp>
+#include <library/libcxx/__utility/forward.hpp>
+
 namespace library::std
 {
-    // TODO : fix this
     template<typename T>
     class reference_wrapper
     {
       public:
-        constexpr reference_wrapper(T &t) noexcept : ref_(t) {};
-
-        constexpr reference_wrapper(const reference_wrapper &other) noexcept
-            : ref_(other.ref_)
+        explicit reference_wrapper(T &t) noexcept : pointer(addressof(t))
         {
         }
 
-        reference_wrapper &operator=(const reference_wrapper &other) noexcept
+        reference_wrapper(reference_wrapper const &other) noexcept
+            : pointer(other.pointer)
         {
-            ref_ = other.ref_;
+        }
+
+        reference_wrapper &operator=(reference_wrapper const &other) noexcept
+        {
+            pointer = other.pointer;
             return *this;
         }
 
-        T &operator*() noexcept
+        T &get() const noexcept
         {
-            return ref_;
+            return *pointer;
         }
 
-        const T &operator*() const noexcept
+        operator T &() const noexcept
         {
-            return ref_;
+            return *pointer;
         }
 
-        T &get() noexcept
+        template<typename... A>
+        auto operator()(A &&...args) const -> decltype(auto)
         {
-            return ref_;
-        }
-
-        const T &get() const noexcept
-        {
-            return ref_;
+            return (*pointer)(forward<A>(args)...);
         }
 
       private:
-        T &ref_;
+        T *pointer;
     };
 
     template<typename T>
