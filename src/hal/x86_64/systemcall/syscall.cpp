@@ -19,8 +19,8 @@ namespace hal::x86_64
         _write_msr(MSR::LSTAR, reinterpret_cast<uint64_t>(test_lstar));
 
         uint64_t star_value
-            = (static_cast<uint64_t>(segment_selector::KERNEL_CS >> 32)
-               | static_cast<uint64_t>(segment_selector::USER_CS_NULL << 48));
+            = (static_cast<uint64_t>(segment_selector::KERNEL_CS) >> 32
+               | static_cast<uint64_t>(segment_selector::USER_CS_NULL) << 48);
         _write_msr(MSR::STAR, star_value);
         _write_msr(MSR::CSTAR, 0);
     }
