@@ -33,8 +33,8 @@ INCDIR += $(SRCDIR)/hal/$(ARCH)/include
 INCDIR += $(SRCDIR)/library/include
 INCFLAGS = $(addprefix -I,$(INCDIR))
 
-CC := clang 
-CXX := clang++
+CC := clang16 
+CXX := clang++-16
 ASM := nasm
 LD = ld.lld
 CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2

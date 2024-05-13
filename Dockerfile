@@ -4,10 +4,11 @@ LABEL maintainer="horizon2k38"
 ENV TERM xterm-256color
 
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y \
         bash \
         llvm \
-        clang \
+        clang-16 \
         lld \
         nasm \
         make \

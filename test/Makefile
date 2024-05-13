@@ -32,7 +32,7 @@ DEPS += $(OBJS:.o=.d)
 $(info $(TEST_SRCS))
 $(info $(SRCS))
 
-CXX = clang++
+CXX = clang++-16
 CXXFLAGS = -Wall -Wextra -O2 -std=c++20
 CXXTESTFLAGS = -pthread -lgtest_main -lgtest -lgmock_main -lgmock
 
