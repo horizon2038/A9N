@@ -1,6 +1,7 @@
 #ifndef LIBRARY_OPTION_HPP
 #define LIBRARY_OPTION_HPP
 
+#include "library/libcxx/__type_traits/is_trivially.hpp"
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 
@@ -14,6 +15,7 @@ namespace library::common
 
     inline constexpr option_none_tag option_none;
 
+    // TODO: add constexpr support
     template<typename T>
     class option
     {
@@ -28,23 +30,28 @@ namespace library::common
         };
         bool has_value_flag;
 
-        void init()
-            requires(library::std::is_trivially_destructible_v<T>)
-        {
-            has_value_flag = false;
-        }
-
-        // non-trivial initialization
-        void init()
-        {
-            if (has_value_flag)
-            {
-                value.~T();
-            }
-            has_value_flag = false;
-        }
-
       public:
+        // conditionally trivial special member functions
+        option(option const &other)
+            requires(library::std::is_trivially_copy_constructible_v<T>)
+        = default;
+
+        option(option &&other)
+            requires(library::std::is_trivially_move_constructible_v<T>)
+        = default;
+
+        ~option()
+            requires(library::std::is_trivially_destructible_v<T>)
+        = default;
+
+        option &operator=(option const &other)
+            requires(library::std::is_trivially_copy_assignable_v<T>)
+        = default;
+
+        option &operator=(option &&other)
+            requires(library::std::is_trivially_move_assignable_v<T>)
+        = default;
+
         option() : dummy {}, has_value_flag(false)
         {
         }
@@ -64,7 +71,6 @@ namespace library::common
             // constructed from T : forwarding reference
         }
 
-        // option<T> -(copy)-> option<T>
         option(const option &other) : has_value_flag(other.has_value_flag)
         {
             // constructed from option<T> : copy
@@ -75,7 +81,6 @@ namespace library::common
             }
         }
 
-        // option<T> -(move)-> option<T>
         option(option &&other) : has_value_flag(other.has_value_flag)
         {
             // constructed from option<T> : move
@@ -87,7 +92,6 @@ namespace library::common
             }
         }
 
-        // option<T> -(copy)-> option<U>
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
         option(const option<U> &other) : has_value_flag(other.has_value_flag)
@@ -100,7 +104,6 @@ namespace library::common
             }
         }
 
-        // option<T> -(move)-> option<U>
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
         option(option<U> &&other) : has_value_flag(other.has_value_flag)
@@ -115,8 +118,14 @@ namespace library::common
         }
 
         ~option()
+            requires(not library::std::is_trivially_destructible_v<T>)
         {
-            init();
+            // init();
+            if (!has_value_flag)
+            {
+                return;
+            }
+            value.~T();
         }
 
         template<typename U>
