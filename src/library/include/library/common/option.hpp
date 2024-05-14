@@ -238,6 +238,29 @@ namespace library::common
             return *this;
         }
 
+        constexpr T &operator*() &
+        {
+            return value;
+        }
+
+        constexpr T &operator*() const &
+        {
+            return value;
+        }
+
+        constexpr T &operator*() &&
+        {
+            return std::move(value);
+        }
+
+        constexpr T &operator*() const &&
+        {
+            return std::move(value);
+        }
+
+        // no check is performed
+        // because there is no exception mechanism
+
         constexpr explicit operator bool() const
         {
             return has_value_flag;
