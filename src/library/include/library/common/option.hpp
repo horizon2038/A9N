@@ -1,7 +1,6 @@
 #ifndef LIBRARY_OPTION_HPP
 #define LIBRARY_OPTION_HPP
 
-#include "library/libcxx/__type_traits/is_trivially.hpp"
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 
@@ -32,31 +31,31 @@ namespace library::common
 
       public:
         // conditionally trivial special member functions
-        option(option const &other)
+        constexpr option(option const &other)
             requires(library::std::is_trivially_copy_constructible_v<T>)
         = default;
 
-        option(option &&other)
+        constexpr option(option &&other)
             requires(library::std::is_trivially_move_constructible_v<T>)
         = default;
 
-        ~option()
+        constexpr ~option()
             requires(library::std::is_trivially_destructible_v<T>)
         = default;
 
-        option &operator=(option const &other)
+        constexpr option &operator=(option const &other)
             requires(library::std::is_trivially_copy_assignable_v<T>)
         = default;
 
-        option &operator=(option &&other)
+        constexpr option &operator=(option &&other)
             requires(library::std::is_trivially_move_assignable_v<T>)
         = default;
 
-        option() : dummy {}, has_value_flag(false)
+        constexpr option() noexcept : dummy {}, has_value_flag(false)
         {
         }
 
-        option([[maybe_unused]] option_none_tag n)
+        constexpr option([[maybe_unused]] option_none_tag n) noexcept
             : dummy {}
             , has_value_flag(false)
         {
@@ -65,59 +64,72 @@ namespace library::common
         template<typename U = T>
             requires(!library::std::
                          is_same_v<option<T>, library::std::remove_cvref_t<U>>)
-        option(U &&u) : value(library::std::forward<U>(u))
-                      , has_value_flag(true)
+        constexpr option(U &&u) noexcept
+            : value(library::std::forward<U>(u))
+            , has_value_flag(true)
         {
             // constructed from T : forwarding reference
         }
 
-        option(const option &other) : has_value_flag(other.has_value_flag)
+        constexpr option(const option &other) noexcept
+            : has_value_flag(other.has_value_flag)
         {
             // constructed from option<T> : copy
 
-            if (other.has_value_flag)
+            if (!other.has_value_flag)
             {
-                new (&value) T(other.value);
+                return;
             }
+
+            new (&value) T(other.value);
         }
 
-        option(option &&other) : has_value_flag(other.has_value_flag)
+        constexpr option(option &&other) noexcept
+            : has_value_flag(other.has_value_flag)
         {
             // constructed from option<T> : move
 
-            if (other.has_value_flag)
+            if (!other.has_value_flag)
             {
-                new (&value) T(library::std::move<T>(other.value));
-                other.has_value_flag = false;
+                return;
             }
+
+            new (&value) T(library::std::move<T>(other.value));
+            other.has_value_flag = false;
         }
 
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
-        option(const option<U> &other) : has_value_flag(other.has_value_flag)
+        constexpr option(const option<U> &other) noexcept
+            : has_value_flag(other.has_value_flag)
         {
             // constructed from option<U> : copy
 
-            if (other.has_value_flag)
+            if (!other.has_value_flag)
             {
-                new (&value) T(static_cast<T>(other.value));
+                return;
             }
+
+            new (&value) T(static_cast<T>(other.value));
         }
 
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
-        option(option<U> &&other) : has_value_flag(other.has_value_flag)
+        constexpr option(option<U> &&other) noexcept
+            : has_value_flag(other.has_value_flag)
         {
             // constructed from option<U> : move
 
-            if (other.has_value_flag)
+            if (!other.has_value_flag)
             {
-                new (&value) T(static_cast<T>(library::std::move(other.value)));
-                other.has_value_flag = false;
+                return;
             }
+
+            new (&value) T(static_cast<T>(library::std::move(other.value)));
+            other.has_value_flag = false;
         }
 
-        ~option()
+        constexpr ~option() noexcept
             requires(not library::std::is_trivially_destructible_v<T>)
         {
             // init();
@@ -125,12 +137,13 @@ namespace library::common
             {
                 return;
             }
+
             value.~T();
         }
 
         template<typename U>
             requires(library::std::is_convertible_v<T, U> && !library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
-        option &operator=(U &&u)
+        constexpr option &operator=(U &&u) noexcept
         {
             new (&value) T(static_cast<T>(library::std::forward<U>(u)));
             has_value_flag = true;
@@ -138,31 +151,53 @@ namespace library::common
             return *this;
         }
 
-        option &operator=(const option &other)
+        constexpr option &operator=(const option &other) noexcept
         {
-            if (this != &other)
+            if (this == &other)
             {
-                has_value_flag = other.has_value_flag;
-                if (other.has_value_flag)
-                {
-                    new (&value) T(other.value);
-                }
+                return *this;
+            }
+
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&value) T(other.value);
             }
 
             return *this;
         }
 
-        option &operator=(option &&other)
+        constexpr option &operator=(option &&other) noexcept
         {
-            if (this != &other)
+            if (this == &other)
             {
-                has_value_flag = other.has_value_flag;
-                if (other.has_value_flag)
-                {
-                    new (&value) T(library::std::move(other.value));
-                }
+                return *this;
+            }
 
-                other.has_value_flag = false;
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&value) T(library::std::move(other.value));
+            }
+            other.has_value_flag = false;
+
+            return *this;
+        }
+
+        template<typename U>
+            requires(library::std::
+                         is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+        constexpr option &operator=(const option<U> &other) noexcept
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&value) T(static_cast<T>(other.value));
             }
 
             return *this;
@@ -171,37 +206,19 @@ namespace library::common
         template<typename U>
             requires(library::std::
                          is_same_v<option<T>, library::std::remove_cvref_t<U>>)
-        option &operator=(const option<U> &other)
+        constexpr option &operator=(option<U> &&other) noexcept
         {
-            if (this != &other)
+            if (this == &other)
             {
-                has_value_flag = other.has_value_flag;
-                if (other.has_value_flag)
-                {
-                    new (&value) T(static_cast<T>(other.value));
-                }
+                return *this;
             }
 
-            return *this;
-        }
-
-        template<typename U>
-            requires(library::std::
-                         is_same_v<option<T>, library::std::remove_cvref_t<U>>)
-        option &operator=(option<U> &&other)
-        {
-            if (this != &other)
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
             {
-                has_value_flag = other.has_value_flag;
-
-                if (other.has_value_flag)
-                {
-                    new (&value)
-                        T(static_cast<T>(library::std::move(other.value)));
-                }
-
-                other.has_value_flag = false;
+                new (&value) T(static_cast<T>(library::std::move(other.value)));
             }
+            other.has_value_flag = false;
 
             return *this;
         }
@@ -211,17 +228,27 @@ namespace library::common
             return has_value_flag;
         }
 
-        const T &unwrap() const
+        constexpr auto &&unwrap() &
         {
             return value;
         }
 
-        T &unwrap()
+        constexpr auto &&unwrap() const &
         {
             return value;
         }
 
-        bool has_value()
+        constexpr auto &&unwrap() &&
+        {
+            return static_cast<T>(library::std::move(value));
+        }
+
+        constexpr auto &&unwrap() const &&
+        {
+            return static_cast<T>(library::std::move(value));
+        }
+
+        constexpr bool has_value() const noexcept
         {
             return has_value_flag;
         }
@@ -244,7 +271,6 @@ namespace library::common
     {
         return option_none;
     }
-
 }
 
 #endif
