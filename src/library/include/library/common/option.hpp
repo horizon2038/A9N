@@ -245,12 +245,12 @@ namespace library::common
 
         constexpr T &operator*() &&
         {
-            return std::move(value);
+            return library::std::move(value);
         }
 
         constexpr T &operator*() const &&
         {
-            return std::move(value);
+            return library::std::move(value);
         }
 
         constexpr explicit operator bool() const
