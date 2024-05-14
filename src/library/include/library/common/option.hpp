@@ -76,6 +76,7 @@ namespace library::common
             new (&value) T(static_cast<Args &&>(args)...);
         }
 
+        // constructed from T : forwarding reference
         template<typename U = T>
             requires(!library::std::
                          is_same_v<option<T>, library::std::remove_cvref_t<U>>)
@@ -83,14 +84,12 @@ namespace library::common
             : value(library::std::forward<U>(u))
             , has_value_flag(true)
         {
-            // constructed from T : forwarding reference
         }
 
+        // constructed from option<T> : copy
         constexpr option(const option &other) noexcept
             : has_value_flag(other.has_value_flag)
         {
-            // constructed from option<T> : copy
-
             if (!other.has_value_flag)
             {
                 return;
@@ -99,11 +98,10 @@ namespace library::common
             new (&value) T(other.value);
         }
 
+        // constructed from option<T> : move
         constexpr option(option &&other) noexcept
             : has_value_flag(other.has_value_flag)
         {
-            // constructed from option<T> : move
-
             if (!other.has_value_flag)
             {
                 return;
@@ -113,13 +111,12 @@ namespace library::common
             other.has_value_flag = false;
         }
 
+        // constructed from option<U> : copy
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
         constexpr option(const option<U> &other) noexcept
             : has_value_flag(other.has_value_flag)
         {
-            // constructed from option<U> : copy
-
             if (!other.has_value_flag)
             {
                 return;
@@ -128,13 +125,12 @@ namespace library::common
             new (&value) T(static_cast<T>(other.value));
         }
 
+        // constructed from option<U> : move
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
         constexpr option(option<U> &&other) noexcept
             : has_value_flag(other.has_value_flag)
         {
-            // constructed from option<U> : move
-
             if (!other.has_value_flag)
             {
                 return;
@@ -145,9 +141,8 @@ namespace library::common
         }
 
         constexpr ~option() noexcept
-            requires(not library::std::is_trivially_destructible_v<T>)
+            requires(!library::std::is_trivially_destructible_v<T>)
         {
-            // init();
             if (!has_value_flag)
             {
                 return;
@@ -258,13 +253,13 @@ namespace library::common
             return std::move(value);
         }
 
-        // no check is performed
-        // because there is no exception mechanism
-
         constexpr explicit operator bool() const
         {
             return has_value_flag;
         }
+
+        // no check is performed
+        // because there is no exception mechanism
 
         constexpr auto &&unwrap() &
         {
@@ -292,7 +287,7 @@ namespace library::common
         }
 
         // TODO: add monadic operations :
-        // e.g. and_then(), transform(), or_else()
+        // e.g., and_then(), transform(), or_else()
     };
 
     // deduction guide
@@ -303,7 +298,6 @@ namespace library::common
     constexpr auto make_option_some(Args... args)
         -> option<library::std::remove_cvref_t<T>>
     {
-        // return library::std::forward<T>(t);
         return option<T>(option_in_place, args...);
     }
 
