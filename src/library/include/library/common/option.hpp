@@ -14,7 +14,12 @@ namespace library::common
 
     inline constexpr option_none_tag option_none;
 
-    // TODO: add constexpr support
+    struct option_in_place_tag
+    {
+    };
+
+    inline constexpr option_in_place_tag option_in_place;
+
     template<typename T>
     class option
     {
@@ -59,6 +64,16 @@ namespace library::common
             : dummy {}
             , has_value_flag(false)
         {
+        }
+
+        template<typename... Args>
+        constexpr option(
+            [[maybe_unused]] option_in_place_tag i,
+            Args... args
+        ) noexcept
+            : has_value_flag(true)
+        {
+            new (&value) T(static_cast<Args &&>(args)...);
         }
 
         template<typename U = T>
@@ -261,13 +276,15 @@ namespace library::common
     template<typename T>
     option(T) -> option<T>;
 
-    template<typename T>
-    auto make_option_some(T &&t) -> option<library::std::remove_cvref_t<T>>
+    template<typename T, typename... Args>
+    constexpr auto make_option_some(Args... args)
+        -> option<library::std::remove_cvref_t<T>>
     {
-        return library::std::forward<T>(t);
+        // return library::std::forward<T>(t);
+        return option<T>(option_in_place, args...);
     }
 
-    inline auto make_option_none() -> decltype(auto)
+    inline constexpr auto make_option_none() -> decltype(auto)
     {
         return option_none;
     }
