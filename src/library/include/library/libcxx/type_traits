@@ -26,6 +26,7 @@
 #include <library/libcxx/__type_traits/is_object.hpp>
 #include <library/libcxx/__type_traits/is_void.hpp>
 #include <library/libcxx/__type_traits/is_reference.hpp>
+#include <library/libcxx/__type_traits/is_function.hpp>
 
 // add
 #include <library/libcxx/__type_traits/add_value_reference.hpp>
