@@ -33,7 +33,7 @@ INCDIR += $(SRCDIR)/hal/$(ARCH)/include
 INCDIR += $(SRCDIR)/library/include
 INCFLAGS = $(addprefix -I,$(INCDIR))
 
-CC := clang16 
+CC := clang-16 
 CXX := clang++-16
 ASM := nasm
 LD = ld.lld
