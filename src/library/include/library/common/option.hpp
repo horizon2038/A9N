@@ -195,8 +195,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::
-                         is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<T, U> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
         constexpr option &operator=(const option<U> &other) noexcept
         {
             if (this == &other)
@@ -214,8 +213,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::
-                         is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<T, U> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
         constexpr option &operator=(option<U> &&other) noexcept
         {
             if (this == &other)
