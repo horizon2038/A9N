@@ -1,16 +1,12 @@
 #ifndef LIBCXX_ADD_VALUE_REFERENCE_HPP
 #define LIBCXX_ADD_VALUE_REFERENCE_HPP
 
+#include <library/libcxx/__type_traits/type_identity.hpp>
+
 namespace library::std
 {
     namespace
     {
-        template<typename T>
-        struct type_identity
-        {
-            using type = T;
-        };
-
         template<typename T>
         auto try_add_lvalue_reference(int) -> type_identity<T &>;
 
