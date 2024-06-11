@@ -22,6 +22,9 @@ namespace library::std
     {
         using type = T;
     };
+
+    template<typename T>
+    using remove_extent_t = typename remove_extent<T>::type;
 }
 
 #endif
