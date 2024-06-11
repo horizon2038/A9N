@@ -21,6 +21,9 @@ namespace library::std
             add_pointer_t<remove_extent_t<U>>,
             conditional_t<is_function_v<U>, U, U>>;
     };
+
+    template<typename T>
+    using decay_t = typename decay<T>::type;
 }
 
 #endif
