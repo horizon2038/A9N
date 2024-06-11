@@ -39,6 +39,7 @@
 
 // other
 #include <library/libcxx/__type_traits/type_identity.hpp>
+#include <library/libcxx/__type_traits/decay.hpp>
 
 // NOTE: headers using compiler extensions
 #include <library/libcxx/__type_traits/is_union.hpp>
