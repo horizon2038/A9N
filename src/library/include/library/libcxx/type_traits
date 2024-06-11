@@ -31,10 +31,14 @@
 
 // add
 #include <library/libcxx/__type_traits/add_value_reference.hpp>
+#include <library/libcxx/__type_traits/add_pointer.hpp>
 
 // condition
 #include <library/libcxx/__type_traits/enable_if.hpp>
 #include <library/libcxx/__type_traits/conditional.hpp>
+
+// other
+#include <library/libcxx/__type_traits/type_identity.hpp>
 
 // NOTE: headers using compiler extensions
 #include <library/libcxx/__type_traits/is_union.hpp>
