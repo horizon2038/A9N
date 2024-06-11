@@ -150,3 +150,41 @@ TEST(option_test, operator_bool_test)
         ASSERT_EQ(opt_none.has_value(), false);
     }
 }
+
+struct foo_has_constructor
+{
+    constexpr foo_has_constructor(int target_a, int target_b)
+        : a { target_a }
+        , b { target_b }
+    {
+    }
+
+    const int a;
+    const int b;
+};
+
+TEST(option_test, inplace_initialization_test)
+{
+    option<foo_has_constructor> opt(libh5n::option_in_place, 123, 456);
+
+    ASSERT_EQ(opt.has_value(), true);
+    ASSERT_EQ(opt.unwrap().a, 123);
+    ASSERT_EQ(opt.unwrap().b, 456);
+}
+
+TEST(option_test, make_option_inplace_initialization_test)
+{
+    auto opt = libh5n::make_option_some<foo_has_constructor>(123, 456);
+
+    ASSERT_EQ(opt.has_value(), true);
+    ASSERT_EQ(opt.unwrap().a, 123);
+    ASSERT_EQ(opt.unwrap().b, 456);
+}
+
+TEST(option_test, operator_indirect_test)
+{
+    option<int> opt { 2038 };
+
+    ASSERT_EQ(opt.unwrap(), 2038);
+    ASSERT_EQ(*opt, 2038);
+}
