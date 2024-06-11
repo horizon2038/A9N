@@ -1,162 +1,363 @@
 #ifndef LIBRARY_RESULT_HPP
 #define LIBRARY_RESULT_HPP
 
+#include "library/libcxx/__type_traits/is_convertible.hpp"
+#include "library/libcxx/__type_traits/is_trivially.hpp"
+#include "library/libcxx/__type_traits/remove_cvref.hpp"
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 
 namespace library::common
 {
-    template<typename, typename>
-    class result;
-
-    template<typename T, int x>
-    class GenericWrapper;
-
-    template<typename T>
-    using error_type = GenericWrapper<T, 0>;
-
-    template<typename T>
-    using value_type = GenericWrapper<T, 1>;
-
-    template<typename T, int x>
-    class GenericWrapper
+    struct result_in_place_ok_tag
     {
-        T v;
-        GenericWrapper(T &&a) : v(library::std::forward<T>(a)) {};
-        GenericWrapper(const T &a) : v(a) {};
-        GenericWrapper(const GenericWrapper &) = default;
-        GenericWrapper(GenericWrapper &&) = default;
-
-      public:
-        ~GenericWrapper() = default;
-
-        template<typename, typename>
-        friend class result;
-
-        template<typename U>
-        friend auto error(U &&error)
-            -> error_type<library::std::remove_cvref_t<U>>;
-
-        template<typename U>
-        friend auto value(U &&value)
-            -> GenericWrapper<library::std::remove_cvref_t<U>, 1>;
     };
 
-    template<typename T>
-    auto error(T &&error) -> error_type<library::std::remove_cvref_t<T>>
-    {
-        return { library::std::forward<T>(error) };
-    }
+    inline constexpr result_in_place_ok_tag result_in_place_ok;
 
-    template<typename T>
-    auto value(T &&value) -> value_type<library::std::remove_cvref_t<T>>
+    struct result_in_place_error_tag
     {
-        return { library::std::forward<T>(value) };
-    }
+    };
 
-    template<typename T, typename ErrorT = int>
+    inline constexpr result_in_place_error_tag result_in_place_error;
+
+    template<typename T, typename E>
+        requires(!library::std::is_same_v<T, E>)
     class result
     {
-        using Type = library::std::remove_cvref_t<T>;
-        using Error = library::std::remove_cvref_t<ErrorT>;
+        using ok_type = T;
+        using error_type = E;
 
+        // if you using specify friend with concepts,
+        // should declared template parameters
+        // i.e., <U>, <F>
+        template<typename U, typename F>
+            requires(!library::std::is_same_v<U, F>)
+        friend class result;
+
+      private:
         union
         {
-            Type value;
-            Error error;
-        } m_stored;
-        bool m_is_error = false;
+            char dummy;
+            T ok_value;
+            E error_value;
+        };
+        bool has_value_flag;
 
       public:
+        // conditionally trivial special member functions
+        constexpr result(const result &other)
+            requires(library::std::is_trivially_copy_constructible_v<T>
+                     && library::std::is_trivially_copy_constructible_v<E>)
+        = default;
+
+        constexpr result(result &&other)
+            requires(library::std::is_trivially_move_constructible_v<T>
+                     && library::std::is_trivially_move_constructible_v<E>)
+        = default;
+
+        constexpr ~result()
+            requires(library::std::is_trivially_destructible_v<T>
+                     && library::std::is_trivially_destructible_v<E>)
+        = default;
+
+        constexpr result &operator=(result const &other)
+            requires(library::std::is_trivially_copy_assignable_v<T>
+                     && library::std::is_trivially_copy_assignable_v<E>)
+        = default;
+
+        constexpr result &operator=(result &&other)
+            requires(library::std::is_trivially_move_assignable_v<T>
+                     && library::std::is_trivially_move_assignable_v<E>)
+        = default;
+
+        // default constructor
+        constexpr result() noexcept : dummy {}, has_value_flag { true }
+        {
+        }
+
+        template<typename... Args>
+        constexpr result(
+            [[maybe_unused]] result_in_place_ok_tag,
+            Args... args
+        ) noexcept
+            : ok_value(std::forward<Args>(args)...)
+            , has_value_flag { true }
+        {
+            new (&ok_value) T(static_cast<Args &&>(args)...);
+        }
+
+        template<typename... Args>
+        constexpr result(
+            [[maybe_unused]] result_in_place_error_tag,
+            Args... args
+        ) noexcept
+            : error_value(std::forward<Args>(args)...)
+            , has_value_flag { false }
+        {
+            new (&error_value) E(static_cast<Args &&>(args)...);
+        }
+
+        template<typename U = T>
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<T, library::std::remove_cvref_t<U>>)
+        constexpr result(U &&other) noexcept : has_value_flag(true)
+        {
+            new (&ok_value) T(library::std::forward<T>(other));
+        }
+
+        template<typename F = E>
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<E, library::std::remove_cvref_t<F>>)
+        constexpr result(F &&other) noexcept : has_value_flag(false)
+        {
+            new (&error_value) E(library::std::forward<E>(other));
+        }
+
+        constexpr result(const result &other)
+            : has_value_flag { other.has_value_flag }
+        {
+            if (other.has_value_flag)
+            {
+                new (&ok_value) T(other.ok_value);
+            }
+            else
+            {
+                new (&error_value) E(other.error_value);
+            }
+        }
+
+        constexpr result(result &&other)
+            : has_value_flag { other.has_value_flag }
+        {
+            if (other.has_value_flag)
+            {
+                new (&ok_value) T(library::std::move(other.ok_value));
+            }
+            else
+            {
+                new (&error_value) E(library::std::move(other.error_value));
+            }
+
+            other.has_value_flag = false;
+        }
+
+        constexpr ~result() noexcept
+        {
+            if (!has_value_flag)
+            {
+                return;
+            }
+
+            if constexpr (!library::std::is_trivially_destructible_v<T>)
+            {
+                ok_value.~T();
+            }
+
+            if constexpr (!library::std::is_trivially_destructible_v<E>)
+            {
+                error_value.~E();
+            }
+        }
+
         template<typename U>
-        requires(library::std::is_same_v<
-                 library::std::remove_cvref_t<
-                     library::std::remove_pointer_t<U>>,
-                 library::std::remove_cvref_t<
-                     library::std::remove_pointer_t<T>>>)
-            result(value_type<U> &&value)
+            requires(library::std::is_convertible_v<T, U> && !library::std::is_same_v<result<T, E>, library::std::remove_cvref_t<U>>)
+        constexpr result &operator=(U &&u) noexcept
         {
-            new (&m_stored.value) T(library::std::move(value.v));
+            new (&ok_value) T(static_cast<T>(library::std::forward<U>(u)));
+            has_value_flag = true;
+
+            return *this;
         }
 
-        template<typename U>
-        requires(library::std::is_same_v<
-                 library::std::remove_cvref_t<
-                     library::std::remove_pointer_t<U>>,
-                 library::std::remove_cvref_t<
-                     library::std::remove_pointer_t<ErrorT>>>)
-            result(error_type<U> &&error)
+        constexpr result &operator=(const result &other) noexcept
         {
-            m_is_error = true;
-            new (&m_stored.error) ErrorT(library::std::move(error.v));
-        }
-
-        ~result()
-        {
-            if (is_error())
-                m_stored.error.~ErrorT();
-            else
-                m_stored.value.~T();
-        }
-
-        result(const result &other)
-        {
-            if (other.is_error())
+            if (this == &other)
             {
-                m_is_error = true;
-                m_stored.error = other.get_error();
+                return *this;
+            }
+
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&ok_value) T(other.ok_value);
             }
             else
             {
-                m_stored.value = other.get_value();
+                new (&error_value) T(other.error_value);
             }
+
+            return *this;
         }
 
-        result(result &&other)
+        constexpr result &operator=(result &&other) noexcept
         {
-            if (other.is_error())
+            if (this == &other)
             {
-                m_is_error = true;
-                m_stored.error = library::std::move(other.get_error());
+                return *this;
+            }
+
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&ok_value) T(library::std::move(other.ok_value));
             }
             else
             {
-                m_stored.value = library::std::move(other.get_value());
+                new (&error_value) E(library::std::move(other.error_value));
             }
+            other.has_value_flag = false;
+
+            return *this;
         }
 
-        bool is_error() const
+        template<typename U, typename F>
+            requires(library::std::is_convertible_v<T, U> && library::std::is_convertible_v<E, F>)
+        constexpr result &operator=(const result<U, F> &other)
         {
-            return m_is_error;
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&ok_value) T(static_cast<T>(other.ok_value));
+            }
+            else
+            {
+                new (&error_value) E(static_cast<E>(other.error_value));
+            }
+
+            return *this;
         }
 
-        bool is_value() const
+        template<typename U, typename F>
+            requires(library::std::is_convertible_v<T, U> && library::std::is_convertible_v<E, F>)
+        constexpr result &operator=(result<U, F> &&other)
         {
-            return !is_error();
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value_flag;
+            if (other.has_value_flag)
+            {
+                new (&ok_value)
+                    T(static_cast<T>(library::std::move(other.ok_value)));
+            }
+            else
+            {
+                new (&error_value)
+                    E(static_cast<E>(library::std::move(other.error_value)));
+            }
+            other.has_value_flag = false;
+
+            return *this;
         }
 
-        T &get_value()
+        constexpr T &operator*() &
         {
-            const auto &as_const = *this;
-            return const_cast<T &>(as_const.get_value());
+            return ok_value;
         }
 
-        const T &get_value() const
+        constexpr T &operator*() const &
         {
-            return m_stored.value;
+            return ok_value;
         }
 
-        ErrorT &get_error()
+        constexpr T &operator*() &&
         {
-            const auto &as_const = *this;
-            return const_cast<ErrorT &>(as_const.get_error());
+            return library::std::move(ok_value);
         }
 
-        const ErrorT &get_error() const
+        constexpr T &operator*() const &&
         {
-            return m_stored.error;
+            return library::std::move(ok_value);
+        }
+
+        constexpr explicit operator bool() const
+        {
+            return has_value_flag;
+        }
+
+        constexpr auto &&unwrap() &
+        {
+            return ok_value;
+        }
+
+        constexpr auto &&unwrap() const &
+        {
+            return ok_value;
+        }
+
+        constexpr auto &&unwrap() &&
+        {
+            return library::std::move(ok_value);
+        }
+
+        constexpr auto &&unwrap() const &&
+        {
+            return library::std::move(ok_value);
+        }
+
+        constexpr auto &&unwrap_error() &
+        {
+            return error_value;
+        }
+
+        constexpr auto &&unwrap_error() const &
+        {
+            return error_value;
+        }
+
+        constexpr auto &&unwrap_error() &&
+        {
+            return library::std::move(error_value);
+        }
+
+        constexpr auto &&unwrap_error() const &&
+        {
+            return library::std::move(error_value);
+        }
+
+        constexpr bool has_value() const noexcept
+        {
+            return has_value_flag;
+        }
+
+        constexpr bool has_error() const noexcept
+        {
+            return !has_value_flag;
         }
     };
+
+    // deduction guide
+    template<typename T, typename E>
+        requires(library::std::is_same_v<T, E>)
+    result(T, E) -> result<T, E>;
+
+    template<typename T>
+    result(T) -> result<T, void>;
+
+    template<typename E>
+    result(E) -> result<void, E>;
+
+    template<typename T, typename E, typename... Args>
+    constexpr result<T, E> make_result_ok(Args... args) noexcept
+    {
+        return result<T, E>(result_in_place_ok, static_cast<Args &&>(args)...);
+    }
+
+    template<typename T, typename E, typename... Args>
+    constexpr result<T, E> make_result_error(Args... args) noexcept
+    {
+        return result<T, E>(
+            result_in_place_error,
+            false,
+            static_cast<Args &&>(args)...
+        );
+    }
 }
 
 #endif
