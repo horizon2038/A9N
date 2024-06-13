@@ -182,3 +182,77 @@ TEST(result_test, is_trivially_destructible_test)
 
     ASSERT_EQ(std::is_trivially_destructible_v<decltype(r)>, true);
 }
+
+// monadic operations test
+library::common::result<int, test_error> increment(int x)
+{
+    return x + 1;
+}
+
+library::common::result<int, test_error> square(int x)
+{
+    return x * x;
+}
+
+library::common::result<int, test_error> fail(int x)
+{
+    return test_error::error_a;
+}
+
+TEST(result_test, and_then_success_test)
+{
+    library::common::result<int, test_error> res { 42 };
+    auto new_res = res.and_then(increment);
+
+    ASSERT_TRUE(new_res.has_value());
+    EXPECT_EQ(new_res.unwrap(), 43);
+}
+
+TEST(result_test, and_then_error_test)
+{
+    library::common::result<int, test_error> res = test_error::error_a;
+    auto new_res = res.and_then(increment);
+
+    ASSERT_TRUE(new_res.has_error());
+    EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
+}
+
+TEST(result_test, and_then_function_returns_error_test)
+{
+    library::common::result<int, test_error> res { 42 };
+    auto new_res = res.and_then(fail);
+
+    ASSERT_TRUE(new_res.has_error());
+    EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
+}
+
+TEST(result_test, and_then_ok_chain_test)
+{
+    library::common::result<int, test_error> res { 1 };
+
+    // clang-format off
+    auto new_res = res
+        .and_then(increment)
+        .and_then(square)
+        .and_then(square);
+    // clang-format on
+
+    ASSERT_TRUE(new_res);
+    ASSERT_EQ(new_res.unwrap(), 16);
+}
+
+TEST(result_test, and_then_error_chain_test)
+{
+    library::common::result<int, test_error> res { 1 };
+
+    // clang-format off
+    auto new_res = res
+        .and_then(increment)
+        .and_then(square)
+        .and_then(square)
+        .and_then(fail);
+    // clang-format on
+
+    ASSERT_FALSE(new_res);
+    ASSERT_EQ(new_res.unwrap_error(), test_error::error_a);
+}

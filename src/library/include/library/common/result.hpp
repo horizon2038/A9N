@@ -1,25 +1,39 @@
 #ifndef LIBRARY_RESULT_HPP
 #define LIBRARY_RESULT_HPP
 
-#include "library/libcxx/__type_traits/is_convertible.hpp"
-#include "library/libcxx/__type_traits/is_trivially.hpp"
-#include "library/libcxx/__type_traits/remove_cvref.hpp"
+#include <library/libcxx/functional>
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 
 namespace library::common
 {
-    struct result_in_place_ok_tag
+    // tag
+    struct result_in_place_tag
     {
     };
 
-    inline constexpr result_in_place_ok_tag result_in_place_ok;
+    inline constexpr result_in_place_tag result_in_place;
 
-    struct result_in_place_error_tag
+    struct result_ok_tag
     {
     };
 
-    inline constexpr result_in_place_error_tag result_in_place_error;
+    inline constexpr result_ok_tag result_ok;
+
+    struct result_error_tag
+    {
+    };
+
+    inline constexpr result_error_tag result_error;
+
+    template<typename T, typename E>
+        requires(!library::std::is_same_v<T, E>)
+    class result;
+
+    template<typename T>
+    concept is_result = library::std::is_same_v<
+        library::std::remove_cvref_t<T>,
+        result<typename T::ok_type, typename T::error_type>>;
 
     template<typename T, typename E>
         requires(!library::std::is_same_v<T, E>)
@@ -78,7 +92,8 @@ namespace library::common
 
         template<typename... Args>
         constexpr result(
-            [[maybe_unused]] result_in_place_ok_tag,
+            [[maybe_unused]] result_in_place_tag,
+            [[maybe_unused]] result_ok_tag,
             Args... args
         ) noexcept
             : ok_value(std::forward<Args>(args)...)
@@ -89,7 +104,8 @@ namespace library::common
 
         template<typename... Args>
         constexpr result(
-            [[maybe_unused]] result_in_place_error_tag,
+            [[maybe_unused]] result_in_place_tag,
+            [[maybe_unused]] result_error_tag,
             Args... args
         ) noexcept
             : error_value(std::forward<Args>(args)...)
@@ -98,6 +114,7 @@ namespace library::common
             new (&error_value) E(static_cast<Args &&>(args)...);
         }
 
+        // deduction constructor
         template<typename U = T>
             requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<T, library::std::remove_cvref_t<U>>)
         constexpr result(U &&other) noexcept : has_value_flag(true)
@@ -108,6 +125,25 @@ namespace library::common
         template<typename F = E>
             requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<E, library::std::remove_cvref_t<F>>)
         constexpr result(F &&other) noexcept : has_value_flag(false)
+        {
+            new (&error_value) E(library::std::forward<E>(other));
+        }
+
+        // obvious constructors
+        //  - for future extensions
+        //  (changes to allow the same type for T and E).
+        template<typename U = T>
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<T, library::std::remove_cvref_t<U>>)
+        constexpr result(result_ok_tag, U &&other) noexcept
+            : has_value_flag(true)
+        {
+            new (&ok_value) T(library::std::forward<T>(other));
+        }
+
+        template<typename F = E>
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<E, library::std::remove_cvref_t<F>>)
+        constexpr result(result_error_tag, F &&other) noexcept
+            : has_value_flag(false)
         {
             new (&error_value) E(library::std::forward<E>(other));
         }
@@ -330,6 +366,91 @@ namespace library::common
         {
             return !has_value_flag;
         }
+
+        // monadic operations
+        template<
+            typename Function,
+            typename TRef = T &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, TRef>>>
+            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+        constexpr auto and_then(Function &&function) &
+        {
+            if (!has_value_flag)
+            {
+                return U(result_error, error_value);
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                ok_value
+            );
+        }
+
+        template<
+            typename Function,
+            typename TRef = T &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, TRef>>>
+            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+        constexpr auto and_then(Function &&function) const &
+        {
+            if (!has_value_flag)
+            {
+                return U(result_error, error_value);
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                error_value
+            );
+        }
+
+        template<
+            typename Function,
+            typename TRef = T &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, TRef>>>
+            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+        constexpr auto and_then(Function &&function) &&
+        {
+            if (!has_value_flag)
+            {
+                return U(result_error, library::std::move(error_value));
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(ok_value)
+            );
+        }
+
+        template<
+            typename Function,
+            typename TRef = T &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, TRef>>>
+            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+        constexpr auto and_then(Function &&function) const &&
+        {
+            if (!has_value_flag)
+            {
+                return U(result_error, library::std::move(error_value));
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(error_value)
+            );
+        }
+
+        // TODO: add monadic operations:
+        // - or_else
+        //   - a function object that retuns a result is applied to the error
+        //   value and returned as a result. normal value are returned as is.
+        //
+        // - transform
+        // - transform_error
     };
 
     // deduction guide
@@ -346,14 +467,19 @@ namespace library::common
     template<typename T, typename E, typename... Args>
     constexpr result<T, E> make_result_ok(Args... args) noexcept
     {
-        return result<T, E>(result_in_place_ok, static_cast<Args &&>(args)...);
+        return result<T, E>(
+            result_in_place,
+            result_ok,
+            static_cast<Args &&>(args)...
+        );
     }
 
     template<typename T, typename E, typename... Args>
     constexpr result<T, E> make_result_error(Args... args) noexcept
     {
         return result<T, E>(
-            result_in_place_error,
+            result_in_place,
+            result_error,
             false,
             static_cast<Args &&>(args)...
         );
