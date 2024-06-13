@@ -116,14 +116,14 @@ namespace library::common
 
         // deduction constructor
         template<typename U = T>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<T, library::std::remove_cvref_t<U>>)
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
         constexpr result(U &&other) noexcept : has_value_flag(true)
         {
             new (&ok_value) T(library::std::forward<T>(other));
         }
 
         template<typename F = E>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<E, library::std::remove_cvref_t<F>>)
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(F &&other) noexcept : has_value_flag(false)
         {
             new (&error_value) E(library::std::forward<E>(other));
@@ -133,7 +133,7 @@ namespace library::common
         //  - for future extensions
         //  (changes to allow the same type for T and E).
         template<typename U = T>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<T, library::std::remove_cvref_t<U>>)
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
         constexpr result(result_ok_tag, U &&other) noexcept
             : has_value_flag(true)
         {
@@ -141,7 +141,7 @@ namespace library::common
         }
 
         template<typename F = E>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<E, library::std::remove_cvref_t<F>>)
+            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(result_error_tag, F &&other) noexcept
             : has_value_flag(false)
         {
@@ -195,7 +195,10 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<T, U> && !library::std::is_same_v<result<T, E>, library::std::remove_cvref_t<U>>)
+        // requires(library::std::is_convertible_v<T, U> &&
+        // !library::std::is_same_v<result<T, E>,
+        // library::std::remove_cvref_t<U>>)
+            requires(!is_result<U> && library::std::is_convertible_v<U, T>)
         constexpr result &operator=(U &&u) noexcept
         {
             new (&ok_value) T(static_cast<T>(library::std::forward<U>(u)));
@@ -246,7 +249,7 @@ namespace library::common
         }
 
         template<typename U, typename F>
-            requires(library::std::is_convertible_v<T, U> && library::std::is_convertible_v<E, F>)
+            requires(library::std::is_convertible_v<U, T> && library::std::is_convertible_v<F, E>)
         constexpr result &operator=(const result<U, F> &other)
         {
             if (this == &other)
@@ -268,7 +271,7 @@ namespace library::common
         }
 
         template<typename U, typename F>
-            requires(library::std::is_convertible_v<T, U> && library::std::is_convertible_v<E, F>)
+            requires(library::std::is_convertible_v<U, T> && library::std::is_convertible_v<F, E>)
         constexpr result &operator=(result<U, F> &&other)
         {
             if (this == &other)
@@ -445,6 +448,7 @@ namespace library::common
         }
 
         // TODO: add monadic operations:
+        // - map
         // - or_else
         //   - a function object that retuns a result is applied to the error
         //   value and returned as a result. normal value are returned as is.
@@ -480,7 +484,6 @@ namespace library::common
         return result<T, E>(
             result_in_place,
             result_error,
-            false,
             static_cast<Args &&>(args)...
         );
     }

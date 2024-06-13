@@ -234,11 +234,15 @@ TEST(result_test, and_then_ok_chain_test)
     auto new_res = res
         .and_then(increment)
         .and_then(square)
-        .and_then(square);
+        .and_then(square)
+        .and_then([](int x)
+        {
+            return library::common::result<int, test_error> { x * 5 };
+        });
     // clang-format on
 
     ASSERT_TRUE(new_res);
-    ASSERT_EQ(new_res.unwrap(), 16);
+    ASSERT_EQ(new_res.unwrap(), 80);
 }
 
 TEST(result_test, and_then_error_chain_test)
@@ -255,4 +259,19 @@ TEST(result_test, and_then_error_chain_test)
 
     ASSERT_FALSE(new_res);
     ASSERT_EQ(new_res.unwrap_error(), test_error::error_a);
+}
+
+TEST(result_test, string_error_test)
+{
+    library::common::result<int, std::string> res { "not working!" };
+    // clang-format off
+    auto new_res = res
+        .and_then([](int x) -> library::common::result<int, std::string>
+        {
+            return "not working!";
+        });
+    // clang-format on
+
+    ASSERT_FALSE(new_res);
+    ASSERT_EQ(new_res.unwrap_error(), "not working!");
 }
