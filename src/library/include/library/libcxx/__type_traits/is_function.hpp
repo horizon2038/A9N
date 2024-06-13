@@ -16,7 +16,7 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......)> : true_type
+    struct is_function<R(Args..., ...)> : true_type
     {
     };
 
@@ -36,17 +36,17 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const> : true_type
+    struct is_function<R(Args..., ...) const> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) volatile> : true_type
+    struct is_function<R(Args..., ...) volatile> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const volatile> : true_type
+    struct is_function<R(Args..., ...) const volatile> : true_type
     {
     };
 
@@ -66,17 +66,17 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const &> : true_type
+    struct is_function<R(Args..., ...) const &> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) volatile &> : true_type
+    struct is_function<R(Args..., ...) volatile &> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const volatile &> : true_type
+    struct is_function<R(Args..., ...) const volatile &> : true_type
     {
     };
     template<typename R, typename... Args>
@@ -95,17 +95,17 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const &&> : true_type
+    struct is_function<R(Args..., ...) const &&> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) volatile &&> : true_type
+    struct is_function<R(Args..., ...) volatile &&> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const volatile &&> : true_type
+    struct is_function<R(Args..., ...) const volatile &&> : true_type
     {
     };
 
@@ -117,7 +117,7 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) noexcept> : true_type
+    struct is_function<R(Args..., ...) noexcept> : true_type
     {
     };
 
@@ -137,17 +137,17 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const noexcept> : true_type
+    struct is_function<R(Args..., ...) const noexcept> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) volatile noexcept> : true_type
+    struct is_function<R(Args..., ...) volatile noexcept> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const volatile noexcept> : true_type
+    struct is_function<R(Args..., ...) const volatile noexcept> : true_type
     {
     };
 
@@ -167,17 +167,17 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const & noexcept> : true_type
+    struct is_function<R(Args..., ...) const & noexcept> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) volatile & noexcept> : true_type
+    struct is_function<R(Args..., ...) volatile & noexcept> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const volatile & noexcept> : true_type
+    struct is_function<R(Args..., ...) const volatile & noexcept> : true_type
     {
     };
     template<typename R, typename... Args>
@@ -196,17 +196,17 @@ namespace library::std
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const && noexcept> : true_type
+    struct is_function<R(Args..., ...) const && noexcept> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) volatile && noexcept> : true_type
+    struct is_function<R(Args..., ...) volatile && noexcept> : true_type
     {
     };
 
     template<typename R, typename... Args>
-    struct is_function<R(Args......) const volatile && noexcept> : true_type
+    struct is_function<R(Args..., ...) const volatile && noexcept> : true_type
     {
     };
 
