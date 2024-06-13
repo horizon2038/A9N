@@ -21,8 +21,18 @@ namespace library::common
     inline constexpr option_in_place_tag option_in_place;
 
     template<typename T>
+    class option;
+
+    template<typename T>
+    concept is_option = library::std::is_same_v<
+        library::std::remove_cvref_t<T>,
+        option<typename T::value_type>>;
+
+    template<typename T>
     class option
     {
+        using value_type = T;
+
         template<typename>
         friend class option;
 
@@ -113,7 +123,7 @@ namespace library::common
 
         // constructed from option<U> : copy
         template<typename U>
-            requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
+            requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<U, T>)
         constexpr option(const option<U> &other) noexcept
             : has_value_flag(other.has_value_flag)
         {
@@ -127,7 +137,7 @@ namespace library::common
 
         // constructed from option<U> : move
         template<typename U>
-            requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<T, U>)
+            requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<U, T>)
         constexpr option(option<U> &&other) noexcept
             : has_value_flag(other.has_value_flag)
         {
@@ -152,7 +162,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<T, U> && !library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<U, T> && !library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
         constexpr option &operator=(U &&u) noexcept
         {
             new (&value) T(static_cast<T>(library::std::forward<U>(u)));
@@ -195,7 +205,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<T, U> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<U, T> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
         constexpr option &operator=(const option<U> &other) noexcept
         {
             if (this == &other)
@@ -213,7 +223,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<T, U> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<U, T> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
         constexpr option &operator=(option<U> &&other) noexcept
         {
             if (this == &other)
