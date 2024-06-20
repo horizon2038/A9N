@@ -373,6 +373,110 @@ namespace library::common
             return !has_value_flag;
         }
 
+        template<typename U>
+            requires library::std::is_copy_constructible_v<U>
+                  && library::std::is_convertible_v<U, T>
+        constexpr auto &&unwrap_or(U &&value) &
+        {
+            if (!has_value())
+            {
+                return static_cast<T>(library::std::forward<U>(value));
+            }
+
+            return unwrap();
+        }
+
+        template<typename U>
+            requires library::std::is_copy_constructible_v<U>
+                  && library::std::is_convertible_v<U, T>
+        constexpr auto &&unwrap_or(U &&value) const &
+        {
+            if (!has_value())
+            {
+                return static_cast<T>(library::std::forward<U>(value));
+            }
+
+            return unwrap();
+        }
+
+        template<typename U>
+            requires library::std::is_move_constructible_v<U>
+                  && library::std::is_convertible_v<U, T>
+        constexpr auto &&unwrap_or(U &&value) &&
+        {
+            if (!has_value())
+            {
+                return static_cast<T>(library::std::forward<U>(value));
+            }
+
+            return library::std::move(unwrap());
+        }
+
+        template<typename U>
+            requires library::std::is_move_constructible_v<U>
+                  && library::std::is_convertible_v<U, T>
+        constexpr auto &&unwrap_or(U &&value) const &&
+        {
+            if (!has_value())
+            {
+                return static_cast<T>(library::std::forward<U>(value));
+            }
+
+            return library::std::move(unwrap());
+        }
+
+        template<typename G = E>
+            requires library::std::is_copy_constructible_v<E>
+                  && library::std::is_convertible_v<G, E>
+        constexpr auto &&unwrap_error_or(G &&value) &
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<G>(value));
+            }
+
+            return unwrap_error();
+        }
+
+        template<typename G = E>
+            requires library::std::is_move_constructible_v<E>
+                  && library::std::is_convertible_v<G, E>
+        constexpr auto &&unwrap_error_or(G &&value) const &
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<G>(value));
+            }
+
+            return unwrap_error();
+        }
+
+        template<typename G = E>
+            requires library::std::is_copy_constructible_v<E>
+                  && library::std::is_convertible_v<G, E>
+        constexpr auto &&unwrap_error_or(G &&value) &&
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<G>(value));
+            }
+
+            return library::std::move(unwrap_error());
+        }
+
+        template<typename G = E>
+            requires library::std::is_move_constructible_v<E>
+                  && library::std::is_convertible_v<G, E>
+        constexpr auto &&unwrap_error_or(G &&value) const &&
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<G>(value));
+            }
+
+            return library::std::move(unwrap_error());
+        }
+
         // monadic operations
 
         // and_then(Function &&function) :
