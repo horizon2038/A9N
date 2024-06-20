@@ -33,7 +33,7 @@ $(info $(TEST_SRCS))
 $(info $(SRCS))
 
 CXX = clang++-16
-CXXFLAGS = -std=c++20 -O2 -Wall -Wextra -frelaxed-template-template-args -stdlib=libc++ -pthread
+CXXFLAGS = -std=c++20 -O2 -Wall -Wextra -stdlib=libc++ -pthread
 CXXTESTFLAGS = -lgtest_main -lgtest -lgmock_main -lgmock
 
 CPPFLAGS = $(INCFLAGS) -MMD -MP
