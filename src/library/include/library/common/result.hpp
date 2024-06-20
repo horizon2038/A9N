@@ -482,6 +482,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
+                  && library::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) &
         {
             static_assert(
@@ -506,6 +507,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
+                  && library::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) const &
         {
             static_assert(
@@ -530,6 +532,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
+                  && library::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) &&
         {
             static_assert(
@@ -554,6 +557,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
+                  && library::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) const &&
         {
             static_assert(
