@@ -28,8 +28,11 @@ namespace kernel
 
         bool is_same_slot(capability_slot *rhs)
         {
-            auto is_same_data
-                = std::memcmp(&data, &rhs->data, sizeof(capability_slot_data));
+            auto is_same_data = library::std::memcmp(
+                &data,
+                &rhs->data,
+                sizeof(capability_slot_data)
+            );
 
             if (is_same_data != 0)
             {
