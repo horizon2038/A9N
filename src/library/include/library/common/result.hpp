@@ -7,10 +7,6 @@
 
 namespace library::common
 {
-    // debug
-    template<typename T>
-    class type_of;
-
     // tag
     struct result_in_place_tag
     {
@@ -30,6 +26,9 @@ namespace library::common
 
     inline constexpr result_error_tag result_error;
 
+    // result<T, E> :
+    //
+    // similar to std::expected<T, E>
     template<typename T, typename E>
         requires(!library::std::is_same_v<T, E>)
     class result;
@@ -153,28 +152,27 @@ namespace library::common
         }
 
         constexpr result(const result &other)
-            : has_value_flag { other.has_value_flag }
+            : has_value_flag { other.has_value() }
         {
-            if (other.has_value_flag)
+            if (other.has_value())
             {
-                new (&ok_value) T(other.ok_value);
+                new (&ok_value) T(other.unwrap());
             }
             else
             {
-                new (&error_value) E(other.error_value);
+                new (&error_value) E(other.unwrap_error);
             }
         }
 
-        constexpr result(result &&other)
-            : has_value_flag { other.has_value_flag }
+        constexpr result(result &&other) : has_value_flag { other.has_value() }
         {
-            if (other.has_value_flag)
+            if (other.has_value())
             {
-                new (&ok_value) T(library::std::move(other.ok_value));
+                new (&ok_value) T(library::std::move(other.unwrap()));
             }
             else
             {
-                new (&error_value) E(library::std::move(other.error_value));
+                new (&error_value) E(library::std::move(other.unwrap_error()));
             }
 
             other.has_value_flag = false;
@@ -218,14 +216,14 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            has_value_flag = other.has_value();
+            if (other.has_value())
             {
-                new (&ok_value) T(other.ok_value);
+                new (&ok_value) T(other.unwrap());
             }
             else
             {
-                new (&error_value) T(other.error_value);
+                new (&error_value) T(other.unwrap_error());
             }
 
             return *this;
@@ -238,14 +236,14 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            has_value_flag = other.has_value();
+            if (other.has_value())
             {
-                new (&ok_value) T(library::std::move(other.ok_value));
+                new (&ok_value) T(library::std::move(other.unwrap()));
             }
             else
             {
-                new (&error_value) E(library::std::move(other.error_value));
+                new (&error_value) E(library::std::move(other.unwrap_error()));
             }
             other.has_value_flag = false;
 
@@ -261,14 +259,14 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            has_value_flag = other.has_value();
+            if (other.has_value())
             {
-                new (&ok_value) T(static_cast<T>(other.ok_value));
+                new (&ok_value) T(static_cast<T>(other.unwrap()));
             }
             else
             {
-                new (&error_value) E(static_cast<E>(other.error_value));
+                new (&error_value) E(static_cast<E>(other.unwrap_error()));
             }
 
             return *this;
@@ -283,16 +281,16 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            has_value_flag = other.has_value();
+            if (other.has_value())
             {
                 new (&ok_value)
-                    T(static_cast<T>(library::std::move(other.ok_value)));
+                    T(static_cast<T>(library::std::move(other.unwrap())));
             }
             else
             {
                 new (&error_value)
-                    E(static_cast<E>(library::std::move(other.error_value)));
+                    E(static_cast<E>(library::std::move(other.unwrap_error())));
             }
             other.has_value_flag = false;
 
@@ -375,6 +373,15 @@ namespace library::common
         }
 
         // monadic operations
+
+        // and_then(Function &&function) :
+        //
+        // applies a function to the contained value if it exists, and returns
+        // the result.
+        //
+        // this method will invoke the provided callable if the `result` object
+        // contains a value of type `T`, the callable must return a new `result`
+        // object, allowing for chaining of (monadic) operations.
         template<
             typename Function,
             typename Tcvref = T &,
@@ -383,14 +390,14 @@ namespace library::common
             requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
         constexpr auto and_then(Function &&function) &
         {
-            if (!has_value_flag)
+            if (!has_value())
             {
-                return U(result_error, error_value);
+                return U(result_error, unwrap_error());
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                ok_value
+                unwrap()
             );
         }
 
@@ -402,14 +409,14 @@ namespace library::common
             requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
         constexpr auto and_then(Function &&function) const &
         {
-            if (!has_value_flag)
+            if (!has_value())
             {
-                return U(result_error, error_value);
+                return U(result_error, unwrap_error());
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                ok_value
+                unwrap()
             );
         }
 
@@ -421,14 +428,14 @@ namespace library::common
             requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
         constexpr auto and_then(Function &&function) &&
         {
-            if (!has_value_flag)
+            if (!has_value())
             {
-                return U(result_error, library::std::move(error_value));
+                return U(result_error, library::std::move(unwrap_error()));
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                library::std::move(ok_value)
+                library::std::move(unwrap())
             );
         }
 
@@ -440,17 +447,25 @@ namespace library::common
             requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
         constexpr auto and_then(Function &&function) const &&
         {
-            if (!has_value_flag)
+            if (!has_value())
             {
-                return U(result_error, library::std::move(error_value));
+                return U(result_error, library::std::move(unwrap_error()));
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                library::std::move(ok_value)
+                library::std::move(unwrap())
             );
         }
 
+        // or_else(Function &&function) :
+        //
+        // applies a function to the contained error if it exists, and retuns
+        // the result.
+        //
+        // this method will invoke the provided callable if the `result` object
+        // contains an error of type `E`, the callable must return a new
+        // `result` object, allowing for error handling or transformation.
         template<
             typename Function,
             typename Ecvref = E &,
@@ -464,14 +479,14 @@ namespace library::common
                 library::std::is_same_v<typename U::ok_type, T>,
                 "Function must return result<T, E>"
             );
-            if (has_value_flag)
+            if (has_value())
             {
-                return U(result_ok, ok_value);
+                return U(result_ok, unwrap());
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                error_value
+                unwrap_error()
             );
         }
 
@@ -488,14 +503,14 @@ namespace library::common
                 library::std::is_same_v<typename U::ok_type, T>,
                 "Function must return result<T, E>"
             );
-            if (has_value_flag)
+            if (has_value())
             {
-                return U(result_ok, ok_value);
+                return U(result_ok, unwrap());
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                error_value
+                unwrap_error()
             );
         }
 
@@ -512,14 +527,14 @@ namespace library::common
                 library::std::is_same_v<typename U::ok_type, T>,
                 "Function must return result<T, E>"
             );
-            if (has_value_flag)
+            if (has_value())
             {
-                return U(result_ok, library::std::move(ok_value));
+                return U(result_ok, library::std::move(unwrap()));
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                library::std::move(error_value)
+                library::std::move(unwrap_error())
             );
         }
 
@@ -537,99 +552,114 @@ namespace library::common
                 "Function must return result<T, E>"
             );
 
-            if (has_value_flag)
+            if (has_value())
             {
-                return U(result_ok, library::std::move(ok_value));
+                return U(result_ok, library::std::move(unwrap()));
             }
 
             return library::std::invoke(
                 library::std::forward<Function>(function),
-                library::std::move(error_value)
+                library::std::move(unwrap_error())
             );
         }
 
-        /*
-    template<typename Function>
-    constexpr auto or_else(Function &&function
-    ) & -> library::std::invoke_result_t<Function, E &>
-    {
-        using U = library::std::invoke_result_t<Function, E &>;
-        static_assert(is_result<U>, "Function must return a result type");
-
-        if (has_value_flag)
+        // transform(Function &&function) :
+        //
+        // transform the contained value if it exists, by applying a
+        // function to it.
+        //
+        // this method will invoke the provided callable if the `result` object
+        // conains a value of type `T`. the callable must return a new value of
+        // type `T`, allowing for transformation of the contained value while
+        // keeping the type consistent.
+        template<
+            typename Function,
+            typename Tcvref = T &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Tcvref>>>
+        constexpr auto transform(Function &&function) &
         {
-            return U(result_ok, ok_value);
+            if (!has_value())
+            {
+                return result<U, E>(
+                    result_error,
+                    library::std::move(unwrap_error())
+                );
+            }
+
+            return result<U, E>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            ));
         }
 
-        return library::std::invoke(
-            std::forward<Function>(function),
-            error_value
-        );
-    }
-
-    template<typename Function>
-    constexpr auto or_else(Function &&function
-    ) & -> library::std::invoke_result_t<Function, E const &>
-    {
-        using U = library::std::invoke_result_t<Function, E const &>;
-        static_assert(is_result<U>, "Function must return a result type");
-
-        if (has_value_flag)
+        template<
+            typename Function,
+            typename Tcvref = const T &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Tcvref>>>
+        constexpr auto transform(Function &&function) const &
         {
-            return U(result_ok, ok_value);
+            if (!has_value())
+            {
+                return result<U, E>(
+                    result_error,
+                    library::std::move(unwrap_error())
+                );
+            }
+
+            return result<U, E>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            ));
         }
 
-        return library::std::invoke(
-            std::forward<Function>(function),
-            error_value
-        );
-    }
-
-    template<typename Function>
-    constexpr auto or_else(Function &&function
-    ) & -> library::std::invoke_result_t<Function, E &&>
-    {
-        using U = library::std::invoke_result_t<Function, E &&>;
-        static_assert(is_result<U>, "Function must return a result type");
-
-        if (has_value_flag)
+        template<
+            typename Function,
+            typename Tcvref = T &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Tcvref>>>
+        constexpr auto transform(Function &&function) &&
         {
-            return U(result_ok, library::std::move(ok_value));
+            if (!has_value())
+            {
+                return result<U, E>(
+                    result_error,
+                    library::std::move(unwrap_error())
+                );
+            }
+
+            return result<U, E>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            ));
         }
 
-        return library::std::invoke(
-            std::forward<Function>(function),
-            library::std::move(error_value)
-        );
-    }
-
-    template<typename Function>
-    constexpr auto or_else(Function &&function
-    ) & -> library::std::invoke_result_t<Function, E const &&>
-    {
-        using U = library::std::invoke_result_t<Function, E const &&>;
-        static_assert(is_result<U>, "Function must return a result type");
-
-        if (has_value_flag)
+        template<
+            typename Function,
+            typename Tcvref = const T &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Tcvref>>>
+        constexpr auto transform(Function &&function) const &&
         {
-            return U(result_ok, library::std::move(ok_value));
-        }
+            if (!has_value())
+            {
+                return result<U, E>(
+                    result_error,
+                    library::std::move(unwrap_error())
+                );
+            }
 
-        return library::std::invoke(
-            std::forward<Function>(function),
-            library::std::move(error_value)
-        );
-    }
-    */
+            return result<U, E>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            ));
+        }
 
         // TODO: add monadic operations:
-        // - map
-        // - or_else
-        //   - a function object that retuns a result is applied to the error
-        //   value and returned as a result. normal value are returned as is.
-        //
-        // - transform
         // - transform_error
+        //
+        // TODO: add result<void, E> specialization
     };
 
     // deduction guide
