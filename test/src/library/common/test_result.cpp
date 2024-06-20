@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <library/common/result.hpp>
+#include <iostream>
 
 namespace libh5n = library::common;
 using word = uintmax_t;
@@ -261,7 +262,7 @@ TEST(result_test, and_then_error_chain_test)
     ASSERT_EQ(new_res.unwrap_error(), test_error::error_a);
 }
 
-TEST(result_test, string_error_test)
+TEST(result_test, and_then_string_error_test)
 {
     library::common::result<int, std::string> res { "not working!" };
     // clang-format off
@@ -274,4 +275,45 @@ TEST(result_test, string_error_test)
 
     ASSERT_FALSE(new_res);
     ASSERT_EQ(new_res.unwrap_error(), "not working!");
+}
+
+library::common::result<int, test_error> fail_2(test_error &err)
+{
+    return 0;
+}
+
+TEST(result_test, or_else_success_test)
+{
+    library::common::result<int, test_error> res { 42 };
+    // 実行されないはず
+    auto new_res = res.or_else(fail_2);
+
+    ASSERT_TRUE(new_res.has_value());
+    ASSERT_EQ(new_res.unwrap(), 42);
+}
+
+library::common::result<int, test_error> change_error(test_error &err)
+{
+    return test_error::error_b;
+}
+
+TEST(result_test, or_else_error_test)
+{
+    library::common::result<int, test_error> res { test_error::error_a };
+    auto new_res = res.or_else(change_error);
+
+    ASSERT_FALSE(new_res);
+    ASSERT_EQ(new_res.unwrap_error(), test_error::error_b);
+}
+
+TEST(result_test, or_else_string_test)
+{
+    library::common::result<int, std::string> res { "hello, world " };
+    auto new_res = res.or_else(
+        [](std::string emsg) -> library::common::result<int, std::string>
+        {
+            std::cout << "error_message : " << emsg << std::endl;
+            return library::common::result<int, std::string> { 0 };
+        }
+    );
 }
