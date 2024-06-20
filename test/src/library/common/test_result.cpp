@@ -381,6 +381,46 @@ TEST(result_test, transform_chain_test)
     // clang-format on
 }
 
+TEST(result_test, unwrap_or_t_test)
+{
+    library::common::result<int, std::string> res { 42 };
+
+    ASSERT_TRUE(res);
+    ASSERT_EQ(res.unwrap_or(0), 42);
+}
+
+TEST(result_test, unwrap_or_e_test)
+{
+    library::common::result<int, std::string> res { std::string("hello, world!"
+    ) };
+
+    ASSERT_FALSE(res);
+    ASSERT_EQ(res.unwrap_or(0), 0);
+}
+
+TEST(result_test, unwrap_or_error_t_test)
+{
+    library::common::result<int, std::string> res { 42 };
+
+    ASSERT_TRUE(res);
+    ASSERT_EQ(
+        res.unwrap_error_or(std::string("hello, world!")),
+        std::string("hello, world!")
+    );
+}
+
+TEST(result_test, unwrap_or_error_e_test)
+{
+    library::common::result<int, std::string> res { std::string("hello, world!"
+    ) };
+
+    ASSERT_FALSE(res);
+    ASSERT_EQ(
+        res.unwrap_error_or(std::string("goodnight, world!")),
+        std::string("hello, world!")
+    );
+}
+
 library::common::result<int, std::string> safe_divide(int a, int b)
 {
     if (b == 0)
@@ -406,30 +446,4 @@ TEST(result_test, safe_divide_test)
 
     res = safe_divide(10, 0);
     std::cout << res.unwrap_error() << std::endl;
-
-    /*
-    auto res = safe_divide(10, 2).and_then(
-        [](const std::string &v) -> library::common::result<int, std::string>
-        {
-            std::cout << v << std::endl;
-            return 0;
-        }
-    );
-
-    res = safe_divide(10, 3).or_else(
-        [](const std::string &e) -> library::common::result<int, std::string>
-        {
-            std::cout << e << std::endl;
-            return "failed";
-        }
-    );
-
-    res = safe_divide(10, 0).or_else(
-        [](const std::string &e) -> library::common::result<int, std::string>
-        {
-            std::cout << e << std::endl;
-            return "failed";
-        }
-    );
-    */
 }
