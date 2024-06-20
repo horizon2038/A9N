@@ -1,6 +1,7 @@
 #ifndef LIBRARY_RESULT_HPP
 #define LIBRARY_RESULT_HPP
 
+#include "library/libcxx/__type_traits/is_constructible.hpp"
 #include <library/libcxx/functional>
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
@@ -387,7 +388,9 @@ namespace library::common
             typename Tcvref = T &,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
-            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && std::is_copy_constructible_v<T>
         constexpr auto and_then(Function &&function) &
         {
             if (!has_value())
@@ -406,7 +409,9 @@ namespace library::common
             typename Tcvref = const T &,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
-            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && library::std::is_copy_constructible_v<E>
         constexpr auto and_then(Function &&function) const &
         {
             if (!has_value())
@@ -425,7 +430,9 @@ namespace library::common
             typename Tcvref = T &&,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
-            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && library::std::is_move_constructible_v<E>
         constexpr auto and_then(Function &&function) &&
         {
             if (!has_value())
@@ -444,7 +451,9 @@ namespace library::common
             typename Tcvref = const T &&,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
-            requires(is_result<U> && library::std::is_same_v<typename U::error_type, E>)
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && library::std::is_move_constructible_v<E>
         constexpr auto and_then(Function &&function) const &&
         {
             if (!has_value())
