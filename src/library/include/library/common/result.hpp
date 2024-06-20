@@ -376,7 +376,7 @@ namespace library::common
         template<typename U>
             requires library::std::is_copy_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto &&unwrap_or(U &&value) &
+        constexpr auto unwrap_or(U &&value) &
         {
             if (!has_value())
             {
@@ -389,7 +389,7 @@ namespace library::common
         template<typename U>
             requires library::std::is_copy_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto &&unwrap_or(U &&value) const &
+        constexpr auto unwrap_or(U &&value) const &
         {
             if (!has_value())
             {
@@ -402,7 +402,7 @@ namespace library::common
         template<typename U>
             requires library::std::is_move_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto &&unwrap_or(U &&value) &&
+        constexpr auto unwrap_or(U &&value) &&
         {
             if (!has_value())
             {
@@ -415,7 +415,7 @@ namespace library::common
         template<typename U>
             requires library::std::is_move_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto &&unwrap_or(U &&value) const &&
+        constexpr auto unwrap_or(U &&value) const &&
         {
             if (!has_value())
             {
@@ -428,7 +428,7 @@ namespace library::common
         template<typename G = E>
             requires library::std::is_copy_constructible_v<E>
                   && library::std::is_convertible_v<G, E>
-        constexpr auto &&unwrap_error_or(G &&value) &
+        constexpr auto unwrap_error_or(G &&value) &
         {
             if (has_value())
             {
@@ -441,7 +441,7 @@ namespace library::common
         template<typename G = E>
             requires library::std::is_move_constructible_v<E>
                   && library::std::is_convertible_v<G, E>
-        constexpr auto &&unwrap_error_or(G &&value) const &
+        constexpr auto unwrap_error_or(G &&value) const &
         {
             if (has_value())
             {
@@ -454,7 +454,7 @@ namespace library::common
         template<typename G = E>
             requires library::std::is_copy_constructible_v<E>
                   && library::std::is_convertible_v<G, E>
-        constexpr auto &&unwrap_error_or(G &&value) &&
+        constexpr auto unwrap_error_or(G &&value) &&
         {
             if (has_value())
             {
@@ -467,7 +467,7 @@ namespace library::common
         template<typename G = E>
             requires library::std::is_move_constructible_v<E>
                   && library::std::is_convertible_v<G, E>
-        constexpr auto &&unwrap_error_or(G &&value) const &&
+        constexpr auto unwrap_error_or(G &&value) const &&
         {
             if (has_value())
             {
