@@ -306,14 +306,130 @@ TEST(result_test, or_else_error_test)
     ASSERT_EQ(new_res.unwrap_error(), test_error::error_b);
 }
 
+library::common::result<int, std::string>
+    or_else_return_int(const std::string &e)
+{
+    return 203;
+}
+
 TEST(result_test, or_else_string_test)
 {
-    library::common::result<int, std::string> res { "hello, world " };
-    auto new_res = res.or_else(
-        [](std::string emsg) -> library::common::result<int, std::string>
+    library::common::result<int, std::string> res { "hello, world!" };
+
+    auto new_res = res.or_else(or_else_return_int).unwrap();
+
+    ASSERT_EQ(203, new_res);
+    ASSERT_TRUE(new_res);
+}
+
+TEST(result_test, transform_success_test)
+{
+    library::common::result<int, std::string> res { 1 };
+    auto new_res = res.transform(
+        [](int x)
         {
-            std::cout << "error_message : " << emsg << std::endl;
-            return library::common::result<int, std::string> { 0 };
+            return x * 2;
         }
     );
+
+    ASSERT_TRUE(new_res);
+    ASSERT_EQ(new_res.unwrap(), 2);
+}
+
+TEST(result_test, transform_error_test)
+{
+    library::common::result<int, std::string> res { "result : error!" };
+    auto new_res = res.transform(
+        [](int x)
+        {
+            return x;
+        }
+    );
+
+    ASSERT_FALSE(new_res);
+    ASSERT_EQ(new_res.unwrap_error(), "result : error!");
+}
+
+TEST(result_test, transform_chain_test)
+{
+    // clang-format off
+
+    library::common::result<int, std::string> res { 4 };
+    auto new_res = res
+        .transform(
+            [](int x)
+            {
+                return x * x;
+            }
+        )
+        .and_then(
+            [](int x) -> library::common::result<int, std::string>
+            {
+                return std::string("failed!");
+            }
+        )
+        .or_else(
+            [](std::string e) -> library::common::result<int, std::string>
+            {
+                return std::string("failed (modified) !");
+            }
+        );
+
+        ASSERT_FALSE(new_res);
+        ASSERT_EQ(new_res.unwrap_error(), "failed (modified) !");
+
+    // clang-format on
+}
+
+library::common::result<int, std::string> safe_divide(int a, int b)
+{
+    if (b == 0)
+    {
+        return "divide by zero";
+    }
+
+    if (a % b != 0)
+    {
+        return "out of domain";
+    }
+
+    return a / b;
+}
+
+TEST(result_test, safe_divide_test)
+{
+    auto res = safe_divide(10, 2);
+    std::cout << res.unwrap() << std::endl;
+
+    res = safe_divide(10, 3);
+    std::cout << res.unwrap_error() << std::endl;
+
+    res = safe_divide(10, 0);
+    std::cout << res.unwrap_error() << std::endl;
+
+    /*
+    auto res = safe_divide(10, 2).and_then(
+        [](const std::string &v) -> library::common::result<int, std::string>
+        {
+            std::cout << v << std::endl;
+            return 0;
+        }
+    );
+
+    res = safe_divide(10, 3).or_else(
+        [](const std::string &e) -> library::common::result<int, std::string>
+        {
+            std::cout << e << std::endl;
+            return "failed";
+        }
+    );
+
+    res = safe_divide(10, 0).or_else(
+        [](const std::string &e) -> library::common::result<int, std::string>
+        {
+            std::cout << e << std::endl;
+            return "failed";
+        }
+    );
+    */
 }
