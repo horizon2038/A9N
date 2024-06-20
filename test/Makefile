@@ -33,10 +33,13 @@ $(info $(TEST_SRCS))
 $(info $(SRCS))
 
 CXX = clang++-16
-CXXFLAGS = -Wall -Wextra -O2 -std=c++20
-CXXTESTFLAGS = -pthread -lgtest_main -lgtest -lgmock_main -lgmock
+CXXFLAGS = -std=c++20 -O2 -Wall -Wextra -frelaxed-template-template-args -stdlib=libc++ -pthread
+CXXTESTFLAGS = -lgtest_main -lgtest -lgmock_main -lgmock
 
 CPPFLAGS = $(INCFLAGS) -MMD -MP
+
+LD := ld.lld
+LDFLAGS := -lc++ -lc++abi -pthread
 
 .PHONY: all clean
 
@@ -46,8 +49,7 @@ executable: $(BUILDDIR)/$(TARGET)
 
 $(BUILDDIR)/$(TARGET): $(TEST_OBJS) $(OBJS)
 	mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(LIBFLAGS) $(CXXTESTFLAGS) $^ -o $@
-#	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	$(CXX) $^ -o $@ $(LDFLAGS) $(CXXTESTFLAGS) $(LIBFLAGS) 
 
 $(BUILDDIR)/%.o: $(TESTSRCDIR)/%.cpp
 	mkdir -p $(dir $@)
