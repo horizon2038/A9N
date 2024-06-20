@@ -10,6 +10,8 @@ RUN apt-get update && \
         llvm \
         clang-16 \
         lld \
+        libc++-16-dev \
+        libc++abi-16-dev \
         nasm \
         make \
         cmake \
