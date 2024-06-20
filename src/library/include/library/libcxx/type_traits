@@ -47,5 +47,6 @@
 #include <library/libcxx/__type_traits/is_convertible.hpp>
 #include <library/libcxx/__type_traits/is_trivially.hpp>
 #include <library/libcxx/__type_traits/is_base_of.hpp>
+#include <library/libcxx/__type_traits/is_constructible.hpp>
 
 #endif
