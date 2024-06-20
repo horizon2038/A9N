@@ -40,7 +40,7 @@ namespace hal::x86_64
         common::virtual_address entry_point_address
     )
     {
-        std::memset(&target_process->stack, 0, kernel::STACK_SIZE_MAX);
+        library::std::memset(&target_process->stack, 0, kernel::STACK_SIZE_MAX);
         common::virtual_address *target_stack_pointer
             = reinterpret_cast<common::virtual_address *>(
                 &target_process->stack[kernel::STACK_SIZE_MAX]

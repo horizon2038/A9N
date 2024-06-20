@@ -84,13 +84,13 @@ namespace kernel
     )
     {
         process->id = target_process_id;
-        std::strcpy(process->name, process_name);
+        library::std::strcpy(process->name, process_name);
 
         process->status = process_status::BLOCKED;
         process->priority = 0;
         process->quantum = QUANTUM_MAX;
 
-        std::memset(process->stack, 0, STACK_SIZE_MAX);
+        library::std::memset(process->stack, 0, STACK_SIZE_MAX);
         kernel_object::memory_manager->init_virtual_memory(process);
     }
 

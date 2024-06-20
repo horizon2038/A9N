@@ -46,14 +46,14 @@ void read_serial()
         uint8_t serial_data = hal_instance->_serial->read_serial();
         if (serial_data == 0xd)
         {
-            std::strcpy(reinterpret_cast<char *>(m.data), "\r\n");
+            library::std::strcpy(reinterpret_cast<char *>(m.data), "\r\n");
             kernel::kernel_object::ipc_manager->send(4, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
         }
         if (serial_data == 0x7f)
         {
-            std::strcpy(reinterpret_cast<char *>(m.data), "\b\033[K");
+            library::std::strcpy(reinterpret_cast<char *>(m.data), "\b\033[K");
             kernel::kernel_object::ipc_manager->send(4, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
@@ -61,7 +61,7 @@ void read_serial()
         char c[2];
         c[0] = serial_data;
         c[1] = '\0';
-        std::strcpy(reinterpret_cast<char *>(m.data), c);
+        library::std::strcpy(reinterpret_cast<char *>(m.data), c);
         kernel::kernel_object::ipc_manager->send(4, &m);
         hal_instance->_interrupt->ack_interrupt();
     }
@@ -71,7 +71,7 @@ void console()
 {
     char buffer[256];
     uint32_t buffer_index = 0;
-    std::memset(buffer, 0, sizeof(buffer));
+    library::std::memset(buffer, 0, sizeof(buffer));
 
     kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
 
@@ -107,7 +107,7 @@ void console()
                 &buffer_message
             ); // send buffer content to process 3
             buffer_index = 0; // reset buffer index
-            std::memset(buffer, 0, sizeof(buffer)); // clear the buffer
+            library::std::memset(buffer, 0, sizeof(buffer)); // clear the buffer
             kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
         }
 
@@ -150,25 +150,25 @@ void console_out()
         }
         kernel::utility::logger::printn("\ncout said : %s\n", received_data);
 
-        if (std::strcmp(received_data, "about") == 0)
+        if (library::std::strcmp(received_data, "about") == 0)
         {
             kernel::utility::logger::a9nout();
         }
 
-        if (std::strcmp(received_data, "syscall") == 0)
+        if (library::std::strcmp(received_data, "syscall") == 0)
         {
             asm volatile("int $0x80" ::: "cc", "memory");
         }
 
-        if (std::strcmp(received_data, "info pm") == 0)
+        if (library::std::strcmp(received_data, "info pm") == 0)
         {
             library::ipc::message m2;
             m2.type = 1;
             // Assuming process ID 3 is for console_out
-            std::strcpy(reinterpret_cast<char *>(m2.data), "info pm");
+            library::std::strcpy(reinterpret_cast<char *>(m2.data), "info pm");
             kernel::kernel_object::ipc_manager->send(2, &m2);
         }
-        if (std::strcmp(received_data, "mitoujr") == 0)
+        if (library::std::strcmp(received_data, "mitoujr") == 0)
         {
             kernel::utility::logger::mitoujr();
         }
@@ -220,7 +220,7 @@ void alpha()
         }
         char *received_data = reinterpret_cast<char *>(m.data);
         kernel::utility::logger::printk("received : %s\n", received_data);
-        if (std::strcmp(received_data, "info pm") == 0)
+        if (library::std::strcmp(received_data, "info pm") == 0)
         {
             kernel::kernel_object::memory_manager->info_physical_memory();
         }

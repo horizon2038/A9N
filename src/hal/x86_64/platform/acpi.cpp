@@ -9,7 +9,7 @@ namespace hal::x86_64
 {
     bool sdt_header::validate_sdt_signature(const char *target_signature)
     {
-        return ((std::memcmp(signature, target_signature, 4) == 0));
+        return ((library::std::memcmp(signature, target_signature, 4) == 0));
     }
 
     uint32_t xsdt::count()
@@ -72,7 +72,10 @@ namespace hal::x86_64
     bool acpi_configurator::validate_rsdp(common::virtual_address rsdp_address)
     {
         rsdp *rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
-        return (std::memcmp(rsdp_pointer->signature, ACPI_MAGIC::RSDP, 8) == 0);
+        return (
+            library::std::memcmp(rsdp_pointer->signature, ACPI_MAGIC::RSDP, 8)
+            == 0
+        );
     }
 
     void acpi_configurator::print_rsdp_info(rsdp *rsdp_pointer)
@@ -83,8 +86,8 @@ namespace hal::x86_64
         char oem_id[7];
         oem_id[6] = '\0';
 
-        std::memcpy(signature, rsdp_pointer->signature, 8);
-        std::memcpy(oem_id, rsdp_pointer->oem_id, 6);
+        library::std::memcpy(signature, rsdp_pointer->signature, 8);
+        library::std::memcpy(oem_id, rsdp_pointer->oem_id, 6);
 
         kernel::utility::logger::printk("signature\e[55G : %s\n", signature);
         kernel::utility::logger::printk(
@@ -118,15 +121,15 @@ namespace hal::x86_64
     {
         char fixed_signature[5];
         fixed_signature[4] = '\0';
-        std::memcpy(fixed_signature, header->signature, 4);
+        library::std::memcpy(fixed_signature, header->signature, 4);
 
         char fixed_oem_id[7];
         fixed_oem_id[6] = '\0';
-        std::memcpy(fixed_oem_id, header->oem_id, 6);
+        library::std::memcpy(fixed_oem_id, header->oem_id, 6);
 
         char fixed_oem_table_id[9];
         fixed_oem_table_id[8] = '\0';
-        std::memcpy(fixed_oem_table_id, header->oem_table_id, 8);
+        library::std::memcpy(fixed_oem_table_id, header->oem_table_id, 8);
 
         kernel::utility::logger::printk(
             "signature\e[55G : %s\n",

@@ -33,7 +33,7 @@ namespace hal::x86_64
             = convert_physical_to_virtual_address(
                 reinterpret_cast<common::physical_address>(&__kernel_pml4)
             );
-        std::memcpy(
+        library::std::memcpy(
             reinterpret_cast<void *>(virtual_top_page_table_address),
             reinterpret_cast<void *>(virtual_kernel_top_page_address),
             common::PAGE_SIZE

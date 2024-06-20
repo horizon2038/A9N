@@ -348,7 +348,7 @@ namespace kernel
         }
 
         target_process->page_table = page_table_address;
-        std::memset(
+        library::std::memset(
             reinterpret_cast<void *>(
                 convert_physical_to_virtual_address(target_process->page_table)
             ),
