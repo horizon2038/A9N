@@ -66,28 +66,28 @@ namespace library::common
       public:
         // conditionally trivial special member functions
         constexpr result(const result &other)
-            requires(library::std::is_trivially_copy_constructible_v<T>
-                     && library::std::is_trivially_copy_constructible_v<E>)
+            requires library::std::is_trivially_copy_constructible_v<T>
+                      && library::std::is_trivially_copy_constructible_v<E>
         = default;
 
         constexpr result(result &&other)
-            requires(library::std::is_trivially_move_constructible_v<T>
-                     && library::std::is_trivially_move_constructible_v<E>)
+            requires library::std::is_trivially_move_constructible_v<T>
+                      && library::std::is_trivially_move_constructible_v<E>
         = default;
 
         constexpr ~result()
-            requires(library::std::is_trivially_destructible_v<T>
-                     && library::std::is_trivially_destructible_v<E>)
+            requires library::std::is_trivially_destructible_v<T>
+                      && library::std::is_trivially_destructible_v<E>
         = default;
 
         constexpr result &operator=(result const &other)
-            requires(library::std::is_trivially_copy_assignable_v<T>
-                     && library::std::is_trivially_copy_assignable_v<E>)
+            requires library::std::is_trivially_copy_assignable_v<T>
+                      && library::std::is_trivially_copy_assignable_v<E>
         = default;
 
         constexpr result &operator=(result &&other)
-            requires(library::std::is_trivially_move_assignable_v<T>
-                     && library::std::is_trivially_move_assignable_v<E>)
+            requires library::std::is_trivially_move_assignable_v<T>
+                      && library::std::is_trivially_move_assignable_v<E>
         = default;
 
         // default constructor
@@ -199,9 +199,6 @@ namespace library::common
         }
 
         template<typename U>
-        // requires(library::std::is_convertible_v<T, U> &&
-        // !library::std::is_same_v<result<T, E>,
-        // library::std::remove_cvref_t<U>>)
             requires(!is_result<U> && library::std::is_convertible_v<U, T>)
         constexpr result &operator=(U &&u) noexcept
         {
@@ -253,7 +250,8 @@ namespace library::common
         }
 
         template<typename U, typename F>
-            requires(library::std::is_convertible_v<U, T> && library::std::is_convertible_v<F, E>)
+            requires library::std::is_convertible_v<U, T>
+                  && library::std::is_convertible_v<F, E>
         constexpr result &operator=(const result<U, F> &other)
         {
             if (this == &other)
@@ -275,7 +273,8 @@ namespace library::common
         }
 
         template<typename U, typename F>
-            requires(library::std::is_convertible_v<U, T> && library::std::is_convertible_v<F, E>)
+            requires library::std::is_convertible_v<U, T>
+                  && library::std::is_convertible_v<F, E>
         constexpr result &operator=(result<U, F> &&other)
         {
             if (this == &other)
@@ -379,7 +378,7 @@ namespace library::common
                   && library::std::is_convertible_v<U, T>
         constexpr auto unwrap_or(U &&value) &
         {
-            if (!has_value())
+            if (has_error())
             {
                 return static_cast<T>(library::std::forward<U>(value));
             }
@@ -392,7 +391,7 @@ namespace library::common
                   && library::std::is_convertible_v<U, T>
         constexpr auto unwrap_or(U &&value) const &
         {
-            if (!has_value())
+            if (has_error())
             {
                 return static_cast<T>(library::std::forward<U>(value));
             }
@@ -405,7 +404,7 @@ namespace library::common
                   && library::std::is_convertible_v<U, T>
         constexpr auto unwrap_or(U &&value) &&
         {
-            if (!has_value())
+            if (has_error())
             {
                 return static_cast<T>(library::std::forward<U>(value));
             }
@@ -418,7 +417,7 @@ namespace library::common
                   && library::std::is_convertible_v<U, T>
         constexpr auto unwrap_or(U &&value) const &&
         {
-            if (!has_value())
+            if (has_error())
             {
                 return static_cast<T>(library::std::forward<U>(value));
             }
@@ -498,7 +497,7 @@ namespace library::common
                   && std::is_copy_constructible_v<T>
         constexpr auto and_then(Function &&function) &
         {
-            if (!has_value())
+            if (has_error())
             {
                 return U(result_error, unwrap_error());
             }
@@ -519,7 +518,7 @@ namespace library::common
                   && library::std::is_copy_constructible_v<E>
         constexpr auto and_then(Function &&function) const &
         {
-            if (!has_value())
+            if (has_error())
             {
                 return U(result_error, unwrap_error());
             }
@@ -540,7 +539,7 @@ namespace library::common
                   && library::std::is_move_constructible_v<E>
         constexpr auto and_then(Function &&function) &&
         {
-            if (!has_value())
+            if (has_error())
             {
                 return U(result_error, library::std::move(unwrap_error()));
             }
@@ -561,7 +560,7 @@ namespace library::common
                   && library::std::is_move_constructible_v<E>
         constexpr auto and_then(Function &&function) const &&
         {
-            if (!has_value())
+            if (has_error())
             {
                 return U(result_error, library::std::move(unwrap_error()));
             }
@@ -697,7 +696,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Tcvref>>>
         constexpr auto transform(Function &&function) &
         {
-            if (!has_value())
+            if (has_error())
             {
                 return result<U, E>(
                     result_error,
@@ -722,7 +721,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Tcvref>>>
         constexpr auto transform(Function &&function) const &
         {
-            if (!has_value())
+            if (has_error())
             {
                 return result<U, E>(
                     result_error,
@@ -747,7 +746,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Tcvref>>>
         constexpr auto transform(Function &&function) &&
         {
-            if (!has_value())
+            if (has_error())
             {
                 return result<U, E>(
                     result_error,
@@ -772,7 +771,7 @@ namespace library::common
                 library::std::invoke_result_t<Function, Tcvref>>>
         constexpr auto transform(Function &&function) const &&
         {
-            if (!has_value())
+            if (has_error())
             {
                 return result<U, E>(
                     result_error,
@@ -898,15 +897,12 @@ namespace library::common
             ));
         }
 
-        // TODO: add monadic operations:
-        // - transform_error
-        //
         // TODO: add result<void, E> specialization
     };
 
     // deduction guide
     template<typename T, typename E>
-        requires(library::std::is_same_v<T, E>)
+        requires library::std::is_same_v<T, E>
     result(T, E) -> result<T, E>;
 
     template<typename T>
