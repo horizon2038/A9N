@@ -28,8 +28,9 @@ namespace library::common
     inline constexpr result_error_tag result_error;
 
     // result<T, E> :
-    //
-    // similar to std::expected<T, E>
+    // similar to std::expected<T, E>.
+    // however, to simplify type inference,
+    // we require that T and E be completely different types.
     template<typename T, typename E>
         requires(!library::std::is_same_v<T, E>)
     class result;
@@ -704,10 +705,14 @@ namespace library::common
                 );
             }
 
-            return result<U, E>(library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
-            ));
+            return result<U, E>(
+                result_in_place,
+                result_ok,
+                library::std::invoke(
+                    library::std::forward<Function>(function),
+                    library::std::move(unwrap())
+                )
+            );
         }
 
         template<
@@ -725,10 +730,14 @@ namespace library::common
                 );
             }
 
-            return result<U, E>(library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
-            ));
+            return result<U, E>(
+                result_in_place,
+                result_ok,
+                library::std::invoke(
+                    library::std::forward<Function>(function),
+                    library::std::move(unwrap())
+                )
+            );
         }
 
         template<
@@ -746,10 +755,14 @@ namespace library::common
                 );
             }
 
-            return result<U, E>(library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
-            ));
+            return result<U, E>(
+                result_in_place,
+                result_ok,
+                library::std::invoke(
+                    library::std::forward<Function>(function),
+                    library::std::move(unwrap())
+                )
+            );
         }
 
         template<
@@ -767,9 +780,121 @@ namespace library::common
                 );
             }
 
-            return result<U, E>(library::std::invoke(
+            return result<U, E>(
+                result_in_place,
+                result_ok,
+                library::std::invoke(
+                    library::std::forward<Function>(function),
+                    library::std::move(unwrap())
+                )
+            );
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+            requires library::std::is_same_v<E, U>
+                  && library::std::is_copy_constructible_v<T>
+        constexpr auto transform_error(Function &&function) &
+        {
+            if (has_value())
+            {
+                return result<T, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function),
+                        unwrap()
+                    )
+                );
+            }
+
+            return result<T, U>(library::std::invoke(
                 library::std::forward<Function>(function),
-                library::std::move(unwrap())
+                unwrap_error()
+            ));
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = const E &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+            requires library::std::is_same_v<E, U>
+                  && library::std::is_copy_constructible_v<T>
+        constexpr auto transform_error(Function &&function) const &
+        {
+            if (has_value())
+            {
+                return result<T, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function),
+                        unwrap()
+                    )
+                );
+            }
+
+            return result<T, U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap_error()
+            ));
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+            requires library::std::is_same_v<E, U>
+                  && library::std::is_copy_constructible_v<T>
+        constexpr auto transform_error(Function &&function) &&
+        {
+            if (has_value())
+            {
+                return result<T, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function),
+                        library::std::move(unwrap())
+                    )
+                );
+            }
+
+            return result<T, U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap_error())
+            ));
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E const &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+            requires library::std::is_same_v<E, U>
+                  && library::std::is_copy_constructible_v<T>
+        constexpr auto transform_error(Function &&function) const &&
+        {
+            if (has_value())
+            {
+                return result<T, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function),
+                        library::std::move(unwrap())
+                    )
+                );
+            }
+
+            return result<T, U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap_error())
             ));
         }
 
