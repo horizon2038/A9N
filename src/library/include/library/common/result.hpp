@@ -317,6 +317,16 @@ namespace library::common
             return library::std::move(ok_value);
         }
 
+        constexpr auto operator->() noexcept -> T *
+        {
+            return library::std::addressof(ok_value);
+        }
+
+        constexpr auto operator->() const noexcept -> T const *
+        {
+            return library::std::addressof(ok_value);
+        }
+
         constexpr explicit operator bool() const
         {
             return has_value_flag;
@@ -362,7 +372,8 @@ namespace library::common
             return library::std::move(error_value);
         }
 
-        constexpr bool has_value() const noexcept
+        [[nodiscard("result::has_value() must be used.")]] constexpr bool
+            has_value() const noexcept
         {
             return has_value_flag;
         }
