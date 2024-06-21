@@ -1,7 +1,6 @@
 #ifndef LIBRARY_RESULT_HPP
 #define LIBRARY_RESULT_HPP
 
-#include "library/libcxx/__type_traits/is_constructible.hpp"
 #include <library/libcxx/functional>
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
