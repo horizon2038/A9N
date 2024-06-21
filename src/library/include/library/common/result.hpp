@@ -922,17 +922,51 @@ namespace library::common
         using ok_type = void;
         using error_type = E;
 
-        // if you using specify friend with concepts,
-        // should declared template parameters
-        // i.e., <U>, <F>
+        // we are friends
         template<typename U, typename F>
             requires(!library::std::is_same_v<U, F>)
         friend class result;
+
+      private:
+        union
+        {
+            char dummy;
+            E error_value;
+        };
+        bool has_value_flag;
+
+      public:
+        // conditionally trivial special member functions
+        // check only E
+        constexpr result(const result &other)
+            requires library::std::is_trivially_copy_constructible_v<E>
+        = default;
+
+        constexpr result(result &&other)
+            requires library::std::is_trivially_move_constructible_v<E>
+        = default;
+
+        constexpr ~result()
+            requires library::std::is_trivially_destructible_v<E>
+        = default;
+
+        constexpr result &operator=(result const &other)
+            requires library::std::is_trivially_copy_assignable_v<E>
+        = default;
+
+        constexpr result &operator=(result &&other)
+            requires library::std::is_trivially_move_assignable_v<E>
+        = default;
+
+        // default constructor
+        constexpr result() noexcept : dummy {}, has_value_flag { true }
+        {
+        }
     };
 
     // deduction guide
     template<typename T, typename E>
-        requires library::std::is_same_v<T, E>
+        requires(!library::std::is_same_v<T, E>)
     result(T, E) -> result<T, E>;
 
     template<typename T>
@@ -942,6 +976,7 @@ namespace library::common
     result(E) -> result<void, E>;
 
     template<typename T, typename E, typename... Args>
+        requires(!library::std::is_same_v<T, E>)
     constexpr result<T, E> make_result_ok(Args... args) noexcept
     {
         return result<T, E>(
@@ -952,6 +987,7 @@ namespace library::common
     }
 
     template<typename T, typename E, typename... Args>
+        requires(!library::std::is_same_v<T, E>)
     constexpr result<T, E> make_result_error(Args... args) noexcept
     {
         return result<T, E>(
@@ -961,5 +997,14 @@ namespace library::common
         );
     }
 }
+
+/*
+ _                _                ____  _    _____  ___
+| |__   ___  _ __(_)_______  _ __ |___ \| | _|___ / ( _ )
+| '_ \ / _ \| '__| |_  / _ \| '_ \  __) | |/ / |_ \ / _ \
+| | | | (_) | |  | |/ / (_) | | | |/ __/|   < ___) | (_) |
+|_| |_|\___/|_|  |_/___\___/|_| |_|_____|_|\_\____/ \___/
+
+*/
 
 #endif
