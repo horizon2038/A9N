@@ -906,8 +906,28 @@ namespace library::common
                 library::std::move(unwrap_error())
             ));
         }
+    };
 
-        // TODO: add result<void, E> specialization
+    // TODO:
+    // - add or_else overload for T is *void* to result<T, E>
+    // - add template specialization of result<void, E>
+
+    // specialization for case where T is *void*.
+    // this is useful for scenarios where you only want to represent an error
+    // without a valid result.
+    template<typename E>
+        requires(!library::std::is_same_v<void, E>)
+    class result<void, E>
+    {
+        using ok_type = void;
+        using error_type = E;
+
+        // if you using specify friend with concepts,
+        // should declared template parameters
+        // i.e., <U>, <F>
+        template<typename U, typename F>
+            requires(!library::std::is_same_v<U, F>)
+        friend class result;
     };
 
     // deduction guide
