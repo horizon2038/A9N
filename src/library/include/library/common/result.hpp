@@ -1237,11 +1237,205 @@ namespace library::common
 
             return *this;
         }
+
+        constexpr void operator*() noexcept
+        {
+            return;
+        }
+
+        constexpr explicit operator bool() const
+        {
+            return has_value_flag;
+        }
+
+        constexpr void unwrap() &
+        {
+            return;
+        }
+
+        constexpr void unwrap() const &
+        {
+            return;
+        }
+
+        constexpr void unwrap() &&
+        {
+            return;
+        }
+
+        constexpr void unwrap() const &&
+        {
+            return;
+        }
+
+        constexpr auto &&unwrap_error() &
+        {
+            return error_value;
+        }
+
+        constexpr auto &&unwrap_error() const &
+        {
+            return error_value;
+        }
+
+        constexpr auto &&unwrap_error() &&
+        {
+            return library::std::move(error_value);
+        }
+
+        constexpr auto &&unwrap_error() const &&
+        {
+            return library::std::move(error_value);
+        }
+
+        [[nodiscard("result::has_value() must be used.")]] constexpr bool
+            has_value() const noexcept
+        {
+            return has_value_flag;
+        }
+
+        [[nodiscard("result::has_error() must be used.")]] constexpr bool
+            has_error() const noexcept
+        {
+            return !has_value_flag;
+        }
+
+        template<typename F = E>
+            requires library::std::is_copy_constructible_v<F>
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&error_value) &
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<F>(error_value));
+            }
+
+            return unwrap_error();
+        }
+
+        template<typename F = E>
+            requires library::std::is_copy_constructible_v<F>
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&error_value) const &
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<F>(error_value));
+            }
+
+            return unwrap_error();
+        }
+
+        template<typename F = E>
+            requires library::std::is_move_constructible_v<F>
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&error_value) &&
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<F>(error_value));
+            }
+
+            return library::std::move(unwrap_error());
+        }
+
+        template<typename F = E>
+            requires library::std::is_move_constructible_v<F>
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&error_value) const &&
+        {
+            if (has_value())
+            {
+                return static_cast<E>(library::std::forward<F>(error_value));
+            }
+
+            return library::std::move(unwrap_error());
+        }
+
+        // monadic operations
+
+        // and_then(Function &&function) :
+        //
+        // applies a function to the contained value if it exists, and returns
+        // the result.
+        template<
+            typename Function,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && std::is_copy_constructible_v<E>
+        constexpr auto and_then(Function &&function) &
+        {
+            if (has_error())
+            {
+                return U(result_error, unwrap_error());
+            }
+
+            return library::std::invoke(library::std::forward<Function>(function
+            ));
+        }
+
+        template<
+            typename Function,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && std::is_copy_constructible_v<E>
+        constexpr auto and_then(Function &&function) const &
+        {
+            if (has_error())
+            {
+                return U(result_error, unwrap_error());
+            }
+
+            return library::std::invoke(library::std::forward<Function>(function
+            ));
+        }
+
+        template<
+            typename Function,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && std::is_move_constructible_v<E>
+        constexpr auto and_then(Function &&function) &&
+        {
+            if (has_error())
+            {
+                return U(result_error, library::std::move(unwrap_error()));
+            }
+
+            return library::std::invoke(library::std::forward<Function>(function
+            ));
+        }
+
+        template<
+            typename Function,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires is_result<U>
+                  && library::std::is_same_v<typename U::error_type, E>
+                  && std::is_move_constructible_v<E>
+        constexpr auto and_then(Function &&function) const &&
+        {
+            if (has_error())
+            {
+                return U(result_error, library::std::move(unwrap_error()));
+            }
+
+            return library::std::invoke(library::std::forward<Function>(function
+            ));
+        }
     };
 
     // TODO:
     // - implementing result<void, E> specialization
-    // - exact destruct within operator=
+    // - update_{ok | error}_value for result<T, E>
+    // - has_{value | error} remove copy
+    // - unify name of template parameters
 
     // deduction guide
     template<typename T, typename E>
