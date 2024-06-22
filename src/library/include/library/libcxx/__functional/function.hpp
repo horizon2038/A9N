@@ -2,6 +2,7 @@
 #define LIBCXX_FUNCTION_HPP
 
 #include <library/libcxx/__utility/move.hpp>
+#include <library/libcxx/__functional/invoke.hpp>
 #include <stdint.h>
 
 namespace library::std
@@ -49,7 +50,7 @@ namespace library::std
 
             R call(Args... args)
             {
-                // return library::std::invoke(callable, args...);
+                return library::std::invoke(callable, args...);
             }
 
             T callable;
