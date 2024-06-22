@@ -124,14 +124,14 @@ namespace library::common
 
         // deduction constructor
         template<typename U>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
+            requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
         constexpr result(U &&other) noexcept : has_value_flag(true)
         {
             new (&ok_value) T(library::std::forward<T>(other));
         }
 
         template<typename F>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
+            requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(F &&other) noexcept : has_value_flag(false)
         {
             new (&error_value) E(library::std::forward<E>(other));
@@ -141,7 +141,7 @@ namespace library::common
         //  - for future extensions
         //  (changes to allow the same type for T and E).
         template<typename U>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<U>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
+            requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
         constexpr result(result_ok_tag, U &&other) noexcept
             : has_value_flag(true)
         {
@@ -149,7 +149,7 @@ namespace library::common
         }
 
         template<typename F>
-            requires(!library::std::is_same_v<library::std::remove_cvref_t<F>, result<T, E>> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
+            requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(result_error_tag, F &&other) noexcept
             : has_value_flag(false)
         {
@@ -1093,11 +1093,7 @@ namespace library::common
 
         constexpr ~result() noexcept
         {
-            if constexpr (library::std::is_trivially_destructible_v<E>)
-            {
-                return;
-            }
-
+            // `E` is not trivial
             error_value.~E();
         }
     };
