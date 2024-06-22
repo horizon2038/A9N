@@ -439,11 +439,11 @@ library::common::result<int, std::string> safe_divide(int a, int b)
 TEST(result_test, safe_divide_test)
 {
     auto res = safe_divide(10, 2);
-    std::cout << res.unwrap() << std::endl;
+    ASSERT_EQ(res.unwrap(), 5);
 
     res = safe_divide(10, 3);
-    std::cout << res.unwrap_error() << std::endl;
+    ASSERT_EQ(res.unwrap_error(), "out of domain");
 
     res = safe_divide(10, 0);
-    std::cout << res.unwrap_error() << std::endl;
+    ASSERT_EQ(res.unwrap_error(), "divide by zero");
 }
