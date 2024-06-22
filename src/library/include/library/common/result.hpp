@@ -93,10 +93,9 @@ namespace library::common
                       && library::std::is_trivially_move_assignable_v<E>
         = default;
 
-        // default constructor
-        constexpr result() noexcept : dummy {}, has_value_flag { true }
-        {
-        }
+        // default constructor (deleted)
+        // the result must always hold a value of `T` or `E`.
+        constexpr result() noexcept = delete;
 
         template<typename... Args>
         constexpr result(
@@ -964,6 +963,8 @@ namespace library::common
         = default;
 
         // default constructor
+        // unlike result<T, E>, result<void, E> is not deleted
+        // because `T` = `void` is allowed.
         constexpr result() noexcept : dummy {}, has_value_flag { true }
         {
             // holds the valid value : `void`
