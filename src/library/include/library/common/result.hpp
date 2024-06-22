@@ -56,6 +56,10 @@ namespace library::common
       private:
         union
         {
+            // NOTE:
+            // hypothesis : since it should be guaranteed to have `T` or `E`,
+            // the dummy may not be necessary ?
+            // no need for lazy initialization like option<T> ?
             char dummy;
             T ok_value;
             E error_value;
@@ -161,7 +165,7 @@ namespace library::common
             }
             else
             {
-                new (&error_value) E(other.unwrap_error);
+                new (&error_value) E(other.unwrap_error());
             }
         }
 
@@ -181,6 +185,7 @@ namespace library::common
 
         constexpr ~result() noexcept
         {
+            // remove it
             if (!has_value_flag)
             {
                 return;
@@ -961,6 +966,139 @@ namespace library::common
         // default constructor
         constexpr result() noexcept : dummy {}, has_value_flag { true }
         {
+            // holds the valid value : `void`
+        }
+
+        template<typename... Args>
+        constexpr result(
+            [[maybe_unused]] result_in_place_tag,
+            [[maybe_unused]] result_ok_tag,
+            Args... args
+        ) noexcept
+            : has_value_flag { true }
+        {
+            // holds the valid value : `void`
+        }
+
+        template<typename... Args>
+        constexpr result(
+            [[maybe_unused]] result_in_place_tag,
+            [[maybe_unused]] result_error_tag,
+            Args... args
+        ) noexcept
+            : has_value_flag { false }
+        {
+            new (&error_value) E(static_cast<Args &&>(args)...);
+        }
+
+        template<typename U = void>
+            requires(!is_result<U> && library::std::is_convertible_v<U, void>)
+        constexpr result(U &&value) noexcept : dummy {}
+                                             , has_value_flag { true }
+        {
+            // holds the valid value : `void`
+        }
+
+        template<typename F = E>
+            requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
+        constexpr result(F &&error) noexcept : has_value_flag { false }
+        {
+            new (error_value) E(library::std::forward<F>(error));
+        }
+
+        // obvious constructors
+        // - for future extensions
+        template<typename U>
+            requires(!is_result<U>
+                     && library::std::is_convertible_v<
+                         library::std::remove_cvref_t<U>,
+                         void>)
+        constexpr result(result_ok_tag, U &&value) noexcept
+            : dummy {}
+            , has_value_flag { true }
+        {
+            // holds the valid value : `void`
+        }
+
+        template<typename F = E>
+            requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
+        constexpr result(result_error_tag, F &&error) noexcept
+            : has_value_flag { false }
+        {
+            new (error_value) E(library::std::forward<F>(error));
+        }
+
+        // result<T, E> -> result<T, E>
+        constexpr result(const result &other)
+            : dummy {}
+            , has_value_flag { other.has_value() }
+        {
+            if (other.has_value())
+            {
+                return;
+            }
+
+            new (&error_value) E(other.unwrap_error());
+        }
+
+        constexpr result(result &&other)
+            : dummy {}
+            , has_value_flag { other.has_value() }
+        {
+            if (other.has_error())
+            {
+                new (&error_value) E(library::std::move(other.unwrap_error()));
+            }
+
+            other.has_value_flag = false;
+        }
+
+        // result<U, F> -> result<T, E>
+        template<typename U>
+            requires is_result<U>
+                      && library::std::
+                             is_convertible_v<typename U::ok_type, void>
+                      && library::std::
+                             is_convertible_v<typename U::error_type, E>
+        constexpr result(const U &other)
+            : dummy {}
+            , has_value_flag { other.has_value() }
+        {
+            if (other.has_value())
+            {
+                return;
+            }
+
+            new (&error_value) E(static_cast<E>(other.unwrap_error()));
+        }
+
+        template<typename U>
+            requires is_result<U>
+                      && library::std::
+                             is_convertible_v<typename U::ok_type, void>
+                      && library::std::
+                             is_convertible_v<typename U::error_type, E>
+        constexpr result(U &&other)
+            : dummy {}
+            , has_value_flag { other.has_value() }
+        {
+            if (other.has_error())
+            {
+                new (&error_value)
+                    E(static_cast<E>(library::std::move(other.unwrap_error())));
+            }
+
+            other.has_value_flag = false;
+        }
+
+        constexpr ~result() noexcept
+        {
+            if constexpr (library::std::is_trivially_destructible_v<E>)
+            {
+                return;
+            }
+
+            error_value.~E();
         }
     };
 
@@ -996,6 +1134,7 @@ namespace library::common
             static_cast<Args &&>(args)...
         );
     }
+
 }
 
 /*
