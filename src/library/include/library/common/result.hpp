@@ -182,6 +182,8 @@ namespace library::common
             other.has_value_flag = false;
         }
 
+        // add result<U, F> constructor
+
         constexpr ~result() noexcept
         {
             // remove it
@@ -687,7 +689,6 @@ namespace library::common
             {
                 return U(result_ok, library::std::move(unwrap()));
             }
-
             return library::std::invoke(
                 library::std::forward<Function>(function),
                 library::std::move(unwrap_error())
@@ -939,6 +940,59 @@ namespace library::common
         };
         bool has_value_flag;
 
+        // helper methods
+
+        /*
+        template<typename U>
+            requires library::std::is_convertible_v<U, T>
+        constexpr void update_ok_value(U &&new_value)
+        {
+            init_ok_value();
+            new (&error_value)
+                T(static_cast<T>(library::std::forward<U>(new_ok_value)));
+        }
+
+        constexpr void init_ok_value()
+        {
+            if (has_error())
+            {
+                return;
+            }
+
+            if constexpr (library::std::is_trivially_destructible_v<T>)
+            {
+                return;
+            }
+
+            ok_value.~T();
+        }
+        */
+
+        template<typename F>
+            requires library::std::is_convertible_v<F, E>
+        constexpr void update_error_value(F &&new_error)
+        {
+            init_error_value();
+            new (&error_value)
+                E(static_cast<E>(library::std::forward<F>(new_error)));
+        }
+
+        constexpr void init_error_value()
+        {
+            // has_value()
+            if (has_value_flag)
+            {
+                return;
+            }
+
+            if constexpr (library::std::is_trivially_destructible_v<E>)
+            {
+                return;
+            }
+
+            error_value.~E();
+        }
+
       public:
         // conditionally trivial special member functions
         // check only E
@@ -976,7 +1030,8 @@ namespace library::common
             [[maybe_unused]] result_ok_tag,
             Args... args
         ) noexcept
-            : has_value_flag { true }
+            : dummy {}
+            , has_value_flag { true }
         {
             // holds the valid value : `void`
         }
@@ -1097,7 +1152,96 @@ namespace library::common
             // `E` is not trivial
             error_value.~E();
         }
+
+        // operators
+        template<typename F>
+            requires(!is_result<F> && library::std::is_convertible_v<F, E>)
+        constexpr result &operator=(F &&new_error) noexcept
+        {
+            update_error_value(library::std::forward<F>(new_error));
+            has_value_flag = false;
+
+            return *this;
+        }
+
+        constexpr result &operator=(const result &other) noexcept
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value();
+            if (other.has_error())
+            {
+                update_error_value(other.unwrap_error());
+            }
+
+            return *this;
+        }
+
+        constexpr result &operator=(result &&other) noexcept
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value();
+            if (other.has_error())
+            {
+                update_error_value(library::std::move<E>(other.unwrap_error()));
+                other.has_value_flag = false;
+            }
+
+            return *this;
+        }
+
+        template<typename U, typename F>
+            requires library::std::is_convertible_v<U, void>
+                  && library::std::is_convertible_v<F, E>
+        constexpr result &operator=(const result<U, F> &other) noexcept
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value();
+            if (other.has_error())
+            {
+                update_error_value(static_cast<E>(other.unwrap_error()));
+            }
+
+            return *this;
+        }
+
+        template<typename U, typename F>
+            requires library::std::is_convertible_v<U, void>
+                  && library::std::is_convertible_v<F, E>
+        constexpr result &operator=(result<U, F> &&other) noexcept
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            has_value_flag = other.has_value();
+            if (other.has_error())
+            {
+                update_error_value(
+                    static_cast<E>(library::std::move<E>(other.unwrap_error()))
+                );
+                other.has_value_flag = false;
+            }
+
+            return *this;
+        }
     };
+
+    // TODO:
+    // - implementing result<void, E> specialization
+    // - exact destruct within operator=
 
     // deduction guide
     template<typename T, typename E>
@@ -1131,7 +1275,6 @@ namespace library::common
             static_cast<Args &&>(args)...
         );
     }
-
 }
 
 /*
