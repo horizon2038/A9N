@@ -1,6 +1,7 @@
 #ifndef LIBRARY_RESULT_HPP
 #define LIBRARY_RESULT_HPP
 
+#include "library/libcxx/__type_traits/remove_cvref.hpp"
 #include <library/libcxx/functional>
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
@@ -1429,6 +1430,79 @@ namespace library::common
             return library::std::invoke(library::std::forward<Function>(function
             ));
         }
+
+        template<
+            typename Function,
+            typename Ecvref = E &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+        constexpr auto or_else(Function &&function) &
+        {
+            if (has_value())
+            {
+                // uniform initialization
+                return U {};
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap_error()
+            );
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E const &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+        constexpr auto or_else(Function &&function) const &
+        {
+            if (has_value())
+            {
+                return U {};
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap_error()
+            );
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+        constexpr auto or_else(Function &&function) &&
+        {
+            if (has_value())
+            {
+                return U {};
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap_error())
+            );
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E const &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function, Ecvref>>>
+        constexpr auto or_else(Function &&function) const &&
+        {
+            if (has_value())
+            {
+                return U {};
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap_error())
+            );
+        }
     };
 
     // TODO:
@@ -1436,6 +1510,7 @@ namespace library::common
     // - update_{ok | error}_value for result<T, E>
     // - has_{value | error} remove copy
     // - unify name of template parameters
+    // - has_{value | error} -> is_{ok | error}
 
     // deduction guide
     template<typename T, typename E>
