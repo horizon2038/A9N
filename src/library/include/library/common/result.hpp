@@ -1588,6 +1588,100 @@ namespace library::common
                 library::std::invoke(library::std::forward<Function>(function))
             );
         }
+
+        template<
+            typename Function,
+            typename Ecvref = E &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires library::std::is_copy_constructible_v<E>
+        constexpr auto transform_error(Function &&function) &
+        {
+            if (has_value())
+            {
+                return result<void, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
+
+            return result<void, E>(result_error, unwrap_error());
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E const &,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires library::std::is_copy_constructible_v<E>
+        constexpr auto transform_error(Function &&function) const &
+        {
+            if (has_value())
+            {
+                return result<void, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
+
+            return result<void, E>(result_error, unwrap_error());
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires library::std::is_move_constructible_v<E>
+        constexpr auto transform_error(Function &&function) &&
+        {
+            if (has_value())
+            {
+                return result<void, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
+
+            return result<void, E>(
+                result_error,
+                library::std::move(unwrap_error())
+            );
+        }
+
+        template<
+            typename Function,
+            typename Ecvref = E const &&,
+            typename U = library::std::remove_cvref_t<
+                library::std::invoke_result_t<Function>>>
+            requires library::std::is_move_constructible_v<E>
+        constexpr auto transform_error(Function &&function) const &&
+        {
+            if (has_value())
+            {
+                return result<void, U>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
+
+            return result<void, E>(
+                result_error,
+                library::std::move(unwrap_error())
+            );
+        }
     };
 
     // TODO:
@@ -1596,6 +1690,15 @@ namespace library::common
     // - has_{value | error} remove copy
     // - unify name of template parameters
     // - has_{value | error} -> is_{ok | error}
+    // - split file
+    //  - result_common.hpp
+    //    - util, constant, helper function
+    //  - result_normal.hpp
+    //    - result<T, E>
+    //  - result_void.hpp
+    //    - result<void, E> specialization
+    //  - result.hpp
+    //    - for include
 
     // deduction guide
     template<typename T, typename E>
