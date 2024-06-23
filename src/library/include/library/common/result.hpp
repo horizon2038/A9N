@@ -1520,6 +1520,7 @@ namespace library::common
             }
 
             return result<U, E>(
+                result_in_place,
                 result_ok,
                 library::std::invoke(library::std::forward<Function>(function))
             );
@@ -1538,6 +1539,7 @@ namespace library::common
             }
 
             return result<U, E>(
+                result_in_place,
                 result_ok,
                 library::std::invoke(library::std::forward<Function>(function))
             );
@@ -1559,6 +1561,7 @@ namespace library::common
             }
 
             return result<U, E>(
+                result_in_place,
                 result_ok,
                 library::std::invoke(library::std::forward<Function>(function))
             );
@@ -1580,6 +1583,7 @@ namespace library::common
             }
 
             return result<U, E>(
+                result_in_place,
                 result_ok,
                 library::std::invoke(library::std::forward<Function>(function))
             );
