@@ -67,6 +67,32 @@ namespace library::common
         };
         bool has_value_flag;
 
+        // helper methods
+
+        template<typename U>
+            requires library::std::is_convertible_v<U, T>
+        constexpr void update_ok_value(U &&new_ok_value)
+        {
+            init_ok_value();
+            new (&error_value)
+                T(static_cast<T>(library::std::forward<U>(new_ok_value)));
+        }
+
+        constexpr void init_ok_value()
+        {
+            if (has_error())
+            {
+                return;
+            }
+
+            if constexpr (library::std::is_trivially_destructible_v<T>)
+            {
+                return;
+            }
+
+            ok_value.~T();
+        }
+
       public:
         // conditionally trivial special member functions
         constexpr result(const result &other)
@@ -1686,6 +1712,7 @@ namespace library::common
 
     // TODO:
     // - implementing result<void, E> specialization
+    //    - done
     // - update_{ok | error}_value for result<T, E>
     // - has_{value | error} remove copy
     // - unify name of template parameters
