@@ -681,10 +681,6 @@ namespace library::common
                   && library::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) &
         {
-            static_assert(
-                library::std::is_same_v<typename U::ok_type, T>,
-                "Function must return result<T, E>"
-            );
             if (is_ok())
             {
                 return U(result_ok, unwrap());
@@ -706,10 +702,6 @@ namespace library::common
                   && library::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) const &
         {
-            static_assert(
-                library::std::is_same_v<typename U::ok_type, T>,
-                "Function must return result<T, E>"
-            );
             if (is_ok())
             {
                 return U(result_ok, unwrap());
@@ -731,10 +723,6 @@ namespace library::common
                   && library::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) &&
         {
-            static_assert(
-                library::std::is_same_v<typename U::ok_type, T>,
-                "Function must return result<T, E>"
-            );
             if (is_ok())
             {
                 return U(result_ok, library::std::move(unwrap()));
@@ -756,11 +744,6 @@ namespace library::common
                   && library::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) const &&
         {
-            static_assert(
-                library::std::is_same_v<typename U::ok_type, T>,
-                "Function must return result<T, E>"
-            );
-
             if (is_ok())
             {
                 return U(result_ok, library::std::move(unwrap()));
