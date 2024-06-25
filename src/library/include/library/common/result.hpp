@@ -258,11 +258,18 @@ namespace library::common
             requires(!is_result<U> && library::std::is_convertible_v<U, T>)
         constexpr result &operator=(U &&u) noexcept
         {
+            if (has_error())
+            {
+                init_error_value();
+            }
+
             new (&ok_value) T(static_cast<T>(library::std::forward<U>(u)));
             has_value_flag = true;
 
             return *this;
         }
+
+        // error assign operator
 
         constexpr result &operator=(const result &other) noexcept
         {
@@ -1078,8 +1085,7 @@ namespace library::common
         template<typename... Args>
         constexpr result(
             [[maybe_unused]] result_in_place_tag,
-            [[maybe_unused]] result_ok_tag,
-            Args... args
+            [[maybe_unused]] result_ok_tag
         ) noexcept
             : dummy {}
             , has_value_flag { true }
