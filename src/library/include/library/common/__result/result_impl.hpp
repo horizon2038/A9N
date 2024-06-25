@@ -1,6 +1,7 @@
 #ifndef LIBRARY_COMMON_RESULT_IMPL_HPP
 #define LIBRARY_COMMON_RESULT_IMPL_HPP
 
+#include "library/libcxx/__type_traits/is_constructible.hpp"
 #include <library/common/__result/result_common.hpp>
 
 #include <library/libcxx/functional>
@@ -143,14 +144,14 @@ namespace library::common
         // deduction constructor
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
-        constexpr result(U &&other) noexcept : is_ok_flag(true)
+        constexpr result(U &&other) noexcept : is_ok_flag { true }
         {
             new (&ok_value) T(library::std::forward<T>(other));
         }
 
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(F &&other) noexcept : is_ok_flag(false)
+        constexpr result(F &&other) noexcept : is_ok_flag { false }
         {
             new (&error_value) E(library::std::forward<E>(other));
         }
@@ -160,7 +161,8 @@ namespace library::common
         //  (changes to allow the same type for T and E).
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
-        constexpr result(result_ok_tag, U &&other) noexcept : is_ok_flag(true)
+        constexpr result(result_ok_tag, U &&other) noexcept
+            : is_ok_flag { true }
         {
             new (&ok_value) T(library::std::forward<T>(other));
         }
@@ -768,6 +770,7 @@ namespace library::common
             typename Tcvref = T &,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
+            requires library::std::is_copy_constructible_v<E>
         constexpr auto transform(Function &&function) &
         {
             if (is_error())
@@ -793,6 +796,7 @@ namespace library::common
             typename Tcvref = const T &,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
+            requires library::std::is_copy_constructible_v<E>
         constexpr auto transform(Function &&function) const &
         {
             if (is_error())
@@ -818,6 +822,7 @@ namespace library::common
             typename Tcvref = T &&,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
+            requires library::std::is_move_constructible_v<E>
         constexpr auto transform(Function &&function) &&
         {
             if (is_error())
@@ -843,6 +848,7 @@ namespace library::common
             typename Tcvref = const T &&,
             typename U = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
+            requires library::std::is_move_constructible_v<E>
         constexpr auto transform(Function &&function) const &&
         {
             if (is_error())
@@ -868,8 +874,7 @@ namespace library::common
             typename Ecvref = E &,
             typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, F>
-                  && library::std::is_copy_constructible_v<T>
+            requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &
         {
             if (is_ok())
@@ -895,8 +900,7 @@ namespace library::common
             typename Ecvref = const E &,
             typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, F>
-                  && library::std::is_copy_constructible_v<T>
+            requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &
         {
             if (is_ok())
@@ -922,8 +926,7 @@ namespace library::common
             typename Ecvref = E &&,
             typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, F>
-                  && library::std::is_copy_constructible_v<T>
+            requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &&
         {
             if (is_ok())
@@ -949,8 +952,7 @@ namespace library::common
             typename Ecvref = E const &&,
             typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, F>
-                  && library::std::is_copy_constructible_v<T>
+            requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &&
         {
             if (is_ok())
@@ -975,6 +977,7 @@ namespace library::common
     // TODO:
     // - add or_else overload for T is *void* to result<T, E>
     // - add template specialization of result<void, E>
+    // - add equality operators
 }
 
 #endif
