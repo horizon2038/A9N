@@ -4,8 +4,6 @@
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 
-#include <kernel/utility/logger.hpp>
-
 namespace library::common
 {
     struct option_none_tag
@@ -44,6 +42,30 @@ namespace library::common
         };
         bool is_some_flag;
 
+        // helper methods
+        template<typename U>
+            requires library::std::is_convertible_v<U, T>
+        constexpr void update_some_value(U &&new_some_value)
+        {
+            init_ok_value();
+            new (&value) T(library::std::forward<U>(new_some_value));
+        }
+
+        constexpr void init_ok_value()
+        {
+            if (is_none())
+            {
+                return;
+            }
+
+            if constexpr (library::std::is_trivially_destructible_v<T>)
+            {
+                return;
+            }
+
+            value.~T();
+        }
+
       public:
         // conditionally trivial special member functions
         constexpr option(option const &other)
@@ -68,12 +90,14 @@ namespace library::common
 
         constexpr option() noexcept : dummy {}, is_some_flag(false)
         {
+            // lazy initialization
         }
 
         constexpr option([[maybe_unused]] option_none_tag n) noexcept
             : dummy {}
             , is_some_flag(false)
         {
+            // lazy initialization
         }
 
         template<typename... Args>
