@@ -74,8 +74,7 @@ namespace library::common
         constexpr void update_ok_value(U &&new_ok_value)
         {
             init_ok_value();
-            new (&error_value)
-                T(static_cast<T>(library::std::forward<U>(new_ok_value)));
+            new (&error_value) T(library::std::forward<U>(new_ok_value));
         }
 
         constexpr void init_ok_value()
@@ -98,8 +97,7 @@ namespace library::common
         constexpr void update_error_value(F &&new_error)
         {
             init_error_value();
-            new (&error_value)
-                E(static_cast<E>(library::std::forward<F>(new_error)));
+            new (&error_value) E(library::std::forward<F>(new_error));
         }
 
         constexpr void init_error_value()
@@ -231,6 +229,7 @@ namespace library::common
                 new (&error_value) E(library::std::move(other.unwrap_error()));
             }
 
+            // remove this
             other.has_value_flag = false;
         }
 
@@ -263,8 +262,7 @@ namespace library::common
                 init_error_value();
             }
 
-            new (&ok_value)
-                T(static_cast<T>(library::std::forward<U>(new_ok_value)));
+            update_ok_value((library::std::forward<T>(new_ok_value)));
             has_value_flag = true;
 
             return *this;
@@ -279,8 +277,8 @@ namespace library::common
                 init_ok_value();
             }
 
-            new (&error_value)
-                E(static_cast<E>(library::std::forward<F>(new_error_value)));
+            // update
+            update_error_value(library::std::forward<F>(new_error_value));
             has_value_flag = false;
 
             return *this;
@@ -295,15 +293,25 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value();
+            if (has_error() && other.has_value())
+            {
+                init_error_value();
+            }
+            if (has_value() && other.has_error())
+            {
+                init_ok_value();
+            }
+
             if (other.has_value())
             {
-                new (&ok_value) T(other.unwrap());
+                update_ok_value(other.unwrap());
             }
             else
             {
-                new (&error_value) T(other.unwrap_error());
+                update_error_value(other.unwrap_error());
             }
+
+            has_value_flag = other.has_value();
 
             return *this;
         }
@@ -315,16 +323,25 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value();
+            if (has_error() && other.has_value())
+            {
+                init_error_value();
+            }
+            if (has_value() && other.has_error())
+            {
+                init_ok_value();
+            }
+
             if (other.has_value())
             {
-                new (&ok_value) T(library::std::move(other.unwrap()));
+                update_ok_value(library::std::move(other.unwrap()));
             }
             else
             {
-                new (&error_value) E(library::std::move(other.unwrap_error()));
+                update_error_value(library::std::move(other.unwrap_error()));
             }
-            other.has_value_flag = false;
+
+            has_value_flag = other.has_value();
 
             return *this;
         }
@@ -339,15 +356,25 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value();
+            if (has_error() && other.has_value())
+            {
+                init_error_value();
+            }
+            if (has_value() && other.has_error())
+            {
+                init_ok_value();
+            }
+
             if (other.has_value())
             {
-                new (&ok_value) T(static_cast<T>(other.unwrap()));
+                update_ok_value(other.unwrap());
             }
             else
             {
-                new (&error_value) E(static_cast<E>(other.unwrap_error()));
+                update_error_value(other.unwrap_error());
             }
+
+            has_value_flag = other.has_value();
 
             return *this;
         }
@@ -362,18 +389,25 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value();
+            if (has_error() && other.has_value())
+            {
+                init_error_value();
+            }
+            if (has_value() && other.has_error())
+            {
+                init_ok_value();
+            }
+
             if (other.has_value())
             {
-                new (&ok_value)
-                    T(static_cast<T>(library::std::move(other.unwrap())));
+                update_ok_value(library::std::move(other.unwrap()));
             }
             else
             {
-                new (&error_value)
-                    E(static_cast<E>(library::std::move(other.unwrap_error())));
+                update_error_value(library::std::move(other.unwrap_error()));
             }
-            other.has_value_flag = false;
+
+            has_value_flag = other.has_value();
 
             return *this;
         }
@@ -467,11 +501,11 @@ namespace library::common
         template<typename U>
             requires library::std::is_copy_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto unwrap_or(U &&value) &
+        constexpr auto unwrap_or(U &&instead_ok_value) &
         {
             if (has_error())
             {
-                return static_cast<T>(library::std::forward<U>(value));
+                return library::std::forward<U>(instead_ok_value);
             }
 
             return unwrap();
@@ -480,11 +514,11 @@ namespace library::common
         template<typename U>
             requires library::std::is_copy_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto unwrap_or(U &&value) const &
+        constexpr auto unwrap_or(U &&instead_ok_value) const &
         {
             if (has_error())
             {
-                return static_cast<T>(library::std::forward<U>(value));
+                return library::std::forward<U>(instead_ok_value);
             }
 
             return unwrap();
@@ -493,11 +527,11 @@ namespace library::common
         template<typename U>
             requires library::std::is_move_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto unwrap_or(U &&value) &&
+        constexpr auto unwrap_or(U &&instead_ok_value) &&
         {
             if (has_error())
             {
-                return static_cast<T>(library::std::forward<U>(value));
+                return library::std::forward<U>(instead_ok_value);
             }
 
             return library::std::move(unwrap());
@@ -506,63 +540,63 @@ namespace library::common
         template<typename U>
             requires library::std::is_move_constructible_v<U>
                   && library::std::is_convertible_v<U, T>
-        constexpr auto unwrap_or(U &&value) const &&
+        constexpr auto unwrap_or(U &&instead_ok_value) const &&
         {
             if (has_error())
             {
-                return static_cast<T>(library::std::forward<U>(value));
+                return library::std::forward<U>(instead_ok_value);
             }
 
             return library::std::move(unwrap());
         }
 
-        template<typename G = E>
+        template<typename F = E>
             requires library::std::is_copy_constructible_v<E>
-                  && library::std::is_convertible_v<G, E>
-        constexpr auto unwrap_error_or(G &&value) &
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&instead_error_value) &
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<G>(value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return unwrap_error();
         }
 
-        template<typename G = E>
+        template<typename F = E>
             requires library::std::is_move_constructible_v<E>
-                  && library::std::is_convertible_v<G, E>
-        constexpr auto unwrap_error_or(G &&value) const &
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&instead_error_value) const &
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<G>(value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return unwrap_error();
         }
 
-        template<typename G = E>
+        template<typename F = E>
             requires library::std::is_copy_constructible_v<E>
-                  && library::std::is_convertible_v<G, E>
-        constexpr auto unwrap_error_or(G &&value) &&
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&instead_error_value) &&
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<G>(value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return library::std::move(unwrap_error());
         }
 
-        template<typename G = E>
+        template<typename F = E>
             requires library::std::is_move_constructible_v<E>
-                  && library::std::is_convertible_v<G, E>
-        constexpr auto unwrap_error_or(G &&value) const &&
+                  && library::std::is_convertible_v<F, E>
+        constexpr auto unwrap_error_or(F &&instead_error_value) const &&
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<G>(value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return library::std::move(unwrap_error());
@@ -882,15 +916,15 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, U>
+            requires library::std::is_same_v<E, F>
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &
         {
             if (has_value())
             {
-                return result<T, U>(
+                return result<T, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -900,7 +934,7 @@ namespace library::common
                 );
             }
 
-            return result<T, U>(library::std::invoke(
+            return result<T, F>(library::std::invoke(
                 library::std::forward<Function>(function),
                 unwrap_error()
             ));
@@ -909,15 +943,15 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = const E &,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, U>
+            requires library::std::is_same_v<E, F>
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &
         {
             if (has_value())
             {
-                return result<T, U>(
+                return result<T, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -927,7 +961,7 @@ namespace library::common
                 );
             }
 
-            return result<T, U>(library::std::invoke(
+            return result<T, F>(library::std::invoke(
                 library::std::forward<Function>(function),
                 unwrap_error()
             ));
@@ -936,15 +970,15 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, U>
+            requires library::std::is_same_v<E, F>
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &&
         {
             if (has_value())
             {
-                return result<T, U>(
+                return result<T, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -954,7 +988,7 @@ namespace library::common
                 );
             }
 
-            return result<T, U>(library::std::invoke(
+            return result<T, F>(library::std::invoke(
                 library::std::forward<Function>(function),
                 library::std::move(unwrap_error())
             ));
@@ -963,15 +997,15 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E const &&,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
-            requires library::std::is_same_v<E, U>
+            requires library::std::is_same_v<E, F>
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &&
         {
             if (has_value())
             {
-                return result<T, U>(
+                return result<T, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -981,7 +1015,7 @@ namespace library::common
                 );
             }
 
-            return result<T, U>(library::std::invoke(
+            return result<T, F>(library::std::invoke(
                 library::std::forward<Function>(function),
                 library::std::move(unwrap_error())
             ));
@@ -1015,41 +1049,12 @@ namespace library::common
         };
         bool has_value_flag;
 
-        // helper methods
-
-        /*
-        template<typename U>
-            requires library::std::is_convertible_v<U, T>
-        constexpr void update_ok_value(U &&new_value)
-        {
-            init_ok_value();
-            new (&error_value)
-                T(static_cast<T>(library::std::forward<U>(new_ok_value)));
-        }
-
-        constexpr void init_ok_value()
-        {
-            if (has_error())
-            {
-                return;
-            }
-
-            if constexpr (library::std::is_trivially_destructible_v<T>)
-            {
-                return;
-            }
-
-            ok_value.~T();
-        }
-        */
-
         template<typename F>
             requires library::std::is_convertible_v<F, E>
-        constexpr void update_error_value(F &&new_error)
+        constexpr void update_error_value(F &&new_error_value)
         {
             init_error_value();
-            new (&error_value)
-                E(static_cast<E>(library::std::forward<F>(new_error)));
+            new (&error_value) E(library::std::forward<F>(new_error_value));
         }
 
         constexpr void init_error_value()
@@ -1123,17 +1128,19 @@ namespace library::common
 
         template<typename U = void>
             requires(!is_result<U> && library::std::is_convertible_v<U, void>)
-        constexpr result(U &&value) noexcept : dummy {}
-                                             , has_value_flag { true }
+        constexpr result(U &&new_ok_value) noexcept
+            : dummy {}
+            , has_value_flag { true }
         {
             // holds the valid value : `void`
         }
 
         template<typename F = E>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(F &&error) noexcept : has_value_flag { false }
+        constexpr result(F &&new_error_value) noexcept
+            : has_value_flag { false }
         {
-            new (error_value) E(library::std::forward<F>(error));
+            new (error_value) E(library::std::forward<F>(new_error_value));
         }
 
         // obvious constructors
@@ -1199,7 +1206,7 @@ namespace library::common
                 return;
             }
 
-            new (&error_value) E(static_cast<E>(other.unwrap_error()));
+            new (&error_value) E(other.unwrap_error());
         }
 
         template<typename U>
@@ -1214,8 +1221,7 @@ namespace library::common
         {
             if (other.has_error())
             {
-                new (&error_value)
-                    E(static_cast<E>(library::std::move(other.unwrap_error())));
+                new (&error_value) E(library::std::move(other.unwrap_error()));
             }
 
             other.has_value_flag = false;
@@ -1230,9 +1236,9 @@ namespace library::common
         // operators
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<F, E>)
-        constexpr result &operator=(F &&new_error) noexcept
+        constexpr result &operator=(F &&new_error_value) noexcept
         {
-            update_error_value(library::std::forward<F>(new_error));
+            update_error_value(library::std::forward<F>(new_error_value));
             has_value_flag = false;
 
             return *this;
@@ -1264,7 +1270,7 @@ namespace library::common
             has_value_flag = other.has_value();
             if (other.has_error())
             {
-                update_error_value(library::std::move<E>(other.unwrap_error()));
+                update_error_value(library::std::move(other.unwrap_error()));
                 other.has_value_flag = false;
             }
 
@@ -1284,7 +1290,7 @@ namespace library::common
             has_value_flag = other.has_value();
             if (other.has_error())
             {
-                update_error_value(static_cast<E>(other.unwrap_error()));
+                update_error_value(other.unwrap_error());
             }
 
             return *this;
@@ -1303,9 +1309,7 @@ namespace library::common
             has_value_flag = other.has_value();
             if (other.has_error())
             {
-                update_error_value(
-                    static_cast<E>(library::std::move<E>(other.unwrap_error()))
-                );
+                update_error_value(static_cast<E>(other.unwrap_error()));
                 other.has_value_flag = false;
             }
 
@@ -1377,11 +1381,11 @@ namespace library::common
         template<typename F = E>
             requires library::std::is_copy_constructible_v<F>
                   && library::std::is_convertible_v<F, E>
-        constexpr auto unwrap_error_or(F &&error_value) &
+        constexpr auto unwrap_error_or(F &&instead_error_value) &
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<F>(error_value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return unwrap_error();
@@ -1390,11 +1394,11 @@ namespace library::common
         template<typename F = E>
             requires library::std::is_copy_constructible_v<F>
                   && library::std::is_convertible_v<F, E>
-        constexpr auto unwrap_error_or(F &&error_value) const &
+        constexpr auto unwrap_error_or(F &&instead_error_value) const &
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<F>(error_value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return unwrap_error();
@@ -1403,11 +1407,11 @@ namespace library::common
         template<typename F = E>
             requires library::std::is_move_constructible_v<F>
                   && library::std::is_convertible_v<F, E>
-        constexpr auto unwrap_error_or(F &&error_value) &&
+        constexpr auto unwrap_error_or(F &&instead_error_value) &&
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<F>(error_value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return library::std::move(unwrap_error());
@@ -1416,11 +1420,11 @@ namespace library::common
         template<typename F = E>
             requires library::std::is_move_constructible_v<F>
                   && library::std::is_convertible_v<F, E>
-        constexpr auto unwrap_error_or(F &&error_value) const &&
+        constexpr auto unwrap_error_or(F &&instead_error_value) const &&
         {
             if (has_value())
             {
-                return static_cast<E>(library::std::forward<F>(error_value));
+                return library::std::forward<F>(instead_error_value);
             }
 
             return library::std::move(unwrap_error());
@@ -1510,14 +1514,14 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) &
         {
             if (has_value())
             {
                 // uniform initialization
-                return U {};
+                return F {};
             }
 
             return library::std::invoke(
@@ -1529,13 +1533,13 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E const &,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) const &
         {
             if (has_value())
             {
-                return U {};
+                return F {};
             }
 
             return library::std::invoke(
@@ -1547,13 +1551,13 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) &&
         {
             if (has_value())
             {
-                return U {};
+                return F {};
             }
 
             return library::std::invoke(
@@ -1565,13 +1569,13 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E const &&,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) const &&
         {
             if (has_value())
             {
-                return U {};
+                return F {};
             }
 
             return library::std::invoke(
@@ -1665,14 +1669,14 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function>>>
             requires library::std::is_copy_constructible_v<E>
         constexpr auto transform_error(Function &&function) &
         {
             if (has_value())
             {
-                return result<void, U>(
+                return result<void, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -1687,14 +1691,14 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E const &,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function>>>
             requires library::std::is_copy_constructible_v<E>
         constexpr auto transform_error(Function &&function) const &
         {
             if (has_value())
             {
-                return result<void, U>(
+                return result<void, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -1709,14 +1713,14 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function>>>
             requires library::std::is_move_constructible_v<E>
         constexpr auto transform_error(Function &&function) &&
         {
             if (has_value())
             {
-                return result<void, U>(
+                return result<void, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -1734,14 +1738,14 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E const &&,
-            typename U = library::std::remove_cvref_t<
+            typename F = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function>>>
             requires library::std::is_move_constructible_v<E>
         constexpr auto transform_error(Function &&function) const &&
         {
             if (has_value())
             {
-                return result<void, U>(
+                return result<void, F>(
                     result_in_place,
                     result_ok,
                     library::std::invoke(
@@ -1759,10 +1763,7 @@ namespace library::common
 
     // TODO:
     // - implementing result<void, E> specialization
-    //    - done
-    // - update_{ok | error}_value for result<T, E>
     // - has_{value | error} remove copy
-    // - unify name of template parameters
     // - has_{value | error} -> is_{ok | error}
     // - split file
     //  - result_common.hpp
