@@ -63,10 +63,10 @@ namespace library::common
 
         template<typename F>
             requires library::std::is_convertible_v<F, E>
-        constexpr void update_error_value(F &&new_error)
+        constexpr void update_error_value(F &&new_error_value)
         {
             init_error_value();
-            new (&error_value) E(library::std::forward<F>(new_error));
+            new (&error_value) E(library::std::forward<F>(new_error_value));
         }
 
         constexpr void init_error_value()
@@ -150,9 +150,9 @@ namespace library::common
 
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(F &&other) noexcept : is_ok_flag { false }
+        constexpr result(F &&new_error_value) noexcept : is_ok_flag { false }
         {
-            new (&error_value) E(library::std::forward<E>(other));
+            new (&error_value) E(library::std::forward<E>(new_error_value));
         }
 
         // obvious constructors
@@ -160,18 +160,18 @@ namespace library::common
         //  (changes to allow the same type for T and E).
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
-        constexpr result(result_ok_tag, U &&other) noexcept
+        constexpr result(result_ok_tag, U &&new_ok_value) noexcept
             : is_ok_flag { true }
         {
-            new (&ok_value) T(library::std::forward<T>(other));
+            new (&ok_value) T(library::std::forward<T>(new_ok_value));
         }
 
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(result_error_tag, F &&other) noexcept
+        constexpr result(result_error_tag, F &&new_error_value) noexcept
             : is_ok_flag(false)
         {
-            new (&error_value) E(library::std::forward<E>(other));
+            new (&error_value) E(library::std::forward<E>(new_error_value));
         }
 
         constexpr result(const result &other) noexcept
