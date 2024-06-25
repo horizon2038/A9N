@@ -34,7 +34,7 @@ namespace library::common
             T ok_value;
             E error_value;
         };
-        bool is_value_flag;
+        bool is_ok_flag;
 
         // helper methods
 
@@ -71,8 +71,8 @@ namespace library::common
 
         constexpr void init_error_value()
         {
-            // is_value()
-            if (is_value())
+            // is_ok()
+            if (is_ok())
             {
                 return;
             }
@@ -123,7 +123,7 @@ namespace library::common
             Args... args
         ) noexcept
             : ok_value(std::forward<Args>(args)...)
-            , is_value_flag { true }
+            , is_ok_flag { true }
         {
             new (&ok_value) T(static_cast<Args &&>(args)...);
         }
@@ -135,7 +135,7 @@ namespace library::common
             Args... args
         ) noexcept
             : error_value(std::forward<Args>(args)...)
-            , is_value_flag { false }
+            , is_ok_flag { false }
         {
             new (&error_value) E(static_cast<Args &&>(args)...);
         }
@@ -143,14 +143,14 @@ namespace library::common
         // deduction constructor
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
-        constexpr result(U &&other) noexcept : is_value_flag(true)
+        constexpr result(U &&other) noexcept : is_ok_flag(true)
         {
             new (&ok_value) T(library::std::forward<T>(other));
         }
 
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(F &&other) noexcept : is_value_flag(false)
+        constexpr result(F &&other) noexcept : is_ok_flag(false)
         {
             new (&error_value) E(library::std::forward<E>(other));
         }
@@ -160,8 +160,7 @@ namespace library::common
         //  (changes to allow the same type for T and E).
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
-        constexpr result(result_ok_tag, U &&other) noexcept
-            : is_value_flag(true)
+        constexpr result(result_ok_tag, U &&other) noexcept : is_ok_flag(true)
         {
             new (&ok_value) T(library::std::forward<T>(other));
         }
@@ -169,15 +168,14 @@ namespace library::common
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(result_error_tag, F &&other) noexcept
-            : is_value_flag(false)
+            : is_ok_flag(false)
         {
             new (&error_value) E(library::std::forward<E>(other));
         }
 
-        constexpr result(const result &other)
-            : is_value_flag { other.is_value() }
+        constexpr result(const result &other) : is_ok_flag { other.is_ok() }
         {
-            if (other.is_value())
+            if (other.is_ok())
             {
                 new (&ok_value) T(other.unwrap());
             }
@@ -187,9 +185,9 @@ namespace library::common
             }
         }
 
-        constexpr result(result &&other) : is_value_flag { other.is_value() }
+        constexpr result(result &&other) : is_ok_flag { other.is_ok() }
         {
-            if (other.is_value())
+            if (other.is_ok())
             {
                 new (&ok_value) T(library::std::move(other.unwrap()));
             }
@@ -199,14 +197,14 @@ namespace library::common
             }
 
             // remove this
-            other.is_value_flag = false;
+            other.is_ok_flag = false;
         }
 
         // add result<U, F> constructor
 
         constexpr ~result() noexcept
         {
-            if (is_value())
+            if (is_ok())
             {
                 if constexpr (!library::std::is_trivially_destructible_v<T>)
                 {
@@ -232,7 +230,7 @@ namespace library::common
             }
 
             update_ok_value((library::std::forward<T>(new_ok_value)));
-            is_value_flag = true;
+            is_ok_flag = true;
 
             return *this;
         }
@@ -241,14 +239,14 @@ namespace library::common
             requires(!is_result<F> && library::std::is_convertible_v<F, E>)
         constexpr result &operator=(F &&new_error_value) noexcept
         {
-            if (is_value())
+            if (is_ok())
             {
                 init_ok_value();
             }
 
             // update
             update_error_value(library::std::forward<F>(new_error_value));
-            is_value_flag = false;
+            is_ok_flag = false;
 
             return *this;
         }
@@ -262,16 +260,16 @@ namespace library::common
                 return *this;
             }
 
-            if (is_error() && other.is_value())
+            if (is_error() && other.is_ok())
             {
                 init_error_value();
             }
-            if (is_value() && other.is_error())
+            if (is_ok() && other.is_error())
             {
                 init_ok_value();
             }
 
-            if (other.is_value())
+            if (other.is_ok())
             {
                 update_ok_value(other.unwrap());
             }
@@ -280,7 +278,7 @@ namespace library::common
                 update_error_value(other.unwrap_error());
             }
 
-            is_value_flag = other.is_value();
+            is_ok_flag = other.is_ok();
 
             return *this;
         }
@@ -292,16 +290,16 @@ namespace library::common
                 return *this;
             }
 
-            if (is_error() && other.is_value())
+            if (is_error() && other.is_ok())
             {
                 init_error_value();
             }
-            if (is_value() && other.is_error())
+            if (is_ok() && other.is_error())
             {
                 init_ok_value();
             }
 
-            if (other.is_value())
+            if (other.is_ok())
             {
                 update_ok_value(library::std::move(other.unwrap()));
             }
@@ -310,7 +308,7 @@ namespace library::common
                 update_error_value(library::std::move(other.unwrap_error()));
             }
 
-            is_value_flag = other.is_value();
+            is_ok_flag = other.is_ok();
 
             return *this;
         }
@@ -325,16 +323,16 @@ namespace library::common
                 return *this;
             }
 
-            if (is_error() && other.is_value())
+            if (is_error() && other.is_ok())
             {
                 init_error_value();
             }
-            if (is_value() && other.is_error())
+            if (is_ok() && other.is_error())
             {
                 init_ok_value();
             }
 
-            if (other.is_value())
+            if (other.is_ok())
             {
                 update_ok_value(other.unwrap());
             }
@@ -343,7 +341,7 @@ namespace library::common
                 update_error_value(other.unwrap_error());
             }
 
-            is_value_flag = other.is_value();
+            is_ok_flag = other.is_ok();
 
             return *this;
         }
@@ -358,16 +356,16 @@ namespace library::common
                 return *this;
             }
 
-            if (is_error() && other.is_value())
+            if (is_error() && other.is_ok())
             {
                 init_error_value();
             }
-            if (is_value() && other.is_error())
+            if (is_ok() && other.is_error())
             {
                 init_ok_value();
             }
 
-            if (other.is_value())
+            if (other.is_ok())
             {
                 update_ok_value(library::std::move(other.unwrap()));
             }
@@ -376,7 +374,7 @@ namespace library::common
                 update_error_value(library::std::move(other.unwrap_error()));
             }
 
-            is_value_flag = other.is_value();
+            is_ok_flag = other.is_ok();
 
             return *this;
         }
@@ -413,7 +411,7 @@ namespace library::common
 
         constexpr explicit operator bool() const
         {
-            return is_value_flag;
+            return is_ok_flag;
         }
 
         constexpr auto &&unwrap() &
@@ -456,15 +454,15 @@ namespace library::common
             return library::std::move(error_value);
         }
 
-        [[nodiscard("result::is_value() must be used.")]] constexpr bool
-            is_value() const noexcept
+        [[nodiscard("result::is_ok() must be used.")]] constexpr bool
+            is_ok() const noexcept
         {
-            return is_value_flag;
+            return is_ok_flag;
         }
 
         constexpr bool is_error() const noexcept
         {
-            return !is_value_flag;
+            return !is_ok_flag;
         }
 
         template<typename U>
@@ -524,7 +522,7 @@ namespace library::common
                   && library::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) &
         {
-            if (is_value())
+            if (is_ok())
             {
                 return library::std::forward<F>(instead_error_value);
             }
@@ -537,7 +535,7 @@ namespace library::common
                   && library::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) const &
         {
-            if (is_value())
+            if (is_ok())
             {
                 return library::std::forward<F>(instead_error_value);
             }
@@ -550,7 +548,7 @@ namespace library::common
                   && library::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) &&
         {
-            if (is_value())
+            if (is_ok())
             {
                 return library::std::forward<F>(instead_error_value);
             }
@@ -563,7 +561,7 @@ namespace library::common
                   && library::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) const &&
         {
-            if (is_value())
+            if (is_ok())
             {
                 return library::std::forward<F>(instead_error_value);
             }
@@ -687,7 +685,7 @@ namespace library::common
                 library::std::is_same_v<typename U::ok_type, T>,
                 "Function must return result<T, E>"
             );
-            if (is_value())
+            if (is_ok())
             {
                 return U(result_ok, unwrap());
             }
@@ -712,7 +710,7 @@ namespace library::common
                 library::std::is_same_v<typename U::ok_type, T>,
                 "Function must return result<T, E>"
             );
-            if (is_value())
+            if (is_ok())
             {
                 return U(result_ok, unwrap());
             }
@@ -737,7 +735,7 @@ namespace library::common
                 library::std::is_same_v<typename U::ok_type, T>,
                 "Function must return result<T, E>"
             );
-            if (is_value())
+            if (is_ok())
             {
                 return U(result_ok, library::std::move(unwrap()));
             }
@@ -763,7 +761,7 @@ namespace library::common
                 "Function must return result<T, E>"
             );
 
-            if (is_value())
+            if (is_ok())
             {
                 return U(result_ok, library::std::move(unwrap()));
             }
@@ -891,7 +889,7 @@ namespace library::common
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &
         {
-            if (is_value())
+            if (is_ok())
             {
                 return result<T, F>(
                     result_in_place,
@@ -918,7 +916,7 @@ namespace library::common
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &
         {
-            if (is_value())
+            if (is_ok())
             {
                 return result<T, F>(
                     result_in_place,
@@ -945,7 +943,7 @@ namespace library::common
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &&
         {
-            if (is_value())
+            if (is_ok())
             {
                 return result<T, F>(
                     result_in_place,
@@ -972,7 +970,7 @@ namespace library::common
                   && library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &&
         {
-            if (is_value())
+            if (is_ok())
             {
                 return result<T, F>(
                     result_in_place,
