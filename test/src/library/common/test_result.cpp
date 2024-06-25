@@ -12,18 +12,18 @@ enum class test_error : char
     error_b = 'b',
 };
 
-TEST(result_test, has_error_test)
+TEST(result_test, is_error_test)
 {
     library::common::result<int, test_error> r { test_error::error_a };
-    ASSERT_EQ(r.has_error(), true);
-    ASSERT_EQ(r.has_value(), false);
+    ASSERT_EQ(r.is_error(), true);
+    ASSERT_EQ(r.is_value(), false);
 }
 
-TEST(result_test, has_value_test)
+TEST(result_test, is_value_test)
 {
     library::common::result<int, test_error> r { 2038 };
-    ASSERT_EQ(r.has_value(), true);
-    ASSERT_EQ(r.has_error(), false);
+    ASSERT_EQ(r.is_value(), true);
+    ASSERT_EQ(r.is_error(), false);
 }
 
 TEST(result_test, unwrap_test)
@@ -113,7 +113,7 @@ TEST(result_test, move_trivial_test)
     // move
     library::common::result<std::unique_ptr<foo>, test_error> b = std::move(a);
 
-    ASSERT_EQ(b.has_value(), true);
+    ASSERT_EQ(b.is_value(), true);
 }
 
 TEST(result_test, move_non_trivial_test)
@@ -122,7 +122,7 @@ TEST(result_test, move_non_trivial_test)
     // move
     library::common::result<std::unique_ptr<bar>, test_error> b = std::move(a);
 
-    ASSERT_EQ(b.has_value(), true);
+    ASSERT_EQ(b.is_value(), true);
 }
 
 TEST(result_test, operator_bool_test)
@@ -172,7 +172,7 @@ TEST(result_test, make_result_ok_inplace_test)
 
     auto r = get_result_ok();
 
-    ASSERT_EQ(r.has_value(), true);
+    ASSERT_EQ(r.is_value(), true);
     ASSERT_EQ(r.unwrap().a, 123);
     ASSERT_EQ(r.unwrap().b, 456);
 }
@@ -205,7 +205,7 @@ TEST(result_test, and_then_success_test)
     library::common::result<int, test_error> res { 42 };
     auto new_res = res.and_then(increment);
 
-    ASSERT_TRUE(new_res.has_value());
+    ASSERT_TRUE(new_res.is_value());
     EXPECT_EQ(new_res.unwrap(), 43);
 }
 
@@ -214,7 +214,7 @@ TEST(result_test, and_then_error_test)
     library::common::result<int, test_error> res = test_error::error_a;
     auto new_res = res.and_then(increment);
 
-    ASSERT_TRUE(new_res.has_error());
+    ASSERT_TRUE(new_res.is_error());
     EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
 }
 
@@ -223,7 +223,7 @@ TEST(result_test, and_then_function_returns_error_test)
     library::common::result<int, test_error> res { 42 };
     auto new_res = res.and_then(fail);
 
-    ASSERT_TRUE(new_res.has_error());
+    ASSERT_TRUE(new_res.is_error());
     EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
 }
 
@@ -288,7 +288,7 @@ TEST(result_test, or_else_success_test)
     // 実行されないはず
     auto new_res = res.or_else(fail_2);
 
-    ASSERT_TRUE(new_res.has_value());
+    ASSERT_TRUE(new_res.is_value());
     ASSERT_EQ(new_res.unwrap(), 42);
 }
 
