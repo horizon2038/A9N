@@ -148,7 +148,7 @@ namespace library::common
         }
 
         // result<T, E> -> result<T, E>
-        constexpr result(const result &other)
+        constexpr result(const result &other) noexcept
             : dummy {}
             , is_ok_flag { other.is_ok() }
         {
@@ -160,7 +160,7 @@ namespace library::common
             new (&error_value) E(other.unwrap_error());
         }
 
-        constexpr result(result &&other)
+        constexpr result(result &&other) noexcept
             : dummy {}
             , is_ok_flag { other.is_ok() }
         {
@@ -177,7 +177,7 @@ namespace library::common
                              is_convertible_v<typename U::ok_type, void>
                       && library::std::
                              is_convertible_v<typename U::error_type, E>
-        constexpr result(const U &other)
+        constexpr result(const U &other) noexcept
             : dummy {}
             , is_ok_flag { other.is_ok() }
         {
@@ -195,8 +195,9 @@ namespace library::common
                              is_convertible_v<typename U::ok_type, void>
                       && library::std::
                              is_convertible_v<typename U::error_type, E>
-        constexpr result(U &&other) : dummy {}
-                                    , is_ok_flag { other.is_ok() }
+        constexpr result(U &&other) noexcept
+            : dummy {}
+            , is_ok_flag { other.is_ok() }
         {
             if (other.is_error())
             {
@@ -483,9 +484,6 @@ namespace library::common
             ));
         }
 
-        // TODO: add
-        //    is_same_v<typename U::ok_type, T>
-        // && is_{copy | move}constructible_v>T>
         template<
             typename Function,
             typename Ecvref = E &,

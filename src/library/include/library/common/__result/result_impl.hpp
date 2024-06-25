@@ -144,9 +144,9 @@ namespace library::common
         // deduction constructor
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<library::std::remove_cvref_t<U>, T>)
-        constexpr result(U &&other) noexcept : is_ok_flag { true }
+        constexpr result(U &&new_ok_value) noexcept : is_ok_flag { true }
         {
-            new (&ok_value) T(library::std::forward<T>(other));
+            new (&ok_value) T(library::std::forward<T>(new_ok_value));
         }
 
         template<typename F>
@@ -175,7 +175,8 @@ namespace library::common
             new (&error_value) E(library::std::forward<E>(other));
         }
 
-        constexpr result(const result &other) : is_ok_flag { other.is_ok() }
+        constexpr result(const result &other) noexcept
+            : is_ok_flag { other.is_ok() }
         {
             if (other.is_ok())
             {
@@ -187,7 +188,7 @@ namespace library::common
             }
         }
 
-        constexpr result(result &&other) : is_ok_flag { other.is_ok() }
+        constexpr result(result &&other) noexcept : is_ok_flag { other.is_ok() }
         {
             if (other.is_ok())
             {
@@ -318,7 +319,7 @@ namespace library::common
         template<typename U, typename F>
             requires library::std::is_convertible_v<U, T>
                   && library::std::is_convertible_v<F, E>
-        constexpr result &operator=(const result<U, F> &other)
+        constexpr result &operator=(const result<U, F> &other) noexcept
         {
             if (this == &other)
             {
@@ -351,7 +352,7 @@ namespace library::common
         template<typename U, typename F>
             requires library::std::is_convertible_v<U, T>
                   && library::std::is_convertible_v<F, E>
-        constexpr result &operator=(result<U, F> &&other)
+        constexpr result &operator=(result<U, F> &&other) noexcept
         {
             if (this == &other)
             {
@@ -975,8 +976,6 @@ namespace library::common
     };
 
     // TODO:
-    // - add or_else overload for T is *void* to result<T, E>
-    // - add template specialization of result<void, E>
     // - add equality operators
 }
 
