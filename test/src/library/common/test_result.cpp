@@ -447,3 +447,12 @@ TEST(result_test, safe_divide_test)
     res = safe_divide(10, 0);
     ASSERT_EQ(res.unwrap_error(), "divide by zero");
 }
+
+// result<void, E> test
+
+TEST(result_void_rest, is_error_test)
+{
+    library::common::result<void, std::string> res { std::string("hello, world!"
+    ) };
+    ASSERT_TRUE(res.is_error());
+}

@@ -47,11 +47,11 @@ namespace library::common
             requires library::std::is_convertible_v<U, T>
         constexpr void update_some_value(U &&new_some_value)
         {
-            init_ok_value();
+            init_some_value();
             new (&value) T(library::std::forward<U>(new_some_value));
         }
 
-        constexpr void init_ok_value()
+        constexpr void init_some_value()
         {
             if (is_none())
             {
