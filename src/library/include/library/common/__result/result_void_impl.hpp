@@ -732,10 +732,31 @@ namespace library::common
                 library::std::move(unwrap_error())
             );
         }
-    };
 
-    // TODO:
-    // - has_{value | error} remove copy
+        // equality operators
+        template<typename F>
+            requires(!library::std::is_same_v<void, F>)
+        friend constexpr bool
+            operator==(const result &lhs, const result<void, F> &rhs)
+        {
+            if (lhs.is_ok() != rhs.is_ok())
+            {
+                return false;
+            }
+
+            return lhs.is_ok()
+                || static_cast<bool>(lhs.unwrap_error() == rhs.unwrap_error());
+        }
+
+        template<typename F>
+            requires library::std::
+                is_convertible_v<library::std::remove_cvref_t<F>, E>
+            friend constexpr bool operator==(const result &lhs, const F &rhs)
+        {
+            return lhs.is_error()
+                && static_cast<bool>(lhs.unwrap_error() == rhs);
+        }
+    };
 }
 
 #endif

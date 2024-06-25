@@ -972,10 +972,45 @@ namespace library::common
                 library::std::move(unwrap_error())
             ));
         }
-    };
 
-    // TODO:
-    // - add equality operators
+        // equality operators
+        template<typename U, typename F>
+            requires(!library::std::is_same_v<U, F>)
+        friend constexpr bool
+            operator==(const result &lhs, const result<U, F> &rhs)
+        {
+            if (lhs.is_ok() != rhs.is_ok())
+            {
+                return false;
+            }
+
+            if (lhs.is_ok())
+            {
+                return lhs.unwrap() == rhs.unwrap();
+            }
+            else
+            {
+                return lhs.unwrap_error() == rhs.unwrap_error();
+            }
+        }
+
+        template<typename U>
+            requires library::std::
+                is_convertible_v<library::std::remove_cvref_t<U>, T>
+            friend constexpr bool operator==(const result &lhs, const U &rhs)
+        {
+            return lhs.is_ok() && static_cast<bool>(lhs.unwrap() == rhs);
+        }
+
+        template<typename F>
+            requires library::std::
+                is_convertible_v<library::std::remove_cvref_t<F>, E>
+            friend constexpr bool operator==(const result &lhs, const F &rhs)
+        {
+            return lhs.is_error()
+                && static_cast<bool>(lhs.unwrap_error() == rhs);
+        }
+    };
 }
 
 #endif
