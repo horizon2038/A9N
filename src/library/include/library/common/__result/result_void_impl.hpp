@@ -118,15 +118,6 @@ namespace library::common
             // holds the valid value : `void`
         }
 
-        /*
-        template<typename F>
-            requires(!is_result<F> &&
-        library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(F &&other) noexcept : is_ok_flag(false)
-        {
-            new (&error_value) E(library::std::forward<E>(other));
-        }
-        */
         template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(F &&new_error_value) noexcept : is_ok_flag { false }
@@ -177,8 +168,6 @@ namespace library::common
             {
                 new (&error_value) E(library::std::move(other.unwrap_error()));
             }
-
-            other.is_ok_flag = false;
         }
 
         // result<U, F> -> result<T, E>
@@ -213,8 +202,6 @@ namespace library::common
             {
                 new (&error_value) E(library::std::move(other.unwrap_error()));
             }
-
-            other.is_ok_flag = false;
         }
 
         constexpr ~result() noexcept
@@ -261,7 +248,6 @@ namespace library::common
             if (other.is_error())
             {
                 update_error_value(library::std::move(other.unwrap_error()));
-                other.is_ok_flag = false;
             }
 
             return *this;
@@ -300,7 +286,6 @@ namespace library::common
             if (other.is_error())
             {
                 update_error_value(static_cast<E>(other.unwrap_error()));
-                other.is_ok_flag = false;
             }
 
             return *this;
@@ -752,17 +737,7 @@ namespace library::common
     };
 
     // TODO:
-    // - implementing result<void, E> specialization
     // - has_{value | error} remove copy
-    // - split file
-    //  - result_common.hpp
-    //    - util, constant, helper function
-    //  - result_normal.hpp
-    //    - result<T, E>
-    //  - result_void.hpp
-    //    - result<void, E> specialization
-    //  - result.hpp
-    //    - for include
 }
 
 #endif
