@@ -269,6 +269,22 @@ namespace library::common
             return *this;
         }
 
+        template<typename F>
+            requires(!is_result<F> && library::std::is_convertible_v<F, E>)
+        constexpr result &operator=(F &&new_error_value) noexcept
+        {
+            if (has_value())
+            {
+                init_ok_value();
+            }
+
+            new (&error_value)
+                E(static_cast<E>(library::std::forward<F>(new_error_value)));
+            has_value_flag = false;
+
+            return *this;
+        }
+
         // error assign operator
 
         constexpr result &operator=(const result &other) noexcept
