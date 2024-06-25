@@ -118,11 +118,20 @@ namespace library::common
             // holds the valid value : `void`
         }
 
-        template<typename F = E>
+        /*
+        template<typename F>
+            requires(!is_result<F> &&
+        library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
+        constexpr result(F &&other) noexcept : is_ok_flag(false)
+        {
+            new (&error_value) E(library::std::forward<E>(other));
+        }
+        */
+        template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(F &&new_error_value) noexcept : is_ok_flag { false }
         {
-            new (error_value) E(library::std::forward<F>(new_error_value));
+            new (&error_value) E(library::std::forward<F>(new_error_value));
         }
 
         // obvious constructors
@@ -139,7 +148,7 @@ namespace library::common
             // holds the valid value : `void`
         }
 
-        template<typename F = E>
+        template<typename F>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
         constexpr result(result_error_tag, F &&new_error_value) noexcept
             : is_ok_flag { false }
