@@ -10,11 +10,11 @@ namespace libh5n = library::common;
 
 using word = library::common::word;
 
-TEST(option_test, has_value_test)
+TEST(option_test, is_some_test)
 {
     libh5n::option opt { 0x40 };
 
-    ASSERT_EQ(true, opt.has_value());
+    ASSERT_EQ(true, opt.is_some());
 }
 
 TEST(option_test, unwrap_test)
@@ -28,7 +28,7 @@ TEST(option_test, none_test)
 {
     libh5n::option opt = libh5n::option_none;
 
-    ASSERT_EQ(false, opt.has_value());
+    ASSERT_EQ(false, opt.is_some());
 }
 
 TEST(option_test, pointer_test)
@@ -78,7 +78,7 @@ TEST(option_test, return_option_none_test)
 
     library::common::option<int> opt = get_option_int_none();
 
-    ASSERT_EQ(opt.has_value(), false);
+    ASSERT_EQ(opt.is_some(), false);
 }
 
 // trivial
@@ -105,7 +105,7 @@ TEST(option_test, move_trivial_test)
     // move
     option<std::unique_ptr<foo>> b = std::move(a);
 
-    ASSERT_EQ(b.has_value(), true);
+    ASSERT_EQ(b.is_some(), true);
 }
 
 TEST(option_test, move_non_trivial_test)
@@ -114,18 +114,18 @@ TEST(option_test, move_non_trivial_test)
     // move
     option<std::unique_ptr<bar>> b = std::move(a);
 
-    ASSERT_EQ(b.has_value(), true);
+    ASSERT_EQ(b.is_some(), true);
 }
 
 TEST(option_test, lazy_initialization_test)
 {
     option<bar> a;
 
-    ASSERT_EQ(a.has_value(), false);
+    ASSERT_EQ(a.is_some(), false);
 
     a = bar();
 
-    ASSERT_EQ(a.has_value(), true);
+    ASSERT_EQ(a.is_some(), true);
 }
 
 TEST(option_test, operator_bool_test)
@@ -147,7 +147,7 @@ TEST(option_test, operator_bool_test)
 
     if (auto opt_none = get_option_none())
     {
-        ASSERT_EQ(opt_none.has_value(), false);
+        ASSERT_EQ(opt_none.is_some(), false);
     }
 }
 
@@ -167,7 +167,7 @@ TEST(option_test, inplace_initialization_test)
 {
     option<foo_has_constructor> opt(libh5n::option_in_place, 123, 456);
 
-    ASSERT_EQ(opt.has_value(), true);
+    ASSERT_EQ(opt.is_some(), true);
     ASSERT_EQ(opt.unwrap().a, 123);
     ASSERT_EQ(opt.unwrap().b, 456);
 }
@@ -176,7 +176,7 @@ TEST(option_test, make_option_inplace_initialization_test)
 {
     auto opt = libh5n::make_option_some<foo_has_constructor>(123, 456);
 
-    ASSERT_EQ(opt.has_value(), true);
+    ASSERT_EQ(opt.is_some(), true);
     ASSERT_EQ(opt.unwrap().a, 123);
     ASSERT_EQ(opt.unwrap().b, 456);
 }
