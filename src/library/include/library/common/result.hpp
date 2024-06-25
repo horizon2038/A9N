@@ -256,14 +256,15 @@ namespace library::common
 
         template<typename U>
             requires(!is_result<U> && library::std::is_convertible_v<U, T>)
-        constexpr result &operator=(U &&u) noexcept
+        constexpr result &operator=(U &&new_ok_value) noexcept
         {
             if (has_error())
             {
                 init_error_value();
             }
 
-            new (&ok_value) T(static_cast<T>(library::std::forward<U>(u)));
+            new (&ok_value)
+                T(static_cast<T>(library::std::forward<U>(new_ok_value)));
             has_value_flag = true;
 
             return *this;
@@ -1142,7 +1143,7 @@ namespace library::common
                      && library::std::is_convertible_v<
                          library::std::remove_cvref_t<U>,
                          void>)
-        constexpr result(result_ok_tag, U &&value) noexcept
+        constexpr result(result_ok_tag, U &&new_ok_value) noexcept
             : dummy {}
             , has_value_flag { true }
         {
@@ -1151,10 +1152,10 @@ namespace library::common
 
         template<typename F = E>
             requires(!is_result<F> && library::std::is_convertible_v<library::std::remove_cvref_t<F>, E>)
-        constexpr result(result_error_tag, F &&error) noexcept
+        constexpr result(result_error_tag, F &&new_error_value) noexcept
             : has_value_flag { false }
         {
-            new (error_value) E(library::std::forward<F>(error));
+            new (error_value) E(library::std::forward<F>(new_error_value));
         }
 
         // result<T, E> -> result<T, E>
