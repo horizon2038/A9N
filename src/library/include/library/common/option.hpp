@@ -42,7 +42,7 @@ namespace library::common
             char dummy;
             T value;
         };
-        bool has_value_flag;
+        bool is_some_flag;
 
       public:
         // conditionally trivial special member functions
@@ -66,13 +66,13 @@ namespace library::common
             requires(library::std::is_trivially_move_assignable_v<T>)
         = default;
 
-        constexpr option() noexcept : dummy {}, has_value_flag(false)
+        constexpr option() noexcept : dummy {}, is_some_flag(false)
         {
         }
 
         constexpr option([[maybe_unused]] option_none_tag n) noexcept
             : dummy {}
-            , has_value_flag(false)
+            , is_some_flag(false)
         {
         }
 
@@ -81,7 +81,7 @@ namespace library::common
             [[maybe_unused]] option_in_place_tag i,
             Args... args
         ) noexcept
-            : has_value_flag(true)
+            : is_some_flag(true)
         {
             new (&value) T(static_cast<Args &&>(args)...);
         }
@@ -92,15 +92,15 @@ namespace library::common
                          is_same_v<option<T>, library::std::remove_cvref_t<U>>)
         constexpr option(U &&u) noexcept
             : value(library::std::forward<U>(u))
-            , has_value_flag(true)
+            , is_some_flag(true)
         {
         }
 
         // constructed from option<T> : copy
         constexpr option(const option &other) noexcept
-            : has_value_flag(other.has_value_flag)
+            : is_some_flag(other.is_some())
         {
-            if (!other.has_value_flag)
+            if (other.is_none())
             {
                 return;
             }
@@ -110,24 +110,24 @@ namespace library::common
 
         // constructed from option<T> : move
         constexpr option(option &&other) noexcept
-            : has_value_flag(other.has_value_flag)
+            : is_some_flag(other.is_some())
         {
-            if (!other.has_value_flag)
+            if (other.is_none())
             {
                 return;
             }
 
             new (&value) T(library::std::move<T>(other.value));
-            other.has_value_flag = false;
+            other.is_some_flag = false;
         }
 
         // constructed from option<U> : copy
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<U, T>)
         constexpr option(const option<U> &other) noexcept
-            : has_value_flag(other.has_value_flag)
+            : is_some_flag(other.is_some())
         {
-            if (!other.has_value_flag)
+            if (other.is_none())
             {
                 return;
             }
@@ -139,21 +139,21 @@ namespace library::common
         template<typename U>
             requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<U, T>)
         constexpr option(option<U> &&other) noexcept
-            : has_value_flag(other.has_value_flag)
+            : is_some_flag(other.is_some())
         {
-            if (!other.has_value_flag)
+            if (other.is_none())
             {
                 return;
             }
 
             new (&value) T(static_cast<T>(library::std::move(other.value)));
-            other.has_value_flag = false;
+            other.is_some_flag = false;
         }
 
         constexpr ~option() noexcept
             requires(!library::std::is_trivially_destructible_v<T>)
         {
-            if (!has_value_flag)
+            if (is_none())
             {
                 return;
             }
@@ -166,7 +166,7 @@ namespace library::common
         constexpr option &operator=(U &&u) noexcept
         {
             new (&value) T(static_cast<T>(library::std::forward<U>(u)));
-            has_value_flag = true;
+            is_some_flag = true;
 
             return *this;
         }
@@ -178,8 +178,8 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            is_some_flag = other.is_some();
+            if (other.is_some())
             {
                 new (&value) T(other.value);
             }
@@ -194,12 +194,12 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            is_some_flag = other.is_some();
+            if (other.is_some())
             {
                 new (&value) T(library::std::move(other.value));
             }
-            other.has_value_flag = false;
+            other.is_some() = false;
 
             return *this;
         }
@@ -213,8 +213,8 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            is_some_flag = other.is_some();
+            if (other.is_some())
             {
                 new (&value) T(static_cast<T>(other.value));
             }
@@ -231,12 +231,12 @@ namespace library::common
                 return *this;
             }
 
-            has_value_flag = other.has_value_flag;
-            if (other.has_value_flag)
+            is_some_flag = other.is_some();
+            if (other.is_some())
             {
                 new (&value) T(static_cast<T>(library::std::move(other.value)));
             }
-            other.has_value_flag = false;
+            other.is_some_flag = false;
 
             return *this;
         }
@@ -263,7 +263,7 @@ namespace library::common
 
         constexpr explicit operator bool() const
         {
-            return has_value_flag;
+            return is_some_flag;
         }
 
         // no check is performed
@@ -289,9 +289,14 @@ namespace library::common
             return static_cast<T>(library::std::move(value));
         }
 
-        constexpr bool has_value() const noexcept
+        constexpr bool is_some() const noexcept
         {
-            return has_value_flag;
+            return is_some_flag;
+        }
+
+        constexpr bool is_none() const noexcept
+        {
+            return is_some_flag;
         }
 
         // TODO: add monadic operations :
