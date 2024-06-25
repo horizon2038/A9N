@@ -93,6 +93,31 @@ namespace library::common
             ok_value.~T();
         }
 
+        template<typename F>
+            requires library::std::is_convertible_v<F, E>
+        constexpr void update_error_value(F &&new_error)
+        {
+            init_error_value();
+            new (&error_value)
+                E(static_cast<E>(library::std::forward<F>(new_error)));
+        }
+
+        constexpr void init_error_value()
+        {
+            // has_value()
+            if (has_value())
+            {
+                return;
+            }
+
+            if constexpr (library::std::is_trivially_destructible_v<E>)
+            {
+                return;
+            }
+
+            error_value.~E();
+        }
+
       public:
         // conditionally trivial special member functions
         constexpr result(const result &other)
@@ -213,20 +238,19 @@ namespace library::common
 
         constexpr ~result() noexcept
         {
-            // remove it
-            if (!has_value_flag)
+            if (has_value())
             {
-                return;
+                if constexpr (!library::std::is_trivially_destructible_v<T>)
+                {
+                    ok_value.~T();
+                }
             }
-
-            if constexpr (!library::std::is_trivially_destructible_v<T>)
+            else
             {
-                ok_value.~T();
-            }
-
-            if constexpr (!library::std::is_trivially_destructible_v<E>)
-            {
-                error_value.~E();
+                if constexpr (!library::std::is_trivially_destructible_v<E>)
+                {
+                    error_value.~E();
+                }
             }
         }
 
@@ -1007,7 +1031,7 @@ namespace library::common
         constexpr void init_error_value()
         {
             // has_value()
-            if (has_value_flag)
+            if (has_value())
             {
                 return;
             }
