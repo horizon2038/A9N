@@ -25,13 +25,13 @@ namespace library::common
     template<typename T>
     concept is_option = library::std::is_same_v<
         library::std::remove_cvref_t<T>,
-        option<typename T::value_type>>;
+        option<typename T::some_type>>;
     */
 
     template<typename T>
     concept is_option = std::is_same_v<
         std::remove_cvref_t<T>,
-        option<typename std::remove_cvref_t<T>::value_type>>;
+        option<typename std::remove_cvref_t<T>::some_type>>;
 
     template<typename T>
     class option
@@ -46,7 +46,7 @@ namespace library::common
         union
         {
             char dummy;
-            T value;
+            T some_value;
         };
         bool is_some_flag;
 
@@ -56,7 +56,7 @@ namespace library::common
         constexpr void update_some_value(U &&new_some_value)
         {
             init_some_value();
-            new (&value) T(library::std::forward<U>(new_some_value));
+            new (&some_value) T(library::std::forward<U>(new_some_value));
         }
 
         constexpr void init_some_value()
@@ -71,7 +71,7 @@ namespace library::common
                 return;
             }
 
-            value.~T();
+            some_value.~T();
         }
 
       public:
@@ -115,14 +115,14 @@ namespace library::common
         ) noexcept
             : is_some_flag(true)
         {
-            new (&value) T(static_cast<Args &&>(args)...);
+            new (&some_value) T(static_cast<Args &&>(args)...);
         }
 
         // constructed from T : forwarding reference
         template<typename U = T>
             requires(!is_option<U>)
         constexpr option(U &&u) noexcept
-            : value(library::std::forward<U>(u))
+            : some_value(library::std::forward<U>(u))
             , is_some_flag(true)
         {
         }
@@ -136,7 +136,7 @@ namespace library::common
                 return;
             }
 
-            new (&value) T(other.value);
+            new (&some_value) T(other.some_value);
         }
 
         // constructed from option<T> : move
@@ -148,7 +148,7 @@ namespace library::common
                 return;
             }
 
-            new (&value) T(library::std::move<T>(other.value));
+            new (&some_value) T(library::std::move<T>(other.some_value));
             other.is_some_flag = false;
         }
 
@@ -163,7 +163,7 @@ namespace library::common
                 return;
             }
 
-            new (&value) T(static_cast<T>(other.value));
+            new (&some_value) T(static_cast<T>(other.some_value));
         }
 
         // constructed from option<U> : move
@@ -177,7 +177,8 @@ namespace library::common
                 return;
             }
 
-            new (&value) T(static_cast<T>(library::std::move(other.value)));
+            new (&some_value)
+                T(static_cast<T>(library::std::move(other.some_value)));
             other.is_some_flag = false;
         }
 
@@ -189,7 +190,7 @@ namespace library::common
                 return;
             }
 
-            value.~T();
+            some_value.~T();
         }
 
         template<typename U>
@@ -252,7 +253,7 @@ namespace library::common
                 return;
             }
 
-            update_some_value(other.value());
+            update_some_value(other.some_value());
             is_some_flag = true;
 
             return *this;
@@ -280,22 +281,22 @@ namespace library::common
 
         constexpr T &operator*() &
         {
-            return value;
+            return some_value;
         }
 
         constexpr T &operator*() const &
         {
-            return value;
+            return some_value;
         }
 
         constexpr T &operator*() &&
         {
-            return library::std::move(value);
+            return library::std::move(some_value);
         }
 
         constexpr T &operator*() const &&
         {
-            return library::std::move(value);
+            return library::std::move(some_value);
         }
 
         constexpr explicit operator bool() const
@@ -308,22 +309,22 @@ namespace library::common
 
         constexpr auto &&unwrap() &
         {
-            return value;
+            return some_value;
         }
 
         constexpr auto &&unwrap() const &
         {
-            return value;
+            return some_value;
         }
 
         constexpr auto &&unwrap() &&
         {
-            return library::std::move(value);
+            return library::std::move(some_value);
         }
 
         constexpr auto &&unwrap() const &&
         {
-            return library::std::move(value);
+            return library::std::move(some_value);
         }
 
         constexpr bool is_some() const noexcept
