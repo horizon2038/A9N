@@ -405,6 +405,62 @@ namespace library::common
                 library::std::move(unwrap())
             );
         }
+
+        template<
+            typename Function,
+            typename U = library::std::invoke_result_t<Function>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto or_else(Function &&function) &
+        {
+            if (is_some())
+            {
+                return *this;
+            }
+
+            return library::std::forward<Function>(function)();
+        }
+
+        template<
+            typename Function,
+            typename U = library::std::invoke_result_t<Function>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto or_else(Function &&function) const &
+        {
+            if (is_some())
+            {
+                return *this;
+            }
+
+            return library::std::forward<Function>(function)();
+        }
+
+        template<
+            typename Function,
+            typename U = library::std::invoke_result_t<Function>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto or_else(Function &&function) &&
+        {
+            if (is_some())
+            {
+                return library::std::move(*this);
+            }
+
+            return library::std::forward<Function>(function)();
+        }
+
+        template<
+            typename Function,
+            typename U = library::std::invoke_result_t<Function>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto or_else(Function &&function) const &&
+        {
+            if (is_some())
+            {
+                return library::std::move(*this);
+            }
+
+            return library::std::forward<Function>(function)();
+        }
     };
 
     // deduction guide
