@@ -29,9 +29,9 @@ namespace library::common
     */
 
     template<typename T>
-    concept is_option = std::is_same_v<
-        std::remove_cvref_t<T>,
-        option<typename std::remove_cvref_t<T>::some_type>>;
+    concept is_option = library::std::is_same_v<
+        library::std::remove_cvref_t<T>,
+        option<typename library::std::remove_cvref_t<T>::some_type>>;
 
     template<typename T>
     class option
@@ -136,7 +136,7 @@ namespace library::common
                 return;
             }
 
-            new (&some_value) T(other.some_value);
+            new (&some_value) T(other.unwrap());
         }
 
         // constructed from option<T> : move
@@ -148,7 +148,7 @@ namespace library::common
                 return;
             }
 
-            new (&some_value) T(library::std::move<T>(other.some_value));
+            new (&some_value) T(library::std::move<T>(other.unwrap()));
             other.is_some_flag = false;
         }
 
@@ -163,7 +163,7 @@ namespace library::common
                 return;
             }
 
-            new (&some_value) T(static_cast<T>(other.some_value));
+            new (&some_value) T(static_cast<T>(other.unwrap()));
         }
 
         // constructed from option<U> : move
@@ -178,7 +178,7 @@ namespace library::common
             }
 
             new (&some_value)
-                T(static_cast<T>(library::std::move(other.some_value)));
+                T(static_cast<T>(library::std::move(other.unwrap())));
             other.is_some_flag = false;
         }
 
@@ -253,7 +253,7 @@ namespace library::common
                 return;
             }
 
-            update_some_value(other.some_value());
+            update_some_value(other.unwrap());
             is_some_flag = true;
 
             return *this;
