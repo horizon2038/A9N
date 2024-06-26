@@ -334,7 +334,7 @@ namespace library::common
 
         constexpr bool is_none() const noexcept
         {
-            return is_some_flag;
+            return !is_some_flag;
         }
 
         // TODO: add monadic operations :
