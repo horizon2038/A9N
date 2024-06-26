@@ -332,6 +332,58 @@ namespace library::common
             return !is_some_flag;
         }
 
+        template<typename U>
+            requires library::std::is_copy_constructible_v<T>
+                  && library::std::is_convertible_v<U &&, T>
+        constexpr T unwrap_or(U &&instead_some_value) &
+        {
+            if (is_some())
+            {
+                return unwrap();
+            }
+
+            return static_cast<T>(library::std::forward<U>(instead_some_value));
+        }
+
+        template<typename U>
+            requires library::std::is_copy_constructible_v<T>
+                  && library::std::is_convertible_v<U, T>
+        constexpr T unwrap_or(U &&instead_some_value) const &
+        {
+            if (is_some())
+            {
+                return unwrap();
+            }
+
+            return static_cast<T>(library::std::forward<U>(instead_some_value));
+        }
+
+        template<typename U>
+            requires library::std::is_move_constructible_v<T>
+                  && library::std::is_convertible_v<U, T>
+        constexpr T unwrap_or(U &&instead_some_value) &&
+        {
+            if (is_some())
+            {
+                return library::std::move(unwrap());
+            }
+
+            return static_cast<T>(library::std::forward<U>(instead_some_value));
+        }
+
+        template<typename U>
+            requires library::std::is_move_constructible_v<T>
+                  && library::std::is_convertible_v<U, T>
+        constexpr T unwrap_or(U &&instead_some_value) const &&
+        {
+            if (is_some())
+            {
+                return library::std::move(unwrap());
+            }
+
+            return static_cast<T>(library::std::forward<U>(instead_some_value));
+        }
+
         // TODO: add monadic operations :
         // e.g., and_then(), transform(), or_else()
 
