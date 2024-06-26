@@ -590,6 +590,34 @@ namespace library::common
                 library::std::move(unwrap())
             ));
         }
+
+        template<typename U>
+        friend constexpr bool operator==(const option &lhs, option<U> rhs)
+        {
+            if (lhs.is_some() != rhs.is_some())
+            {
+                return false;
+            }
+
+            if (lhs.is_none())
+            {
+                return false;
+            }
+
+            return static_cast<bool>(lhs.unwrap() == rhs.unwrap());
+        }
+
+        template<typename U>
+            requires(!is_option<U>)
+        friend constexpr bool operator==(const option &lhs, const U &rhs)
+        {
+            return lhs.is_some() && static_cast<bool>(lhs.unwrap() == rhs);
+        }
+
+        friend constexpr bool operator==(const option &lhs, option_none_tag)
+        {
+            return lhs.is_none();
+        }
     };
 
     // deduction guide
