@@ -466,6 +466,78 @@ namespace library::common
 
             return library::std::forward<Function>(function)();
         }
+
+        template<
+            typename Function,
+            typename Tcvref = T &,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+        constexpr auto transform(Function &&function) &
+        {
+            if (is_none())
+            {
+                return option<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function)(unwrap())
+            );
+        }
+
+        template<
+            typename Function,
+            typename Tcvref = T const &,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+        constexpr auto transform(Function &&function) const &
+        {
+            if (is_none())
+            {
+                return option<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function)(unwrap())
+            );
+        }
+
+        template<
+            typename Function,
+            typename Tcvref = T &&,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+        constexpr auto transform(Function &&function) &&
+        {
+            if (is_none())
+            {
+                return option<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function)(
+                    library::std::move(unwrap())
+                )
+            );
+        }
+
+        template<
+            typename Function,
+            typename Tcvref = T const &&,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+        constexpr auto transform(Function &&function) const &&
+        {
+            if (is_none())
+            {
+                return option<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function)(
+                    library::std::move(unwrap())
+                )
+            );
+        }
     };
 
     // deduction guide
