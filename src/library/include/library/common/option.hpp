@@ -3,6 +3,7 @@
 
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
+#include <library/libcxx/functional>
 
 namespace library::common
 {
@@ -332,6 +333,78 @@ namespace library::common
 
         // TODO: add monadic operations :
         // e.g., and_then(), transform(), or_else()
+
+        template<
+            typename Function,
+            typename Tcvref = T &,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto and_then(Function &&function) &
+        {
+            if (is_none())
+            {
+                return library::std::remove_cvref_t<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap()
+            );
+        }
+
+        template<
+            typename Function,
+            typename Tcvref = T const &,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto and_then(Function &&function) const &
+        {
+            if (is_none())
+            {
+                return library::std::remove_cvref_t<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap()
+            );
+        }
+
+        template<
+            typename Function,
+            typename Tcvref = T &&,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto and_then(Function &&function) &&
+        {
+            if (is_none())
+            {
+                return library::std::remove_cvref_t<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            );
+        }
+
+        template<
+            typename Function,
+            typename Tcvref = T const &&,
+            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<library::std::remove_cvref_t<U>>
+        constexpr auto and_then(Function &&function) const &&
+        {
+            if (is_none())
+            {
+                return library::std::remove_cvref_t<U>();
+            }
+
+            return library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            );
+        }
     };
 
     // deduction guide
