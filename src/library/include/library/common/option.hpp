@@ -1,6 +1,7 @@
 #ifndef LIBRARY_OPTION_HPP
 #define LIBRARY_OPTION_HPP
 
+#include "library/libcxx/__type_traits/is_constructible.hpp"
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 #include <library/libcxx/functional>
@@ -410,6 +411,7 @@ namespace library::common
             typename Function,
             typename U = library::std::invoke_result_t<Function>>
             requires is_option<library::std::remove_cvref_t<U>>
+                  && library::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) &
         {
             if (is_some())
@@ -424,6 +426,7 @@ namespace library::common
             typename Function,
             typename U = library::std::invoke_result_t<Function>>
             requires is_option<library::std::remove_cvref_t<U>>
+                  && library::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) const &
         {
             if (is_some())
@@ -438,6 +441,7 @@ namespace library::common
             typename Function,
             typename U = library::std::invoke_result_t<Function>>
             requires is_option<library::std::remove_cvref_t<U>>
+                  && library::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) &&
         {
             if (is_some())
@@ -452,6 +456,7 @@ namespace library::common
             typename Function,
             typename U = library::std::invoke_result_t<Function>>
             requires is_option<library::std::remove_cvref_t<U>>
+                  && library::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) const &&
         {
             if (is_some())
