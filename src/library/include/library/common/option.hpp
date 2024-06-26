@@ -21,15 +21,23 @@ namespace library::common
     template<typename T>
     class option;
 
+    /*
     template<typename T>
     concept is_option = library::std::is_same_v<
         library::std::remove_cvref_t<T>,
         option<typename T::value_type>>;
+    */
+
+    template<typename T>
+    concept is_option = std::is_same_v<
+        std::remove_cvref_t<T>,
+        option<typename std::remove_cvref_t<T>::value_type>>;
 
     template<typename T>
     class option
     {
-        using value_type = T;
+        // TODO: value_type -> some_type
+        using some_type = T;
 
         template<typename>
         friend class option;
@@ -112,8 +120,7 @@ namespace library::common
 
         // constructed from T : forwarding reference
         template<typename U = T>
-            requires(!library::std::
-                         is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(!is_option<U>)
         constexpr option(U &&u) noexcept
             : value(library::std::forward<U>(u))
             , is_some_flag(true)
@@ -187,9 +194,9 @@ namespace library::common
 
         template<typename U>
             requires(library::std::is_convertible_v<U, T> && !library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
-        constexpr option &operator=(U &&u) noexcept
+        constexpr option &operator=(U &&new_some_value) noexcept
         {
-            new (&value) T(static_cast<T>(library::std::forward<U>(u)));
+            update_some_value(library::std::forward<U>(new_some_value));
             is_some_flag = true;
 
             return *this;
@@ -202,11 +209,13 @@ namespace library::common
                 return *this;
             }
 
-            is_some_flag = other.is_some();
-            if (other.is_some())
+            if (other.is_none())
             {
-                new (&value) T(other.value);
+                return;
             }
+
+            update_some_value(other.unwrap());
+            is_some_flag = true;
 
             return *this;
         }
@@ -218,12 +227,13 @@ namespace library::common
                 return *this;
             }
 
-            is_some_flag = other.is_some();
-            if (other.is_some())
+            if (other.is_none())
             {
-                new (&value) T(library::std::move(other.value));
+                return;
             }
-            other.is_some() = false;
+
+            update_some_value(library::std::move(other.unwrap()));
+            is_some_flag = true;
 
             return *this;
         }
@@ -237,11 +247,13 @@ namespace library::common
                 return *this;
             }
 
-            is_some_flag = other.is_some();
-            if (other.is_some())
+            if (other.is_none())
             {
-                new (&value) T(static_cast<T>(other.value));
+                return;
             }
+
+            update_some_value(other.value());
+            is_some_flag = true;
 
             return *this;
         }
@@ -255,12 +267,13 @@ namespace library::common
                 return *this;
             }
 
-            is_some_flag = other.is_some();
-            if (other.is_some())
+            if (other.is_none())
             {
-                new (&value) T(static_cast<T>(library::std::move(other.value)));
+                return;
             }
-            other.is_some_flag = false;
+
+            update_some_value(library::std::move(other.unwrap()));
+            is_some_flag = true;
 
             return *this;
         }
@@ -305,12 +318,12 @@ namespace library::common
 
         constexpr auto &&unwrap() &&
         {
-            return static_cast<T>(library::std::move(value));
+            return library::std::move(value);
         }
 
         constexpr auto &&unwrap() const &&
         {
-            return static_cast<T>(library::std::move(value));
+            return library::std::move(value);
         }
 
         constexpr bool is_some() const noexcept
