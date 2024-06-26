@@ -21,13 +21,6 @@ namespace library::common
     template<typename T>
     class option;
 
-    /*
-    template<typename T>
-    concept is_option = library::std::is_same_v<
-        library::std::remove_cvref_t<T>,
-        option<typename T::some_type>>;
-    */
-
     template<typename T>
     concept is_option = library::std::is_same_v<
         library::std::remove_cvref_t<T>,
@@ -101,7 +94,7 @@ namespace library::common
             // lazy initialization
         }
 
-        constexpr option([[maybe_unused]] option_none_tag n) noexcept
+        constexpr option([[maybe_unused]] option_none_tag) noexcept
             : dummy {}
             , is_some_flag(false)
         {
@@ -110,7 +103,7 @@ namespace library::common
 
         template<typename... Args>
         constexpr option(
-            [[maybe_unused]] option_in_place_tag i,
+            [[maybe_unused]] option_in_place_tag,
             Args... args
         ) noexcept
             : is_some_flag(true)
