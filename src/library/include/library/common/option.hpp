@@ -531,9 +531,10 @@ namespace library::common
                 return option<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function)(unwrap())
-            );
+            return option<U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap()
+            ));
         }
 
         template<
@@ -548,9 +549,10 @@ namespace library::common
                 return option<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function)(unwrap())
-            );
+            return option<U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                unwrap()
+            ));
         }
 
         template<
@@ -565,11 +567,10 @@ namespace library::common
                 return option<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function)(
-                    library::std::move(unwrap())
-                )
-            );
+            return option<U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            ));
         }
 
         template<
@@ -584,11 +585,10 @@ namespace library::common
                 return option<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function)(
-                    library::std::move(unwrap())
-                )
-            );
+            return option<U>(library::std::invoke(
+                library::std::forward<Function>(function),
+                library::std::move(unwrap())
+            ));
         }
     };
 
