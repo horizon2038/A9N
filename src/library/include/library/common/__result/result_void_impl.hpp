@@ -127,14 +127,7 @@ namespace library::common
 
         // obvious constructors
         // - for future extensions
-        template<typename U>
-            requires(!is_result<U>
-                     && library::std::is_convertible_v<
-                         library::std::remove_cvref_t<U>,
-                         void>)
-        constexpr result(result_ok_tag, U &&new_ok_value) noexcept
-            : dummy {}
-            , is_ok_flag { true }
+        constexpr result(result_ok_tag) noexcept : dummy {}, is_ok_flag { true }
         {
             // holds the valid value : `void`
         }
@@ -144,7 +137,7 @@ namespace library::common
         constexpr result(result_error_tag, F &&new_error_value) noexcept
             : is_ok_flag { false }
         {
-            new (error_value) E(library::std::forward<F>(new_error_value));
+            new (&error_value) E(library::std::forward<F>(new_error_value));
         }
 
         // result<T, E> -> result<T, E>
