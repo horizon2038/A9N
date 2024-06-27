@@ -52,8 +52,10 @@ namespace library::common
             {
                 return;
             }
-
-            error_value.~E();
+            else
+            {
+                error_value.~E();
+            }
         }
 
       public:
@@ -566,14 +568,18 @@ namespace library::common
             if constexpr (library::std::is_void_v<U>)
             {
                 library::std::invoke(library::std::forward<Function>(function));
-                return result<U, E>();
+                return result<void, E>();
             }
-
-            return result<U, E>(
-                result_in_place,
-                result_ok,
-                library::std::invoke(library::std::forward<Function>(function))
-            );
+            else
+            {
+                return result<U, E>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
         }
 
         template<
@@ -591,14 +597,18 @@ namespace library::common
             if constexpr (library::std::is_void_v<U>)
             {
                 library::std::invoke(library::std::forward<Function>(function));
-                return result<U, E>();
+                return result<void, E>();
             }
-
-            return result<U, E>(
-                result_in_place,
-                result_ok,
-                library::std::invoke(library::std::forward<Function>(function))
-            );
+            else
+            {
+                return result<U, E>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
         }
 
         template<
@@ -619,14 +629,18 @@ namespace library::common
             if constexpr (library::std::is_void_v<U>)
             {
                 library::std::invoke(library::std::forward<Function>(function));
-                return result<U, E>();
+                return result<void, E>();
             }
-
-            return result<U, E>(
-                result_in_place,
-                result_ok,
-                library::std::invoke(library::std::forward<Function>(function))
-            );
+            else
+            {
+                return result<U, E>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
         }
 
         template<
@@ -647,14 +661,18 @@ namespace library::common
             if constexpr (library::std::is_void_v<U>)
             {
                 library::std::invoke(library::std::forward<Function>(function));
-                return result<U, E>();
+                return result<void, E>();
             }
-
-            return result<U, E>(
-                result_in_place,
-                result_ok,
-                library::std::invoke(library::std::forward<Function>(function))
-            );
+            else
+            {
+                return result<U, E>(
+                    result_in_place,
+                    result_ok,
+                    library::std::invoke(
+                        library::std::forward<Function>(function)
+                    )
+                );
+            }
         }
 
         template<

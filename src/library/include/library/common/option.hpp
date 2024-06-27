@@ -65,8 +65,10 @@ namespace library::common
             {
                 return;
             }
-
-            some_value.~T();
+            else
+            {
+                some_value.~T();
+            }
         }
 
       public:
