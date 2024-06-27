@@ -158,7 +158,7 @@ namespace library::common
                 return;
             }
 
-            new (&some_value) T(static_cast<T>(other.unwrap()));
+            new (&some_value) T(other.unwrap());
         }
 
         // constructed from option<U> : move
@@ -172,8 +172,7 @@ namespace library::common
                 return;
             }
 
-            new (&some_value)
-                T(static_cast<T>(library::std::move(other.unwrap())));
+            new (&some_value) T(library::std::move(other.unwrap()));
             other.is_some_flag = false;
         }
 
@@ -189,7 +188,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<U, T> && !library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<U, T> && !is_option<U>)
         constexpr option &operator=(U &&new_some_value) noexcept
         {
             update_some_value(library::std::forward<U>(new_some_value));
@@ -235,7 +234,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<U, T> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<U, T>)
         constexpr option &operator=(const option<U> &other) noexcept
         {
             if (this == &other)
@@ -255,7 +254,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<U, T> && library::std::is_same_v<option<T>, library::std::remove_cvref_t<U>>)
+            requires(library::std::is_convertible_v<U, T>)
         constexpr option &operator=(option<U> &&other) noexcept
         {
             if (this == &other)
