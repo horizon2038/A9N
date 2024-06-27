@@ -35,10 +35,10 @@ namespace library::std
             return *pointer;
         }
 
-        template<typename... A>
-        auto operator()(A &&...args) const -> decltype(auto)
+        template<typename... Args>
+        auto operator()(Args &&...args) const -> decltype(auto)
         {
-            return (*pointer)(forward<A>(args)...);
+            return (*pointer)(forward<Args>(args)...);
         }
 
       private:
