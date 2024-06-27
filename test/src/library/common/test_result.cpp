@@ -456,3 +456,30 @@ TEST(result_void_rest, is_error_test)
     ) };
     ASSERT_TRUE(res.is_error());
 }
+
+TEST(result_void_test, is_ok_test)
+{
+    library::common::result<void, std::string> res {};
+    ASSERT_TRUE(res.is_ok());
+}
+
+TEST(result_void_test, chain_test)
+{
+    library::common::result<void, std::string> res {};
+
+    // clang-format off
+    auto res_2 = res.and_then(
+        []() -> library::common::result<void, std::string>
+        {
+            return "text";
+        }
+    )
+    .or_else(
+        [](const std::string &e) -> library::common::result<void, std::string>
+        {
+            std::cout << e << std::endl;
+            return {};
+        }
+    );
+    // clang-format on
+}
