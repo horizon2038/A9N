@@ -188,3 +188,34 @@ TEST(option_test, operator_indirect_test)
     ASSERT_EQ(opt.unwrap(), 2038);
     ASSERT_EQ(*opt, 2038);
 }
+
+TEST(option_test, option_chain_test)
+{
+    option<int> opt { 2038 };
+    // clang-format off
+    auto opt_2 = opt
+        .and_then([](int x) -> option<int>
+        {
+            return x + 10;
+        })
+         .and_then([](int x) -> option<int>
+        {
+            std::cout << x << std::endl;
+            return library::common::option_none;
+        });
+    // clang-format on
+    // ASSERT_EQ(opt_2.unwrap(), 2048);
+    ASSERT_TRUE(opt_2.is_none());
+}
+
+TEST(option_test, option_equality_test)
+{
+    option<int> opt { 42 };
+    option<int> opt_same { 42 };
+    option<int> opt_diff { 32 };
+    option<int> opt_none {};
+
+    ASSERT_TRUE(opt == opt_same);
+    ASSERT_FALSE(opt == opt_diff);
+    ASSERT_FALSE(opt == opt_none);
+}
