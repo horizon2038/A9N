@@ -781,6 +781,12 @@ namespace library::common
                 );
             }
 
+            if constexpr (library::std::is_void_v<U>)
+            {
+                library::std::invoke(library::std::forward<Function>(function));
+                return result<U, E>();
+            }
+
             return result<U, E>(
                 result_in_place,
                 result_ok,
@@ -805,6 +811,12 @@ namespace library::common
                     result_error,
                     library::std::move(unwrap_error())
                 );
+            }
+
+            if constexpr (library::std::is_void_v<U>)
+            {
+                library::std::invoke(library::std::forward<Function>(function));
+                return result<U, E>();
             }
 
             return result<U, E>(
@@ -833,6 +845,12 @@ namespace library::common
                 );
             }
 
+            if constexpr (library::std::is_void_v<U>)
+            {
+                library::std::invoke(library::std::forward<Function>(function));
+                return result<U, E>();
+            }
+
             return result<U, E>(
                 result_in_place,
                 result_ok,
@@ -857,6 +875,12 @@ namespace library::common
                     result_error,
                     library::std::move(unwrap_error())
                 );
+            }
+
+            if constexpr (library::std::is_void_v<U>)
+            {
+                library::std::invoke(library::std::forward<Function>(function));
+                return result<U, E>();
             }
 
             return result<U, E>(
