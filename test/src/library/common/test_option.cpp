@@ -4,6 +4,8 @@
 
 #include <library/common/types.hpp>
 
+#include <library/libcxx/functional>
+
 template<typename T>
 using option = library::common::option<T>;
 namespace libh5n = library::common;
@@ -218,4 +220,17 @@ TEST(option_test, option_equality_test)
     ASSERT_TRUE(opt == opt_same);
     ASSERT_FALSE(opt == opt_diff);
     ASSERT_FALSE(opt == opt_none);
+}
+
+static int ref_value { 20 };
+
+option<library::std::reference_wrapper<int>> return_ref()
+{
+    return library::std::ref(ref_value);
+}
+
+TEST(option_test, option_reference_test)
+{
+    auto opt = return_ref();
+    ASSERT_EQ(opt.unwrap(), ref_value);
 }
