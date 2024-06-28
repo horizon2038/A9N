@@ -7,9 +7,9 @@ namespace hal::x86_64
 {
     namespace LOCAL_APIC_ADDRESS
     {
-        constexpr static uint32_t BASE_REGISTER = 0xfee00000;
-        constexpr static uint32_t ID_REGISTER = BASE_REGISTER + 0x20;
-        constexpr static uint32_t VERSION = BASE_REGISTER + 0x30;
+        constexpr static uint32_t BASE_REGISTER          = 0xfee00000;
+        constexpr static uint32_t ID_REGISTER            = BASE_REGISTER + 0x20;
+        constexpr static uint32_t VERSION                = BASE_REGISTER + 0x30;
         constexpr static uint32_t TASK_PRIORITY_REGISTOR = BASE_REGISTER + 0x80;
         constexpr static uint32_t ARBITRATION_PRIORITY_REGISTOR
             = BASE_REGISTER + 0x90;

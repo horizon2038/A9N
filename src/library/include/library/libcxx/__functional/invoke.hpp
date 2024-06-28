@@ -19,7 +19,7 @@ namespace library::std
             typename... Args>
         constexpr decltype(auto) invoke_member_pointer(
             Pointer ClassType::*member,
-            Object &&object,
+            Object            &&object,
             Args &&...args
         )
         {

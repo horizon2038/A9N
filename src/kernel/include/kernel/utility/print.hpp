@@ -20,53 +20,50 @@ namespace kernel::utility
         hal::interface::serial &_serial;
 
         void process_format(
-            char **destination,
-            const char **format_pointer,
+            char            **destination,
+            const char      **format_pointer,
             __builtin_va_list args
         );
         void write_char(char **destination, char target_char);
-        void write_string(
-            char **destination,
-            char *target_string,
-            int width = 0
-        );
+        void
+            write_string(char **destination, char *target_string, int width = 0);
         void write_int(
             char **destination,
-            int count,
-            int width = 0,
-            bool zero_pad = false
+            int    count,
+            int    width    = 0,
+            bool   zero_pad = false
         );
         void write_int_ll(
-            char **destination,
+            char    **destination,
             long long count,
-            int width = 0,
-            bool zero_pad = false
+            int       width    = 0,
+            bool      zero_pad = false
         );
         void write_uint(
-            char **destination,
+            char       **destination,
             unsigned int count,
-            int width,
-            bool zero_pad
+            int          width,
+            bool         zero_pad
         );
         void write_uint_ll(
-            char **destination,
+            char             **destination,
             unsigned long long count,
-            int width,
-            bool zero_pad
+            int                width,
+            bool               zero_pad
         );
         void write_hex(
-            char **destination,
+            char       **destination,
             unsigned int count,
-            int width = 0,
-            bool zero_pad = false,
-            bool uppercase = false
+            int          width     = 0,
+            bool         zero_pad  = false,
+            bool         uppercase = false
         );
         void write_hex_ll(
-            char **destination,
+            char             **destination,
             unsigned long long count,
-            int width,
-            bool zero_pad,
-            bool uppercase = false
+            int                width,
+            bool               zero_pad,
+            bool               uppercase = false
         );
         void write_pointer(char **destination, const void *pointer);
 

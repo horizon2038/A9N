@@ -36,7 +36,7 @@ namespace library::std
         // type erasure base
         struct callable_base
         {
-            virtual R call(Args...) = 0;
+            virtual R call(Args...)  = 0;
             virtual ~callable_base() = default;
         };
 
@@ -56,7 +56,7 @@ namespace library::std
             T callable;
         };
 
-        uint8_t buffer[FUNCTION_BUFFER_SIZE];
+        uint8_t        buffer[FUNCTION_BUFFER_SIZE];
         callable_base *callable;
     };
 }

@@ -22,7 +22,7 @@ namespace hal::x86_64
     class hal_factory final : public hal::interface::hal_factory
     {
       public:
-        hal::interface::hal *make() override;
+        hal::interface::hal      *make() override;
         constexpr static uint64_t hal_size = sizeof(hal::interface::hal);
         alignas(hal::interface::hal) static char hal_buffer[];
 

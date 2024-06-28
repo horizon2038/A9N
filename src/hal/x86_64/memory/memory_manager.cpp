@@ -42,7 +42,7 @@ namespace hal::x86_64
 
     bool memory_manager::is_table_exists(
         common::physical_address top_page_table_address,
-        common::virtual_address target_virtual_address
+        common::virtual_address  target_virtual_address
     )
     {
         common::virtual_address *current_page_table
@@ -82,10 +82,8 @@ namespace hal::x86_64
         }
         // offset
 
-        uint64_t PT_INDEX = calculate_page_table_index(
-            target_virtual_address,
-            PAGE_DEPTH::PT
-        );
+        uint64_t PT_INDEX
+            = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);
         current_page_table_entry.all = current_page_table[PT_INDEX];
         return current_page_table_entry.present;
         // return pt_entry != 0;
@@ -93,7 +91,7 @@ namespace hal::x86_64
 
     void memory_manager::configure_page_table(
         common::physical_address top_page_table_address,
-        common::virtual_address target_virtual_address,
+        common::virtual_address  target_virtual_address,
         common::physical_address page_table_address
     )
     {
@@ -135,7 +133,7 @@ namespace hal::x86_64
                 page_table_address
             );
             current_page_table_entry.present = true;
-            current_page_table_entry.rw = true;
+            current_page_table_entry.rw      = true;
             current_page_table[current_page_table_index]
                 = current_page_table_entry.all;
             break;
@@ -144,7 +142,7 @@ namespace hal::x86_64
 
     void memory_manager::map_virtual_memory(
         common::physical_address top_page_table_address,
-        common::virtual_address target_virtual_address,
+        common::virtual_address  target_virtual_address,
         common::physical_address target_physical_address
     )
     {
@@ -180,23 +178,21 @@ namespace hal::x86_64
             // page_table_depth : %d\n", i);
         }
 
-        uint64_t pt_index = calculate_page_table_index(
-            target_virtual_address,
-            PAGE_DEPTH::PT
-        );
+        uint64_t pt_index
+            = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);
         current_page_table_entry.all = current_page_table[pt_index];
         current_page_table_entry.configure_physical_address(
             target_physical_address
         );
         current_page_table_entry.present = true;
-        current_page_table_entry.rw = true;
-        current_page_table[pt_index] = current_page_table_entry.all;
+        current_page_table_entry.rw      = true;
+        current_page_table[pt_index]     = current_page_table_entry.all;
         _invalidate_page(target_virtual_address);
     }
 
     void memory_manager::unmap_virtual_memory(
         common::physical_address top_page_table_address,
-        common::virtual_address target_virtual_addresss
+        common::virtual_address  target_virtual_addresss
     )
     {
         return;

@@ -20,7 +20,7 @@ namespace hal::x86_64
     sdt_header *xsdt::search_sdt_header(uint32_t count)
     {
         common::virtual_address *sdt_address_table = calculate_table_head();
-        common::virtual_address sdt_virtual_address
+        common::virtual_address  sdt_virtual_address
             = convert_physical_to_virtual_address(sdt_address_table[count]);
         return reinterpret_cast<sdt_header *>(sdt_virtual_address);
     }

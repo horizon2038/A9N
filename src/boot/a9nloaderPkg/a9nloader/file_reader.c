@@ -6,9 +6,9 @@
 
 EFI_STATUS read_file(
     EFI_FILE_PROTOCOL *file,
-    uint64_t offset,
-    uint64_t size,
-    void **buffer
+    uint64_t           offset,
+    uint64_t           size,
+    void             **buffer
 )
 {
     EFI_STATUS efi_status = EFI_SUCCESS;

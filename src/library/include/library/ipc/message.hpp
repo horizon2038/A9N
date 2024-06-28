@@ -10,7 +10,7 @@ namespace library::ipc
     {
         common::sword sender_process_id;
         common::sword type;
-        uint8_t data[1024];
+        uint8_t       data[1024];
     };
 }
 

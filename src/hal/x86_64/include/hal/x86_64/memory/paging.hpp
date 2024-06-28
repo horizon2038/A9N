@@ -9,8 +9,8 @@
 namespace hal::x86_64
 {
     extern "C" uint64_t __kernel_pml4;
-    extern "C" void _load_cr3(common::physical_address cr3_address);
-    extern "C" void _flush_tlb();
+    extern "C" void     _load_cr3(common::physical_address cr3_address);
+    extern "C" void     _flush_tlb();
     extern "C" void
         _invalidate_page(common::virtual_address target_virtual_address);
 
@@ -22,12 +22,12 @@ namespace hal::x86_64
 
         struct
         {
-            uint64_t page : 12;
-            uint64_t page_table : 9;
-            uint64_t page_directory : 9;
+            uint64_t page                   : 12;
+            uint64_t page_table             : 9;
+            uint64_t page_directory         : 9;
             uint64_t page_directory_pointer : 9;
-            uint64_t page_map_level_4 : 9;
-            uint64_t canonical : 16;
+            uint64_t page_map_level_4       : 9;
+            uint64_t canonical              : 16;
         } __attribute__((packed));
     };
 
@@ -37,18 +37,18 @@ namespace hal::x86_64
 
         struct
         {
-            uint64_t present : 1;
-            uint64_t rw : 1;
+            uint64_t present         : 1;
+            uint64_t rw              : 1;
             uint64_t user_supervisor : 1;
-            uint64_t write_through : 1;
-            uint64_t cache_disable : 1;
-            uint64_t accessed : 1;
-            uint64_t dirty : 1;
-            uint64_t page_size : 1;
-            uint64_t global : 1;
-            uint64_t : 3;
-            uint64_t address : 40;
-            uint64_t : 12;
+            uint64_t write_through   : 1;
+            uint64_t cache_disable   : 1;
+            uint64_t accessed        : 1;
+            uint64_t dirty           : 1;
+            uint64_t page_size       : 1;
+            uint64_t global          : 1;
+            uint64_t                 : 3;
+            uint64_t address         : 40;
+            uint64_t                 : 12;
         } __attribute__((packed));
 
         common::physical_address get_physical_address()
@@ -66,16 +66,16 @@ namespace hal::x86_64
 
     namespace PAGE_DEPTH
     {
-        constexpr static uint16_t PML4 = 4;
-        constexpr static uint16_t PDPT = 3;
-        constexpr static uint16_t PD = 2;
-        constexpr static uint16_t PT = 1;
+        constexpr static uint16_t PML4   = 4;
+        constexpr static uint16_t PDPT   = 3;
+        constexpr static uint16_t PD     = 2;
+        constexpr static uint16_t PT     = 1;
         constexpr static uint16_t OFFSET = 0;
     }
 
     static inline uint64_t calculate_page_table_index(
         common::virtual_address target_virtual_address,
-        uint16_t table_depth
+        uint16_t                table_depth
     )
     {
         // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}

@@ -10,8 +10,7 @@
 
 namespace hal::x86_64
 {
-    static inline hal::interface::interrupt_handler
-        interrupt_handler_table[256];
+    static inline hal::interface::interrupt_handler interrupt_handler_table[256];
 
     class interrupt final : public hal::interface::interrupt
     {
@@ -20,7 +19,7 @@ namespace hal::x86_64
         ~interrupt();
         void init_interrupt() override;
         void register_handler(
-            common::word irq_number,
+            common::word                      irq_number,
             hal::interface::interrupt_handler target_interrupt_handler
         ) override;
         void enable_interrupt(common::word irq_number) override;
@@ -33,41 +32,41 @@ namespace hal::x86_64
         void init_handler();
         void load_idt();
         void register_idt_handler(
-            common::word irq_number,
+            common::word                      irq_number,
             hal::interface::interrupt_handler target_interrupt_handler
         );
         interrupt_descriptor_64 idt[256];
-        pic _pic;
+        pic                     _pic;
     };
 
     enum class EXCEPTION_TYPE : uint16_t
     {
-        DIVISION_ERROR = 0,
-        DEBUG = 1,
-        NMI = 2,
-        BREAKPOINT = 3,
-        OVERFLOW = 4,
-        BOUND_RANGE_EXCEEDED = 5,
-        INVALID_OPCODE = 6,
-        DEVICE_NOT_AVAILABLE = 7,
-        DOUBLE_FAULT = 8,
+        DIVISION_ERROR              = 0,
+        DEBUG                       = 1,
+        NMI                         = 2,
+        BREAKPOINT                  = 3,
+        OVERFLOW                    = 4,
+        BOUND_RANGE_EXCEEDED        = 5,
+        INVALID_OPCODE              = 6,
+        DEVICE_NOT_AVAILABLE        = 7,
+        DOUBLE_FAULT                = 8,
         COPROCESSOR_SEGMENT_OVERRUN = 9,
-        INVALID_TSS = 10,
-        SEGMENT_NOT_PRESENT = 11,
-        STACK_SEGMENT_FAULT = 12,
-        GENERAL_PROTECTION_FAULT = 13,
-        PAGE_FAULT = 14,
+        INVALID_TSS                 = 10,
+        SEGMENT_NOT_PRESENT         = 11,
+        STACK_SEGMENT_FAULT         = 12,
+        GENERAL_PROTECTION_FAULT    = 13,
+        PAGE_FAULT                  = 14,
         // RESERVED 15
-        X87_FLOATING_POINT_EXCEPTION = 16,
-        ALIGNMENT_CHECK = 17,
-        MACHINE_CHECK = 18,
+        X87_FLOATING_POINT_EXCEPTION  = 16,
+        ALIGNMENT_CHECK               = 17,
+        MACHINE_CHECK                 = 18,
         SIMD_FLOATING_POINT_EXCEPTION = 19,
-        VIRTUALIZATION_EXCEPTION = 20,
-        CONTROL_PROTECTION_EXCEPTION = 21,
+        VIRTUALIZATION_EXCEPTION      = 20,
+        CONTROL_PROTECTION_EXCEPTION  = 21,
         // RESERVED 22-27
         HYPERVISOR_INJECTION_EXCEPTION = 28,
-        VMM_COMMUNICATION_EXCEPTION = 29,
-        SECURITY_EXCEPTION = 30,
+        VMM_COMMUNICATION_EXCEPTION    = 29,
+        SECURITY_EXCEPTION             = 30,
     };
 
     inline static const char *get_exception_type_string(uint16_t type)

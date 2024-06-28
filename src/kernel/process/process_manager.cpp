@@ -26,7 +26,7 @@ namespace kernel
     }
 
     void process_manager::create_process(
-        const char *process_name,
+        const char             *process_name,
         common::virtual_address entry_point_address
     )
     {
@@ -72,23 +72,23 @@ namespace kernel
         {
             temp_process = temp_process->next;
         }
-        temp_process->next = current_process;
+        temp_process->next       = current_process;
         current_process->preview = temp_process;
     }
 
     void process_manager::init_process(
-        process *process,
-        process_id target_process_id,
-        const char *process_name,
+        process                *process,
+        process_id              target_process_id,
+        const char             *process_name,
         common::virtual_address entry_point_address
     )
     {
         process->id = target_process_id;
         library::std::strcpy(process->name, process_name);
 
-        process->status = process_status::BLOCKED;
+        process->status   = process_status::BLOCKED;
         process->priority = 0;
-        process->quantum = QUANTUM_MAX;
+        process->quantum  = QUANTUM_MAX;
 
         library::std::memset(process->stack, 0, STACK_SIZE_MAX);
         kernel_object::memory_manager->init_virtual_memory(process);
@@ -117,7 +117,7 @@ namespace kernel
     void process_manager::switch_context()
     {
         process *temp_current_process = current_process;
-        process *next_process = _scheduler.schedule_next_process(
+        process *next_process         = _scheduler.schedule_next_process(
             priority_groups,
             highest_priority
         );

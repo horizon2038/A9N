@@ -1,7 +1,6 @@
 #ifndef LIBRARY_OPTION_HPP
 #define LIBRARY_OPTION_HPP
 
-#include "library/libcxx/__type_traits/is_constructible.hpp"
 #include <library/libcxx/utility>
 #include <library/libcxx/type_traits>
 #include <library/libcxx/functional>
@@ -31,7 +30,6 @@ namespace library::common
     template<typename T>
     class option
     {
-        // TODO: value_type -> some_type
         using some_type = T;
 
         template<typename>
@@ -41,7 +39,7 @@ namespace library::common
         union
         {
             char dummy;
-            T some_value;
+            T    some_value;
         };
         bool is_some_flag;
 
@@ -385,13 +383,10 @@ namespace library::common
             return static_cast<T>(library::std::forward<U>(instead_some_value));
         }
 
-        // TODO: add monadic operations :
-        // e.g., and_then(), transform(), or_else()
-
         template<
             typename Function,
             typename Tcvref = T &,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires is_option<library::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) &
         {
@@ -409,7 +404,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T const &,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires is_option<library::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) const &
         {
@@ -427,7 +422,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &&,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires is_option<library::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) &&
         {
@@ -445,7 +440,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T const &&,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires is_option<library::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) const &&
         {
@@ -523,7 +518,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) &
         {
@@ -541,7 +536,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T const &,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) const &
         {
@@ -559,7 +554,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &&,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) &&
         {
@@ -577,7 +572,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T const &&,
-            typename U = library::std::invoke_result_t<Function, Tcvref>>
+            typename U      = library::std::invoke_result_t<Function, Tcvref>>
             requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) const &&
         {

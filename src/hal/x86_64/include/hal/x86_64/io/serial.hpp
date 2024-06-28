@@ -13,16 +13,16 @@ namespace hal::x86_64
       public:
         serial(hal::interface::port_io &injected_port_io);
         ~serial();
-        void init_serial(common::word baud_rate) override;
+        void    init_serial(common::word baud_rate) override;
         uint8_t read_serial() override;
-        void write_serial(char data) override;
-        void write_string_serial(char *out) override;
+        void    write_serial(char data) override;
+        void    write_string_serial(char *out) override;
 
       private:
         hal::interface::port_io &_port_io;
-        int is_received();
-        int is_empty();
-        uint32_t strlen(const char *s);
+        int                      is_received();
+        int                      is_empty();
+        uint32_t                 strlen(const char *s);
     };
 
 }

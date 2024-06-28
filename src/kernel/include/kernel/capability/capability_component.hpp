@@ -17,7 +17,7 @@ namespace kernel
         capability_component *component;
 
         capability_slot_data data;
-        dependency_node family_node;
+        dependency_node      family_node;
 
         bool has_child()
         {
@@ -58,7 +58,7 @@ namespace kernel
         virtual common::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer *buffer
+            message_buffer  *buffer
         ) = 0;
 
         // called from node
@@ -69,8 +69,8 @@ namespace kernel
 
         virtual capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
-            common::word descriptor_max_bits,
-            common::word descriptor_used_bits
+            common::word                               descriptor_max_bits,
+            common::word                               descriptor_used_bits
         ) = 0;
     };
 }

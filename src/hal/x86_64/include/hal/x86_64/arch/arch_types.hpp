@@ -31,7 +31,7 @@ namespace hal::x86_64
     static inline bool
         is_canonical(const common::virtual_address target_virtual_address)
     {
-        const uint64_t canonical_sign_bit = target_virtual_address >> 47 & 1;
+        const uint64_t canonical_sign_bit   = target_virtual_address >> 47 & 1;
         const uint64_t canonical_upper_bits = target_virtual_address >> 48;
 
         return (

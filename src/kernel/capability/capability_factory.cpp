@@ -10,7 +10,7 @@ namespace kernel
 {
     common::word capability_factory::calculate_memory_size_bits(
         library::capability::capability_type type,
-        common::word size_bits
+        common::word                         size_bits
     )
     {
         using namespace library::capability;
@@ -37,8 +37,8 @@ namespace kernel
 
     capability_slot capability_factory::make(
         library::capability::capability_type type,
-        common::word size_bits,
-        common::virtual_address target_address
+        common::word                         size_bits,
+        common::virtual_address              target_address
     )
     {
         using capability_type = library::capability::capability_type;

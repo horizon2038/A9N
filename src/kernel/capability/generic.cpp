@@ -64,7 +64,7 @@ namespace kernel
     common::error generic::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
-        message_buffer *buffer
+        message_buffer  *buffer
     )
     {
         auto e = decode_operation(*this_slot, *root_slot, *buffer);
@@ -72,8 +72,8 @@ namespace kernel
     }
 
     common::error generic::decode_operation(
-        capability_slot &this_slot,
-        capability_slot &root_slot,
+        capability_slot      &this_slot,
+        capability_slot      &root_slot,
         const message_buffer &buffer
     )
     {
@@ -103,14 +103,14 @@ namespace kernel
     }
 
     common::error generic::convert(
-        capability_slot &this_slot,
-        capability_slot &root_slot,
+        capability_slot      &this_slot,
+        capability_slot      &root_slot,
         const message_buffer &buffer
     )
     {
         using namespace library::capability::convert_argument;
 
-        auto this_info = create_generic_info(this_slot.data);
+        auto               this_info = create_generic_info(this_slot.data);
         capability_factory factory {};
         auto target_type = static_cast<library::capability::capability_type>(
             buffer.get_element(CAPABILITY_TYPE)
@@ -128,7 +128,7 @@ namespace kernel
 
         auto target_root_slot = retrieve_target_root_slot(root_slot, buffer);
 
-        auto count = buffer.get_element(CAPABILITY_COUNT);
+        auto count      = buffer.get_element(CAPABILITY_COUNT);
         auto base_index = buffer.get_element(SLOT_INDEX);
 
         for (auto i = 0; i < count; i++)
@@ -164,14 +164,14 @@ namespace kernel
 
     capability_slot *generic::retrieve_target_root_slot(
         const capability_slot &root_slot,
-        const message_buffer &buffer
+        const message_buffer  &buffer
     ) const
     {
         using namespace library::capability::convert_argument;
 
         auto target_descriptor = buffer.get_element(ROOT_DESCRIPTOR);
-        auto target_depth = buffer.get_element(ROOT_DEPTH);
-        auto target_index = buffer.get_element(SLOT_INDEX);
+        auto target_depth      = buffer.get_element(ROOT_DEPTH);
+        auto target_index      = buffer.get_element(SLOT_INDEX);
 
         if (target_depth == 0)
         {

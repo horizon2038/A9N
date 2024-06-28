@@ -2,8 +2,8 @@
 
 namespace kernel::utility
 {
-    uint32_t logger::log_id = 0;
-    logger *logger::this_logger = nullptr;
+    uint32_t logger::log_id      = 0;
+    logger  *logger::this_logger = nullptr;
 
     logger::logger(hal::interface::serial &target_serial)
         : _print(target_serial)

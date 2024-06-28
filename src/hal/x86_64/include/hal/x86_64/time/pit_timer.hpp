@@ -18,9 +18,9 @@ namespace hal::x86_64
         pit_timer();
         ~pit_timer();
 
-        void init_timer() override;
-        void configure_timer(uint16_t hz) override;
-        void clock() override;
+        void         init_timer() override;
+        void         configure_timer(uint16_t hz) override;
+        void         clock() override;
         common::word get_tick() override;
 
         __attribute__((interrupt("IRQ"))) static void handle(void *data);
@@ -28,7 +28,7 @@ namespace hal::x86_64
         uint32_t ticks = 0;
 
       private:
-        static pit_timer *this_timer;
+        static pit_timer    *this_timer;
         hal::x86_64::port_io _port_io;
     };
 }

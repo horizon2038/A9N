@@ -13,7 +13,7 @@ namespace library::common
         requires(!library::std::is_same_v<T, E>)
     class result
     {
-        using ok_type = T;
+        using ok_type    = T;
         using error_type = E;
 
         // if you using specify friend with concepts,
@@ -31,8 +31,8 @@ namespace library::common
             // the dummy may not be necessary ?
             // no need for lazy initialization like option<T> ?
             char dummy;
-            T ok_value;
-            E error_value;
+            T    ok_value;
+            E    error_value;
         };
         bool is_ok_flag;
 
@@ -589,7 +589,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::error_type, E>
@@ -610,7 +610,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = const T &,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::error_type, E>
@@ -631,7 +631,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &&,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::error_type, E>
@@ -652,7 +652,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = const T &&,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::error_type, E>
@@ -681,7 +681,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
@@ -702,7 +702,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = const E &,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
@@ -723,7 +723,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
@@ -744,7 +744,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = const E &&,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires is_result<U>
                   && library::std::is_same_v<typename U::ok_type, T>
@@ -773,7 +773,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires library::std::is_copy_constructible_v<E>
         constexpr auto transform(Function &&function) &
@@ -804,7 +804,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = const T &,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires library::std::is_copy_constructible_v<E>
         constexpr auto transform(Function &&function) const &
@@ -835,7 +835,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &&,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires library::std::is_move_constructible_v<E>
         constexpr auto transform(Function &&function) &&
@@ -869,7 +869,7 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = const T &&,
-            typename U = library::std::remove_cvref_t<
+            typename U      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Tcvref>>>
             requires library::std::is_move_constructible_v<E>
         constexpr auto transform(Function &&function) const &&
@@ -903,7 +903,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &,
-            typename F = library::std::remove_cvref_t<
+            typename F      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &
@@ -929,7 +929,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = const E &,
-            typename F = library::std::remove_cvref_t<
+            typename F      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &
@@ -955,7 +955,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename F = library::std::remove_cvref_t<
+            typename F      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) &&
@@ -981,7 +981,7 @@ namespace library::common
         template<
             typename Function,
             typename Ecvref = E const &&,
-            typename F = library::std::remove_cvref_t<
+            typename F      = library::std::remove_cvref_t<
                 library::std::invoke_result_t<Function, Ecvref>>>
             requires library::std::is_copy_constructible_v<T>
         constexpr auto transform_error(Function &&function) const &&

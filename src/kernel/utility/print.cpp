@@ -34,11 +34,8 @@ namespace kernel::utility
         __builtin_va_end(args);
     }
 
-    void print::vsprintf(
-        char *buffer,
-        const char *format,
-        __builtin_va_list args
-    )
+    void
+        print::vsprintf(char *buffer, const char *format, __builtin_va_list args)
     {
         char *destination = buffer;
 
@@ -58,14 +55,14 @@ namespace kernel::utility
     }
 
     void print::process_format(
-        char **destination,
-        const char **format_pointer,
+        char            **destination,
+        const char      **format_pointer,
         __builtin_va_list args
     )
     {
-        int width = 0;
-        bool zero_pad = false;
-        bool long_modifier = false;
+        int  width              = 0;
+        bool zero_pad           = false;
+        bool long_modifier      = false;
         bool long_long_modifier = false;
 
         while (true)
@@ -203,11 +200,7 @@ namespace kernel::utility
                 break;
 
             case 's' :
-                write_string(
-                    destination,
-                    __builtin_va_arg(args, char *),
-                    width
-                );
+                write_string(destination, __builtin_va_arg(args, char *), width);
                 break;
 
             case 'p' :
@@ -290,12 +283,8 @@ namespace kernel::utility
         }
     }
 
-    void print::write_int(
-        char **destination,
-        int count,
-        int width,
-        bool zero_pad
-    )
+    void
+        print::write_int(char **destination, int count, int width, bool zero_pad)
     {
         if (count < 0)
         {
@@ -304,7 +293,7 @@ namespace kernel::utility
             --width;
         }
 
-        char buffer[10];
+        char  buffer[10];
         char *pointer = buffer + 10;
 
         do
@@ -325,10 +314,10 @@ namespace kernel::utility
         }
     }
     void print::write_int_ll(
-        char **destination,
+        char    **destination,
         long long count,
-        int width,
-        bool zero_pad
+        int       width,
+        bool      zero_pad
     )
     {
         if (count < 0)
@@ -338,7 +327,7 @@ namespace kernel::utility
             --width;
         }
 
-        char buffer[20];
+        char  buffer[20];
         char *pointer = buffer + 20;
 
         do
@@ -360,13 +349,13 @@ namespace kernel::utility
     }
 
     void print::write_uint(
-        char **destination,
+        char       **destination,
         unsigned int count,
-        int width,
-        bool zero_pad
+        int          width,
+        bool         zero_pad
     )
     {
-        char buffer[10];
+        char  buffer[10];
         char *pointer = buffer + 10;
 
         do
@@ -388,13 +377,13 @@ namespace kernel::utility
     }
 
     void print::write_uint_ll(
-        char **destination,
+        char             **destination,
         unsigned long long count,
-        int width,
-        bool zero_pad
+        int                width,
+        bool               zero_pad
     )
     {
-        char buffer[20];
+        char  buffer[20];
         char *pointer = buffer + 20;
 
         do
@@ -416,19 +405,19 @@ namespace kernel::utility
     }
 
     void print::write_hex(
-        char **destination,
+        char       **destination,
         unsigned int count,
-        int width,
-        bool zero_pad,
-        bool uppercase
+        int          width,
+        bool         zero_pad,
+        bool         uppercase
     )
     {
-        char buffer[8];
+        char  buffer[8];
         char *pointer = buffer + 8;
 
         do
         {
-            int digit = count % 16;
+            int digit  = count % 16;
             *--pointer = (digit < 10) ? ('0' + digit) :
                                         ((uppercase ? 'A' : 'a') + digit - 10);
             count /= 16;
@@ -449,19 +438,19 @@ namespace kernel::utility
     }
 
     void print::write_hex_ll(
-        char **destination,
+        char             **destination,
         unsigned long long count,
-        int width,
-        bool zero_pad,
-        bool uppercase
+        int                width,
+        bool               zero_pad,
+        bool               uppercase
     )
     {
-        char buffer[16];
+        char  buffer[16];
         char *pointer = buffer + 16;
 
         do
         {
-            int digit = count % 16;
+            int digit  = count % 16;
             *--pointer = (digit < 10) ? ('0' + digit) :
                                         ((uppercase ? 'A' : 'a') + digit - 10);
             count /= 16;
@@ -484,7 +473,7 @@ namespace kernel::utility
     void print::write_pointer(char **destination, const void *pointer)
     {
         static const char *hex_digits = "0123456789abcdef";
-        unsigned long value = reinterpret_cast<unsigned long>(pointer);
+        unsigned long      value = reinterpret_cast<unsigned long>(pointer);
 
         write_char(destination, '0');
         write_char(destination, 'x');

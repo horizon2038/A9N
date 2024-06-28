@@ -22,7 +22,7 @@ namespace kernel
 
         // hardware-independent systemcall handler
         void handle_system_call(
-            uint16_t system_call_number,
+            uint16_t     system_call_number,
             common::word arg_1,
             common::word arg_2,
             common::word arg_3,

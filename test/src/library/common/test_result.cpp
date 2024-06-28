@@ -481,5 +481,27 @@ TEST(result_void_test, chain_test)
             return {};
         }
     );
+
+    ASSERT_TRUE(res_2.is_ok());
+    // clang-format on
+}
+
+TEST(result_void_test, transform_test)
+{
+    library::common::result<void, std::string> res {};
+    // clang-format off
+    auto new_res = res
+        .transform(
+            []()
+            {
+                std::cout << "hello,";
+            }
+        )
+        .transform(
+            []()
+            {
+                std::cout << "world!";
+            }
+        );
     // clang-format on
 }

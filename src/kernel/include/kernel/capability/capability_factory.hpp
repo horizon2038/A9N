@@ -12,14 +12,14 @@ namespace kernel
       public:
         common::word calculate_memory_size_bits(
             library::capability::capability_type type,
-            common::word size_bits
+            common::word                         size_bits
         );
 
         // make ??????
         capability_slot make(
             library::capability::capability_type type,
-            common::word size_bits,
-            common::virtual_address target_address
+            common::word                         size_bits,
+            common::virtual_address              target_address
         );
     };
 }

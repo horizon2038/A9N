@@ -11,8 +11,8 @@
 
 EFI_STATUS make_boot_info(
     EFI_SYSTEM_TABLE *system_table,
-    uefi_memory_map *target_uefi_memory_map,
-    boot_info *target_boot_info
+    uefi_memory_map  *target_uefi_memory_map,
+    boot_info        *target_boot_info
 )
 {
     for (uintmax_t i = 0; i < 8; i++)
@@ -24,7 +24,7 @@ EFI_STATUS make_boot_info(
     uint16_t entries_count = target_uefi_memory_map->map_size
                            / target_uefi_memory_map->descriptor_size;
     target_boot_info->boot_memory_info.memory_map_count = entries_count;
-    target_boot_info->boot_memory_info.memory_size = 0;
+    target_boot_info->boot_memory_info.memory_size      = 0;
 
     EFI_STATUS efi_status = gBS->AllocatePool(
         EfiLoaderData,

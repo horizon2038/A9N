@@ -12,7 +12,7 @@ namespace library::capability
     struct capability_location
     {
         library::capability::capability_descriptor descriptor;
-        common::word depth;
+        common::word                               depth;
     };
 
 }

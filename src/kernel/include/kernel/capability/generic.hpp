@@ -43,8 +43,8 @@ namespace kernel
       public:
         generic_info(
             const common::physical_address initial_base_address,
-            const common::word initial_size_bits,
-            const bool initial_device,
+            const common::word             initial_size_bits,
+            const bool                     initial_device,
             const common::physical_address initial_watermark
         )
             : base_address { initial_base_address }
@@ -67,9 +67,9 @@ namespace kernel
 
       private:
         const common::physical_address base_address;
-        const common::word size_bits;
-        common::physical_address watermark;
-        const bool device;
+        const common::word             size_bits;
+        common::physical_address       watermark;
+        const bool                     device;
 
         inline common::word size() const
         {
@@ -83,7 +83,7 @@ namespace kernel
         common::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer *buffer
+            message_buffer  *buffer
         ) override;
 
         common::error revoke() override;
@@ -96,8 +96,8 @@ namespace kernel
 
         capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
-            common::word max_bits,
-            common::word used_bits
+            common::word                               max_bits,
+            common::word                               used_bits
         ) override
         {
             return nullptr;
@@ -105,14 +105,14 @@ namespace kernel
 
       private:
         common::error decode_operation(
-            capability_slot &this_slot,
-            capability_slot &root_slot,
+            capability_slot      &this_slot,
+            capability_slot      &root_slot,
             const message_buffer &huffer
         );
 
         common::error convert(
-            capability_slot &this_slot,
-            capability_slot &root_slot,
+            capability_slot      &this_slot,
+            capability_slot      &root_slot,
             const message_buffer &buffer
         );
 
@@ -120,7 +120,7 @@ namespace kernel
 
         capability_slot *retrieve_target_root_slot(
             const capability_slot &root_slot,
-            const message_buffer &buffer
+            const message_buffer  &buffer
         ) const;
     };
 }

@@ -12,7 +12,7 @@ namespace hal::x86_64
     extern "C" void _load_task_register(uint16_t segment_register);
 
     global_descriptor_table segment_configurator::gdt = {};
-    task_state_segment segment_configurator::tss = {};
+    task_state_segment      segment_configurator::tss = {};
 
     segment_configurator::segment_configurator()
     {
@@ -35,12 +35,12 @@ namespace hal::x86_64
 
     void segment_configurator::configure_gdt()
     {
-        gdt.null = 0;
-        gdt.kernel_code_segment = 0x00af9a000000ffff;
-        gdt.kernel_data_segment = 0x00cf93000000ffff;
+        gdt.null                 = 0;
+        gdt.kernel_code_segment  = 0x00af9a000000ffff;
+        gdt.kernel_data_segment  = 0x00cf93000000ffff;
         gdt.user_code_segment_32 = 0;
-        gdt.user_code_segment = 0x00af9a000000ffff;
-        gdt.user_data_sgment = 0x00cff2000000ffff;
+        gdt.user_code_segment    = 0x00af9a000000ffff;
+        gdt.user_data_sgment     = 0x00cff2000000ffff;
     }
 
     void segment_configurator::configure_tss()
@@ -57,7 +57,7 @@ namespace hal::x86_64
 
     void segment_configurator::load_gdt()
     {
-        uint16_t gdt_size = sizeof(gdt) - 1;
+        uint16_t  gdt_size    = sizeof(gdt) - 1;
         uint64_t *gdt_address = (uint64_t *)&gdt;
         _load_gdt(gdt_size, gdt_address);
     }

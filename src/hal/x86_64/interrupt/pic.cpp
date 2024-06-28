@@ -8,13 +8,13 @@ namespace hal::x86_64
 {
     namespace
     {
-        constexpr static uint8_t PIC_MASTER = 0x20;
+        constexpr static uint8_t PIC_MASTER         = 0x20;
         constexpr static uint8_t PIC_MASTER_COMMAND = 0x20;
-        constexpr static uint8_t PIC_MASTER_DATA = 0x21;
-        constexpr static uint8_t PIC_SLAVE = 0xa0;
-        constexpr static uint8_t PIC_SLAVE_COMMAND = 0xa0;
-        constexpr static uint8_t PIC_SLAVE_DATA = 0xa1;
-        constexpr static uint8_t PIC_EOI = 0x20;
+        constexpr static uint8_t PIC_MASTER_DATA    = 0x21;
+        constexpr static uint8_t PIC_SLAVE          = 0xa0;
+        constexpr static uint8_t PIC_SLAVE_COMMAND  = 0xa0;
+        constexpr static uint8_t PIC_SLAVE_DATA     = 0xa1;
+        constexpr static uint8_t PIC_EOI            = 0x20;
     }
 
     pic::pic() : _port_io()
@@ -36,7 +36,7 @@ namespace hal::x86_64
         uint8_t slave_mask;
 
         master_mask = _port_io.read(PIC_MASTER_DATA);
-        slave_mask = _port_io.read(PIC_SLAVE_DATA);
+        slave_mask  = _port_io.read(PIC_SLAVE_DATA);
 
         _port_io.write(PIC_MASTER_COMMAND, 0x11); // send init command to master
         _port_io.io_wait();
@@ -90,7 +90,7 @@ namespace hal::x86_64
     void pic::mask_irq(uint8_t irq_number)
     {
         uint16_t port;
-        uint8_t value;
+        uint8_t  value;
 
         port = PIC_MASTER_DATA;
 
@@ -107,7 +107,7 @@ namespace hal::x86_64
     void pic::unmask_irq(uint8_t irq_number)
     {
         uint16_t port;
-        uint8_t value;
+        uint8_t  value;
 
         port = PIC_MASTER_DATA;
 
@@ -121,7 +121,7 @@ namespace hal::x86_64
         _port_io.write(port, value);
 
         uint8_t master_mask = _port_io.read(PIC_MASTER_DATA);
-        uint8_t slave_mask = _port_io.read(PIC_SLAVE_DATA);
+        uint8_t slave_mask  = _port_io.read(PIC_SLAVE_DATA);
     }
 
     void pic::end_of_interrupt_pic(uint8_t irq_number)

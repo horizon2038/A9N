@@ -12,7 +12,7 @@ namespace kernel
     struct capability_entry final : public capability_component
     {
       public:
-        capability_object *capability_pointer;
+        capability_object     *capability_pointer;
         capability_local_state state;
 
         common::error execute(message_buffer *buffer) override
@@ -36,7 +36,7 @@ namespace kernel
         }
 
         common::error add_child(
-            common::word index,
+            common::word          index,
             capability_component *component
         ) override
         {
@@ -70,8 +70,7 @@ namespace kernel
             {
                 auto next_capability_entry
                     = this->state.family_node.next_capability_entry;
-                next_capability_entry->state.family_node
-                    .preview_capability_entry
+                next_capability_entry->state.family_node.preview_capability_entry
                     = nullptr;
                 return 0;
             }
@@ -120,8 +119,8 @@ namespace kernel
 
         capability_component *traverse(
             library::capability::capability_descriptor descriptor,
-            common::word descriptor_max_bits,
-            common::word descriptor_used_bits
+            common::word                               descriptor_max_bits,
+            common::word                               descriptor_used_bits
         ) override
         {
             return this;

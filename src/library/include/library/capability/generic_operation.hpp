@@ -24,12 +24,12 @@ namespace library::capability
         // 7 : target node depth
         // 8 : target node index
 
-        constexpr inline common::word CAPABILITY_TYPE = 3;
+        constexpr inline common::word CAPABILITY_TYPE      = 3;
         constexpr inline common::word CAPABILITY_SIZE_BITS = 4;
-        constexpr inline common::word CAPABILITY_COUNT = 5;
-        constexpr inline common::word ROOT_DESCRIPTOR = 6;
-        constexpr inline common::word ROOT_DEPTH = 7;
-        constexpr inline common::word SLOT_INDEX = 8;
+        constexpr inline common::word CAPABILITY_COUNT     = 5;
+        constexpr inline common::word ROOT_DESCRIPTOR      = 6;
+        constexpr inline common::word ROOT_DEPTH           = 7;
+        constexpr inline common::word SLOT_INDEX           = 8;
     };
 }
 

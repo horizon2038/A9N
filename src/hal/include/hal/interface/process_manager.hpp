@@ -15,9 +15,9 @@ namespace hal::interface
             kernel::process *next_process
         ) = 0;
         virtual void create_process(
-            kernel::process *target_process,
+            kernel::process        *target_process,
             common::virtual_address entry_point_address
-        ) = 0;
+        )                                                            = 0;
         virtual void delete_process(kernel::process *target_process) = 0;
     };
 }

@@ -19,7 +19,7 @@ namespace hal::x86_64
             kernel::process *next_process
         ) override;
         void create_process(
-            kernel::process *target_process,
+            kernel::process        *target_process,
             common::virtual_address entry_point_address
         ) override;
         void delete_process(kernel::process *target_process) override;

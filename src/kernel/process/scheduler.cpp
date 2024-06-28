@@ -18,8 +18,8 @@ namespace kernel
 
     process *scheduler::schedule_next_process()
     {
-        process *target_process = nullptr;
-        common::word start_index = current_process_index;
+        process     *target_process = nullptr;
+        common::word start_index    = current_process_index;
 
         do
         {
@@ -52,13 +52,13 @@ namespace kernel
         }
 
         target_process->status = process_status::RUNNING;
-        _current_process = target_process;
+        _current_process       = target_process;
 
         return target_process;
     }
 
     process *scheduler::schedule_next_process(
-        process *priority_groups[],
+        process       *priority_groups[],
         common::sword &highest_priority
     )
     {
@@ -112,7 +112,7 @@ namespace kernel
 
         if (head_process == target_process)
         {
-            head_process = target_process->next;
+            head_process          = target_process->next;
             head_process->preview = nullptr;
         }
 
@@ -130,9 +130,9 @@ namespace kernel
             temp_process = temp_process->next;
         }
 
-        temp_process->next = target_process;
+        temp_process->next      = target_process;
         target_process->preview = temp_process;
-        target_process->next = nullptr;
+        target_process->next    = nullptr;
     }
 
     common::sword scheduler::update_highest_priority(process *priority_groups[])

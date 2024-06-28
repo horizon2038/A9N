@@ -18,17 +18,17 @@ namespace hal::interface
 {
     struct hal
     {
-        memory_manager *_memory_manager;
+        memory_manager  *_memory_manager;
         process_manager *_process_manager;
-        interrupt *_interrupt;
+        interrupt       *_interrupt;
 
         // platform services
         arch_initializer *_arch_initializer;
 
         // peripheral drivers
         port_io *_port_io;
-        serial *_serial;
-        timer *_timer;
+        serial  *_serial;
+        timer   *_timer;
     };
 }
 

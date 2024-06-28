@@ -9,7 +9,7 @@ namespace library::std
         static constexpr T value = v;
 
         using value_type = T;
-        using type = integral_constant<T, v>;
+        using type       = integral_constant<T, v>;
 
         constexpr operator value_type() const noexcept
         {

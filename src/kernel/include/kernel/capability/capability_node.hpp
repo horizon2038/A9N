@@ -15,15 +15,15 @@ namespace kernel
     {
       public:
         capability_node(
-            common::word initial_ignore_bits,
-            common::word initial_radix_bits,
+            common::word     initial_ignore_bits,
+            common::word     initial_radix_bits,
             capability_slot *initial_capability_slots
         );
 
         common::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer *buffer
+            message_buffer  *buffer
         ) override;
 
         common::error revoke() override
@@ -35,8 +35,8 @@ namespace kernel
 
         capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
-            common::word descriptor_max_bits,
-            common::word descriptor_used_bits
+            common::word                               descriptor_max_bits,
+            common::word                               descriptor_used_bits
         ) override;
 
       private:
@@ -61,7 +61,7 @@ namespace kernel
 
         capability_slot *lookup_slot(
             library::capability::capability_descriptor target_descriptor,
-            common::word descriptor_used_bits
+            common::word                               descriptor_used_bits
         );
 
         // inline section
@@ -84,7 +84,7 @@ namespace kernel
 
         inline const common::word calculate_capability_index(
             library::capability::capability_descriptor descriptor,
-            common::word descriptor_used_bits
+            common::word                               descriptor_used_bits
         )
         {
             auto mask_bits = static_cast<common::word>((1 << radix_bits) - 1);

@@ -22,8 +22,8 @@ static void zero_clear(elf64_program_header *);
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
 {
-    EFI_STATUS efi_status = EFI_SUCCESS;
-    elf64_header *loaded_elf64_header;
+    EFI_STATUS            efi_status = EFI_SUCCESS;
+    elf64_header         *loaded_elf64_header;
     elf64_program_header *loaded_elf64_program_header_table;
 
     efi_status = read_elf_header(kernel, &loaded_elf64_header);
@@ -63,8 +63,8 @@ static EFI_STATUS
 }
 
 static EFI_STATUS read_elf_program_header(
-    EFI_FILE_PROTOCOL *kernel,
-    elf64_header *header,
+    EFI_FILE_PROTOCOL     *kernel,
+    elf64_header          *header,
     elf64_program_header **program_header
 )
 {
@@ -84,14 +84,14 @@ static EFI_STATUS read_elf_program_header(
 }
 
 static EFI_STATUS load_elf_segment(
-    EFI_FILE_PROTOCOL *kernel,
-    elf64_header *header,
+    EFI_FILE_PROTOCOL    *kernel,
+    elf64_header         *header,
     elf64_program_header *program_header_table
 )
 {
-    EFI_STATUS efi_status = EFI_SUCCESS;
+    EFI_STATUS            efi_status = EFI_SUCCESS;
     elf64_program_header *program_header;
-    void *buffer;
+    void                 *buffer;
 
     efi_status = allocate_kernel_memory(header, program_header_table);
     if (EFI_ERROR(efi_status))
@@ -120,18 +120,18 @@ static EFI_STATUS load_elf_segment(
 }
 
 static EFI_STATUS allocate_kernel_memory(
-    elf64_header *header,
+    elf64_header         *header,
     elf64_program_header *program_header_table
 )
 {
-    EFI_STATUS efi_status = EFI_SUCCESS;
+    EFI_STATUS            efi_status = EFI_SUCCESS;
     elf64_program_header *program_header;
-    uint64_t start_segment_address;
-    uint64_t end_segment_address;
-    uint64_t segment_size;
+    uint64_t              start_segment_address;
+    uint64_t              end_segment_address;
+    uint64_t              segment_size;
 
     start_segment_address = MAX_UINT64;
-    end_segment_address = 0;
+    end_segment_address   = 0;
 
     for (uint16_t i = 0; i < header->program_header_number; ++i)
     {
@@ -160,9 +160,9 @@ static EFI_STATUS allocate_kernel_memory(
 }
 
 static void locate_elf_segment(
-    elf64_header *header,
+    elf64_header         *header,
     elf64_program_header *program_header,
-    uint64_t buffer
+    uint64_t              buffer
 )
 {
     CopyMem(

@@ -17,7 +17,7 @@ namespace library::std
 
     void *memcpy(void *buffer, const void *source, size_t size)
     {
-        uint8_t *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
+        uint8_t       *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
         const uint8_t *source_pointer
             = reinterpret_cast<const uint8_t *>(source);
 

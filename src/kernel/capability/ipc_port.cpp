@@ -6,7 +6,7 @@ namespace kernel
     common::error ipc_port::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
-        message_buffer *buffer
+        message_buffer  *buffer
     )
     {
     }

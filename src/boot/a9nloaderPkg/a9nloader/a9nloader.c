@@ -22,13 +22,13 @@
 EFI_STATUS EFIAPI
     efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
-    EFI_STATUS efi_status = EFI_SUCCESS;
+    EFI_STATUS         efi_status = EFI_SUCCESS;
     EFI_FILE_PROTOCOL *root_directory;
     EFI_FILE_PROTOCOL *kernel;
-    uint64_t entry_point_address = 0;
+    uint64_t           entry_point_address = 0;
 
     uefi_memory_map target_uefi_memory_map;
-    boot_info target_boot_info;
+    boot_info       target_boot_info;
 
     system_table->ConOut->ClearScreen(system_table->ConOut);
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_WHITE);

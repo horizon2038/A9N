@@ -8,7 +8,7 @@ namespace kernel
 {
     memory_manager::memory_manager(
         hal::interface::memory_manager &target_memory_manager,
-        const memory_info &target_memory_info
+        const memory_info              &target_memory_info
     )
         : _memory_manager(target_memory_manager)
         , head_memory_block(nullptr)
@@ -35,8 +35,8 @@ namespace kernel
         (since it is assumed that free memory exists).
         */
 
-        memory_map_entry *_memory_map_entry = nullptr;
-        memory_block *previous_memory_block = nullptr;
+        memory_map_entry *_memory_map_entry     = nullptr;
+        memory_block     *previous_memory_block = nullptr;
 
         for (uint16_t i = 0; i < target_memory_info.memory_map_count; i++)
         {
@@ -68,8 +68,8 @@ namespace kernel
             // 0x%llx\n",
             // reinterpret_cast<virtual_address>(current_memory_block));
             current_memory_block->start_physical_address = adjusted_address;
-            current_memory_block->size = adjusted_size;
-            current_memory_block->next = nullptr;
+            current_memory_block->size                   = adjusted_size;
+            current_memory_block->next                   = nullptr;
             current_memory_block->memory_frame_count
                 = adjusted_size / common::PAGE_SIZE;
 
@@ -77,13 +77,13 @@ namespace kernel
 
             if (head_memory_block == nullptr)
             {
-                head_memory_block = current_memory_block;
+                head_memory_block     = current_memory_block;
                 previous_memory_block = current_memory_block;
                 continue;
             }
 
             previous_memory_block->next = current_memory_block;
-            previous_memory_block = current_memory_block;
+            previous_memory_block       = current_memory_block;
         }
 
         memory_block *now_memory_block = head_memory_block;
@@ -147,7 +147,7 @@ namespace kernel
         for (common::word i = 0; i < target_memory_block.memory_frame_count;
              i++)
         {
-            target_memory_block.memory_frames[i].owner = nullptr;
+            target_memory_block.memory_frames[i].owner        = nullptr;
             target_memory_block.memory_frames[i].is_allocated = false;
         }
     }
@@ -159,8 +159,8 @@ namespace kernel
         size_t requested_page_count
             = aligned_requested_size / common::PAGE_SIZE;
         memory_block *current_memory_block = head_memory_block;
-        common::word start_frame_index;
-        bool has_free_frames;
+        common::word  start_frame_index;
+        bool          has_free_frames;
 
         while (current_memory_block)
         {
@@ -203,7 +203,7 @@ namespace kernel
 
     bool memory_manager::find_free_frames(
         memory_block &target_memory_block,
-        common::word page_count,
+        common::word  page_count,
         common::word &start_frame_index
     )
     {
@@ -217,9 +217,9 @@ namespace kernel
 
     bool memory_manager::find_frames(
         memory_block &target_memory_block,
-        common::word page_count,
+        common::word  page_count,
         common::word &start_frame_index,
-        bool flag
+        bool          flag
     )
     {
         common::word free_page_count = 0;
@@ -246,25 +246,25 @@ namespace kernel
 
     void memory_manager::configure_memory_frames(
         memory_frame *start_frame,
-        common::word page_count,
-        process *owner,
-        bool flag
+        common::word  page_count,
+        process      *owner,
+        bool          flag
     )
     {
         for (common::word i = 0; i < page_count; i++)
         {
             start_frame[i].is_allocated = flag;
-            start_frame[i].owner = owner;
+            start_frame[i].owner        = owner;
         }
     }
 
     void memory_manager::deallocate_physical_memory(
         common::physical_address start_physical_address,
-        size_t size
+        size_t                   size
     )
     {
         memory_block *current_memory_block = head_memory_block;
-        common::word page_count
+        common::word  page_count
             = align_size(size, common::PAGE_SIZE) / common::PAGE_SIZE;
         common::word start_frame_index = 0;
 
@@ -305,7 +305,7 @@ namespace kernel
 
     common::word memory_manager::align_physical_address(
         common::word physical_address,
-        uint16_t page_size
+        uint16_t     page_size
     )
     {
         common::word aligned_address
@@ -362,13 +362,13 @@ namespace kernel
     }
 
     void memory_manager::map_virtual_memory(
-        kernel::process *target_process,
-        common::virtual_address target_virtual_address,
+        kernel::process         *target_process,
+        common::virtual_address  target_virtual_address,
         common::physical_address target_physical_address,
-        common::word page_count
+        common::word             page_count
     )
     {
-        bool is_kernel = !(target_process);
+        bool                     is_kernel = !(target_process);
         common::physical_address target_page_table_address;
         target_page_table_address = target_process->page_table;
 
@@ -419,8 +419,8 @@ namespace kernel
     }
 
     void memory_manager::unmap_virtual_memory(
-        kernel::process *target_process,
-        common::virtual_address target_virtual_address,
+        kernel::process         *target_process,
+        common::virtual_address  target_virtual_address,
         common::physical_address target_physical_address
     )
     {

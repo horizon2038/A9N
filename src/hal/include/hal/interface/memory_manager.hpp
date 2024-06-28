@@ -19,24 +19,24 @@ namespace hal::interface
 
         virtual bool is_table_exists(
             common::physical_address top_page_table,
-            common::virtual_address target_virtual_address
+            common::virtual_address  target_virtual_address
         ) = 0;
 
         virtual void configure_page_table(
             common::physical_address top_page_table_address,
-            common::virtual_address target_virtual_address,
+            common::virtual_address  target_virtual_address,
             common::physical_address page_table_address
         ) = 0;
 
         virtual void map_virtual_memory(
             common::physical_address top_page_table_address,
-            common::virtual_address target_virtual_addresss,
+            common::virtual_address  target_virtual_addresss,
             common::physical_address target_physical_address
         ) = 0;
 
         virtual void unmap_virtual_memory(
             common::physical_address top_page_table_address,
-            common::virtual_address target_virtual_address
+            common::virtual_address  target_virtual_address
         ) = 0;
 
         virtual common::virtual_address convert_physical_to_virtual_address(

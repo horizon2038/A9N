@@ -10,8 +10,8 @@
 namespace kernel
 {
     capability_node::capability_node(
-        common::word initial_ignore_bits,
-        common::word initial_radix_bits,
+        common::word     initial_ignore_bits,
+        common::word     initial_radix_bits,
         capability_slot *initial_capability_slots
     )
         : capability_slots(initial_capability_slots)
@@ -23,7 +23,7 @@ namespace kernel
     common::error capability_node::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
-        message_buffer *buffer
+        message_buffer  *buffer
     )
     {
         kernel::utility::logger::printk("execute : node\n");
@@ -97,8 +97,8 @@ namespace kernel
     {
         auto destination_index = buffer->get_element(3);
         auto source_descriptor = buffer->get_element(4);
-        auto source_depth = buffer->get_element(5);
-        auto source_index = buffer->get_element(6);
+        auto source_depth      = buffer->get_element(5);
+        auto source_index      = buffer->get_element(6);
         // TODO: create root_node
         // auto source_root_node = root_node->traverse(source_descriptor,
         // source_depth, 0);
@@ -127,8 +127,8 @@ namespace kernel
     {
         auto destination_index = buffer->get_element(3);
         auto source_descriptor = buffer->get_element(4);
-        auto source_depth = buffer->get_element(5);
-        auto source_index = buffer->get_element(6);
+        auto source_depth      = buffer->get_element(5);
+        auto source_index      = buffer->get_element(6);
         // TODO: create root_node
         // auto source_root_node = root_node->traverse(source_descriptor,
         // source_depth, 0);
@@ -189,7 +189,7 @@ namespace kernel
 
     capability_slot *capability_node::lookup_slot(
         library::capability::capability_descriptor descriptor,
-        common::word descriptor_used_bits
+        common::word                               descriptor_used_bits
     )
     {
         kernel::utility::logger::printk("lookup_capability\n");

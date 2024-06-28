@@ -8,12 +8,12 @@ namespace hal::x86_64
     namespace segment_selector
     {
         constexpr static uint16_t NULL_SEGMENT = 0x00;
-        constexpr static uint16_t KERNEL_CS = 0x08;
-        constexpr static uint16_t KERNEL_DS = 0x10;
+        constexpr static uint16_t KERNEL_CS    = 0x08;
+        constexpr static uint16_t KERNEL_DS    = 0x10;
         constexpr static uint16_t USER_CS_NULL = 0x18;
-        constexpr static uint16_t USER_CS = 0x20;
-        constexpr static uint16_t USER_DS = 0x28;
-        constexpr static uint16_t KERNEL_TSS = 0x30;
+        constexpr static uint16_t USER_CS      = 0x20;
+        constexpr static uint16_t USER_DS      = 0x28;
+        constexpr static uint16_t KERNEL_TSS   = 0x30;
     };
 
     struct task_state_segment
@@ -66,7 +66,7 @@ namespace hal::x86_64
         void load_task_register(uint16_t segment_register);
 
         // it needs to be rewritten because it does not take into account mp
-        static task_state_segment tss;
+        static task_state_segment      tss;
         static global_descriptor_table gdt;
     };
 

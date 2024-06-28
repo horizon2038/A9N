@@ -8,10 +8,10 @@ namespace hal::x86_64
 {
     namespace
     {
-        constexpr uint32_t CLOCK_RATE = 1193182;
-        constexpr uint16_t PIT_CHANNEL_0 = 0x40;
-        constexpr uint16_t PIT_CHANNEL_1 = 0x41;
-        constexpr uint16_t PIT_CHANNEL_2 = 0x42;
+        constexpr uint32_t CLOCK_RATE           = 1193182;
+        constexpr uint16_t PIT_CHANNEL_0        = 0x40;
+        constexpr uint16_t PIT_CHANNEL_1        = 0x41;
+        constexpr uint16_t PIT_CHANNEL_2        = 0x42;
         constexpr uint16_t PIT_COMMAND_REGISTER = 0x43;
     }
 

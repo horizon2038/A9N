@@ -36,7 +36,7 @@ namespace hal::x86_64
     }
 
     void process_manager::create_process(
-        kernel::process *target_process,
+        kernel::process        *target_process,
         common::virtual_address entry_point_address
     )
     {

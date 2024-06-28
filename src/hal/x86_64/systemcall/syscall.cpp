@@ -5,7 +5,7 @@
 namespace hal::x86_64
 {
 
-    extern "C" void _write_msr(uint32_t msr, uint64_t value);
+    extern "C" void     _write_msr(uint32_t msr, uint64_t value);
     extern "C" uint64_t _read_msr(uint32_t msr);
 
     void test_lstar()

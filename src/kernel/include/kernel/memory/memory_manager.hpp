@@ -17,18 +17,17 @@ namespace kernel
     struct memory_frame
     {
         process *owner;
-        bool is_allocated;
+        bool     is_allocated;
     };
 
     struct memory_block
     {
         common::physical_address start_physical_address;
-        size_t size;
-        memory_block *next;
-        common::word memory_frame_count;
-        memory_frame
-            memory_frames[1]; // C++ uses an array of 1 elements to emulate
-                              // a FAM (Flexible Array Members).
+        size_t                   size;
+        memory_block            *next;
+        common::word             memory_frame_count;
+        memory_frame memory_frames[1]; // C++ uses an array of 1 elements to
+                                       // emulate a FAM (Flexible Array Members).
     };
 
     // future: delegate physical_memory_allocation_system to
@@ -40,29 +39,29 @@ namespace kernel
       public:
         memory_manager(
             hal::interface::memory_manager &target_memory_manager,
-            const memory_info &target_memory_info
+            const memory_info              &target_memory_info
         );
 
         // physical-memory management
         common::physical_address
-            allocate_physical_memory(size_t size, process *owner);
+             allocate_physical_memory(size_t size, process *owner);
         void deallocate_physical_memory(
             common::physical_address target_physical_address,
-            size_t size
+            size_t                   size
         );
 
         // virtual-memory management
         void init_virtual_memory(process *target_process);
         void map_virtual_memory(
-            kernel::process *target_process,
-            common::virtual_address target_virtual_address,
+            kernel::process         *target_process,
+            common::virtual_address  target_virtual_address,
             common::physical_address target_physical_address,
-            common::word page_count
+            common::word             page_count
         );
         void unmap_virtual_memory(
-            kernel::process *target_process,
+            kernel::process        *target_process,
             common::virtual_address target_virtual_address,
-            common::word page_count
+            common::word            page_count
         );
 
         common::virtual_address convert_physical_to_virtual_address(
@@ -75,34 +74,34 @@ namespace kernel
         void info_physical_memory();
 
       private:
-        memory_block *head_memory_block;
+        memory_block                   *head_memory_block;
         hal::interface::memory_manager &_memory_manager;
 
-        void init(const memory_info &target_memory_info);
-        void init_memory_block(const memory_info &target_memory_info);
-        void print_memory_block_info(memory_block &target_memory_block);
-        void init_memory_frame(memory_block &target_memory_block);
-        size_t align_size(size_t size, uint16_t page_size);
+        void         init(const memory_info &target_memory_info);
+        void         init_memory_block(const memory_info &target_memory_info);
+        void         print_memory_block_info(memory_block &target_memory_block);
+        void         init_memory_frame(memory_block &target_memory_block);
+        size_t       align_size(size_t size, uint16_t page_size);
         common::word align_physical_address(
             common::physical_address target_physical_address,
-            uint16_t page_size
+            uint16_t                 page_size
         );
         void configure_memory_frames(
             memory_frame *start_frame,
-            common::word end_frame_index,
-            process *owner,
-            bool flag
+            common::word  end_frame_index,
+            process      *owner,
+            bool          flag
         );
         bool find_free_frames(
             memory_block &target_memory_block,
-            common::word page_count,
+            common::word  page_count,
             common::word &start_frame_index
         );
         bool find_frames(
             memory_block &target_memory_block,
-            common::word page_count,
+            common::word  page_count,
             common::word &start_frame_index,
-            bool flag
+            bool          flag
         );
     };
 }

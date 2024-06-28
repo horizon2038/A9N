@@ -8,6 +8,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 
 EFI_STATUS
-    exit_uefi(EFI_HANDLE image_handle, uefi_memory_map *target_uefi_memory_map);
+exit_uefi(EFI_HANDLE image_handle, uefi_memory_map *target_uefi_memory_map);
 
 #endif

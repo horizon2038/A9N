@@ -9,7 +9,7 @@ namespace kernel
 {
     struct process_node
     {
-        process *process;
+        process      *process;
         process_node *next;
     };
 
@@ -23,13 +23,13 @@ namespace kernel
 
         process *schedule_next_process();
         process *schedule_next_process(
-            process *priority_groups[],
+            process       *priority_groups[],
             common::sword &priority
         );
 
       private:
-        process *_process_list; // process array pointer<
-        process *_current_process;
+        process     *_process_list; // process array pointer<
+        process     *_current_process;
         common::word current_process_index;
 
         void move_to_end(process *target_process, process *&head_process);

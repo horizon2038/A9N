@@ -58,7 +58,7 @@ namespace library::std
                 requires(is_function_v<MemberTypeOther>)
             static auto call(
                 MemberTypeOther ClassType::*member_function_pointer,
-                T &&t,
+                T                         &&t,
                 Args &&...args
             )
                 -> decltype((invoke_impl::get(forward<T>(t)).*member_function_pointer)(
@@ -68,7 +68,7 @@ namespace library::std
             template<typename T>
             static auto call(
                 MemberType ClassType::*member_function_pointer,
-                T &&t
+                T                    &&t
             ) -> decltype(invoke_impl::get(forward<T>(t)).*member_function_pointer);
         };
 

@@ -11,7 +11,7 @@ namespace kernel
         common::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer *buffer
+            message_buffer  *buffer
         ) override;
 
         common::error revoke() override
@@ -26,8 +26,8 @@ namespace kernel
 
         capability_slot *traverse_slot(
             library::capability::capability_descriptor descriptor,
-            common::word max_bits,
-            common::word used_bits
+            common::word                               max_bits,
+            common::word                               used_bits
         ) override
         {
             return nullptr;

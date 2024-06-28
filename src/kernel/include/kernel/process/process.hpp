@@ -38,13 +38,13 @@ namespace kernel
 
       private:
         static constexpr common::word QUEUE_SIZE = 256;
-        process *queue[QUEUE_SIZE];
-        common::sword head = 0;
-        common::sword count = 0;
+        process                      *queue[QUEUE_SIZE];
+        common::sword                 head  = 0;
+        common::sword                 count = 0;
     };
 
-    constexpr static common::word QUANTUM_MAX = 10;
-    constexpr static common::word STACK_SIZE_MAX = 8192;
+    constexpr static common::word QUANTUM_MAX      = 10;
+    constexpr static common::word STACK_SIZE_MAX   = 8192;
     constexpr static common::word PROCESS_NAME_MAX = 128;
 
     enum class process_status : uint16_t
@@ -65,12 +65,12 @@ namespace kernel
 
         // identifier
         process_id id;
-        char name[PROCESS_NAME_MAX];
+        char       name[PROCESS_NAME_MAX];
 
         // for context-switch
         process_status status;
-        common::sword priority;
-        common::sword quantum;
+        common::sword  priority;
+        common::sword  quantum;
 
         // for priority-scheduling
         process *preview;
@@ -79,15 +79,15 @@ namespace kernel
         // hardware-context
         void *arch_context;
 
-        uint8_t stack[STACK_SIZE_MAX];
+        uint8_t                 stack[STACK_SIZE_MAX];
         common::virtual_address stack_pointer;
 
         common::physical_address page_table;
 
         // for ipc
-        ipc::message message_buffer;
+        ipc::message  message_buffer;
         message_queue send_wait_queue;
-        process_id receive_from;
+        process_id    receive_from;
 
         // resolver solves various process-related problems.
         process *resolver;

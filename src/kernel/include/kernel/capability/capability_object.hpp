@@ -12,10 +12,8 @@ namespace kernel
       public:
         virtual ~capability_object() {};
 
-        virtual common::error execute(
-            message_buffer *buffer,
-            capability_local_state *local_state
-        );
+        virtual common::error
+            execute(message_buffer *buffer, capability_local_state *local_state);
 
         virtual common::error remove();
 

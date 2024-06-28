@@ -9,8 +9,8 @@ void _start()
 
 void main()
 {
-    while(0)
+    while (0)
     {
-        asm volatile ("nop");
+        asm volatile("nop");
     }
 }

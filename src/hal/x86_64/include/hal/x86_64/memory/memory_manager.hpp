@@ -19,24 +19,24 @@ namespace hal::x86_64
 
         bool is_table_exists(
             common::physical_address top_page_table,
-            common::virtual_address target_virtual_address
+            common::virtual_address  target_virtual_address
         ) override;
 
         void configure_page_table(
             common::physical_address top_page_table_address,
-            common::virtual_address target_virtual_address,
+            common::virtual_address  target_virtual_address,
             common::physical_address page_table_address
         ) override;
 
         void map_virtual_memory(
             common::physical_address top_page_table_address,
-            common::virtual_address target_virtual_address,
+            common::virtual_address  target_virtual_address,
             common::physical_address target_physical_address
         ) override;
 
         void unmap_virtual_memory(
             common::physical_address top_page_table_address,
-            common::virtual_address target_virtual_address
+            common::virtual_address  target_virtual_address
         ) override;
 
         common::virtual_address convert_physical_to_virtual_address(

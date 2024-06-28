@@ -20,8 +20,8 @@ namespace hal::x86_64
     alignas(hal::x86_64::memory_manager
     ) char hal_factory::memory_manager_buffer[hal_factory::memory_manager_size]
         = {};
-    alignas(hal::x86_64::process_manager) char hal_factory::
-        process_manager_buffer[hal_factory::process_manager_size]
+    alignas(hal::x86_64::process_manager
+    ) char hal_factory::process_manager_buffer[hal_factory::process_manager_size]
         = {};
     alignas(hal::x86_64::interrupt
     ) char hal_factory::interrupt_buffer[hal_factory::interrupt_size]
@@ -62,13 +62,13 @@ namespace hal::x86_64
             = new (serial_buffer) serial(*port_io_pointer);
         hal::interface::timer *timer_pointer = new (timer_buffer) pit_timer();
 
-        hal_pointer->_memory_manager = memory_manager_pointer;
-        hal_pointer->_process_manager = process_manager_pointer;
-        hal_pointer->_interrupt = interrupt_pointer;
+        hal_pointer->_memory_manager   = memory_manager_pointer;
+        hal_pointer->_process_manager  = process_manager_pointer;
+        hal_pointer->_interrupt        = interrupt_pointer;
         hal_pointer->_arch_initializer = arch_initializer_pointer;
-        hal_pointer->_port_io = port_io_pointer;
-        hal_pointer->_serial = serial_pointer;
-        hal_pointer->_timer = timer_pointer;
+        hal_pointer->_port_io          = port_io_pointer;
+        hal_pointer->_serial           = serial_pointer;
+        hal_pointer->_timer            = timer_pointer;
 
         return hal_pointer;
     }

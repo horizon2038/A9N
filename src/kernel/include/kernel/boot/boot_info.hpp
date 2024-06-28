@@ -13,7 +13,7 @@ namespace kernel
 
     struct boot_info
     {
-        memory_info boot_memory_info;
+        memory_info  boot_memory_info;
         common::word arch_info[ARCH_INFO_MAX];
     } __attribute__((packed));
 }

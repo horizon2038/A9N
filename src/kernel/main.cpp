@@ -42,7 +42,7 @@ void read_serial()
     {
         asm volatile("sti");
         library::ipc::message m;
-        m.type = 1;
+        m.type              = 1;
         uint8_t serial_data = hal_instance->_serial->read_serial();
         if (serial_data == 0xd)
         {
@@ -69,7 +69,7 @@ void read_serial()
 
 void console()
 {
-    char buffer[256];
+    char     buffer[256];
     uint32_t buffer_index = 0;
     library::std::memset(buffer, 0, sizeof(buffer));
 
@@ -105,7 +105,7 @@ void console()
             kernel::kernel_object::ipc_manager->send(
                 5,
                 &buffer_message
-            ); // send buffer content to process 3
+            );                // send buffer content to process 3
             buffer_index = 0; // reset buffer index
             library::std::memset(buffer, 0, sizeof(buffer)); // clear the buffer
             kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
@@ -239,7 +239,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
 
     constexpr uint16_t logger_size = sizeof(kernel::utility::logger);
     alignas(kernel::utility::logger) char logger_buf[logger_size];
-    kernel::utility::logger *my_logger = new ((void *)logger_buf)
+    kernel::utility::logger              *my_logger = new ((void *)logger_buf)
         kernel::utility::logger { *hal_instance->_serial };
 
     logger::a9nout();
@@ -270,10 +270,7 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
             );
 
     logger::printk("test memory_manager\n");
-    kernel::kernel_object::memory_manager->allocate_physical_memory(
-        40,
-        nullptr
-    );
+    kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
     kernel::kernel_object::memory_manager
         ->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 

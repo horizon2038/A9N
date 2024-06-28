@@ -22,14 +22,14 @@ namespace hal::x86_64
         common::virtual_address user_stack_pointer;
         global_descriptor_table gdt;
         interrupt_descriptor_64 idt;
-        task_state_segment tss;
+        task_state_segment      tss;
     } __attribute__((packed));
 
     namespace segment_selector
     {
         constexpr static uint16_t KERNEL_STACK_POINTER_OFFSET = 0x00;
-        constexpr static uint16_t USER_STACK_POINTER_OFFSET = 0x08;
-        constexpr static uint16_t GDT_OFFSET = 0x10;
+        constexpr static uint16_t USER_STACK_POINTER_OFFSET   = 0x08;
+        constexpr static uint16_t GDT_OFFSET                  = 0x10;
         constexpr static uint16_t IDT_OFFSET
             = sizeof(global_descriptor_table) + GDT_OFFSET;
     }

@@ -14,7 +14,7 @@ static EFI_STATUS
     get_root_directory(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *, EFI_FILE_PROTOCOL **);
 
 EFI_STATUS open_kernel(
-    EFI_HANDLE image_handle,
+    EFI_HANDLE          image_handle,
     EFI_FILE_PROTOCOL **root_directory,
     EFI_FILE_PROTOCOL **kernel
 )
@@ -34,13 +34,13 @@ EFI_STATUS open_kernel(
 }
 
 static EFI_STATUS open_root_directory(
-    EFI_HANDLE image_handle,
+    EFI_HANDLE          image_handle,
     EFI_FILE_PROTOCOL **root_directory
 )
 {
-    EFI_LOADED_IMAGE_PROTOCOL *device_image;
+    EFI_LOADED_IMAGE_PROTOCOL       *device_image;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;
-    EFI_STATUS efi_status = EFI_SUCCESS;
+    EFI_STATUS                       efi_status = EFI_SUCCESS;
 
     efi_status = get_image(image_handle, &device_image);
     if (EFI_ERROR(efi_status))
@@ -76,8 +76,8 @@ static EFI_STATUS
 }
 
 static EFI_STATUS get_root_file_system(
-    EFI_HANDLE image_handle,
-    EFI_HANDLE device_handle,
+    EFI_HANDLE                        image_handle,
+    EFI_HANDLE                        device_handle,
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL **file_system
 )
 {
@@ -96,7 +96,7 @@ static EFI_STATUS get_root_file_system(
 
 static EFI_STATUS get_root_directory(
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *root_file_system,
-    EFI_FILE_PROTOCOL **root_directory
+    EFI_FILE_PROTOCOL              **root_directory
 )
 {
     EFI_STATUS efi_status;
