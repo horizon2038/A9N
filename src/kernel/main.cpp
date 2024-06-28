@@ -29,6 +29,7 @@
 #include <hal/x86_64/factory/hal_factory.hpp>
 
 #include <liba9n/option/option.hpp>
+#include <liba9n/result/result.hpp>
 
 void kernel_main(void);
 
@@ -324,43 +325,6 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
         "alpha",
         reinterpret_cast<a9n::virtual_address>(alpha)
     );
-
-    /*
-    liba9n::common::option<int> test_option {};
-
-    // lazy initialization
-    test_option = 2038;
-
-    // monadic operations
-    test_option
-        .and_then(
-            [](int x) -> liba9n::common::option<int>
-            {
-                logger::printk("option_and_then : %d\n", x);
-                return { 2038 };
-            }
-        )
-        .transform(
-            [](int x) -> int
-            {
-                return x * 2;
-            }
-        )
-        .and_then(
-            [](int x) -> liba9n::common::option<int>
-            {
-                logger::printk("option_and_then_2 : %d\n", x);
-                return {};
-            }
-        )
-        .or_else(
-            []() -> liba9n::common::option<int>
-            {
-                logger::printk("option_or_else\n");
-                return {};
-            }
-        );
-    */
 
     a9n::kernel::kernel_object::interrupt_manager->enable_interrupt_all();
     a9n::kernel::kernel_object::interrupt_manager->ack_interrupt();
