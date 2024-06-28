@@ -22,7 +22,7 @@ It combines high portability, stability, and scalability.
 │   │    └── include/hal/interface
 │   │    └── {ARCH}
 │   ├── boot
-│   ├── library
+│   ├── liba9n
 │   └── servers
 └── test
 
@@ -45,10 +45,10 @@ This bootloader is currently only implemented for the x86_64 by EDK2.
 > [!NOTE]
 > The bootloader binary is **separated** from the kernel binary.
 
-### `src/library`
+### `src/liba9n`
 
 The A9N base library.
-Used by the kernel, HAL, and user.
+Used by the kernel, and HAL.
 
 ### `src/servers`
 
