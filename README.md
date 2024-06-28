@@ -113,6 +113,8 @@ sudo apt update && sudo apt install -y \
     llvm \
     clang \
     lld \
+    libc++-16-dev \
+    libc++abi-16-dev \
     nasm \
     make \
     cmake \
@@ -146,6 +148,8 @@ Misskey : [@horizon](https://misskey.io/@horizon)
 [Mitou Jr](https://jr.mitou.org) : This project was supported by the Mitou Junior program.  
 [@kyasbal](https://github.com/kyasbal) : My mentor during the Mitou Junior program, who provided valuable advice.  
 [@nuta](https://github.com/nuta) : Gave me a advice on the implementation.  
+
+[MITOU IT](https://www.ipa.go.jp/jinzai/mitou/it/2024/gaiyou-sg-2.html) : This project was supported by the MITOU IT Program.
 
 And I would also like to thank everyone who supported this project.  
 
