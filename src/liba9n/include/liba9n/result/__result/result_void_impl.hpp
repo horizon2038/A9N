@@ -670,8 +670,8 @@ namespace liba9n
         template<
             typename Function,
             typename Ecvref = E &,
-            typename F
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename F      = liba9n::std::remove_cvref_t<
+                liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_copy_constructible_v<E>
         constexpr auto transform_error(Function &&function) &
         {
@@ -680,14 +680,20 @@ namespace liba9n
                 return result<void, F>(result_ok);
             }
 
-            return result<void, F>(result_error, unwrap_error());
+            return result<void, F>(
+                result_error,
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    unwrap_error()
+                )
+            );
         }
 
         template<
             typename Function,
             typename Ecvref = E const &,
-            typename F
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename F      = liba9n::std::remove_cvref_t<
+                liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_copy_constructible_v<E>
         constexpr auto transform_error(Function &&function) const &
         {
@@ -696,14 +702,20 @@ namespace liba9n
                 return result<void, F>(result_ok);
             }
 
-            return result<void, F>(result_error, unwrap_error());
+            return result<void, F>(
+                result_error,
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    unwrap_error()
+                )
+            );
         }
 
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename F
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename F      = liba9n::std::remove_cvref_t<
+                liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_move_constructible_v<E>
         constexpr auto transform_error(Function &&function) &&
         {
@@ -714,15 +726,18 @@ namespace liba9n
 
             return result<void, F>(
                 result_error,
-                liba9n::std::move(unwrap_error())
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    liba9n::std::move(unwrap_error())
+                )
             );
         }
 
         template<
             typename Function,
             typename Ecvref = E const &&,
-            typename F
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename F      = liba9n::std::remove_cvref_t<
+                liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_move_constructible_v<E>
         constexpr auto transform_error(Function &&function) const &&
         {
@@ -733,7 +748,10 @@ namespace liba9n
 
             return result<void, F>(
                 result_error,
-                liba9n::std::move(unwrap_error())
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    liba9n::std::move(unwrap_error())
+                )
             );
         }
 
