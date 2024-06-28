@@ -910,14 +910,7 @@ namespace liba9n
         {
             if (is_ok())
             {
-                return result<T, F>(
-                    result_in_place,
-                    result_ok,
-                    liba9n::std::invoke(
-                        liba9n::std::forward<Function>(function),
-                        unwrap()
-                    )
-                );
+                return result<T, F>(result_in_place, result_ok, unwrap());
             }
 
             return result<T, F>(liba9n::std::invoke(
@@ -936,14 +929,7 @@ namespace liba9n
         {
             if (is_ok())
             {
-                return result<T, F>(
-                    result_in_place,
-                    result_ok,
-                    liba9n::std::invoke(
-                        liba9n::std::forward<Function>(function),
-                        unwrap()
-                    )
-                );
+                return result<T, F>(result_in_place, result_ok, unwrap());
             }
 
             return result<T, F>(liba9n::std::invoke(
@@ -965,10 +951,7 @@ namespace liba9n
                 return result<T, F>(
                     result_in_place,
                     result_ok,
-                    liba9n::std::invoke(
-                        liba9n::std::forward<Function>(function),
-                        liba9n::std::move(unwrap())
-                    )
+                    liba9n::std::move(unwrap())
                 );
             }
 
@@ -991,10 +974,7 @@ namespace liba9n
                 return result<T, F>(
                     result_in_place,
                     result_ok,
-                    liba9n::std::invoke(
-                        liba9n::std::forward<Function>(function),
-                        liba9n::std::move(unwrap())
-                    )
+                    liba9n::std::move(unwrap())
                 );
             }
 

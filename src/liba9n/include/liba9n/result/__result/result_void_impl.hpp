@@ -677,15 +677,10 @@ namespace liba9n
         {
             if (is_ok())
             {
-                return result<void, F>(
-                    result_in_place,
-                    result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
-                );
+                return result<void, F>(result_ok);
             }
 
-            return result<void, E>(result_error, unwrap_error());
+            return result<void, F>(result_error, unwrap_error());
         }
 
         template<
@@ -698,15 +693,10 @@ namespace liba9n
         {
             if (is_ok())
             {
-                return result<void, F>(
-                    result_in_place,
-                    result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
-                );
+                return result<void, F>(result_ok);
             }
 
-            return result<void, E>(result_error, unwrap_error());
+            return result<void, F>(result_error, unwrap_error());
         }
 
         template<
@@ -719,15 +709,10 @@ namespace liba9n
         {
             if (is_ok())
             {
-                return result<void, F>(
-                    result_in_place,
-                    result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
-                );
+                return result<void, F>(result_ok);
             }
 
-            return result<void, E>(
+            return result<void, F>(
                 result_error,
                 liba9n::std::move(unwrap_error())
             );
@@ -743,15 +728,10 @@ namespace liba9n
         {
             if (is_ok())
             {
-                return result<void, F>(
-                    result_in_place,
-                    result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
-                );
+                return result<void, F>(result_ok);
             }
 
-            return result<void, E>(
+            return result<void, F>(
                 result_error,
                 liba9n::std::move(unwrap_error())
             );
