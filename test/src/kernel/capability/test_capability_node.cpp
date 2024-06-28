@@ -18,12 +18,12 @@ class capability_node_test : public ::testing::Test
     a9n::kernel::capability_slot *slots_2;
 
     constexpr static a9n::word NODE_ROOT_RADIX = 8;
-    constexpr static a9n::word NODE_1_RADIX = 12;
-    constexpr static a9n::word NODE_2_RADIX = 12;
+    constexpr static a9n::word NODE_1_RADIX    = 12;
+    constexpr static a9n::word NODE_2_RADIX    = 12;
 
     constexpr static a9n::word NODE_ROOT_IGNORE = 24;
-    constexpr static a9n::word NODE_1_IGNORE = 4;
-    constexpr static a9n::word NODE_2_IGNORE = 4;
+    constexpr static a9n::word NODE_1_IGNORE    = 4;
+    constexpr static a9n::word NODE_2_IGNORE    = 4;
 
     constexpr static a9n::word NODE_ROOT_ALLBITS
         = (NODE_ROOT_RADIX + NODE_ROOT_IGNORE);
@@ -41,7 +41,7 @@ class capability_node_test : public ::testing::Test
     {
         // node_root
         slots_root = new a9n::kernel::capability_slot[1 << NODE_ROOT_RADIX];
-        node_root = new a9n::kernel::capability_node(
+        node_root  = new a9n::kernel::capability_node(
             NODE_ROOT_IGNORE,
             NODE_ROOT_RADIX,
             slots_root
@@ -49,7 +49,7 @@ class capability_node_test : public ::testing::Test
 
         // node_1
         slots_1 = new a9n::kernel::capability_slot[1 << NODE_1_RADIX];
-        node_1 = new a9n::kernel::capability_node(
+        node_1  = new a9n::kernel::capability_node(
             NODE_1_IGNORE,
             NODE_1_RADIX,
             slots_1
@@ -58,7 +58,7 @@ class capability_node_test : public ::testing::Test
 
         // node_2
         slots_2 = new a9n::kernel::capability_slot[1 << NODE_2_RADIX];
-        node_2 = new a9n::kernel::capability_node(
+        node_2  = new a9n::kernel::capability_node(
             NODE_2_IGNORE,
             NODE_2_RADIX,
             slots_2

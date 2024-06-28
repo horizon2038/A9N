@@ -17,22 +17,21 @@ namespace a9n::kernel
     class process_manager
     {
       public:
-        process_manager(a9n::hal::process_manager &target_process_manager
-        );
+        process_manager(a9n::hal::process_manager &target_process_manager);
 
         ~process_manager();
 
-        process      *current_process;
+        process   *current_process;
         a9n::sword highest_priority;
 
         void create_process(
-            const char             *process_name,
+            const char          *process_name,
             a9n::virtual_address entry_point_address
         );
         void init_process(
-            process                *process,
-            process_id              target_process_id,
-            const char             *process_name,
+            process             *process,
+            process_id           target_process_id,
+            const char          *process_name,
             a9n::virtual_address entry_point_address
         );
         void delete_process(process_id target_process_id);
@@ -44,7 +43,7 @@ namespace a9n::kernel
         process  process_list[PROCESS_COUNT_MAX];
         process *priority_groups[PRIORITY_MAX] = { nullptr };
 
-        scheduler                        _scheduler;
+        scheduler                  _scheduler;
         a9n::hal::process_manager &_process_manager;
 
         a9n::sword determine_process_id();

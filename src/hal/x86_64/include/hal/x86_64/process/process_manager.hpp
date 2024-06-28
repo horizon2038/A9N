@@ -19,8 +19,8 @@ namespace a9n::hal::x86_64
             a9n::kernel::process *next_process
         ) override;
         void create_process(
-            a9n::kernel::process        *target_process,
-            a9n::virtual_address entry_point_address
+            a9n::kernel::process *target_process,
+            a9n::virtual_address  entry_point_address
         ) override;
         void delete_process(a9n::kernel::process *target_process) override;
 

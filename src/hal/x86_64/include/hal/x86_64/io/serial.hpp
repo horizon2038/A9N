@@ -20,9 +20,9 @@ namespace a9n::hal::x86_64
 
       private:
         a9n::hal::port_io &_port_io;
-        int                      is_received();
-        int                      is_empty();
-        uint32_t                 strlen(const char *s);
+        int                is_received();
+        int                is_empty();
+        uint32_t           strlen(const char *s);
     };
 
 }

@@ -20,14 +20,14 @@ namespace a9n::hal
       public:
         virtual void init_interrupt() = 0;
         virtual void register_handler(
-            a9n::word      irq_number,
+            a9n::word         irq_number,
             interrupt_handler target_interrupt_handler
-        )                                                       = 0;
+        )                                                    = 0;
         virtual void enable_interrupt(a9n::word irq_number)  = 0;
         virtual void disable_interrupt(a9n::word irq_number) = 0;
-        virtual void enable_interrupt_all()                     = 0;
-        virtual void disable_interrupt_all()                    = 0;
-        virtual void ack_interrupt()                            = 0;
+        virtual void enable_interrupt_all()                  = 0;
+        virtual void disable_interrupt_all()                 = 0;
+        virtual void ack_interrupt()                         = 0;
     };
 
 }

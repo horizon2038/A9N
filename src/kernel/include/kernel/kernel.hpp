@@ -14,14 +14,16 @@ namespace a9n::kernel
     struct kernel_object
     {
       public:
-        alignas(a9n::kernel::memory_manager) static char memory_manager_buffer[];
+        alignas(a9n::kernel::memory_manager
+        ) static char memory_manager_buffer[];
         static a9n::kernel::memory_manager *memory_manager;
 
         alignas(a9n::kernel::interrupt_manager
         ) static char interrupt_manager_buffer[];
         static a9n::kernel::interrupt_manager *interrupt_manager;
 
-        alignas(a9n::kernel::process_manager) static char process_manager_buffer[];
+        alignas(a9n::kernel::process_manager
+        ) static char process_manager_buffer[];
         static a9n::kernel::process_manager *process_manager;
 
         alignas(a9n::kernel::ipc_manager) static char ipc_manager_buffer[];

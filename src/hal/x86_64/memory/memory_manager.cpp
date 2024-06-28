@@ -120,12 +120,11 @@ namespace a9n::hal::x86_64
 
             if (current_page_table_entry.present)
             {
-                current_page_table
-                    = reinterpret_cast<a9n::virtual_address *>(
-                        convert_physical_to_virtual_address(
-                            current_page_table_entry.get_physical_address()
-                        )
-                    );
+                current_page_table = reinterpret_cast<a9n::virtual_address *>(
+                    convert_physical_to_virtual_address(
+                        current_page_table_entry.get_physical_address()
+                    )
+                );
                 continue;
             }
 
@@ -207,10 +206,9 @@ namespace a9n::hal::x86_64
         );
     }
 
-    a9n::physical_address
-        memory_manager::convert_virtual_to_physical_address(
-            const a9n::virtual_address target_virtual_address
-        )
+    a9n::physical_address memory_manager::convert_virtual_to_physical_address(
+        const a9n::virtual_address target_virtual_address
+    )
     {
         return a9n::hal::x86_64::convert_virtual_to_physical_address(
             target_virtual_address

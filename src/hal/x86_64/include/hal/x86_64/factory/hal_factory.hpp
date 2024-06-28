@@ -22,7 +22,7 @@ namespace a9n::hal::x86_64
     class hal_factory final : public a9n::hal::hal_factory
     {
       public:
-        a9n::hal::hal      *make() override;
+        a9n::hal::hal            *make() override;
         constexpr static uint64_t hal_size = sizeof(a9n::hal::hal);
         alignas(a9n::hal::hal) static char hal_buffer[];
 
@@ -45,13 +45,16 @@ namespace a9n::hal::x86_64
         alignas(a9n::hal::x86_64::arch_initializer
         ) static char arch_initializer_buffer[];
 
-        constexpr static uint64_t port_io_size = sizeof(a9n::hal::x86_64::port_io);
+        constexpr static uint64_t port_io_size
+            = sizeof(a9n::hal::x86_64::port_io);
         alignas(a9n::hal::x86_64::port_io) static char port_io_buffer[];
 
-        constexpr static uint64_t serial_size = sizeof(a9n::hal::x86_64::serial);
+        constexpr static uint64_t serial_size
+            = sizeof(a9n::hal::x86_64::serial);
         alignas(a9n::hal::x86_64::serial) static char serial_buffer[];
 
-        constexpr static uint64_t timer_size = sizeof(a9n::hal::x86_64::pit_timer);
+        constexpr static uint64_t timer_size
+            = sizeof(a9n::hal::x86_64::pit_timer);
         alignas(a9n::hal::x86_64::pit_timer) static char timer_buffer[];
 
       private:

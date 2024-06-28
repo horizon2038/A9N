@@ -71,7 +71,7 @@ namespace a9n::hal::x86_64
     }
 
     void interrupt::register_idt_handler(
-        a9n::word                      irq_number,
+        a9n::word                   irq_number,
         a9n::hal::interrupt_handler target_interrupt_handler
     )
     {
@@ -89,7 +89,7 @@ namespace a9n::hal::x86_64
     };
 
     void interrupt::register_handler(
-        a9n::word                      irq_number,
+        a9n::word                   irq_number,
         a9n::hal::interrupt_handler target_interrupt_handler
     )
     {

@@ -5,8 +5,7 @@ namespace a9n::kernel::utility
     uint32_t logger::log_id      = 0;
     logger  *logger::this_logger = nullptr;
 
-    logger::logger(a9n::hal::serial &target_serial)
-        : _print(target_serial)
+    logger::logger(a9n::hal::serial &target_serial) : _print(target_serial)
     {
         this_logger = this;
         this_logger->_print.printf("\e[0m");

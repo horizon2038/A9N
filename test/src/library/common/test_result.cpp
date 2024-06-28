@@ -40,10 +40,10 @@ TEST(result_test, unwrap_error_test)
 
 TEST(result_test, pointer_test)
 {
-    int base_value = 400;
-    int *base_value_address = &base_value;
+    int                                       base_value         = 400;
+    int                                      *base_value_address = &base_value;
     liba9n::common::result<int *, test_error> r { base_value_address };
-    auto addr = r.unwrap();
+    auto                                      addr = r.unwrap();
 
     ASSERT_EQ(400, *addr);
 }
@@ -58,7 +58,7 @@ TEST(result_test, small_size_test)
 TEST(result_test, copy_test)
 {
     liba9n::common::result<int, test_error> r { 2038 };
-    auto r_2 = r;
+    auto                                    r_2 = r;
 
     ASSERT_EQ(r_2.unwrap(), 2038);
 }
@@ -202,7 +202,7 @@ liba9n::common::result<int, test_error> fail(int x)
 TEST(result_test, and_then_success_test)
 {
     liba9n::common::result<int, test_error> res { 42 };
-    auto new_res = res.and_then(increment);
+    auto                                    new_res = res.and_then(increment);
 
     ASSERT_TRUE(new_res.is_ok());
     EXPECT_EQ(new_res.unwrap(), 43);
@@ -210,8 +210,8 @@ TEST(result_test, and_then_success_test)
 
 TEST(result_test, and_then_error_test)
 {
-    liba9n::common::result<int, test_error> res = test_error::error_a;
-    auto new_res = res.and_then(increment);
+    liba9n::common::result<int, test_error> res     = test_error::error_a;
+    auto                                    new_res = res.and_then(increment);
 
     ASSERT_TRUE(new_res.is_error());
     EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
@@ -220,7 +220,7 @@ TEST(result_test, and_then_error_test)
 TEST(result_test, and_then_function_returns_error_test)
 {
     liba9n::common::result<int, test_error> res { 42 };
-    auto new_res = res.and_then(fail);
+    auto                                    new_res = res.and_then(fail);
 
     ASSERT_TRUE(new_res.is_error());
     EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
@@ -299,7 +299,7 @@ liba9n::common::result<int, test_error> change_error(test_error &err)
 TEST(result_test, or_else_error_test)
 {
     liba9n::common::result<int, test_error> res { test_error::error_a };
-    auto new_res = res.or_else(change_error);
+    auto                                    new_res = res.or_else(change_error);
 
     ASSERT_FALSE(new_res);
     ASSERT_EQ(new_res.unwrap_error(), test_error::error_b);
@@ -324,7 +324,7 @@ TEST(result_test, or_else_string_test)
 TEST(result_test, transform_success_test)
 {
     liba9n::common::result<int, std::string> res { 1 };
-    auto new_res = res.transform(
+    auto                                     new_res = res.transform(
         [](int x)
         {
             return x * 2;
@@ -338,7 +338,7 @@ TEST(result_test, transform_success_test)
 TEST(result_test, transform_error_test)
 {
     liba9n::common::result<int, std::string> res { "result : error!" };
-    auto new_res = res.transform(
+    auto                                     new_res = res.transform(
         [](int x)
         {
             return x;

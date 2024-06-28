@@ -13,8 +13,7 @@
 
 namespace a9n::hal::x86_64
 {
-    alignas(a9n::hal::hal
-    ) char hal_factory::hal_buffer[hal_factory::hal_size]
+    alignas(a9n::hal::hal) char hal_factory::hal_buffer[hal_factory::hal_size]
         = {};
 
     alignas(a9n::hal::x86_64::memory_manager
@@ -43,8 +42,7 @@ namespace a9n::hal::x86_64
 
     a9n::hal::hal *hal_factory::make()
     {
-        a9n::hal::hal *hal_pointer
-            = new (hal_buffer) a9n::hal::hal();
+        a9n::hal::hal *hal_pointer = new (hal_buffer) a9n::hal::hal();
 
         a9n::hal::memory_manager *memory_manager_pointer
             = new (memory_manager_buffer) memory_manager();
@@ -56,9 +54,8 @@ namespace a9n::hal::x86_64
         a9n::hal::arch_initializer *arch_initializer_pointer
             = new (arch_initializer_buffer) arch_initializer();
 
-        a9n::hal::port_io *port_io_pointer
-            = new (port_io_buffer) port_io();
-        a9n::hal::serial *serial_pointer
+        a9n::hal::port_io *port_io_pointer = new (port_io_buffer) port_io();
+        a9n::hal::serial  *serial_pointer
             = new (serial_buffer) serial(*port_io_pointer);
         a9n::hal::timer *timer_pointer = new (timer_buffer) pit_timer();
 

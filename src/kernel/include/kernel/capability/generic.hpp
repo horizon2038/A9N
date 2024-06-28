@@ -44,7 +44,7 @@ namespace a9n::kernel
         generic_info(
             const a9n::physical_address initial_base_address,
             const a9n::word             initial_size_bits,
-            const bool                     initial_device,
+            const bool                  initial_device,
             const a9n::physical_address initial_watermark
         )
             : base_address { initial_base_address }
@@ -58,8 +58,7 @@ namespace a9n::kernel
 
         bool is_device() const;
 
-        bool is_allocatable(a9n::word memory_size_bits, a9n::word count)
-            const;
+        bool is_allocatable(a9n::word memory_size_bits, a9n::word count) const;
 
         a9n::error apply_allocate(a9n::word memory_size_bits);
 
@@ -69,7 +68,7 @@ namespace a9n::kernel
         const a9n::physical_address base_address;
         const a9n::word             size_bits;
         a9n::physical_address       watermark;
-        const bool                     device;
+        const bool                  device;
 
         inline a9n::word size() const
         {
@@ -96,8 +95,8 @@ namespace a9n::kernel
 
         capability_slot *traverse_slot(
             liba9n::capability::capability_descriptor descriptor,
-            a9n::word                               max_bits,
-            a9n::word                               used_bits
+            a9n::word                                 max_bits,
+            a9n::word                                 used_bits
         ) override
         {
             return nullptr;

@@ -26,7 +26,7 @@ namespace a9n::kernel
     }
 
     void process_manager::create_process(
-        const char             *process_name,
+        const char          *process_name,
         a9n::virtual_address entry_point_address
     )
     {
@@ -77,9 +77,9 @@ namespace a9n::kernel
     }
 
     void process_manager::init_process(
-        process                *process,
-        process_id              target_process_id,
-        const char             *process_name,
+        process             *process,
+        process_id           target_process_id,
+        const char          *process_name,
         a9n::virtual_address entry_point_address
     )
     {

@@ -38,7 +38,7 @@ namespace a9n::kernel
 
       private:
         static constexpr a9n::word QUEUE_SIZE = 256;
-        process                      *queue[QUEUE_SIZE];
+        process                   *queue[QUEUE_SIZE];
         a9n::sword                 head  = 0;
         a9n::sword                 count = 0;
     };
@@ -69,8 +69,8 @@ namespace a9n::kernel
 
         // for context-switch
         process_status status;
-        a9n::sword  priority;
-        a9n::sword  quantum;
+        a9n::sword     priority;
+        a9n::sword     quantum;
 
         // for priority-scheduling
         process *preview;
@@ -79,7 +79,7 @@ namespace a9n::kernel
         // hardware-context
         void *arch_context;
 
-        uint8_t                 stack[STACK_SIZE_MAX];
+        uint8_t              stack[STACK_SIZE_MAX];
         a9n::virtual_address stack_pointer;
 
         a9n::physical_address page_table;

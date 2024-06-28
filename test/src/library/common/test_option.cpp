@@ -29,10 +29,10 @@ TEST(option_test, none_test)
 
 TEST(option_test, pointer_test)
 {
-    a9n::word base_value = 400;
-    a9n::word *base_value_address = &base_value;
+    a9n::word                           base_value         = 400;
+    a9n::word                          *base_value_address = &base_value;
     liba9n::common::option<a9n::word *> opt { base_value_address };
-    auto addr = opt.unwrap();
+    auto                                addr = opt.unwrap();
 
     ASSERT_EQ(400, *addr);
 }
@@ -47,7 +47,7 @@ TEST(option_test, size_test)
 TEST(option_test, copy_test)
 {
     liba9n::common::option<a9n::word> opt { 2038 };
-    auto opt_2 = opt;
+    auto                              opt_2 = opt;
 
     ASSERT_EQ(opt_2.unwrap(), 2038);
 }

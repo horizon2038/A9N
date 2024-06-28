@@ -6,9 +6,7 @@
 
 namespace a9n::kernel
 {
-    interrupt_manager::interrupt_manager(
-        a9n::hal::interrupt &target_interrupt
-    )
+    interrupt_manager::interrupt_manager(a9n::hal::interrupt &target_interrupt)
         : _interrupt(target_interrupt)
     {
     }

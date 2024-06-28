@@ -11,13 +11,13 @@ namespace a9n::kernel
     {
         a9n::physical_address start_physical_address;
         a9n::word             page_count;
-        bool                     is_free;
-        bool                     is_device;
+        bool                  is_free;
+        bool                  is_device;
     };
 
     struct memory_info
     {
-        a9n::word      memory_size;
+        a9n::word         memory_size;
         uint16_t          memory_map_count;
         memory_map_entry *memory_map;
     };

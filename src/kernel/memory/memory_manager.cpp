@@ -8,7 +8,7 @@ namespace a9n::kernel
 {
     memory_manager::memory_manager(
         a9n::hal::memory_manager &target_memory_manager,
-        const memory_info              &target_memory_info
+        const memory_info        &target_memory_info
     )
         : _memory_manager(target_memory_manager)
         , head_memory_block(nullptr)
@@ -64,8 +64,8 @@ namespace a9n::kernel
                         _memory_map_entry->start_physical_address
                     )
                 );
-            // a9n::kernel::utility::logger::printk("current_memory_block_address :
-            // 0x%llx\n",
+            // a9n::kernel::utility::logger::printk("current_memory_block_address
+            // : 0x%llx\n",
             // reinterpret_cast<virtual_address>(current_memory_block));
             current_memory_block->start_physical_address = adjusted_address;
             current_memory_block->size                   = adjusted_size;
@@ -144,8 +144,7 @@ namespace a9n::kernel
 
     void memory_manager::init_memory_frame(memory_block &target_memory_block)
     {
-        for (a9n::word i = 0; i < target_memory_block.memory_frame_count;
-             i++)
+        for (a9n::word i = 0; i < target_memory_block.memory_frame_count; i++)
         {
             target_memory_block.memory_frames[i].owner        = nullptr;
             target_memory_block.memory_frames[i].is_allocated = false;
@@ -156,10 +155,9 @@ namespace a9n::kernel
         memory_manager::allocate_physical_memory(size_t size, process *owner)
     {
         size_t aligned_requested_size = align_size(size, a9n::PAGE_SIZE);
-        size_t requested_page_count
-            = aligned_requested_size / a9n::PAGE_SIZE;
+        size_t requested_page_count   = aligned_requested_size / a9n::PAGE_SIZE;
         memory_block *current_memory_block = head_memory_block;
-        a9n::word  start_frame_index;
+        a9n::word     start_frame_index;
         bool          has_free_frames;
 
         while (current_memory_block)
@@ -203,8 +201,8 @@ namespace a9n::kernel
 
     bool memory_manager::find_free_frames(
         memory_block &target_memory_block,
-        a9n::word  page_count,
-        a9n::word &start_frame_index
+        a9n::word     page_count,
+        a9n::word    &start_frame_index
     )
     {
         return find_frames(
@@ -217,15 +215,14 @@ namespace a9n::kernel
 
     bool memory_manager::find_frames(
         memory_block &target_memory_block,
-        a9n::word  page_count,
-        a9n::word &start_frame_index,
+        a9n::word     page_count,
+        a9n::word    &start_frame_index,
         bool          flag
     )
     {
         a9n::word free_page_count = 0;
 
-        for (a9n::word i = 0; i < target_memory_block.memory_frame_count;
-             i++)
+        for (a9n::word i = 0; i < target_memory_block.memory_frame_count; i++)
         {
             if (target_memory_block.memory_frames[i].is_allocated != flag)
             {
@@ -246,7 +243,7 @@ namespace a9n::kernel
 
     void memory_manager::configure_memory_frames(
         memory_frame *start_frame,
-        a9n::word  page_count,
+        a9n::word     page_count,
         process      *owner,
         bool          flag
     )
@@ -260,11 +257,11 @@ namespace a9n::kernel
 
     void memory_manager::deallocate_physical_memory(
         a9n::physical_address start_physical_address,
-        size_t                   size
+        size_t                size
     )
     {
         memory_block *current_memory_block = head_memory_block;
-        a9n::word  page_count
+        a9n::word     page_count
             = align_size(size, a9n::PAGE_SIZE) / a9n::PAGE_SIZE;
         a9n::word start_frame_index = 0;
 
@@ -305,7 +302,7 @@ namespace a9n::kernel
 
     a9n::word memory_manager::align_physical_address(
         a9n::word physical_address,
-        uint16_t     page_size
+        uint16_t  page_size
     )
     {
         a9n::word aligned_address
@@ -322,10 +319,9 @@ namespace a9n::kernel
         );
     }
 
-    a9n::physical_address
-        memory_manager::convert_virtual_to_physical_address(
-            a9n::virtual_address target_virtual_address
-        )
+    a9n::physical_address memory_manager::convert_virtual_to_physical_address(
+        a9n::virtual_address target_virtual_address
+    )
     {
         return _memory_manager.convert_virtual_to_physical_address(
             target_virtual_address
@@ -362,13 +358,13 @@ namespace a9n::kernel
     }
 
     void memory_manager::map_virtual_memory(
-        a9n::kernel::process         *target_process,
+        a9n::kernel::process *target_process,
         a9n::virtual_address  target_virtual_address,
         a9n::physical_address target_physical_address,
         a9n::word             page_count
     )
     {
-        bool                     is_kernel = !(target_process);
+        bool                  is_kernel = !(target_process);
         a9n::physical_address target_page_table_address;
         target_page_table_address = target_process->page_table;
 
@@ -419,7 +415,7 @@ namespace a9n::kernel
     }
 
     void memory_manager::unmap_virtual_memory(
-        a9n::kernel::process         *target_process,
+        a9n::kernel::process *target_process,
         a9n::virtual_address  target_virtual_address,
         a9n::physical_address target_physical_address
     )

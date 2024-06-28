@@ -18,8 +18,8 @@ namespace a9n::hal::x86_64
 
     class cpu_local_variable
     {
-        a9n::virtual_address kernel_stack_pointer;
-        a9n::virtual_address user_stack_pointer;
+        a9n::virtual_address    kernel_stack_pointer;
+        a9n::virtual_address    user_stack_pointer;
         global_descriptor_table gdt;
         interrupt_descriptor_64 idt;
         task_state_segment      tss;

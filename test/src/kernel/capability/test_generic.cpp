@@ -11,8 +11,8 @@
 class generic_test : public ::testing::Test
 {
   protected:
-    a9n::kernel::capability_slot root_slot;
-    a9n::kernel::capability_slot *root_node_slot;
+    a9n::kernel::capability_slot       root_slot;
+    a9n::kernel::capability_slot      *root_node_slot;
     a9n::kernel::capability_component *root_node;
 
     void SetUp() override
@@ -56,10 +56,10 @@ inline a9n::word calculate_size(a9n::word flags)
 
 TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
 {
-    a9n::kernel::generic g;
+    a9n::kernel::generic        g;
     a9n::kernel::message_buffer buffer;
 
-    auto generic_slot = root_slot.component->retrieve_slot(0);
+    auto generic_slot       = root_slot.component->retrieve_slot(0);
     generic_slot->component = &g;
     generic_slot->data.set_element(0, 0x1000);
     auto generic_flags = calculate_generic_flags(0, 0xc);
@@ -81,7 +81,7 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     buffer.set_element(5, 1); // count-1
     buffer.set_element(6, 0); // target capability_node descriptor
     buffer.set_element(7,
-                       0); // target capability_node descriptor
+                       0);    // target capability_node descriptor
     buffer.set_element(8, 1); // target index
 
     auto e
@@ -90,17 +90,17 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     auto watermark = generic_slot->data.get_element(2);
     ASSERT_EQ(watermark, (0x1000 + 0x100));
 
-    auto child = root_slot.component->retrieve_slot(1);
+    auto child      = root_slot.component->retrieve_slot(1);
     auto child_size = calculate_size(child->data.get_element(1));
     ASSERT_EQ(0x100, child_size);
 }
 
 TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
 {
-    a9n::kernel::generic g;
+    a9n::kernel::generic        g;
     a9n::kernel::message_buffer buffer;
 
-    auto generic_slot = root_slot.component->retrieve_slot(0);
+    auto generic_slot       = root_slot.component->retrieve_slot(0);
     generic_slot->component = &g;
     generic_slot->data.set_element(0, 0x1000);
     auto generic_flags = calculate_generic_flags(0, 0xc);
@@ -119,13 +119,13 @@ TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
     // 8 : target node index
     buffer.set_element(0, 0);
     buffer.set_element(1, a9n::WORD_BITS);
-    buffer.set_element(2, 0); // generic::CONVERT
-    buffer.set_element(3, 1); // generic
+    buffer.set_element(2, 0);  // generic::CONVERT
+    buffer.set_element(3, 1);  // generic
     buffer.set_element(4, 10); // 2^8 = 256 byte
-    buffer.set_element(5, 1); // count-1
-    buffer.set_element(6, 0); // target capability_node descriptor
+    buffer.set_element(5, 1);  // count-1
+    buffer.set_element(6, 0);  // target capability_node descriptor
     buffer.set_element(7,
-                       0); // target capability_node descriptor
+                       0);    // target capability_node descriptor
     buffer.set_element(8, 1); // target index
 
     g.execute(generic_slot, &root_slot, &buffer);

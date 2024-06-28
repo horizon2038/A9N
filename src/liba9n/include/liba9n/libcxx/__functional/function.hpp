@@ -43,8 +43,7 @@ namespace liba9n::std
         template<typename T>
         struct callable_impl : callable_base
         {
-            callable_impl(T callable)
-                : callable { liba9n::std::move(callable) }
+            callable_impl(T callable) : callable { liba9n::std::move(callable) }
             {
             }
 

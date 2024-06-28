@@ -11,8 +11,8 @@ namespace a9n::hal::x86_64
     extern "C" uint64_t __kernel_pml4;
     extern "C" void     _load_cr3(a9n::physical_address cr3_address);
     extern "C" void     _flush_tlb();
-    extern "C" void
-        _invalidate_page(a9n::virtual_address target_virtual_address);
+    extern "C" void _invalidate_page(a9n::virtual_address target_virtual_address
+    );
 
     constexpr static uint16_t PAGE_TABLE_COUNT = 512;
 
@@ -75,7 +75,7 @@ namespace a9n::hal::x86_64
 
     static inline uint64_t calculate_page_table_index(
         a9n::virtual_address target_virtual_address,
-        uint16_t                table_depth
+        uint16_t             table_depth
     )
     {
         // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}

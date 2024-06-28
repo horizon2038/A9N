@@ -15,9 +15,9 @@ namespace a9n::hal
             a9n::kernel::process *next_process
         ) = 0;
         virtual void create_process(
-            a9n::kernel::process        *target_process,
-            a9n::virtual_address entry_point_address
-        )                                                            = 0;
+            a9n::kernel::process *target_process,
+            a9n::virtual_address  entry_point_address
+        )                                                                 = 0;
         virtual void delete_process(a9n::kernel::process *target_process) = 0;
     };
 }

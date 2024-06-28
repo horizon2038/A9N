@@ -35,10 +35,8 @@ namespace a9n::kernel
             // return capability_pointer->execute(buffer, &this->state);
         }
 
-        a9n::error add_child(
-            a9n::word          index,
-            capability_component *component
-        ) override
+        a9n::error
+            add_child(a9n::word index, capability_component *component) override
         {
             return 0;
         };
@@ -119,8 +117,8 @@ namespace a9n::kernel
 
         capability_component *traverse(
             liba9n::capability::capability_descriptor descriptor,
-            a9n::word                               descriptor_max_bits,
-            a9n::word                               descriptor_used_bits
+            a9n::word                                 descriptor_max_bits,
+            a9n::word                                 descriptor_used_bits
         ) override
         {
             return this;

@@ -19,7 +19,7 @@ namespace a9n::hal::x86_64
         ~interrupt();
         void init_interrupt() override;
         void register_handler(
-            a9n::word                      irq_number,
+            a9n::word                   irq_number,
             a9n::hal::interrupt_handler target_interrupt_handler
         ) override;
         void enable_interrupt(a9n::word irq_number) override;
@@ -32,7 +32,7 @@ namespace a9n::hal::x86_64
         void init_handler();
         void load_idt();
         void register_idt_handler(
-            a9n::word                      irq_number,
+            a9n::word                   irq_number,
             a9n::hal::interrupt_handler target_interrupt_handler
         );
         interrupt_descriptor_64 idt[256];

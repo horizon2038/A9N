@@ -18,7 +18,7 @@ namespace a9n::kernel
 
     process *scheduler::schedule_next_process()
     {
-        process     *target_process = nullptr;
+        process  *target_process = nullptr;
         a9n::word start_index    = current_process_index;
 
         do
@@ -58,7 +58,7 @@ namespace a9n::kernel
     }
 
     process *scheduler::schedule_next_process(
-        process       *priority_groups[],
+        process    *priority_groups[],
         a9n::sword &highest_priority
     )
     {

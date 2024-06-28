@@ -22,7 +22,7 @@ namespace a9n::kernel
 
         // hardware-independent systemcall handler
         void handle_system_call(
-            uint16_t     system_call_number,
+            uint16_t  system_call_number,
             a9n::word arg_1,
             a9n::word arg_2,
             a9n::word arg_3,

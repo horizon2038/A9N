@@ -69,8 +69,8 @@ namespace a9n::kernel
 
         virtual capability_slot *traverse_slot(
             liba9n::capability::capability_descriptor descriptor,
-            a9n::word                               descriptor_max_bits,
-            a9n::word                               descriptor_used_bits
+            a9n::word                                 descriptor_max_bits,
+            a9n::word                                 descriptor_used_bits
         ) = 0;
     };
 }

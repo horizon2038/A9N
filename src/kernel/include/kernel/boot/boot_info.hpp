@@ -13,8 +13,8 @@ namespace a9n::kernel
 
     struct boot_info
     {
-        memory_info  boot_memory_info;
-        a9n::word arch_info[ARCH_INFO_MAX];
+        memory_info boot_memory_info;
+        a9n::word   arch_info[ARCH_INFO_MAX];
     } __attribute__((packed));
 }
 

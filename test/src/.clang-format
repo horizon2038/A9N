@@ -2,13 +2,13 @@ BasedOnStyle: WebKit
 AccessModifierOffset: -2
 AlignAfterOpenBracket: BlockIndent
 AlignArrayOfStructures: None
-AlignConsecutiveAssignments: None
-AlignConsecutiveBitFields: None
-AlignConsecutiveDeclarations: None
+AlignConsecutiveAssignments: true
+AlignConsecutiveBitFields: true
+AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: None
 AlignEscapedNewlines: DontAlign
 AlignOperands: AlignAfterOperator
-AlignTrailingComments: false
+AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Never
@@ -24,6 +24,7 @@ AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
+BreakAfterAttributes: Leave
 BreakBeforeBinaryOperators: All
 BreakBeforeBraces: Allman
 BreakBeforeConceptDeclarations: true
@@ -50,10 +51,11 @@ IndentWidth: 4
 IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
-Language: Cpp
+# Language: Cpp
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All
 PackConstructorInitializers: CurrentLine
+PenaltyExcessCharacter: 100
 PointerAlignment: Right
 ReferenceAlignment: Right
 ReflowComments: true
@@ -79,7 +81,7 @@ SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: c++17
+# Standard: c++20
 UseTab: Never
 BraceWrapping:
   AfterCaseLabel: true
