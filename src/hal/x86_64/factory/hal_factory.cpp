@@ -8,7 +8,7 @@
 #include <hal/x86_64/time/pit_timer.hpp>
 #include <hal/x86_64/io/port_io.hpp>
 
-#include <liba9n/cpp_dependent/new.hpp>
+#include <liba9n/libcxx/new>
 #include <liba9n/libc/string.hpp>
 
 namespace a9n::hal::x86_64

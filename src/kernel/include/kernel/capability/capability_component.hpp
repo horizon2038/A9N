@@ -52,7 +52,7 @@ namespace a9n::kernel
     class capability_component
     {
       public:
-        virtual ~capability_component() {};
+        // virtual ~capability_component() {};
 
         // called from user
         virtual a9n::error execute(

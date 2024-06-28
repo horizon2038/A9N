@@ -1,6 +1,6 @@
 #include "kernel/ipc/message_buffer.hpp"
 #include <stdint.h>
-#include <liba9n/cpp_dependent/new.hpp>
+#include <liba9n/libcxx/new>
 
 #include <hal/interface/interrupt.hpp>
 #include <hal/interface/port_io.hpp>
