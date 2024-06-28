@@ -3,7 +3,7 @@
 
 #include <liba9n/libcxx/type_traits>
 
-namespace liba9n::common
+namespace liba9n
 {
     // tag
     struct result_in_place_tag

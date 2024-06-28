@@ -13,60 +13,60 @@ enum class test_error : char
 
 TEST(result_test, is_error_test)
 {
-    liba9n::common::result<int, test_error> r { test_error::error_a };
+    liba9n::result<int, test_error> r { test_error::error_a };
     ASSERT_EQ(r.is_error(), true);
     ASSERT_EQ(r.is_ok(), false);
 }
 
 TEST(result_test, is_ok_test)
 {
-    liba9n::common::result<int, test_error> r { 2038 };
+    liba9n::result<int, test_error> r { 2038 };
     ASSERT_EQ(r.is_ok(), true);
     ASSERT_EQ(r.is_error(), false);
 }
 
 TEST(result_test, unwrap_test)
 {
-    liba9n::common::result<int, test_error> r { 2038 };
+    liba9n::result<int, test_error> r { 2038 };
     ASSERT_EQ(r.unwrap(), 2038);
     ASSERT_NE(r.unwrap(), 128);
 }
 
 TEST(result_test, unwrap_error_test)
 {
-    liba9n::common::result<int, test_error> r { test_error::error_a };
+    liba9n::result<int, test_error> r { test_error::error_a };
     ASSERT_EQ(r.unwrap_error(), test_error::error_a);
 }
 
 TEST(result_test, pointer_test)
 {
-    int                                       base_value         = 400;
-    int                                      *base_value_address = &base_value;
-    liba9n::common::result<int *, test_error> r { base_value_address };
-    auto                                      addr = r.unwrap();
+    int                               base_value         = 400;
+    int                              *base_value_address = &base_value;
+    liba9n::result<int *, test_error> r { base_value_address };
+    auto                              addr = r.unwrap();
 
     ASSERT_EQ(400, *addr);
 }
 
 TEST(result_test, small_size_test)
 {
-    liba9n::common::result<word, test_error> r { 2038 };
+    liba9n::result<word, test_error> r { 2038 };
 
     ASSERT_EQ(sizeof(word) * 2, sizeof(r));
 }
 
 TEST(result_test, copy_test)
 {
-    liba9n::common::result<int, test_error> r { 2038 };
-    auto                                    r_2 = r;
+    liba9n::result<int, test_error> r { 2038 };
+    auto                            r_2 = r;
 
     ASSERT_EQ(r_2.unwrap(), 2038);
 }
 
 TEST(result_test, return_result_value_test)
 {
-    // liba9n::common::option<int> opt = get_opt_int();
-    auto get_result = []() -> liba9n::common::result<int, test_error>
+    // liba9n::option<int> opt = get_opt_int();
+    auto get_result = []() -> liba9n::result<int, test_error>
     {
         return 2038;
     };
@@ -78,7 +78,7 @@ TEST(result_test, return_result_value_test)
 
 TEST(result_test, return_result_error_test)
 {
-    auto get_result = []() -> liba9n::common::result<int, test_error>
+    auto get_result = []() -> liba9n::result<int, test_error>
     {
         return test_error::error_a;
     };
@@ -110,7 +110,7 @@ TEST(result_test, move_trivial_test)
 {
     std::unique_ptr<foo> a = std::make_unique<foo>();
     // move
-    liba9n::common::result<std::unique_ptr<foo>, test_error> b = std::move(a);
+    liba9n::result<std::unique_ptr<foo>, test_error> b = std::move(a);
 
     ASSERT_EQ(b.is_ok(), true);
 }
@@ -119,19 +119,19 @@ TEST(result_test, move_non_trivial_test)
 {
     std::unique_ptr<bar> a = std::make_unique<bar>();
     // move
-    liba9n::common::result<std::unique_ptr<bar>, test_error> b = std::move(a);
+    liba9n::result<std::unique_ptr<bar>, test_error> b = std::move(a);
 
     ASSERT_EQ(b.is_ok(), true);
 }
 
 TEST(result_test, operator_bool_test)
 {
-    auto get_result_value = []() -> liba9n::common::result<int, test_error>
+    auto get_result_value = []() -> liba9n::result<int, test_error>
     {
         return 2038;
     };
 
-    auto get_result_error = []() -> liba9n::common::result<int, test_error>
+    auto get_result_error = []() -> liba9n::result<int, test_error>
     {
         return test_error::error_a;
     };
@@ -160,13 +160,9 @@ struct foo_has_constructor
 
 TEST(result_test, make_result_ok_inplace_test)
 {
-    auto get_result_ok
-        = []() -> liba9n::common::result<foo_has_constructor, test_error>
+    auto get_result_ok = []() -> liba9n::result<foo_has_constructor, test_error>
     {
-        return liba9n::common::make_result_ok<foo_has_constructor, test_error>(
-            123,
-            456
-        );
+        return liba9n::make_result_ok<foo_has_constructor, test_error>(123, 456);
     };
 
     auto r = get_result_ok();
@@ -178,31 +174,31 @@ TEST(result_test, make_result_ok_inplace_test)
 
 TEST(result_test, is_trivially_destructible_test)
 {
-    liba9n::common::result<int, test_error> r { 2038 };
+    liba9n::result<int, test_error> r { 2038 };
 
     ASSERT_EQ(std::is_trivially_destructible_v<decltype(r)>, true);
 }
 
 // monadic operations test
-liba9n::common::result<int, test_error> increment(int x)
+liba9n::result<int, test_error> increment(int x)
 {
     return x + 1;
 }
 
-liba9n::common::result<int, test_error> square(int x)
+liba9n::result<int, test_error> square(int x)
 {
     return x * x;
 }
 
-liba9n::common::result<int, test_error> fail(int x)
+liba9n::result<int, test_error> fail(int x)
 {
     return test_error::error_a;
 }
 
 TEST(result_test, and_then_success_test)
 {
-    liba9n::common::result<int, test_error> res { 42 };
-    auto                                    new_res = res.and_then(increment);
+    liba9n::result<int, test_error> res { 42 };
+    auto                            new_res = res.and_then(increment);
 
     ASSERT_TRUE(new_res.is_ok());
     EXPECT_EQ(new_res.unwrap(), 43);
@@ -210,8 +206,8 @@ TEST(result_test, and_then_success_test)
 
 TEST(result_test, and_then_error_test)
 {
-    liba9n::common::result<int, test_error> res     = test_error::error_a;
-    auto                                    new_res = res.and_then(increment);
+    liba9n::result<int, test_error> res     = test_error::error_a;
+    auto                            new_res = res.and_then(increment);
 
     ASSERT_TRUE(new_res.is_error());
     EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
@@ -219,8 +215,8 @@ TEST(result_test, and_then_error_test)
 
 TEST(result_test, and_then_function_returns_error_test)
 {
-    liba9n::common::result<int, test_error> res { 42 };
-    auto                                    new_res = res.and_then(fail);
+    liba9n::result<int, test_error> res { 42 };
+    auto                            new_res = res.and_then(fail);
 
     ASSERT_TRUE(new_res.is_error());
     EXPECT_EQ(new_res.unwrap_error(), test_error::error_a);
@@ -228,7 +224,7 @@ TEST(result_test, and_then_function_returns_error_test)
 
 TEST(result_test, and_then_ok_chain_test)
 {
-    liba9n::common::result<int, test_error> res { 1 };
+    liba9n::result<int, test_error> res { 1 };
 
     // clang-format off
     auto new_res = res
@@ -237,7 +233,7 @@ TEST(result_test, and_then_ok_chain_test)
         .and_then(square)
         .and_then([](int x)
         {
-            return liba9n::common::result<int, test_error> { x * 5 };
+            return liba9n::result<int, test_error> { x * 5 };
         });
     // clang-format on
 
@@ -247,7 +243,7 @@ TEST(result_test, and_then_ok_chain_test)
 
 TEST(result_test, and_then_error_chain_test)
 {
-    liba9n::common::result<int, test_error> res { 1 };
+    liba9n::result<int, test_error> res { 1 };
 
     // clang-format off
     auto new_res = res
@@ -263,10 +259,10 @@ TEST(result_test, and_then_error_chain_test)
 
 TEST(result_test, and_then_string_error_test)
 {
-    liba9n::common::result<int, std::string> res { "not working!" };
+    liba9n::result<int, std::string> res { "not working!" };
     // clang-format off
     auto new_res = res
-        .and_then([](int x) -> liba9n::common::result<int, std::string>
+        .and_then([](int x) -> liba9n::result<int, std::string>
         {
             return "not working!";
         });
@@ -276,14 +272,14 @@ TEST(result_test, and_then_string_error_test)
     ASSERT_EQ(new_res.unwrap_error(), "not working!");
 }
 
-liba9n::common::result<int, test_error> fail_2(test_error &err)
+liba9n::result<int, test_error> fail_2(test_error &err)
 {
     return 0;
 }
 
 TEST(result_test, or_else_success_test)
 {
-    liba9n::common::result<int, test_error> res { 42 };
+    liba9n::result<int, test_error> res { 42 };
     // 実行されないはず
     auto new_res = res.or_else(fail_2);
 
@@ -291,29 +287,28 @@ TEST(result_test, or_else_success_test)
     ASSERT_EQ(new_res.unwrap(), 42);
 }
 
-liba9n::common::result<int, test_error> change_error(test_error &err)
+liba9n::result<int, test_error> change_error(test_error &err)
 {
     return test_error::error_b;
 }
 
 TEST(result_test, or_else_error_test)
 {
-    liba9n::common::result<int, test_error> res { test_error::error_a };
-    auto                                    new_res = res.or_else(change_error);
+    liba9n::result<int, test_error> res { test_error::error_a };
+    auto                            new_res = res.or_else(change_error);
 
     ASSERT_FALSE(new_res);
     ASSERT_EQ(new_res.unwrap_error(), test_error::error_b);
 }
 
-liba9n::common::result<int, std::string> or_else_return_int(const std::string &e
-)
+liba9n::result<int, std::string> or_else_return_int(const std::string &e)
 {
     return 203;
 }
 
 TEST(result_test, or_else_string_test)
 {
-    liba9n::common::result<int, std::string> res { "hello, world!" };
+    liba9n::result<int, std::string> res { "hello, world!" };
 
     auto new_res = res.or_else(or_else_return_int).unwrap();
 
@@ -323,8 +318,8 @@ TEST(result_test, or_else_string_test)
 
 TEST(result_test, transform_success_test)
 {
-    liba9n::common::result<int, std::string> res { 1 };
-    auto                                     new_res = res.transform(
+    liba9n::result<int, std::string> res { 1 };
+    auto                             new_res = res.transform(
         [](int x)
         {
             return x * 2;
@@ -337,8 +332,8 @@ TEST(result_test, transform_success_test)
 
 TEST(result_test, transform_error_test)
 {
-    liba9n::common::result<int, std::string> res { "result : error!" };
-    auto                                     new_res = res.transform(
+    liba9n::result<int, std::string> res { "result : error!" };
+    auto                             new_res = res.transform(
         [](int x)
         {
             return x;
@@ -353,7 +348,7 @@ TEST(result_test, transform_chain_test)
 {
     // clang-format off
 
-    liba9n::common::result<int, std::string> res { 4 };
+    liba9n::result<int, std::string> res { 4 };
     auto new_res = res
         .transform(
             [](int x)
@@ -362,13 +357,13 @@ TEST(result_test, transform_chain_test)
             }
         )
         .and_then(
-            [](int x) -> liba9n::common::result<int, std::string>
+            [](int x) -> liba9n::result<int, std::string>
             {
                 return std::string("failed!");
             }
         )
         .or_else(
-            [](std::string e) -> liba9n::common::result<int, std::string>
+            [](std::string e) -> liba9n::result<int, std::string>
             {
                 return std::string("failed (modified) !");
             }
@@ -382,7 +377,7 @@ TEST(result_test, transform_chain_test)
 
 TEST(result_test, unwrap_or_t_test)
 {
-    liba9n::common::result<int, std::string> res { 42 };
+    liba9n::result<int, std::string> res { 42 };
 
     ASSERT_TRUE(res);
     ASSERT_EQ(res.unwrap_or(0), 42);
@@ -390,8 +385,7 @@ TEST(result_test, unwrap_or_t_test)
 
 TEST(result_test, unwrap_or_e_test)
 {
-    liba9n::common::result<int, std::string> res { std::string("hello, world!"
-    ) };
+    liba9n::result<int, std::string> res { std::string("hello, world!") };
 
     ASSERT_FALSE(res);
     ASSERT_EQ(res.unwrap_or(0), 0);
@@ -399,7 +393,7 @@ TEST(result_test, unwrap_or_e_test)
 
 TEST(result_test, unwrap_or_error_t_test)
 {
-    liba9n::common::result<int, std::string> res { 42 };
+    liba9n::result<int, std::string> res { 42 };
 
     ASSERT_TRUE(res);
     ASSERT_EQ(
@@ -410,8 +404,7 @@ TEST(result_test, unwrap_or_error_t_test)
 
 TEST(result_test, unwrap_or_error_e_test)
 {
-    liba9n::common::result<int, std::string> res { std::string("hello, world!"
-    ) };
+    liba9n::result<int, std::string> res { std::string("hello, world!") };
 
     ASSERT_FALSE(res);
     ASSERT_EQ(
@@ -420,7 +413,7 @@ TEST(result_test, unwrap_or_error_e_test)
     );
 }
 
-liba9n::common::result<int, std::string> safe_divide(int a, int b)
+liba9n::result<int, std::string> safe_divide(int a, int b)
 {
     if (b == 0)
     {
@@ -451,30 +444,29 @@ TEST(result_test, safe_divide_test)
 
 TEST(result_void_rest, is_error_test)
 {
-    liba9n::common::result<void, std::string> res { std::string("hello, world!"
-    ) };
+    liba9n::result<void, std::string> res { std::string("hello, world!") };
     ASSERT_TRUE(res.is_error());
 }
 
 TEST(result_void_test, is_ok_test)
 {
-    liba9n::common::result<void, std::string> res {};
+    liba9n::result<void, std::string> res {};
     ASSERT_TRUE(res.is_ok());
 }
 
 TEST(result_void_test, chain_test)
 {
-    liba9n::common::result<void, std::string> res {};
+    liba9n::result<void, std::string> res {};
 
     // clang-format off
     auto res_2 = res.and_then(
-        []() -> liba9n::common::result<void, std::string>
+        []() -> liba9n::result<void, std::string>
         {
             return "text";
         }
     )
     .or_else(
-        [](const std::string &e) -> liba9n::common::result<void, std::string>
+        [](const std::string &e) -> liba9n::result<void, std::string>
         {
             std::cout << e << std::endl;
             return {};
@@ -487,7 +479,7 @@ TEST(result_void_test, chain_test)
 
 TEST(result_void_test, transform_test)
 {
-    liba9n::common::result<void, std::string> res {};
+    liba9n::result<void, std::string> res {};
     // clang-format off
     auto new_res = res
         .transform(

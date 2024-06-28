@@ -7,7 +7,7 @@
 #include <liba9n/libcxx/utility>
 #include <liba9n/libcxx/type_traits>
 
-namespace liba9n::common
+namespace liba9n
 {
     template<typename T, typename E>
         requires(!liba9n::std::is_same_v<T, E>)

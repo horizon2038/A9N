@@ -7,7 +7,7 @@
 #include <liba9n/libcxx/utility>
 #include <liba9n/libcxx/type_traits>
 
-namespace liba9n::common
+namespace liba9n
 {
     // specialization for case where T is *void*.
     // this is useful for scenarios where you only want to represent an error
