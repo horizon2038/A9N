@@ -913,10 +913,13 @@ namespace liba9n
                 return result<T, F>(result_in_place, result_ok, unwrap());
             }
 
-            return result<T, F>(liba9n::std::invoke(
-                liba9n::std::forward<Function>(function),
-                unwrap_error()
-            ));
+            return result<T, F>(
+                result_error,
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    unwrap_error()
+                )
+            );
         }
 
         template<
@@ -932,10 +935,13 @@ namespace liba9n
                 return result<T, F>(result_in_place, result_ok, unwrap());
             }
 
-            return result<T, F>(liba9n::std::invoke(
-                liba9n::std::forward<Function>(function),
-                unwrap_error()
-            ));
+            return result<T, F>(
+                result_error,
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    unwrap_error()
+                )
+            );
         }
 
         template<
@@ -955,10 +961,13 @@ namespace liba9n
                 );
             }
 
-            return result<T, F>(liba9n::std::invoke(
-                liba9n::std::forward<Function>(function),
-                liba9n::std::move(unwrap_error())
-            ));
+            return result<T, F>(
+                result_error,
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    liba9n::std::move(unwrap_error())
+                )
+            );
         }
 
         template<
@@ -978,10 +987,13 @@ namespace liba9n
                 );
             }
 
-            return result<T, F>(liba9n::std::invoke(
-                liba9n::std::forward<Function>(function),
-                liba9n::std::move(unwrap_error())
-            ));
+            return result<T, F>(
+                result_error,
+                liba9n::std::invoke(
+                    liba9n::std::forward<Function>(function),
+                    liba9n::std::move(unwrap_error())
+                )
+            );
         }
 
         // equality operators
