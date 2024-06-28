@@ -3,13 +3,13 @@
 
 #include <library/common/types.hpp>
 
-namespace library::common
+namespace liba9n::common
 {
-    template<typename T, common::word size>
+    template<typename T, a9n::word size>
     class bounded_array
     {
       public:
-        const T get_element(common::word index) const
+        const T get_element(a9n::word index) const
         {
             if (index >= size)
             {
@@ -18,7 +18,7 @@ namespace library::common
             return elements[index];
         }
 
-        void set_element(common::word index, T data)
+        void set_element(a9n::word index, T data)
         {
             if (index >= size)
             {

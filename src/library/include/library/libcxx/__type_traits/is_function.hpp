@@ -3,7 +3,7 @@
 
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename>
     struct is_function : false_type

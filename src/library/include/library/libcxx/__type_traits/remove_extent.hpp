@@ -3,7 +3,7 @@
 
 #include <library/libcxx/cstddef>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct remove_extent

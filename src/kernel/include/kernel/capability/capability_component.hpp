@@ -8,7 +8,7 @@
 
 #include <library/libc/string.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     class capability_component;
 
@@ -28,7 +28,7 @@ namespace kernel
 
         bool is_same_slot(capability_slot *rhs)
         {
-            auto is_same_data = library::std::memcmp(
+            auto is_same_data = liba9n::std::memcmp(
                 &data,
                 &rhs->data,
                 sizeof(capability_slot_data)
@@ -55,22 +55,22 @@ namespace kernel
         virtual ~capability_component() {};
 
         // called from user
-        virtual common::error execute(
+        virtual a9n::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
             message_buffer  *buffer
         ) = 0;
 
         // called from node
-        virtual common::error revoke() = 0;
+        virtual a9n::error revoke() = 0;
 
         // for tree
-        virtual capability_slot *retrieve_slot(common::word index) = 0;
+        virtual capability_slot *retrieve_slot(a9n::word index) = 0;
 
         virtual capability_slot *traverse_slot(
-            library::capability::capability_descriptor descriptor,
-            common::word                               descriptor_max_bits,
-            common::word                               descriptor_used_bits
+            liba9n::capability::capability_descriptor descriptor,
+            a9n::word                               descriptor_max_bits,
+            a9n::word                               descriptor_used_bits
         ) = 0;
     };
 }

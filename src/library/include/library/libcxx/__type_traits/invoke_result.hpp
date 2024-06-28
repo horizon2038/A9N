@@ -10,7 +10,7 @@
 #include <library/libcxx/__utility/forward.hpp>
 #include <library/libcxx/__utility/declval.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     namespace
     {

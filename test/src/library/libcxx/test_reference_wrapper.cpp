@@ -5,7 +5,7 @@
 TEST(reference_wrapper_test, test_reference)
 {
     int a = 7;
-    library::std::reference_wrapper<int> rw_a = library::std::ref(a);
+    liba9n::std::reference_wrapper<int> rw_a = liba9n::std::ref(a);
 
     int &r_rw_a = rw_a.get();
 

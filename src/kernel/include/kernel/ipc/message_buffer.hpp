@@ -4,11 +4,11 @@
 #include <library/common/types.hpp>
 #include <library/common/array.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
-    constexpr static common::word MESSAGE_BUFFER_MAX = 64;
+    constexpr static a9n::word MESSAGE_BUFFER_MAX = 64;
     using message_buffer
-        = library::common::bounded_array<common::word, MESSAGE_BUFFER_MAX>;
+        = liba9n::common::bounded_array<a9n::word, MESSAGE_BUFFER_MAX>;
 }
 
 #endif

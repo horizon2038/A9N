@@ -3,7 +3,7 @@
 
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T, typename U>
     struct is_same : false_type

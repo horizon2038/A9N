@@ -4,7 +4,7 @@
 #include <library/libcxx/cstddef>
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_array : false_type

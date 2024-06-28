@@ -4,7 +4,7 @@
 #include <kernel/process/process.hpp>
 #include <library/ipc/message.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     static constexpr int32_t ANY_PROCESS = -1;
 

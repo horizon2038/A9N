@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <library/common/types.hpp>
 
-namespace hal::interface
+namespace a9n::hal
 {
     class timer
     {
@@ -12,7 +12,7 @@ namespace hal::interface
         virtual void         init_timer()                 = 0;
         virtual void         configure_timer(uint16_t hz) = 0;
         virtual void         clock();
-        virtual common::word get_tick();
+        virtual a9n::word get_tick();
     };
 }
 

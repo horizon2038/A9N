@@ -5,7 +5,7 @@
 #include <library/common/types.hpp>
 #include <kernel/process/process.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     struct process_node
     {
@@ -13,7 +13,7 @@ namespace kernel
         process_node *next;
     };
 
-    constexpr static common::sword PRIORITY_MAX = 32;
+    constexpr static a9n::sword PRIORITY_MAX = 32;
 
     class scheduler
     {
@@ -24,16 +24,16 @@ namespace kernel
         process *schedule_next_process();
         process *schedule_next_process(
             process       *priority_groups[],
-            common::sword &priority
+            a9n::sword &priority
         );
 
       private:
         process     *_process_list; // process array pointer<
         process     *_current_process;
-        common::word current_process_index;
+        a9n::word current_process_index;
 
         void move_to_end(process *target_process, process *&head_process);
-        common::sword update_highest_priority(process *priority_groups[]);
+        a9n::sword update_highest_priority(process *priority_groups[]);
     };
 }
 

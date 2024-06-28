@@ -3,7 +3,7 @@
 
 #include <library/common/types.hpp>
 
-namespace library::capability
+namespace liba9n::capability
 {
     enum class capability_type : uint16_t
     {

@@ -3,12 +3,12 @@
 
 #include <hal/interface/timer.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     class timer
     {
       public:
-        timer(hal::interface::timer &timer);
+        timer(a9n::hal::timer &timer);
         ~timer();
 
         void clock();

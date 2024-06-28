@@ -7,7 +7,7 @@
 #include <hal/interface/interrupt.hpp>
 #include <kernel/process/scheduler.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     namespace
     {
@@ -17,23 +17,23 @@ namespace kernel
     class process_manager
     {
       public:
-        process_manager(hal::interface::process_manager &target_process_manager
+        process_manager(a9n::hal::process_manager &target_process_manager
         );
 
         ~process_manager();
 
         process      *current_process;
-        common::sword highest_priority;
+        a9n::sword highest_priority;
 
         void create_process(
             const char             *process_name,
-            common::virtual_address entry_point_address
+            a9n::virtual_address entry_point_address
         );
         void init_process(
             process                *process,
             process_id              target_process_id,
             const char             *process_name,
-            common::virtual_address entry_point_address
+            a9n::virtual_address entry_point_address
         );
         void delete_process(process_id target_process_id);
         void switch_context();
@@ -45,9 +45,9 @@ namespace kernel
         process *priority_groups[PRIORITY_MAX] = { nullptr };
 
         scheduler                        _scheduler;
-        hal::interface::process_manager &_process_manager;
+        a9n::hal::process_manager &_process_manager;
 
-        common::sword determine_process_id();
+        a9n::sword determine_process_id();
     };
 }
 

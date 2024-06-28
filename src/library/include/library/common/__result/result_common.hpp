@@ -3,7 +3,7 @@
 
 #include <library/libcxx/type_traits>
 
-namespace library::common
+namespace liba9n::common
 {
     // tag
     struct result_in_place_tag
@@ -29,17 +29,17 @@ namespace library::common
     // however, to simplify type inference,
     // we require that T and E be completely different types.
     template<typename T, typename E>
-        requires(!library::std::is_same_v<T, E>)
+        requires(!liba9n::std::is_same_v<T, E>)
     class result;
 
     template<typename T>
-    concept is_result = library::std::is_same_v<
-        library::std::remove_cvref_t<T>,
+    concept is_result = liba9n::std::is_same_v<
+        liba9n::std::remove_cvref_t<T>,
         result<typename T::ok_type, typename T::error_type>>;
 
     // deduction guide
     template<typename T, typename E>
-        requires(!library::std::is_same_v<T, E>)
+        requires(!liba9n::std::is_same_v<T, E>)
     result(T, E) -> result<T, E>;
 
     template<typename T>
@@ -49,7 +49,7 @@ namespace library::common
     result(E) -> result<void, E>;
 
     template<typename T, typename E, typename... Args>
-        requires(!library::std::is_same_v<T, E>)
+        requires(!liba9n::std::is_same_v<T, E>)
     constexpr result<T, E> make_result_ok(Args... args) noexcept
     {
         return result<T, E>(
@@ -60,7 +60,7 @@ namespace library::common
     }
 
     template<typename T, typename E, typename... Args>
-        requires(!library::std::is_same_v<T, E>)
+        requires(!liba9n::std::is_same_v<T, E>)
     constexpr result<T, E> make_result_error(Args... args) noexcept
     {
         return result<T, E>(

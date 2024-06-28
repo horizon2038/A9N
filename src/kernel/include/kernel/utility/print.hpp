@@ -3,12 +3,12 @@
 
 #include <hal/interface/serial.hpp>
 
-namespace kernel::utility
+namespace a9n::kernel::utility
 {
     class print
     {
       public:
-        print(hal::interface::serial &injected_serial);
+        print(a9n::hal::serial &injected_serial);
 
         void printf(const char *format, ...);
         void vprintf(const char *format, __builtin_va_list args);
@@ -17,7 +17,7 @@ namespace kernel::utility
         void vsprintf(char *buffer, const char *format, __builtin_va_list args);
 
       private:
-        hal::interface::serial &_serial;
+        a9n::hal::serial &_serial;
 
         void process_format(
             char            **destination,

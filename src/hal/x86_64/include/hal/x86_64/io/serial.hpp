@@ -6,20 +6,20 @@
 #include <hal/interface/port_io.hpp>
 #include <stdint.h>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
-    class serial : public hal::interface::serial
+    class serial : public a9n::hal::serial
     {
       public:
-        serial(hal::interface::port_io &injected_port_io);
+        serial(a9n::hal::port_io &injected_port_io);
         ~serial();
-        void    init_serial(common::word baud_rate) override;
+        void    init_serial(a9n::word baud_rate) override;
         uint8_t read_serial() override;
         void    write_serial(char data) override;
         void    write_string_serial(char *out) override;
 
       private:
-        hal::interface::port_io &_port_io;
+        a9n::hal::port_io &_port_io;
         int                      is_received();
         int                      is_empty();
         uint32_t                 strlen(const char *s);

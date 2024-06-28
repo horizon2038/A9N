@@ -9,7 +9,7 @@
 
 // TODO : Research GS and FS for TLS; How to activate and management MP
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     // CPU Local Variables (CLV).
     // class cpu per CPU-1core.
@@ -18,8 +18,8 @@ namespace hal::x86_64
 
     class cpu_local_variable
     {
-        common::virtual_address kernel_stack_pointer;
-        common::virtual_address user_stack_pointer;
+        a9n::virtual_address kernel_stack_pointer;
+        a9n::virtual_address user_stack_pointer;
         global_descriptor_table gdt;
         interrupt_descriptor_64 idt;
         task_state_segment      tss;

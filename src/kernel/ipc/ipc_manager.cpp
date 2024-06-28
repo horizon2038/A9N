@@ -6,7 +6,7 @@
 
 #include <library/libc/string.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     void ipc_manager::send(process_id receiver_process_id, ipc::message *msg)
     {
@@ -27,7 +27,7 @@ namespace kernel
 
         process *current_process
             = kernel_object::process_manager->current_process;
-        library::std::memcpy(
+        liba9n::std::memcpy(
             &current_process->message_buffer,
             msg,
             sizeof(ipc::message)
@@ -47,14 +47,14 @@ namespace kernel
 
         if (!is_ready)
         {
-            library::std::memset(msg, 0, sizeof(ipc::message));
+            liba9n::std::memset(msg, 0, sizeof(ipc::message));
             current_process->status = process_status::BLOCKED;
             receiver_process->send_wait_queue.enqueue(current_process);
             kernel_object::process_manager->switch_context();
         }
         else
         {
-            library::std::memcpy(
+            liba9n::std::memcpy(
                 &receiver_process->message_buffer,
                 &current_process->message_buffer,
                 sizeof(ipc::message)
@@ -82,7 +82,7 @@ namespace kernel
             || (source_process_id != ANY_PROCESS
                 && sender_process->id != source_process_id))
         {
-            library::std::memset(msg, 0, sizeof(ipc::message));
+            liba9n::std::memset(msg, 0, sizeof(ipc::message));
             current_process->status = process_status::BLOCKED;
             kernel_object::process_manager->switch_context();
         }
@@ -98,7 +98,7 @@ namespace kernel
                 sender_process->name
             );
             */
-            library::std::memcpy(
+            liba9n::std::memcpy(
                 msg,
                 &sender_process->message_buffer,
                 sizeof(ipc::message)

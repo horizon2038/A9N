@@ -4,10 +4,10 @@
 
 #include <kernel/utility/logger.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     interrupt_manager::interrupt_manager(
-        hal::interface::interrupt &target_interrupt
+        a9n::hal::interrupt &target_interrupt
     )
         : _interrupt(target_interrupt)
     {
@@ -42,8 +42,8 @@ namespace kernel
     // this handler is required
     extern "C" void handle_timer()
     {
-        // kernel::utility::logger::printk("handle_timer\n");
-        kernel::kernel_object::interrupt_manager->ack_interrupt();
-        kernel::kernel_object::process_manager->switch_context();
+        // a9n::kernel::utility::logger::printk("handle_timer\n");
+        a9n::kernel::kernel_object::interrupt_manager->ack_interrupt();
+        a9n::kernel::kernel_object::process_manager->switch_context();
     }
 }

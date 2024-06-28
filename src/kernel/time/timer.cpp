@@ -1,6 +1,6 @@
 #include <kernel/time/timer.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
 
 }

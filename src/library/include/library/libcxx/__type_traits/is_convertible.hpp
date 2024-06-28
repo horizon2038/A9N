@@ -5,7 +5,7 @@
 #include <library/libcxx/__type_traits/is_void.hpp>
 #include <library/libcxx/__utility/declval.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     /*
     namespace

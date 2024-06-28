@@ -3,11 +3,11 @@
 
 #include <library/common/types.hpp>
 
-namespace library::capability
+namespace liba9n::capability
 {
     // generic.execute(CONVERT, type, size, descriptor, descriptor_depth,
     // descriptor_index);
-    enum class generic_operation : common::word
+    enum class generic_operation : a9n::word
     {
         CONVERT,
     };
@@ -24,12 +24,12 @@ namespace library::capability
         // 7 : target node depth
         // 8 : target node index
 
-        constexpr inline common::word CAPABILITY_TYPE      = 3;
-        constexpr inline common::word CAPABILITY_SIZE_BITS = 4;
-        constexpr inline common::word CAPABILITY_COUNT     = 5;
-        constexpr inline common::word ROOT_DESCRIPTOR      = 6;
-        constexpr inline common::word ROOT_DEPTH           = 7;
-        constexpr inline common::word SLOT_INDEX           = 8;
+        constexpr inline a9n::word CAPABILITY_TYPE      = 3;
+        constexpr inline a9n::word CAPABILITY_SIZE_BITS = 4;
+        constexpr inline a9n::word CAPABILITY_COUNT     = 5;
+        constexpr inline a9n::word ROOT_DESCRIPTOR      = 6;
+        constexpr inline a9n::word ROOT_DEPTH           = 7;
+        constexpr inline a9n::word SLOT_INDEX           = 8;
     };
 }
 

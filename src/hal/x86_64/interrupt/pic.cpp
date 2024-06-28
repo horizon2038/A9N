@@ -4,7 +4,7 @@
 
 #include <kernel/utility/logger.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     namespace
     {

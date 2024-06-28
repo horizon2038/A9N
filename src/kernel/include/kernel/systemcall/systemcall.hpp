@@ -4,7 +4,7 @@
 #include <library/common/types.hpp>
 #include <stdint.h>
 
-namespace kernel
+namespace a9n::kernel
 {
     namespace SYSTEMCALL_TYPE
     {
@@ -23,11 +23,11 @@ namespace kernel
         // hardware-independent systemcall handler
         void handle_system_call(
             uint16_t     system_call_number,
-            common::word arg_1,
-            common::word arg_2,
-            common::word arg_3,
-            common::word arg_4,
-            common::word arg_5
+            a9n::word arg_1,
+            a9n::word arg_2,
+            a9n::word arg_3,
+            a9n::word arg_4,
+            a9n::word arg_5
         );
 
       private:

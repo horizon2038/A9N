@@ -1,9 +1,9 @@
 #include "kernel/capability/capability_component.hpp"
 #include <kernel/capability/ipc_port.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
-    common::error ipc_port::execute(
+    a9n::error ipc_port::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         message_buffer  *buffer
@@ -11,7 +11,7 @@ namespace kernel
     {
     }
 
-    common::error decode_operation(message_buffer *buffer)
+    a9n::error decode_operation(message_buffer *buffer)
     {
     }
 

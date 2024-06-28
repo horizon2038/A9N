@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 
 // for C++
-namespace library::common
+namespace a9n
 {
     // architecture-dependent size
     using word  = uintmax_t;
@@ -26,15 +26,17 @@ namespace library::common
     constexpr static word PAGE_SIZE = 4096;
 }
 
-namespace kernel
+/*
+namespace a9n::kernel
 {
-    namespace common = library::common;
+    namespace common = liba9n::common;
 }
 
-namespace hal
+namespace a9n::hal
 {
-    namespace common = library::common;
+    namespace common = liba9n::common;
 }
+*/
 
 #else
 

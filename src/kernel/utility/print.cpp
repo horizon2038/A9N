@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace kernel::utility
+namespace a9n::kernel::utility
 {
-    print::print(hal::interface::serial &injected_serial)
+    print::print(a9n::hal::serial &injected_serial)
         : _serial(injected_serial)
     {
     }

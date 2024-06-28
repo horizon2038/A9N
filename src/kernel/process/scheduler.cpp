@@ -3,7 +3,7 @@
 #include <kernel/utility/logger.hpp>
 #include <library/common/types.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     scheduler::scheduler(process *process_list)
         : _process_list(process_list)
@@ -19,7 +19,7 @@ namespace kernel
     process *scheduler::schedule_next_process()
     {
         process     *target_process = nullptr;
-        common::word start_index    = current_process_index;
+        a9n::word start_index    = current_process_index;
 
         do
         {
@@ -59,7 +59,7 @@ namespace kernel
 
     process *scheduler::schedule_next_process(
         process       *priority_groups[],
-        common::sword &highest_priority
+        a9n::sword &highest_priority
     )
     {
         if (highest_priority == -1)
@@ -135,7 +135,7 @@ namespace kernel
         target_process->next    = nullptr;
     }
 
-    common::sword scheduler::update_highest_priority(process *priority_groups[])
+    a9n::sword scheduler::update_highest_priority(process *priority_groups[])
     {
         for (uint16_t i = (PRIORITY_MAX - 1); i >= 0; i--)
         {

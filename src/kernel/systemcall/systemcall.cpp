@@ -4,7 +4,7 @@
 
 #include <kernel/kernel.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     void system_call_manager::init()
     {

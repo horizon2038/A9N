@@ -4,19 +4,19 @@
 #include <library/common/types.hpp>
 #include <stdint.h>
 
-namespace library::ipc
+namespace liba9n::ipc
 {
     struct message
     {
-        common::sword sender_process_id;
-        common::sword type;
+        a9n::sword sender_process_id;
+        a9n::sword type;
         uint8_t       data[1024];
     };
 }
 
-namespace kernel
+namespace a9n::kernel
 {
-    namespace ipc = library::ipc;
+    namespace ipc = liba9n::ipc;
 }
 
 #endif

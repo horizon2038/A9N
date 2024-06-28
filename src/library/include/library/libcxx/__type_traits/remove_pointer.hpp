@@ -1,7 +1,7 @@
 #ifndef LIBCXX_REMOVE_POINTER_HPP
 #define LIBCXX_REMOVE_POINTER_HPP
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct remove_pointer

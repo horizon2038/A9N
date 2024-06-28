@@ -23,18 +23,18 @@ int free_function(int x)
 
 TEST(invoke_test, free_function_test)
 {
-    EXPECT_EQ(library::std::invoke(free_function, 1), 4);
+    EXPECT_EQ(liba9n::std::invoke(free_function, 1), 4);
 }
 
 TEST(invoke_test, static_member_function_test)
 {
-    EXPECT_EQ(library::std::invoke(&test_class::static_member_function, 1), 3);
+    EXPECT_EQ(liba9n::std::invoke(&test_class::static_member_function, 1), 3);
 }
 
 TEST(invoke_test, member_function_test)
 {
     test_class obj;
-    EXPECT_EQ(library::std::invoke(&test_class::member_function, obj, 1), 2);
+    EXPECT_EQ(liba9n::std::invoke(&test_class::member_function, obj, 1), 2);
 }
 
 TEST(invoke_test, lambda_test)
@@ -43,5 +43,5 @@ TEST(invoke_test, lambda_test)
     {
         return x + 4;
     };
-    EXPECT_EQ(library::std::invoke(lambda, 1), 5);
+    EXPECT_EQ(liba9n::std::invoke(lambda, 1), 5);
 }

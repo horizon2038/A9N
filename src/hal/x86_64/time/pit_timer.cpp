@@ -4,7 +4,7 @@
 
 #include <kernel/utility/logger.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     namespace
     {
@@ -28,7 +28,7 @@ namespace hal::x86_64
 
     void pit_timer::init_timer()
     {
-        kernel::utility::logger::printk("init timer\n");
+        a9n::kernel::utility::logger::printk("init timer\n");
         configure_timer(100);
         pic my_pic;
         my_pic.unmask_irq(0);
@@ -61,7 +61,7 @@ namespace hal::x86_64
         ticks++;
     }
 
-    common::word pit_timer::get_tick()
+    a9n::word pit_timer::get_tick()
     {
         return ticks;
     }

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-namespace hal::interface
+namespace a9n::hal
 {
     class port_io
     {

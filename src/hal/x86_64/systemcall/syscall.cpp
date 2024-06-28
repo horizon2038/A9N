@@ -2,7 +2,7 @@
 
 #include <hal/x86_64/arch/segment_configurator.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
 
     extern "C" void     _write_msr(uint32_t msr, uint64_t value);

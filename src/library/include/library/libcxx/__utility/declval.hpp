@@ -3,7 +3,7 @@
 
 #include <library/libcxx/__type_traits/add_value_reference.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     add_rvalue_reference_t<T> declval() noexcept;

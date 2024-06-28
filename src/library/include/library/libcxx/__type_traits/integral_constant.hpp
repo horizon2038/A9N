@@ -1,7 +1,7 @@
 #ifndef LIBCXX_INTEGRAL_CONSTANT_HPP
 #define LIBCXX_INTEGRAL_CONSTANT_HPP
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T, T v>
     struct integral_constant

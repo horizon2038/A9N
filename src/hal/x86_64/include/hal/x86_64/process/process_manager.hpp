@@ -7,22 +7,22 @@
 #include <hal/x86_64/arch/segment_configurator.hpp>
 #include <hal/x86_64/memory/paging.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
-    class process_manager final : public hal::interface::process_manager
+    class process_manager final : public a9n::hal::process_manager
     {
       public:
         process_manager();
         ~process_manager();
         void switch_context(
-            kernel::process *preview_process,
-            kernel::process *next_process
+            a9n::kernel::process *preview_process,
+            a9n::kernel::process *next_process
         ) override;
         void create_process(
-            kernel::process        *target_process,
-            common::virtual_address entry_point_address
+            a9n::kernel::process        *target_process,
+            a9n::virtual_address entry_point_address
         ) override;
-        void delete_process(kernel::process *target_process) override;
+        void delete_process(a9n::kernel::process *target_process) override;
 
       private:
         segment_configurator _segment_configurator;

@@ -4,7 +4,7 @@
 #include <hal/interface/interrupt.hpp>
 #include <stdint.h>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     typedef struct __attribute__((packed))
     {

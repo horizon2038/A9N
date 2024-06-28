@@ -24,7 +24,7 @@ void enviroment::setup_hal_test()
 void enviroment::setup_logger()
 {
     hal_test_serial = new std_serial();
-    hal_test_logger = new kernel::utility::logger(*hal_test_serial);
+    hal_test_logger = new a9n::kernel::utility::logger(*hal_test_serial);
 }
 
 void enviroment::TearDown()

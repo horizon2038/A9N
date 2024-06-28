@@ -3,15 +3,15 @@
 
 #include <hal/interface/arch_initializer.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
-    class arch_initializer final : public hal::interface::arch_initializer
+    class arch_initializer final : public a9n::hal::arch_initializer
     {
       public:
         arch_initializer();
         ~arch_initializer();
 
-        void init_architecture(common::word arch_info[]) override;
+        void init_architecture(a9n::word arch_info[]) override;
 
       private:
     };

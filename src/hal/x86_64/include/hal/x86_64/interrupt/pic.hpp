@@ -5,7 +5,7 @@
 #include <hal/x86_64/io/port_io.hpp>
 #include <stdint.h>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     enum class PIC_VALUE : uint16_t
     {
@@ -31,7 +31,7 @@ namespace hal::x86_64
         void end_of_interrupt_pic(uint8_t irq_number);
 
       private:
-        hal::x86_64::port_io _port_io;
+        a9n::hal::x86_64::port_io _port_io;
     };
 }
 

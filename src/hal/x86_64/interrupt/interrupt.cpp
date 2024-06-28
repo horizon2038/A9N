@@ -4,7 +4,7 @@
 
 #include <kernel/utility/logger.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     extern "C" void _load_idt(uint16_t size, uint64_t *offset);
     extern "C" void _enable_interrupt_all();
@@ -15,7 +15,7 @@ namespace hal::x86_64
 
     extern "C" void do_irq(uint16_t irq_number, uint64_t error_code)
     {
-        // kernel::utility::logger::printk("irq_number : %d\n", irq_number);
+        // a9n::kernel::utility::logger::printk("irq_number : %d\n", irq_number);
         bool        is_exception   = false;
         const char *exception_type = get_exception_type_string(irq_number);
 
@@ -26,7 +26,7 @@ namespace hal::x86_64
                 break;
 
             default :
-                kernel::utility::logger::printk(
+                a9n::kernel::utility::logger::printk(
                     "exception [%2d] : %s : %llu\n",
                     irq_number,
                     exception_type,
@@ -47,7 +47,7 @@ namespace hal::x86_64
     {
         // call asm (initialize IDT)
         init_handler();
-        kernel::utility::logger::printk("handler init\n");
+        a9n::kernel::utility::logger::printk("handler init\n");
         load_idt();
     };
 
@@ -57,7 +57,7 @@ namespace hal::x86_64
         {
             register_idt_handler(
                 i,
-                (hal::interface::interrupt_handler)&interrupt_handlers[i]
+                (a9n::hal::interrupt_handler)&interrupt_handlers[i]
             );
         }
     }
@@ -71,8 +71,8 @@ namespace hal::x86_64
     }
 
     void interrupt::register_idt_handler(
-        common::word                      irq_number,
-        hal::interface::interrupt_handler target_interrupt_handler
+        a9n::word                      irq_number,
+        a9n::hal::interrupt_handler target_interrupt_handler
     )
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
@@ -89,29 +89,29 @@ namespace hal::x86_64
     };
 
     void interrupt::register_handler(
-        common::word                      irq_number,
-        hal::interface::interrupt_handler target_interrupt_handler
+        a9n::word                      irq_number,
+        a9n::hal::interrupt_handler target_interrupt_handler
     )
     {
         interrupt_handler_table[irq_number] = target_interrupt_handler;
         uint64_t interrupt_handler_address
             = reinterpret_cast<uint64_t>(target_interrupt_handler);
 
-        kernel::utility::logger::printk(
+        a9n::kernel::utility::logger::printk(
             "hal_register_interrupt : %lu : 0x%016llx\n",
             irq_number,
             interrupt_handler_address
         );
     }
 
-    void interrupt::enable_interrupt(common::word irq_number)
+    void interrupt::enable_interrupt(a9n::word irq_number)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
 
         idt_entry->type = INTERRUPT_GATE;
     };
 
-    void interrupt::disable_interrupt(common::word irq_number)
+    void interrupt::disable_interrupt(a9n::word irq_number)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
 

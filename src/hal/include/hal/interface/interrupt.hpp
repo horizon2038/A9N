@@ -4,7 +4,7 @@
 #include <library/common/types.hpp>
 #include <stdint.h>
 
-namespace hal::interface
+namespace a9n::hal
 {
 
     using interrupt_handler = void (*)();
@@ -20,11 +20,11 @@ namespace hal::interface
       public:
         virtual void init_interrupt() = 0;
         virtual void register_handler(
-            common::word      irq_number,
+            a9n::word      irq_number,
             interrupt_handler target_interrupt_handler
         )                                                       = 0;
-        virtual void enable_interrupt(common::word irq_number)  = 0;
-        virtual void disable_interrupt(common::word irq_number) = 0;
+        virtual void enable_interrupt(a9n::word irq_number)  = 0;
+        virtual void disable_interrupt(a9n::word irq_number) = 0;
         virtual void enable_interrupt_all()                     = 0;
         virtual void disable_interrupt_all()                    = 0;
         virtual void ack_interrupt()                            = 0;

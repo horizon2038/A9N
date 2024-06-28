@@ -4,7 +4,7 @@
 #include <library/libcxx/__type_traits/is_same.hpp>
 #include <library/libcxx/__type_traits/remove_cv.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_void : is_same<void, remove_cv_t<T>>

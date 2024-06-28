@@ -5,21 +5,21 @@
 #include <library/common/types.hpp>
 #include <library/capability/capability_types.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     class capability_factory
     {
       public:
-        common::word calculate_memory_size_bits(
-            library::capability::capability_type type,
-            common::word                         size_bits
+        a9n::word calculate_memory_size_bits(
+            liba9n::capability::capability_type type,
+            a9n::word                         size_bits
         );
 
         // make ??????
         capability_slot make(
-            library::capability::capability_type type,
-            common::word                         size_bits,
-            common::virtual_address              target_address
+            liba9n::capability::capability_type type,
+            a9n::word                         size_bits,
+            a9n::virtual_address              target_address
         );
     };
 }

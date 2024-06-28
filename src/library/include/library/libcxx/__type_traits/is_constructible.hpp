@@ -4,7 +4,7 @@
 #include <library/libcxx/__type_traits/add_value_reference.hpp>
 #include <library/libcxx/__type_traits/integral_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     // *warning*
     // portability may be compromised

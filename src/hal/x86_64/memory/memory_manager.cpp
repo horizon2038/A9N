@@ -8,54 +8,54 @@
 #include <library/common/types.hpp>
 #include <library/libc/string.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     void memory_manager::init_memory()
     {
         // init kernel memory mapping
-        common::physical_address *kernel_top_page_table
-            = reinterpret_cast<common::physical_address *>(&__kernel_pml4);
+        a9n::physical_address *kernel_top_page_table
+            = reinterpret_cast<a9n::physical_address *>(&__kernel_pml4);
 
         kernel_top_page_table[0] = 0; // reset id-map
         _invalidate_page(0);
     }
 
     void memory_manager::init_virtual_memory(
-        common::physical_address top_page_table_address
+        a9n::physical_address top_page_table_address
     )
     {
         // copy kernel_page_table.
         // no meltdown vulnerability countermeasures are taken because the page
         // table is not split.
-        common::virtual_address virtual_top_page_table_address
+        a9n::virtual_address virtual_top_page_table_address
             = convert_physical_to_virtual_address(top_page_table_address);
-        common::virtual_address virtual_kernel_top_page_address
+        a9n::virtual_address virtual_kernel_top_page_address
             = convert_physical_to_virtual_address(
-                reinterpret_cast<common::physical_address>(&__kernel_pml4)
+                reinterpret_cast<a9n::physical_address>(&__kernel_pml4)
             );
-        library::std::memcpy(
+        liba9n::std::memcpy(
             reinterpret_cast<void *>(virtual_top_page_table_address),
             reinterpret_cast<void *>(virtual_kernel_top_page_address),
-            common::PAGE_SIZE
+            a9n::PAGE_SIZE
         );
     }
 
     bool memory_manager::is_table_exists(
-        common::physical_address top_page_table_address,
-        common::virtual_address  target_virtual_address
+        a9n::physical_address top_page_table_address,
+        a9n::virtual_address  target_virtual_address
     )
     {
-        common::virtual_address *current_page_table
-            = reinterpret_cast<common::virtual_address *>(
+        a9n::virtual_address *current_page_table
+            = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(top_page_table_address)
             );
 
         // search kernel
         if (!top_page_table_address)
         {
-            common::physical_address kernel_page_table_address
-                = reinterpret_cast<common::physical_address>(&__kernel_pml4);
-            current_page_table = reinterpret_cast<common::virtual_address *>(
+            a9n::physical_address kernel_page_table_address
+                = reinterpret_cast<a9n::physical_address>(&__kernel_pml4);
+            current_page_table = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(kernel_page_table_address)
             );
         }
@@ -74,7 +74,7 @@ namespace hal::x86_64
                 return false;
             }
 
-            current_page_table = reinterpret_cast<common::virtual_address *>(
+            current_page_table = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(
                     current_page_table_entry.get_physical_address()
                 )
@@ -90,21 +90,21 @@ namespace hal::x86_64
     }
 
     void memory_manager::configure_page_table(
-        common::physical_address top_page_table_address,
-        common::virtual_address  target_virtual_address,
-        common::physical_address page_table_address
+        a9n::physical_address top_page_table_address,
+        a9n::virtual_address  target_virtual_address,
+        a9n::physical_address page_table_address
     )
     {
-        common::virtual_address *current_page_table
-            = reinterpret_cast<common::virtual_address *>(
+        a9n::virtual_address *current_page_table
+            = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(top_page_table_address)
             );
 
         if (!top_page_table_address)
         {
-            common::physical_address kernel_page_table_address
-                = reinterpret_cast<common::physical_address>(&__kernel_pml4);
-            current_page_table = reinterpret_cast<common::virtual_address *>(
+            a9n::physical_address kernel_page_table_address
+                = reinterpret_cast<a9n::physical_address>(&__kernel_pml4);
+            current_page_table = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(kernel_page_table_address)
             );
         }
@@ -121,7 +121,7 @@ namespace hal::x86_64
             if (current_page_table_entry.present)
             {
                 current_page_table
-                    = reinterpret_cast<common::virtual_address *>(
+                    = reinterpret_cast<a9n::virtual_address *>(
                         convert_physical_to_virtual_address(
                             current_page_table_entry.get_physical_address()
                         )
@@ -141,21 +141,21 @@ namespace hal::x86_64
     }
 
     void memory_manager::map_virtual_memory(
-        common::physical_address top_page_table_address,
-        common::virtual_address  target_virtual_address,
-        common::physical_address target_physical_address
+        a9n::physical_address top_page_table_address,
+        a9n::virtual_address  target_virtual_address,
+        a9n::physical_address target_physical_address
     )
     {
-        common::virtual_address *current_page_table
-            = reinterpret_cast<common::virtual_address *>(
+        a9n::virtual_address *current_page_table
+            = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(top_page_table_address)
             );
 
         if (!top_page_table_address)
         {
-            common::physical_address kernel_page_table_address
-                = reinterpret_cast<common::physical_address>(&__kernel_pml4);
-            current_page_table = reinterpret_cast<common::virtual_address *>(
+            a9n::physical_address kernel_page_table_address
+                = reinterpret_cast<a9n::physical_address>(&__kernel_pml4);
+            current_page_table = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(kernel_page_table_address)
             );
         }
@@ -169,12 +169,12 @@ namespace hal::x86_64
                 = calculate_page_table_index(target_virtual_address, i);
             current_page_table_entry.all
                 = current_page_table[current_page_table_index];
-            current_page_table = reinterpret_cast<common::virtual_address *>(
+            current_page_table = reinterpret_cast<a9n::virtual_address *>(
                 convert_physical_to_virtual_address(
                     current_page_table_entry.get_physical_address()
                 )
             );
-            // kernel::utility::logger::printk("hal::map_virtual_memory
+            // a9n::kernel::utility::logger::printk("a9n::hal::map_virtual_memory
             // page_table_depth : %d\n", i);
         }
 
@@ -191,28 +191,28 @@ namespace hal::x86_64
     }
 
     void memory_manager::unmap_virtual_memory(
-        common::physical_address top_page_table_address,
-        common::virtual_address  target_virtual_addresss
+        a9n::physical_address top_page_table_address,
+        a9n::virtual_address  target_virtual_addresss
     )
     {
         return;
     }
 
-    common::virtual_address memory_manager::convert_physical_to_virtual_address(
-        const common::physical_address target_physical_address
+    a9n::virtual_address memory_manager::convert_physical_to_virtual_address(
+        const a9n::physical_address target_physical_address
     )
     {
-        return hal::x86_64::convert_physical_to_virtual_address(
+        return a9n::hal::x86_64::convert_physical_to_virtual_address(
             target_physical_address
         );
     }
 
-    common::physical_address
+    a9n::physical_address
         memory_manager::convert_virtual_to_physical_address(
-            const common::virtual_address target_virtual_address
+            const a9n::virtual_address target_virtual_address
         )
     {
-        return hal::x86_64::convert_virtual_to_physical_address(
+        return a9n::hal::x86_64::convert_virtual_to_physical_address(
             target_virtual_address
         );
     }

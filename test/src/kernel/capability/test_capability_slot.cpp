@@ -4,7 +4,7 @@
 
 TEST(capability_slot_test, slot_data_get_element_test)
 {
-    auto slot = new kernel::capability_slot;
+    auto slot = new a9n::kernel::capability_slot;
 
     slot->data.set_element(0, 0xdeadbeaf);
 
@@ -14,7 +14,7 @@ TEST(capability_slot_test, slot_data_get_element_test)
 
 TEST(capability_slot_test, slot_data_out_of_range_test)
 {
-    auto slot = new kernel::capability_slot;
+    auto slot = new a9n::kernel::capability_slot;
 
     slot->data.set_element(4, 0xdeadbeaf);
 

@@ -5,7 +5,7 @@
 #include <library/libcxx/__functional/invoke.hpp>
 #include <stdint.h>
 
-namespace library::std
+namespace liba9n::std
 {
     namespace
     {
@@ -23,7 +23,7 @@ namespace library::std
         template<typename F>
         function(F func)
             : callable { new(&buffer)
-                             callable_impl<F>(library::std::move(func)) }
+                             callable_impl<F>(liba9n::std::move(func)) }
         {
         }
 
@@ -44,13 +44,13 @@ namespace library::std
         struct callable_impl : callable_base
         {
             callable_impl(T callable)
-                : callable { library::std::move(callable) }
+                : callable { liba9n::std::move(callable) }
             {
             }
 
             R call(Args... args)
             {
-                return library::std::invoke(callable, args...);
+                return liba9n::std::invoke(callable, args...);
             }
 
             T callable;

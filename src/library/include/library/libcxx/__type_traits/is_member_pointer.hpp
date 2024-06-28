@@ -4,7 +4,7 @@
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 #include <library/libcxx/__type_traits/remove_cv.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_member_pointer_helper : false_type

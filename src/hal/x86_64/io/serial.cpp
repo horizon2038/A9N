@@ -5,14 +5,14 @@
 
 #include <library/common/types.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     constexpr static uint16_t COM_1 = 0x3f8;
     constexpr static uint16_t COM_2 = 0x2f8;
     constexpr static uint16_t COM_3 = 0x3e8;
     constexpr static uint16_t COM_4 = 0x2e8;
 
-    serial::serial(hal::interface::port_io &injected_port_io)
+    serial::serial(a9n::hal::port_io &injected_port_io)
         : _port_io(injected_port_io)
     {
     }
@@ -21,7 +21,7 @@ namespace hal::x86_64
     {
     }
 
-    void serial::init_serial(common::word baud_rate)
+    void serial::init_serial(a9n::word baud_rate)
     {
         this->_port_io.write(COM_1 + 1, 0x00);
         this->_port_io.write(COM_1 + 3, 0x80);

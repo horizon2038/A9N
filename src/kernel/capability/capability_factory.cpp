@@ -6,14 +6,14 @@
 #include <kernel/utility/logger.hpp>
 #include <library/capability/capability_types.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
-    common::word capability_factory::calculate_memory_size_bits(
-        library::capability::capability_type type,
-        common::word                         size_bits
+    a9n::word capability_factory::calculate_memory_size_bits(
+        liba9n::capability::capability_type type,
+        a9n::word                         size_bits
     )
     {
-        using namespace library::capability;
+        using namespace liba9n::capability;
 
         switch (type)
         {
@@ -24,24 +24,24 @@ namespace kernel
 
             case capability_type::FRAME :
                 {
-                    return library::common::PAGE_SIZE;
+                    return a9n::PAGE_SIZE;
                 }
 
             default :
                 {
-                    kernel::utility::logger::debug("illegal type");
+                    a9n::kernel::utility::logger::debug("illegal type");
                     return 0;
                 }
         }
     }
 
     capability_slot capability_factory::make(
-        library::capability::capability_type type,
-        common::word                         size_bits,
-        common::virtual_address              target_address
+        liba9n::capability::capability_type type,
+        a9n::word                         size_bits,
+        a9n::virtual_address              target_address
     )
     {
-        using capability_type = library::capability::capability_type;
+        using capability_type = liba9n::capability::capability_type;
 
         capability_slot slot;
 

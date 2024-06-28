@@ -3,16 +3,16 @@
 
 #include <library/common/types.hpp>
 
-namespace library::capability
+namespace liba9n::capability
 {
     // capability_descriptors do not directly point to entries.
     // they are only used for indirect adressing.
-    using capability_descriptor = common::word;
+    using capability_descriptor = a9n::word;
 
     struct capability_location
     {
-        library::capability::capability_descriptor descriptor;
-        common::word                               depth;
+        liba9n::capability::capability_descriptor descriptor;
+        a9n::word                                 depth;
     };
 
 }

@@ -1,6 +1,6 @@
 #include <library/libc/string.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     void *memset(void *buffer, char value, size_t buffer_size)
     {

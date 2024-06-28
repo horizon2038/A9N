@@ -5,19 +5,19 @@
 #include <library/common/types.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     class capability_object
     {
       public:
         virtual ~capability_object() {};
 
-        virtual common::error
+        virtual a9n::error
             execute(message_buffer *buffer, capability_local_state *local_state);
 
-        virtual common::error remove();
+        virtual a9n::error remove();
 
-        virtual common::error revoke(capability_local_state *local_state);
+        virtual a9n::error revoke(capability_local_state *local_state);
     };
 }
 

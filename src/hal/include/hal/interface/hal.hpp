@@ -14,7 +14,7 @@
 #include <hal/interface/port_io.hpp>
 #include <hal/interface/serial.hpp>
 
-namespace hal::interface
+namespace a9n::hal
 {
     struct hal
     {

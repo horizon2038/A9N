@@ -8,7 +8,7 @@
 #include <kernel/boot/boot_info.hpp>
 #include <kernel/utility/logger.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     arch_initializer::arch_initializer()
     {
@@ -18,17 +18,17 @@ namespace hal::x86_64
     {
     }
 
-    void arch_initializer::init_architecture(common::word arch_info[])
+    void arch_initializer::init_architecture(a9n::word arch_info[])
     {
         for (auto i = 0; i < 8; i++)
         {
-            kernel::utility::logger::printk(
+            a9n::kernel::utility::logger::printk(
                 "arch_info [%d] : 0x%016llx\n",
                 i,
                 arch_info[i]
             );
         }
-        kernel::utility::logger::split();
+        a9n::kernel::utility::logger::split();
         segment_configurator my_segment_configurator;
         my_segment_configurator.init_gdt();
 

@@ -3,12 +3,12 @@
 
 #include <library/common/array.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
-    constexpr static common::word ENTRY_DATA_MAX = 3;
+    constexpr static a9n::word ENTRY_DATA_MAX = 3;
 
     using capability_slot_data
-        = library::common::bounded_array<common::word, ENTRY_DATA_MAX>;
+        = liba9n::common::bounded_array<a9n::word, ENTRY_DATA_MAX>;
 
     struct dependency_node
     {
@@ -18,7 +18,7 @@ namespace kernel
 
         // child capability_entry
         // capability_entry *child_capability_entry;
-        common::word depth;
+        a9n::word depth;
         // visitor ?
     };
 

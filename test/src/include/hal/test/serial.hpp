@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-class std_serial : public hal::interface::serial
+class std_serial : public a9n::hal::serial
 {
-    void init_serial(library::common::word baud_rate) override {};
+    void init_serial(a9n::word baud_rate) override {};
 
     uint8_t read_serial() override
     {

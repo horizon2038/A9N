@@ -7,7 +7,7 @@
 
 #include <kernel/utility/logger.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     struct capability_entry final : public capability_component
     {
@@ -15,12 +15,12 @@ namespace kernel
         capability_object     *capability_pointer;
         capability_local_state state;
 
-        common::error execute(message_buffer *buffer) override
+        a9n::error execute(message_buffer *buffer) override
         {
-            kernel::utility::logger::printk("execute : entry\n");
+            a9n::kernel::utility::logger::printk("execute : entry\n");
             for (auto i = 0; i < ENTRY_DATA_MAX; i++)
             {
-                kernel::utility::logger::printk(
+                a9n::kernel::utility::logger::printk(
                     "entry_data [%02d]\e[55G : 0x%016llx\n",
                     i,
                     state.data.get_element(i)
@@ -35,30 +35,30 @@ namespace kernel
             // return capability_pointer->execute(buffer, &this->state);
         }
 
-        common::error add_child(
-            common::word          index,
+        a9n::error add_child(
+            a9n::word          index,
             capability_component *component
         ) override
         {
             return 0;
         };
 
-        capability_component *retrieve_child(common::word index) override
+        capability_component *retrieve_child(a9n::word index) override
         {
             return this;
         };
 
-        common::error revoke_child(common::word index) override
+        a9n::error revoke_child(a9n::word index) override
         {
             return 0;
         }
 
-        common::error remove_child(common::word index) override
+        a9n::error remove_child(a9n::word index) override
         {
             return 0;
         }
 
-        common::error revoke() override
+        a9n::error revoke() override
         {
             /*
             capability_pointer = nullptr;
@@ -104,7 +104,7 @@ namespace kernel
         }
 
         // all child nodes are also revoked.
-        common::error remove() override
+        a9n::error remove() override
         {
             auto current_entry = this->state.family_node.next_capability_entry;
             while (current_entry != nullptr
@@ -118,9 +118,9 @@ namespace kernel
         }
 
         capability_component *traverse(
-            library::capability::capability_descriptor descriptor,
-            common::word                               descriptor_max_bits,
-            common::word                               descriptor_used_bits
+            liba9n::capability::capability_descriptor descriptor,
+            a9n::word                               descriptor_max_bits,
+            a9n::word                               descriptor_used_bits
         ) override
         {
             return this;

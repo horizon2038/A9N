@@ -5,7 +5,7 @@
 #include <library/libc/string.hpp>
 #include <library/common/types.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     extern "C" void _load_gdt(uint16_t size, uint64_t *offset);
     extern "C" void _load_segment_register(uint16_t code_segment_register);
@@ -75,7 +75,7 @@ namespace hal::x86_64
     }
 
     void segment_configurator::configure_rsp0(
-        common::virtual_address kernel_stack_pointer
+        a9n::virtual_address kernel_stack_pointer
     )
     {
         tss.rsp_0 = kernel_stack_pointer;

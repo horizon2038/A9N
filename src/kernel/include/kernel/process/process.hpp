@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-namespace kernel
+namespace a9n::kernel
 {
     class process;
 
@@ -37,15 +37,15 @@ namespace kernel
         }
 
       private:
-        static constexpr common::word QUEUE_SIZE = 256;
+        static constexpr a9n::word QUEUE_SIZE = 256;
         process                      *queue[QUEUE_SIZE];
-        common::sword                 head  = 0;
-        common::sword                 count = 0;
+        a9n::sword                 head  = 0;
+        a9n::sword                 count = 0;
     };
 
-    constexpr static common::word QUANTUM_MAX      = 10;
-    constexpr static common::word STACK_SIZE_MAX   = 8192;
-    constexpr static common::word PROCESS_NAME_MAX = 128;
+    constexpr static a9n::word QUANTUM_MAX      = 10;
+    constexpr static a9n::word STACK_SIZE_MAX   = 8192;
+    constexpr static a9n::word PROCESS_NAME_MAX = 128;
 
     enum class process_status : uint16_t
     {
@@ -55,7 +55,7 @@ namespace kernel
         BLOCKED
     };
 
-    using process_id = common::sword;
+    using process_id = a9n::sword;
 
     class process
     {
@@ -69,8 +69,8 @@ namespace kernel
 
         // for context-switch
         process_status status;
-        common::sword  priority;
-        common::sword  quantum;
+        a9n::sword  priority;
+        a9n::sword  quantum;
 
         // for priority-scheduling
         process *preview;
@@ -80,9 +80,9 @@ namespace kernel
         void *arch_context;
 
         uint8_t                 stack[STACK_SIZE_MAX];
-        common::virtual_address stack_pointer;
+        a9n::virtual_address stack_pointer;
 
-        common::physical_address page_table;
+        a9n::physical_address page_table;
 
         // for ipc
         ipc::message  message_buffer;

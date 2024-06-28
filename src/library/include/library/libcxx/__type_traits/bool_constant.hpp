@@ -3,7 +3,7 @@
 
 #include <library/libcxx/__type_traits/integral_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<bool B>
     using bool_constant = integral_constant<bool, B>;

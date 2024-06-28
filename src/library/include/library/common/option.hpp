@@ -5,7 +5,7 @@
 #include <library/libcxx/type_traits>
 #include <library/libcxx/functional>
 
-namespace library::common
+namespace liba9n::common
 {
     struct option_none_tag
     {
@@ -23,9 +23,9 @@ namespace library::common
     class option;
 
     template<typename T>
-    concept is_option = library::std::is_same_v<
-        library::std::remove_cvref_t<T>,
-        option<typename library::std::remove_cvref_t<T>::some_type>>;
+    concept is_option = liba9n::std::is_same_v<
+        liba9n::std::remove_cvref_t<T>,
+        option<typename liba9n::std::remove_cvref_t<T>::some_type>>;
 
     template<typename T>
     class option
@@ -45,11 +45,11 @@ namespace library::common
 
         // helper methods
         template<typename U>
-            requires library::std::is_convertible_v<U, T>
+            requires liba9n::std::is_convertible_v<U, T>
         constexpr void update_some_value(U &&new_some_value)
         {
             init_some_value();
-            new (&some_value) T(library::std::forward<U>(new_some_value));
+            new (&some_value) T(liba9n::std::forward<U>(new_some_value));
         }
 
         constexpr void init_some_value()
@@ -59,7 +59,7 @@ namespace library::common
                 return;
             }
 
-            if constexpr (library::std::is_trivially_destructible_v<T>)
+            if constexpr (liba9n::std::is_trivially_destructible_v<T>)
             {
                 return;
             }
@@ -72,23 +72,23 @@ namespace library::common
       public:
         // conditionally trivial special member functions
         constexpr option(option const &other)
-            requires(library::std::is_trivially_copy_constructible_v<T>)
+            requires(liba9n::std::is_trivially_copy_constructible_v<T>)
         = default;
 
         constexpr option(option &&other)
-            requires(library::std::is_trivially_move_constructible_v<T>)
+            requires(liba9n::std::is_trivially_move_constructible_v<T>)
         = default;
 
         constexpr ~option()
-            requires(library::std::is_trivially_destructible_v<T>)
+            requires(liba9n::std::is_trivially_destructible_v<T>)
         = default;
 
         constexpr option &operator=(option const &other)
-            requires(library::std::is_trivially_copy_assignable_v<T>)
+            requires(liba9n::std::is_trivially_copy_assignable_v<T>)
         = default;
 
         constexpr option &operator=(option &&other)
-            requires(library::std::is_trivially_move_assignable_v<T>)
+            requires(liba9n::std::is_trivially_move_assignable_v<T>)
         = default;
 
         constexpr option() noexcept : dummy {}, is_some_flag(false)
@@ -117,7 +117,7 @@ namespace library::common
         template<typename U = T>
             requires(!is_option<U>)
         constexpr option(U &&u) noexcept
-            : some_value(library::std::forward<U>(u))
+            : some_value(liba9n::std::forward<U>(u))
             , is_some_flag(true)
         {
         }
@@ -143,13 +143,13 @@ namespace library::common
                 return;
             }
 
-            new (&some_value) T(library::std::move<T>(other.unwrap()));
+            new (&some_value) T(liba9n::std::move<T>(other.unwrap()));
             other.is_some_flag = false;
         }
 
         // constructed from option<U> : copy
         template<typename U>
-            requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<U, T>)
+            requires(!liba9n::std::is_reference_v<U> && liba9n::std::is_convertible_v<U, T>)
         constexpr option(const option<U> &other) noexcept
             : is_some_flag(other.is_some())
         {
@@ -163,7 +163,7 @@ namespace library::common
 
         // constructed from option<U> : move
         template<typename U>
-            requires(!library::std::is_reference_v<U> && library::std::is_convertible_v<U, T>)
+            requires(!liba9n::std::is_reference_v<U> && liba9n::std::is_convertible_v<U, T>)
         constexpr option(option<U> &&other) noexcept
             : is_some_flag(other.is_some())
         {
@@ -172,12 +172,12 @@ namespace library::common
                 return;
             }
 
-            new (&some_value) T(library::std::move(other.unwrap()));
+            new (&some_value) T(liba9n::std::move(other.unwrap()));
             other.is_some_flag = false;
         }
 
         constexpr ~option() noexcept
-            requires(!library::std::is_trivially_destructible_v<T>)
+            requires(!liba9n::std::is_trivially_destructible_v<T>)
         {
             if (is_none())
             {
@@ -188,10 +188,10 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<U, T> && !is_option<U>)
+            requires(liba9n::std::is_convertible_v<U, T> && !is_option<U>)
         constexpr option &operator=(U &&new_some_value) noexcept
         {
-            update_some_value(library::std::forward<U>(new_some_value));
+            update_some_value(liba9n::std::forward<U>(new_some_value));
             is_some_flag = true;
 
             return *this;
@@ -227,14 +227,14 @@ namespace library::common
                 return;
             }
 
-            update_some_value(library::std::move(other.unwrap()));
+            update_some_value(liba9n::std::move(other.unwrap()));
             is_some_flag = true;
 
             return *this;
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<U, T>)
+            requires(liba9n::std::is_convertible_v<U, T>)
         constexpr option &operator=(const option<U> &other) noexcept
         {
             if (this == &other)
@@ -254,7 +254,7 @@ namespace library::common
         }
 
         template<typename U>
-            requires(library::std::is_convertible_v<U, T>)
+            requires(liba9n::std::is_convertible_v<U, T>)
         constexpr option &operator=(option<U> &&other) noexcept
         {
             if (this == &other)
@@ -267,7 +267,7 @@ namespace library::common
                 return;
             }
 
-            update_some_value(library::std::move(other.unwrap()));
+            update_some_value(liba9n::std::move(other.unwrap()));
             is_some_flag = true;
 
             return *this;
@@ -285,12 +285,12 @@ namespace library::common
 
         constexpr T &operator*() &&
         {
-            return library::std::move(some_value);
+            return liba9n::std::move(some_value);
         }
 
         constexpr T &operator*() const &&
         {
-            return library::std::move(some_value);
+            return liba9n::std::move(some_value);
         }
 
         constexpr explicit operator bool() const
@@ -313,12 +313,12 @@ namespace library::common
 
         constexpr auto &&unwrap() &&
         {
-            return library::std::move(some_value);
+            return liba9n::std::move(some_value);
         }
 
         constexpr auto &&unwrap() const &&
         {
-            return library::std::move(some_value);
+            return liba9n::std::move(some_value);
         }
 
         constexpr bool is_some() const noexcept
@@ -332,8 +332,8 @@ namespace library::common
         }
 
         template<typename U>
-            requires library::std::is_copy_constructible_v<T>
-                  && library::std::is_convertible_v<U &&, T>
+            requires liba9n::std::is_copy_constructible_v<T>
+                  && liba9n::std::is_convertible_v<U &&, T>
         constexpr T unwrap_or(U &&instead_some_value) &
         {
             if (is_some())
@@ -341,12 +341,12 @@ namespace library::common
                 return unwrap();
             }
 
-            return static_cast<T>(library::std::forward<U>(instead_some_value));
+            return static_cast<T>(liba9n::std::forward<U>(instead_some_value));
         }
 
         template<typename U>
-            requires library::std::is_copy_constructible_v<T>
-                  && library::std::is_convertible_v<U, T>
+            requires liba9n::std::is_copy_constructible_v<T>
+                  && liba9n::std::is_convertible_v<U, T>
         constexpr T unwrap_or(U &&instead_some_value) const &
         {
             if (is_some())
@@ -354,49 +354,49 @@ namespace library::common
                 return unwrap();
             }
 
-            return static_cast<T>(library::std::forward<U>(instead_some_value));
+            return static_cast<T>(liba9n::std::forward<U>(instead_some_value));
         }
 
         template<typename U>
-            requires library::std::is_move_constructible_v<T>
-                  && library::std::is_convertible_v<U, T>
+            requires liba9n::std::is_move_constructible_v<T>
+                  && liba9n::std::is_convertible_v<U, T>
         constexpr T unwrap_or(U &&instead_some_value) &&
         {
             if (is_some())
             {
-                return library::std::move(unwrap());
+                return liba9n::std::move(unwrap());
             }
 
-            return static_cast<T>(library::std::forward<U>(instead_some_value));
+            return static_cast<T>(liba9n::std::forward<U>(instead_some_value));
         }
 
         template<typename U>
-            requires library::std::is_move_constructible_v<T>
-                  && library::std::is_convertible_v<U, T>
+            requires liba9n::std::is_move_constructible_v<T>
+                  && liba9n::std::is_convertible_v<U, T>
         constexpr T unwrap_or(U &&instead_some_value) const &&
         {
             if (is_some())
             {
-                return library::std::move(unwrap());
+                return liba9n::std::move(unwrap());
             }
 
-            return static_cast<T>(library::std::forward<U>(instead_some_value));
+            return static_cast<T>(liba9n::std::forward<U>(instead_some_value));
         }
 
         template<
             typename Function,
             typename Tcvref = T &,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires is_option<library::std::remove_cvref_t<U>>
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) &
         {
             if (is_none())
             {
-                return library::std::remove_cvref_t<U>();
+                return liba9n::std::remove_cvref_t<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function),
+            return liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
                 unwrap()
             );
         }
@@ -404,17 +404,17 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T const &,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires is_option<library::std::remove_cvref_t<U>>
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) const &
         {
             if (is_none())
             {
-                return library::std::remove_cvref_t<U>();
+                return liba9n::std::remove_cvref_t<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function),
+            return liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
                 unwrap()
             );
         }
@@ -422,44 +422,44 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &&,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires is_option<library::std::remove_cvref_t<U>>
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) &&
         {
             if (is_none())
             {
-                return library::std::remove_cvref_t<U>();
+                return liba9n::std::remove_cvref_t<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
+            return liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
+                liba9n::std::move(unwrap())
             );
         }
 
         template<
             typename Function,
             typename Tcvref = T const &&,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires is_option<library::std::remove_cvref_t<U>>
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) const &&
         {
             if (is_none())
             {
-                return library::std::remove_cvref_t<U>();
+                return liba9n::std::remove_cvref_t<U>();
             }
 
-            return library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
+            return liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
+                liba9n::std::move(unwrap())
             );
         }
 
         template<
             typename Function,
-            typename U = library::std::invoke_result_t<Function>>
-            requires is_option<library::std::remove_cvref_t<U>>
-                  && library::std::is_copy_constructible_v<T>
+            typename U = liba9n::std::invoke_result_t<Function>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
+                  && liba9n::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) &
         {
             if (is_some())
@@ -467,14 +467,14 @@ namespace library::common
                 return *this;
             }
 
-            return library::std::forward<Function>(function)();
+            return liba9n::std::forward<Function>(function)();
         }
 
         template<
             typename Function,
-            typename U = library::std::invoke_result_t<Function>>
-            requires is_option<library::std::remove_cvref_t<U>>
-                  && library::std::is_copy_constructible_v<T>
+            typename U = liba9n::std::invoke_result_t<Function>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
+                  && liba9n::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) const &
         {
             if (is_some())
@@ -482,44 +482,44 @@ namespace library::common
                 return *this;
             }
 
-            return library::std::forward<Function>(function)();
+            return liba9n::std::forward<Function>(function)();
         }
 
         template<
             typename Function,
-            typename U = library::std::invoke_result_t<Function>>
-            requires is_option<library::std::remove_cvref_t<U>>
-                  && library::std::is_move_constructible_v<T>
+            typename U = liba9n::std::invoke_result_t<Function>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
+                  && liba9n::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) &&
         {
             if (is_some())
             {
-                return library::std::move(*this);
+                return liba9n::std::move(*this);
             }
 
-            return library::std::forward<Function>(function)();
+            return liba9n::std::forward<Function>(function)();
         }
 
         template<
             typename Function,
-            typename U = library::std::invoke_result_t<Function>>
-            requires is_option<library::std::remove_cvref_t<U>>
-                  && library::std::is_move_constructible_v<T>
+            typename U = liba9n::std::invoke_result_t<Function>>
+            requires is_option<liba9n::std::remove_cvref_t<U>>
+                  && liba9n::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) const &&
         {
             if (is_some())
             {
-                return library::std::move(*this);
+                return liba9n::std::move(*this);
             }
 
-            return library::std::forward<Function>(function)();
+            return liba9n::std::forward<Function>(function)();
         }
 
         template<
             typename Function,
             typename Tcvref = T &,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires(!liba9n::std::is_same_v<U, option_in_place_tag> && !liba9n::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) &
         {
             if (is_none())
@@ -527,8 +527,8 @@ namespace library::common
                 return option<U>();
             }
 
-            return option<U>(library::std::invoke(
-                library::std::forward<Function>(function),
+            return option<U>(liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
                 unwrap()
             ));
         }
@@ -536,8 +536,8 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T const &,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires(!liba9n::std::is_same_v<U, option_in_place_tag> && !liba9n::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) const &
         {
             if (is_none())
@@ -545,8 +545,8 @@ namespace library::common
                 return option<U>();
             }
 
-            return option<U>(library::std::invoke(
-                library::std::forward<Function>(function),
+            return option<U>(liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
                 unwrap()
             ));
         }
@@ -554,8 +554,8 @@ namespace library::common
         template<
             typename Function,
             typename Tcvref = T &&,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires(!liba9n::std::is_same_v<U, option_in_place_tag> && !liba9n::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) &&
         {
             if (is_none())
@@ -563,17 +563,17 @@ namespace library::common
                 return option<U>();
             }
 
-            return option<U>(library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
+            return option<U>(liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
+                liba9n::std::move(unwrap())
             ));
         }
 
         template<
             typename Function,
             typename Tcvref = T const &&,
-            typename U      = library::std::invoke_result_t<Function, Tcvref>>
-            requires(!library::std::is_same_v<U, option_in_place_tag> && !library::std::is_same_v<U, option_none_tag>)
+            typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
+            requires(!liba9n::std::is_same_v<U, option_in_place_tag> && !liba9n::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) const &&
         {
             if (is_none())
@@ -581,9 +581,9 @@ namespace library::common
                 return option<U>();
             }
 
-            return option<U>(library::std::invoke(
-                library::std::forward<Function>(function),
-                library::std::move(unwrap())
+            return option<U>(liba9n::std::invoke(
+                liba9n::std::forward<Function>(function),
+                liba9n::std::move(unwrap())
             ));
         }
 
@@ -622,7 +622,7 @@ namespace library::common
 
     template<typename T, typename... Args>
     constexpr auto make_option_some(Args... args)
-        -> option<library::std::remove_cvref_t<T>>
+        -> option<liba9n::std::remove_cvref_t<T>>
     {
         return option<T>(option_in_place, args...);
     }

@@ -1,7 +1,7 @@
 #ifndef LIBCXX_NEW_HPP
 #define LIBCXX_NEW_HPP
 
-namespace library::std
+namespace liba9n::std
 {
     void *operator new(size_t size, void *buffer) throw()
     {

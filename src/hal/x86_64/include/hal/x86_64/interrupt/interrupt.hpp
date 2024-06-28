@@ -8,22 +8,22 @@
 #include "interrupt_descriptor.hpp"
 #include "pic.hpp"
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
-    static inline hal::interface::interrupt_handler interrupt_handler_table[256];
+    static inline a9n::hal::interrupt_handler interrupt_handler_table[256];
 
-    class interrupt final : public hal::interface::interrupt
+    class interrupt final : public a9n::hal::interrupt
     {
       public:
         interrupt();
         ~interrupt();
         void init_interrupt() override;
         void register_handler(
-            common::word                      irq_number,
-            hal::interface::interrupt_handler target_interrupt_handler
+            a9n::word                      irq_number,
+            a9n::hal::interrupt_handler target_interrupt_handler
         ) override;
-        void enable_interrupt(common::word irq_number) override;
-        void disable_interrupt(common::word irq_number) override;
+        void enable_interrupt(a9n::word irq_number) override;
+        void disable_interrupt(a9n::word irq_number) override;
         void enable_interrupt_all() override;
         void disable_interrupt_all() override;
         void ack_interrupt() override;
@@ -32,8 +32,8 @@ namespace hal::x86_64
         void init_handler();
         void load_idt();
         void register_idt_handler(
-            common::word                      irq_number,
-            hal::interface::interrupt_handler target_interrupt_handler
+            a9n::word                      irq_number,
+            a9n::hal::interrupt_handler target_interrupt_handler
         );
         interrupt_descriptor_64 idt[256];
         pic                     _pic;

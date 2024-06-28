@@ -10,9 +10,9 @@
 
 #include <stdint.h>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
-    class pit_timer final : public hal::interface::timer
+    class pit_timer final : public a9n::hal::timer
     {
       public:
         pit_timer();
@@ -21,7 +21,7 @@ namespace hal::x86_64
         void         init_timer() override;
         void         configure_timer(uint16_t hz) override;
         void         clock() override;
-        common::word get_tick() override;
+        a9n::word get_tick() override;
 
         __attribute__((interrupt("IRQ"))) static void handle(void *data);
 
@@ -29,7 +29,7 @@ namespace hal::x86_64
 
       private:
         static pit_timer    *this_timer;
-        hal::x86_64::port_io _port_io;
+        a9n::hal::x86_64::port_io _port_io;
     };
 }
 

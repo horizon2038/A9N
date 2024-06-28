@@ -1,6 +1,6 @@
 #include <kernel/process/process.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     /*
     namespace

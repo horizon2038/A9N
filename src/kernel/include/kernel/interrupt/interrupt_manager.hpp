@@ -5,12 +5,12 @@
 
 #include <hal/interface/interrupt.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     class interrupt_manager
     {
       public:
-        interrupt_manager(hal::interface::interrupt &target_interrupt);
+        interrupt_manager(a9n::hal::interrupt &target_interrupt);
         ~interrupt_manager();
 
         void init();
@@ -20,7 +20,7 @@ namespace kernel
         void ack_interrupt();
 
       private:
-        hal::interface::interrupt &_interrupt;
+        a9n::hal::interrupt &_interrupt;
 
         void init_handler();
     };

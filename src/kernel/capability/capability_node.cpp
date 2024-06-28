@@ -7,11 +7,11 @@
 #include <library/capability/capability_node_operation.hpp>
 #include <library/common/types.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     capability_node::capability_node(
-        common::word     initial_ignore_bits,
-        common::word     initial_radix_bits,
+        a9n::word        initial_ignore_bits,
+        a9n::word        initial_radix_bits,
         capability_slot *initial_capability_slots
     )
         : capability_slots(initial_capability_slots)
@@ -20,13 +20,13 @@ namespace kernel
     {
     }
 
-    common::error capability_node::execute(
+    a9n::error capability_node::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         message_buffer  *buffer
     )
     {
-        kernel::utility::logger::printk("execute : node\n");
+        a9n::kernel::utility::logger::printk("execute : node\n");
 
         // 1. decode operation
         auto result = decode_operation(buffer);
@@ -36,55 +36,56 @@ namespace kernel
         return result;
     }
 
-    common::error capability_node::decode_operation(message_buffer *buffer)
+    a9n::error capability_node::decode_operation(message_buffer *buffer)
     {
         auto operation_type
-            = static_cast<library::capability::node_operation_type>(
+            = static_cast<liba9n::capability::node_operation_type>(
                 buffer->get_element(2)
             );
-        kernel::utility::logger::printk(
+        a9n::kernel::utility::logger::printk(
             "operation type : %llu\n",
             buffer->get_element(2)
         );
 
         switch (operation_type)
         {
-            case library::capability::node_operation_type::COPY :
+            case liba9n::capability::node_operation_type::COPY :
                 {
-                    kernel::utility::logger::printk("node : copy\n");
+                    a9n::kernel::utility::logger::printk("node : copy\n");
                     auto e = operation_copy(buffer);
                     return e;
                     break;
                 }
 
-            case library::capability::node_operation_type::MOVE :
+            case liba9n::capability::node_operation_type::MOVE :
                 {
-                    kernel::utility::logger::printk("node : move\n");
+                    a9n::kernel::utility::logger::printk("node : move\n");
                     auto e = operation_move(buffer);
                     return e;
                     break;
                 }
 
-            case library::capability::node_operation_type::REVOKE :
+            case liba9n::capability::node_operation_type::REVOKE :
                 {
                     // the size of the message_buffer must be the same as one
                     // entry in the message buffer, so the size of the message
                     // buffer is the same as the size of a word.
-                    kernel::utility::logger::printk("node : revoke\n");
+                    a9n::kernel::utility::logger::printk("node : revoke\n");
                     // auto e = operation_revoke(buffer);
                     return 0;
                     break;
                 }
 
-            case library::capability::node_operation_type::REMOVE :
+            case liba9n::capability::node_operation_type::REMOVE :
                 {
-                    kernel::utility::logger::printk("node : remove\n");
+                    a9n::kernel::utility::logger::printk("node : remove\n");
                     return 0;
                 }
 
             default :
                 {
-                    kernel::utility::logger::error("node : illegal operation!\n"
+                    a9n::kernel::utility::logger::error(
+                        "node : illegal operation!\n"
                     );
                     break;
                     // ERROR: illegal operation !
@@ -93,7 +94,7 @@ namespace kernel
         return 0;
     }
 
-    common::error capability_node::operation_copy(message_buffer *buffer)
+    a9n::error capability_node::operation_copy(message_buffer *buffer)
     {
         auto destination_index = buffer->get_element(3);
         auto source_descriptor = buffer->get_element(4);
@@ -112,18 +113,18 @@ namespace kernel
     }
 
     // return of empty slots is allowed
-    capability_slot *capability_node::retrieve_slot(common::word index)
+    capability_slot *capability_node::retrieve_slot(a9n::word index)
     {
         auto index_max = 1 << radix_bits;
         if (index >= index_max)
         {
-            kernel::utility::logger::debug("index out of range !\n");
+            a9n::kernel::utility::logger::debug("index out of range !\n");
             return nullptr;
         }
         return &(capability_slots[index]);
     }
 
-    common::error capability_node::operation_move(message_buffer *buffer)
+    a9n::error capability_node::operation_move(message_buffer *buffer)
     {
         auto destination_index = buffer->get_element(3);
         auto source_descriptor = buffer->get_element(4);
@@ -150,18 +151,18 @@ namespace kernel
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
     capability_slot *capability_node::traverse_slot(
-        library::capability::capability_descriptor descriptor,
-        common::word descriptor_max_bits, // usually WORD_BITS is used.
-        common::word descriptor_used_bits
+        liba9n::capability::capability_descriptor descriptor,
+        a9n::word descriptor_max_bits, // usually WORD_BITS is used.
+        a9n::word descriptor_used_bits
     )
     {
         auto slot = lookup_slot(descriptor, descriptor_used_bits);
         if (slot == nullptr)
         {
-            kernel::utility::logger::error("null entry !\n");
+            a9n::kernel::utility::logger::error("null entry !\n");
         }
 
-        if (descriptor_used_bits == library::common::WORD_BITS)
+        if (descriptor_used_bits == a9n::WORD_BITS)
         {
             return slot;
         }
@@ -188,17 +189,17 @@ namespace kernel
     }
 
     capability_slot *capability_node::lookup_slot(
-        library::capability::capability_descriptor descriptor,
-        common::word                               descriptor_used_bits
+        liba9n::capability::capability_descriptor descriptor,
+        a9n::word                                 descriptor_used_bits
     )
     {
-        kernel::utility::logger::printk("lookup_capability\n");
+        a9n::kernel::utility::logger::printk("lookup_capability\n");
         auto index
             = calculate_capability_index(descriptor, descriptor_used_bits);
         auto slot = retrieve_slot(index);
         if (slot == nullptr)
         {
-            kernel::utility::logger::error("null entry !\n");
+            a9n::kernel::utility::logger::error("null entry !\n");
         }
 
         return slot;

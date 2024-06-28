@@ -8,7 +8,7 @@
 #include <library/libcxx/__functional/reference_wrapper.hpp>
 #include <library/libcxx/__type_traits/remove_cvref.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     namespace
     {

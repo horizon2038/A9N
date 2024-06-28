@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     namespace MSR
     {

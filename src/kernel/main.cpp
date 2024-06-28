@@ -30,10 +30,10 @@
 
 void kernel_main(void);
 
-hal::interface::hal *hal_instance;
+a9n::hal::hal *hal_instance;
 
-constexpr uint32_t hal_factory_size = sizeof(hal::x86_64::hal_factory);
-alignas(hal::x86_64::hal_factory
+constexpr uint32_t hal_factory_size = sizeof(a9n::hal::x86_64::hal_factory);
+alignas(a9n::hal::x86_64::hal_factory
 ) static char hal_factory_buffer[hal_factory_size];
 
 void read_serial()
@@ -41,28 +41,28 @@ void read_serial()
     while (1)
     {
         asm volatile("sti");
-        library::ipc::message m;
+        liba9n::ipc::message m;
         m.type              = 1;
         uint8_t serial_data = hal_instance->_serial->read_serial();
         if (serial_data == 0xd)
         {
-            library::std::strcpy(reinterpret_cast<char *>(m.data), "\r\n");
-            kernel::kernel_object::ipc_manager->send(4, &m);
+            liba9n::std::strcpy(reinterpret_cast<char *>(m.data), "\r\n");
+            a9n::kernel::kernel_object::ipc_manager->send(4, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
         }
         if (serial_data == 0x7f)
         {
-            library::std::strcpy(reinterpret_cast<char *>(m.data), "\b\033[K");
-            kernel::kernel_object::ipc_manager->send(4, &m);
+            liba9n::std::strcpy(reinterpret_cast<char *>(m.data), "\b\033[K");
+            a9n::kernel::kernel_object::ipc_manager->send(4, &m);
             hal_instance->_interrupt->ack_interrupt();
             continue;
         }
         char c[2];
         c[0] = serial_data;
         c[1] = '\0';
-        library::std::strcpy(reinterpret_cast<char *>(m.data), c);
-        kernel::kernel_object::ipc_manager->send(4, &m);
+        liba9n::std::strcpy(reinterpret_cast<char *>(m.data), c);
+        a9n::kernel::kernel_object::ipc_manager->send(4, &m);
         hal_instance->_interrupt->ack_interrupt();
     }
 }
@@ -71,15 +71,18 @@ void console()
 {
     char     buffer[256];
     uint32_t buffer_index = 0;
-    library::std::memset(buffer, 0, sizeof(buffer));
+    liba9n::std::memset(buffer, 0, sizeof(buffer));
 
-    kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
+    a9n::kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
 
     while (1)
     {
         asm volatile("sti");
-        library::ipc::message m;
-        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
+        liba9n::ipc::message m;
+        a9n::kernel::kernel_object::ipc_manager->receive(
+            a9n::kernel::ANY_PROCESS,
+            &m
+        );
 
         // Assuming that m.data holds ASCII characters
         char received_char = reinterpret_cast<char *>(m.data)[0];
@@ -93,7 +96,7 @@ void console()
             buffer[buffer_index] = '\0'; // null terminate the string
 
             // Prepare a message to send buffer content to process 3
-            library::ipc::message buffer_message;
+            liba9n::ipc::message buffer_message;
             buffer_message.type = 1; // assuming 1 is a generic message type
 
             // Manually copy buffer content to buffer_message.data
@@ -102,13 +105,13 @@ void console()
                 buffer_message.data[i] = buffer[i];
             }
 
-            kernel::kernel_object::ipc_manager->send(
+            a9n::kernel::kernel_object::ipc_manager->send(
                 5,
                 &buffer_message
             );                // send buffer content to process 3
             buffer_index = 0; // reset buffer index
-            library::std::memset(buffer, 0, sizeof(buffer)); // clear the buffer
-            kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
+            liba9n::std::memset(buffer, 0, sizeof(buffer)); // clear the buffer
+            a9n::kernel::utility::logger::printn("\e[32mhorizon@A9N\e[0m > ");
         }
 
         else if (received_char == '\b') // Backspace key
@@ -117,7 +120,7 @@ void console()
             {
                 buffer[--buffer_index]
                     = '\0'; // remove the last character from buffer
-                kernel::utility::logger::printn("\b \b"
+                a9n::kernel::utility::logger::printn("\b \b"
                 ); // handle backspace on terminal
             }
         }
@@ -125,7 +128,7 @@ void console()
         {
             buffer[buffer_index++]
                 = received_char; // store the character in buffer
-            kernel::utility::logger::printn(
+            a9n::kernel::utility::logger::printn(
                 "%c",
                 received_char
             ); // print the received character
@@ -138,9 +141,12 @@ void console_out()
     while (1)
     {
         asm volatile("sti");
-        library::ipc::message m;
+        liba9n::ipc::message m;
         // Assuming process ID 3 is for console_out
-        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
+        a9n::kernel::kernel_object::ipc_manager->receive(
+            a9n::kernel::ANY_PROCESS,
+            &m
+        );
 
         char *received_data = reinterpret_cast<char *>(m.data);
 
@@ -148,29 +154,32 @@ void console_out()
         {
             continue;
         }
-        kernel::utility::logger::printn("\ncout said : %s\n", received_data);
+        a9n::kernel::utility::logger::printn(
+            "\ncout said : %s\n",
+            received_data
+        );
 
-        if (library::std::strcmp(received_data, "about") == 0)
+        if (liba9n::std::strcmp(received_data, "about") == 0)
         {
-            kernel::utility::logger::a9nout();
+            a9n::kernel::utility::logger::a9nout();
         }
 
-        if (library::std::strcmp(received_data, "syscall") == 0)
+        if (liba9n::std::strcmp(received_data, "syscall") == 0)
         {
             asm volatile("int $0x80" ::: "cc", "memory");
         }
 
-        if (library::std::strcmp(received_data, "info pm") == 0)
+        if (liba9n::std::strcmp(received_data, "info pm") == 0)
         {
-            library::ipc::message m2;
+            liba9n::ipc::message m2;
             m2.type = 1;
             // Assuming process ID 3 is for console_out
-            library::std::strcpy(reinterpret_cast<char *>(m2.data), "info pm");
-            kernel::kernel_object::ipc_manager->send(2, &m2);
+            liba9n::std::strcpy(reinterpret_cast<char *>(m2.data), "info pm");
+            a9n::kernel::kernel_object::ipc_manager->send(2, &m2);
         }
-        if (library::std::strcmp(received_data, "mitoujr") == 0)
+        if (liba9n::std::strcmp(received_data, "mitoujr") == 0)
         {
-            kernel::utility::logger::mitoujr();
+            a9n::kernel::utility::logger::mitoujr();
         }
     }
 }
@@ -180,31 +189,31 @@ void info_mem()
     while (1)
     {
         asm volatile("sti");
-        library::ipc::message m;
-        kernel::kernel_object::ipc_manager->receive(3, &m);
+        liba9n::ipc::message m;
+        a9n::kernel::kernel_object::ipc_manager->receive(3, &m);
         if (m.type != 1)
         {
             continue;
         }
-        kernel::kernel_object::memory_manager->info_physical_memory();
+        a9n::kernel::kernel_object::memory_manager->info_physical_memory();
     }
 }
 
 void alpha()
 {
     asm volatile("sti");
-    kernel::utility::logger::printn("alpha\n");
-    kernel::kernel_object::process_manager->create_process(
+    a9n::kernel::utility::logger::printn("alpha\n");
+    a9n::kernel::kernel_object::process_manager->create_process(
         "read_serial",
-        reinterpret_cast<library::common::virtual_address>(read_serial)
+        reinterpret_cast<a9n::virtual_address>(read_serial)
     );
-    kernel::kernel_object::process_manager->create_process(
+    a9n::kernel::kernel_object::process_manager->create_process(
         "console",
-        reinterpret_cast<library::common::virtual_address>(console)
+        reinterpret_cast<a9n::virtual_address>(console)
     );
-    kernel::kernel_object::process_manager->create_process(
+    a9n::kernel::kernel_object::process_manager->create_process(
         "console_out",
-        reinterpret_cast<library::common::virtual_address>(console_out)
+        reinterpret_cast<a9n::virtual_address>(console_out)
     );
     // read_serial : 3
     // console : 4
@@ -212,35 +221,38 @@ void alpha()
     while (true)
     {
         asm volatile("sti");
-        library::ipc::message m;
-        kernel::kernel_object::ipc_manager->receive(kernel::ANY_PROCESS, &m);
+        liba9n::ipc::message m;
+        a9n::kernel::kernel_object::ipc_manager->receive(
+            a9n::kernel::ANY_PROCESS,
+            &m
+        );
         if (m.type != 1)
         {
             continue;
         }
         char *received_data = reinterpret_cast<char *>(m.data);
-        kernel::utility::logger::printk("received : %s\n", received_data);
-        if (library::std::strcmp(received_data, "info pm") == 0)
+        a9n::kernel::utility::logger::printk("received : %s\n", received_data);
+        if (liba9n::std::strcmp(received_data, "info pm") == 0)
         {
-            kernel::kernel_object::memory_manager->info_physical_memory();
+            a9n::kernel::kernel_object::memory_manager->info_physical_memory();
         }
     }
 }
 
-extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
+extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
 {
-    using logger = kernel::utility::logger;
+    using logger = a9n::kernel::utility::logger;
     // make HAL and kernel objects.
-    hal::interface::hal_factory *hal_factory_instance
-        = new (hal_factory_buffer) hal::x86_64::hal_factory();
+    a9n::hal::hal_factory *hal_factory_instance
+        = new (hal_factory_buffer) a9n::hal::x86_64::hal_factory();
     hal_instance = hal_factory_instance->make();
 
     hal_instance->_serial->init_serial(115200);
 
-    constexpr uint16_t logger_size = sizeof(kernel::utility::logger);
-    alignas(kernel::utility::logger) char logger_buf[logger_size];
-    kernel::utility::logger              *my_logger = new ((void *)logger_buf)
-        kernel::utility::logger { *hal_instance->_serial };
+    constexpr uint16_t logger_size = sizeof(a9n::kernel::utility::logger);
+    alignas(a9n::kernel::utility::logger) char logger_buf[logger_size];
+    a9n::kernel::utility::logger *my_logger = new ((void *)logger_buf)
+        a9n::kernel::utility::logger { *hal_instance->_serial };
 
     logger::a9nout();
     logger::printk("start A9N kernel\n");
@@ -262,29 +274,33 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     logger::printk("init logger\n");
 
     logger::printk("init memory_manager\n");
-    kernel::kernel_object::memory_manager
-        = new (kernel::kernel_object::memory_manager_buffer)
-            kernel::memory_manager(
+    a9n::kernel::kernel_object::memory_manager
+        = new (a9n::kernel::kernel_object::memory_manager_buffer)
+            a9n::kernel::memory_manager(
                 *hal_instance->_memory_manager,
                 target_boot_info->boot_memory_info
             );
 
     logger::printk("test memory_manager\n");
-    kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
-    kernel::kernel_object::memory_manager
+    a9n::kernel::kernel_object::memory_manager->allocate_physical_memory(
+        40,
+        nullptr
+    );
+    a9n::kernel::kernel_object::memory_manager
         ->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
     logger::printk("init interrupt_manager\n");
-    kernel::kernel_object::interrupt_manager
-        = new (kernel::kernel_object::interrupt_manager_buffer)
-            kernel::interrupt_manager(*hal_instance->_interrupt);
-    kernel::kernel_object::interrupt_manager->init();
+    a9n::kernel::kernel_object::interrupt_manager
+        = new (a9n::kernel::kernel_object::interrupt_manager_buffer)
+            a9n::kernel::interrupt_manager(*hal_instance->_interrupt);
+    a9n::kernel::kernel_object::interrupt_manager->init();
 
     logger::printk("init ipc_manager\n");
-    kernel::kernel_object::ipc_manager
-        = new (kernel::kernel_object::ipc_manager_buffer) kernel::ipc_manager();
+    a9n::kernel::kernel_object::ipc_manager
+        = new (a9n::kernel::kernel_object::ipc_manager_buffer)
+            a9n::kernel::ipc_manager();
 
-    kernel::kernel_object::interrupt_manager->disable_interrupt_all();
+    a9n::kernel::kernel_object::interrupt_manager->disable_interrupt_all();
 
     logger::printk("init architecture\n");
     hal_instance->_arch_initializer->init_architecture(
@@ -294,21 +310,21 @@ extern "C" int kernel_entry(kernel::boot_info *target_boot_info)
     hal_instance->_timer->init_timer();
 
     logger::printk("init process_manager\n");
-    kernel::kernel_object::process_manager
-        = new (kernel::kernel_object::process_manager_buffer)
-            kernel::process_manager(*hal_instance->_process_manager);
+    a9n::kernel::kernel_object::process_manager
+        = new (a9n::kernel::kernel_object::process_manager_buffer)
+            a9n::kernel::process_manager(*hal_instance->_process_manager);
     logger::split();
-    kernel::kernel_object::process_manager->create_process(
+    a9n::kernel::kernel_object::process_manager->create_process(
         "idle",
-        reinterpret_cast<library::common::virtual_address>(kernel_main)
+        reinterpret_cast<a9n::virtual_address>(kernel_main)
     );
-    kernel::kernel_object::process_manager->create_process(
+    a9n::kernel::kernel_object::process_manager->create_process(
         "alpha",
-        reinterpret_cast<library::common::virtual_address>(alpha)
+        reinterpret_cast<a9n::virtual_address>(alpha)
     );
 
-    kernel::kernel_object::interrupt_manager->enable_interrupt_all();
-    kernel::kernel_object::interrupt_manager->ack_interrupt();
+    a9n::kernel::kernel_object::interrupt_manager->enable_interrupt_all();
+    a9n::kernel::kernel_object::interrupt_manager->ack_interrupt();
 
     kernel_main();
 
@@ -320,7 +336,7 @@ void kernel_main(void)
     while (1)
     {
         asm volatile("sti");
-        kernel::kernel_object::process_manager->switch_context();
+        a9n::kernel::kernel_object::process_manager->switch_context();
         asm volatile("hlt");
     }
 }

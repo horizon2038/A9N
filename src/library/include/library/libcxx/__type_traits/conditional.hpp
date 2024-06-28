@@ -1,7 +1,7 @@
 #ifndef LIBCXX_CONDITIONAL_HPP
 #define LIBCXX_CONDITIONAL_HPP
 
-namespace library::std
+namespace liba9n::std
 {
     template<bool B, typename T, typename F>
     struct conditional

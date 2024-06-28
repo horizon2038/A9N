@@ -4,7 +4,7 @@
 #include <library/libcxx/__type_traits/remove_reference.hpp>
 #include <library/libcxx/__type_traits/type_identity.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     namespace
     {

@@ -9,7 +9,7 @@
 #include <library/libcxx/__type_traits/is_member_pointer.hpp>
 #include <library/libcxx/__type_traits/is_null_pointer.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_scalar

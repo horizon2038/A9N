@@ -5,7 +5,7 @@
 #include <library/libcxx/__type_traits/is_integral.hpp>
 #include <library/libcxx/__type_traits/is_floating_point.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_arithmetic

@@ -7,7 +7,7 @@
 #include "library/libcxx/__type_traits/is_function.hpp"
 #include "library/libcxx/__type_traits/remove_extent.hpp"
 #include "library/libcxx/__type_traits/remove_reference.hpp"
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct decay

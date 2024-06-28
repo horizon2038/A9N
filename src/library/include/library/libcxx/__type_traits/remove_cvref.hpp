@@ -4,7 +4,7 @@
 #include <library/libcxx/__type_traits/remove_cv.hpp>
 #include <library/libcxx/__type_traits/remove_reference.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct remove_cvref

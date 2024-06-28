@@ -12,8 +12,8 @@ class enviroment : public ::testing::Environment
     void TearDown() override;
 
   private:
-    hal::interface::serial *hal_test_serial;
-    kernel::utility::logger *hal_test_logger;
+    a9n::hal::serial *hal_test_serial;
+    a9n::kernel::utility::logger *hal_test_logger;
 
     void setup_hal_test();
     void setup_logger();

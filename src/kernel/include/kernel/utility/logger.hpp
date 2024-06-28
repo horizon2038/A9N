@@ -5,7 +5,7 @@
 #include <kernel/utility/print.hpp>
 #include <hal/interface/serial.hpp>
 
-namespace kernel::utility
+namespace a9n::kernel::utility
 {
     enum class log_type : uint8_t
     {
@@ -43,7 +43,7 @@ namespace kernel::utility
     class logger
     {
       public:
-        logger(hal::interface::serial &target_serial);
+        logger(a9n::hal::serial &target_serial);
         ~logger();
 
         static void log(const char *sender, const char *message);

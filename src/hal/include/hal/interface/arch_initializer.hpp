@@ -3,12 +3,12 @@
 
 #include <library/common/types.hpp>
 
-namespace hal::interface
+namespace a9n::hal
 {
     class arch_initializer
     {
       public:
-        virtual void init_architecture(common::word arch_info[]) = 0;
+        virtual void init_architecture(a9n::word arch_info[]) = 0;
     };
 }
 

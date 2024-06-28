@@ -8,10 +8,10 @@
 #include <stdint.h>
 #include <library/libc/string.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
     process_manager::process_manager(
-        hal::interface::process_manager &target_process_manager
+        a9n::hal::process_manager &target_process_manager
     )
         : _scheduler(process_list)
         , _process_manager(target_process_manager)
@@ -27,7 +27,7 @@ namespace kernel
 
     void process_manager::create_process(
         const char             *process_name,
-        common::virtual_address entry_point_address
+        a9n::virtual_address entry_point_address
     )
     {
         uint16_t process_id = determine_process_id();
@@ -60,7 +60,7 @@ namespace kernel
         utility::logger::split();
 
         // test priority-scheduling
-        common::sword priority = current_process->priority;
+        a9n::sword priority = current_process->priority;
         if (priority_groups[priority] == nullptr)
         {
             priority_groups[priority] = current_process;
@@ -80,21 +80,21 @@ namespace kernel
         process                *process,
         process_id              target_process_id,
         const char             *process_name,
-        common::virtual_address entry_point_address
+        a9n::virtual_address entry_point_address
     )
     {
         process->id = target_process_id;
-        library::std::strcpy(process->name, process_name);
+        liba9n::std::strcpy(process->name, process_name);
 
         process->status   = process_status::BLOCKED;
         process->priority = 0;
         process->quantum  = QUANTUM_MAX;
 
-        library::std::memset(process->stack, 0, STACK_SIZE_MAX);
+        liba9n::std::memset(process->stack, 0, STACK_SIZE_MAX);
         kernel_object::memory_manager->init_virtual_memory(process);
     }
 
-    common::sword process_manager::determine_process_id()
+    a9n::sword process_manager::determine_process_id()
     {
         // 0 == init_server id (reserved).
 

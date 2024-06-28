@@ -3,7 +3,7 @@
 
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
         struct is_integral : bool_constant < requires(T t, T *p, void (*f)(T))

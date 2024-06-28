@@ -3,7 +3,7 @@
 
 #include <library/common/types.hpp>
 
-namespace hal::x86_64
+namespace a9n::hal::x86_64
 {
     struct rsdp
     {
@@ -151,9 +151,9 @@ namespace hal::x86_64
 
     namespace ACPI_REGION
     {
-        constexpr static common::physical_address BIOS_MAIN_START = 0x000E0000;
-        constexpr static common::physical_address BIOS_MAIN_END   = 0x00100000;
-        constexpr static common::physical_address EBDA_SEGMENT    = 0x0000040E;
+        constexpr static a9n::physical_address BIOS_MAIN_START = 0x000E0000;
+        constexpr static a9n::physical_address BIOS_MAIN_END   = 0x00100000;
+        constexpr static a9n::physical_address EBDA_SEGMENT    = 0x0000040E;
     }
 
     namespace ACPI_MAGIC
@@ -174,10 +174,10 @@ namespace hal::x86_64
         acpi_configurator();
         ~acpi_configurator();
 
-        void init_acpi(common::virtual_address rsdp_address);
+        void init_acpi(a9n::virtual_address rsdp_address);
 
       private:
-        bool validate_rsdp(common::virtual_address rsdp_address);
+        bool validate_rsdp(a9n::virtual_address rsdp_address);
         void print_rsdp_info(rsdp *target_rsdp);
         void print_sdt_header_info(sdt_header *header);
     };

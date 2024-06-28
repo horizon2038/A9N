@@ -4,7 +4,7 @@
 
 TEST(function_test, invoke_lambda_test)
 {
-    library::std::function<int(int, int)> func(
+    liba9n::std::function<int(int, int)> func(
         [](int a, int b)
         {
             return a + b;
@@ -23,7 +23,7 @@ struct multiplier
 
 TEST(function_test, invoke_function_object_test)
 {
-    library::std::function<int(int, int)> func(multiplier {});
+    liba9n::std::function<int(int, int)> func(multiplier {});
     ASSERT_EQ(func(4, 5), 20);
 }
 
@@ -34,6 +34,6 @@ int subtract(int a, int b)
 
 TEST(function_test, invoke_free_function_test)
 {
-    library::std::function<int(int, int)> func(subtract);
+    liba9n::std::function<int(int, int)> func(subtract);
     ASSERT_EQ(func(9, 4), 5);
 }

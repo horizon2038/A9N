@@ -11,14 +11,15 @@
 class generic_test : public ::testing::Test
 {
   protected:
-    kernel::capability_slot root_slot;
-    kernel::capability_slot *root_node_slot;
-    kernel::capability_component *root_node;
+    a9n::kernel::capability_slot root_slot;
+    a9n::kernel::capability_slot *root_node_slot;
+    a9n::kernel::capability_component *root_node;
 
     void SetUp() override
     {
-        this->root_node_slot = new kernel::capability_slot[256];
-        this->root_node = new kernel::capability_node(56, 8, root_node_slot);
+        this->root_node_slot = new a9n::kernel::capability_slot[256];
+        this->root_node
+            = new a9n::kernel::capability_node(56, 8, root_node_slot);
         this->root_slot.component = root_node;
         return;
     }
@@ -31,10 +32,9 @@ class generic_test : public ::testing::Test
     }
 };
 
-library::common::word
-    calculate_generic_flags(bool is_device, library::common::word size_bits)
+a9n::word calculate_generic_flags(bool is_device, a9n::word size_bits)
 {
-    library::common::word generic_flags {};
+    a9n::word generic_flags {};
 
     generic_flags |= (is_device << 7);
     auto size_bits_mask = (1 << 7) - 1;
@@ -43,21 +43,21 @@ library::common::word
     return generic_flags;
 }
 
-inline bool is_device(library::common::word flags)
+inline bool is_device(a9n::word flags)
 {
     return (flags >> 7) & 1;
 }
 
-inline library::common::word calculate_size(library::common::word flags)
+inline a9n::word calculate_size(a9n::word flags)
 {
-    library::common::word size_mask = (1 << (7)) - 1;
-    return static_cast<library::common::word>(1) << (flags & size_mask);
+    a9n::word size_mask = (1 << (7)) - 1;
+    return static_cast<a9n::word>(1) << (flags & size_mask);
 }
 
 TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
 {
-    kernel::generic g;
-    kernel::message_buffer buffer;
+    a9n::kernel::generic g;
+    a9n::kernel::message_buffer buffer;
 
     auto generic_slot = root_slot.component->retrieve_slot(0);
     generic_slot->component = &g;
@@ -74,7 +74,7 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     // 4 : size
     // 5 : count
     buffer.set_element(0, 0);
-    buffer.set_element(1, library::common::WORD_BITS);
+    buffer.set_element(1, a9n::WORD_BITS);
     buffer.set_element(2, 0); // generic::CONVERT
     buffer.set_element(3, 1); // generic
     buffer.set_element(4, 8); // 2^8 = 256 byte
@@ -97,8 +97,8 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
 
 TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
 {
-    kernel::generic g;
-    kernel::message_buffer buffer;
+    a9n::kernel::generic g;
+    a9n::kernel::message_buffer buffer;
 
     auto generic_slot = root_slot.component->retrieve_slot(0);
     generic_slot->component = &g;
@@ -118,7 +118,7 @@ TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
     // 7 : target node depth
     // 8 : target node index
     buffer.set_element(0, 0);
-    buffer.set_element(1, library::common::WORD_BITS);
+    buffer.set_element(1, a9n::WORD_BITS);
     buffer.set_element(2, 0); // generic::CONVERT
     buffer.set_element(3, 1); // generic
     buffer.set_element(4, 10); // 2^8 = 256 byte

@@ -4,7 +4,7 @@
 #include <library/libcxx/__type_traits/integral_constant.hpp>
 #include <library/libcxx/__type_traits/bool_constant.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_pointer : false_type

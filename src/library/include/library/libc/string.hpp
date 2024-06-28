@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace library::std
+namespace liba9n::std
 {
     void *memset(void *buffer, char value, size_t count);
     void *memcpy(void *buffer, const void *source, size_t size);

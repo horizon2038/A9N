@@ -2,7 +2,7 @@
 #define LIBCXX_IS_BASE_OF_HPP
 
 #include "library/libcxx/__type_traits/integral_constant.hpp"
-namespace library::std
+namespace liba9n::std
 {
     // *warning*
     // portability may be compromised because __is_union is a compiler extension

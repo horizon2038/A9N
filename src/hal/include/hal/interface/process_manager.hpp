@@ -5,20 +5,20 @@
 
 #include <library/common/types.hpp>
 
-namespace hal::interface
+namespace a9n::hal
 {
     class process_manager
     {
       public:
         virtual void switch_context(
-            kernel::process *preview_process,
-            kernel::process *next_process
+            a9n::kernel::process *preview_process,
+            a9n::kernel::process *next_process
         ) = 0;
         virtual void create_process(
-            kernel::process        *target_process,
-            common::virtual_address entry_point_address
+            a9n::kernel::process        *target_process,
+            a9n::virtual_address entry_point_address
         )                                                            = 0;
-        virtual void delete_process(kernel::process *target_process) = 0;
+        virtual void delete_process(a9n::kernel::process *target_process) = 0;
     };
 }
 

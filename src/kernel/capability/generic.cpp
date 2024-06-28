@@ -11,9 +11,9 @@
 
 #include <kernel/utility/logger.hpp>
 
-namespace kernel
+namespace a9n::kernel
 {
-    common::physical_address generic_info::current_watermark() const
+    a9n::physical_address generic_info::current_watermark() const
     {
         return watermark;
     }
@@ -24,27 +24,27 @@ namespace kernel
     }
 
     bool generic_info::is_allocatable(
-        common::word memory_size_bits,
-        common::word count
+        a9n::word memory_size_bits,
+        a9n::word count
     ) const
     {
         auto end_address = base_address + size();
         auto request_unit_size
-            = (static_cast<common::word>(1) << memory_size_bits);
+            = (static_cast<a9n::word>(1) << memory_size_bits);
         auto aligned_watermark
-            = library::common::align_value(watermark, request_unit_size);
+            = liba9n::common::align_value(watermark, request_unit_size);
         auto target_end_address
             = aligned_watermark + (request_unit_size * count);
 
         return (target_end_address < end_address);
     }
 
-    common::error generic_info::apply_allocate(common::word memory_size_bits)
+    a9n::error generic_info::apply_allocate(a9n::word memory_size_bits)
     {
         auto request_unit_size
-            = (static_cast<common::word>(1) << memory_size_bits);
+            = (static_cast<a9n::word>(1) << memory_size_bits);
         auto aligned_watermark
-            = library::common::align_value(watermark, request_unit_size);
+            = liba9n::common::align_value(watermark, request_unit_size);
         watermark = aligned_watermark + request_unit_size;
 
         return 0;
@@ -61,7 +61,7 @@ namespace kernel
         return data;
     }
 
-    common::error generic::execute(
+    a9n::error generic::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         message_buffer  *buffer
@@ -71,30 +71,30 @@ namespace kernel
         return e;
     }
 
-    common::error generic::decode_operation(
+    a9n::error generic::decode_operation(
         capability_slot      &this_slot,
         capability_slot      &root_slot,
         const message_buffer &buffer
     )
     {
-        kernel::utility::logger::printk("generic : decode_operation\n");
+        a9n::kernel::utility::logger::printk("generic : decode_operation\n");
         auto operation_type
-            = static_cast<library::capability::generic_operation>(
+            = static_cast<liba9n::capability::generic_operation>(
                 buffer.get_element(2)
             );
 
         switch (operation_type)
         {
-            case library::capability::generic_operation::CONVERT :
+            case liba9n::capability::generic_operation::CONVERT :
                 {
-                    kernel::utility::logger::printk("generic : CONVERT\n");
+                    a9n::kernel::utility::logger::printk("generic : CONVERT\n");
                     auto e = convert(this_slot, root_slot, buffer);
                     return e;
                 }
 
             default :
                 {
-                    kernel::utility::logger::printk("illegal operaton\n");
+                    a9n::kernel::utility::logger::printk("illegal operaton\n");
                     return -1;
                 }
         }
@@ -102,17 +102,17 @@ namespace kernel
         return 0;
     }
 
-    common::error generic::convert(
+    a9n::error generic::convert(
         capability_slot      &this_slot,
         capability_slot      &root_slot,
         const message_buffer &buffer
     )
     {
-        using namespace library::capability::convert_argument;
+        using namespace liba9n::capability::convert_argument;
 
         auto               this_info = create_generic_info(this_slot.data);
         capability_factory factory {};
-        auto target_type = static_cast<library::capability::capability_type>(
+        auto target_type = static_cast<liba9n::capability::capability_type>(
             buffer.get_element(CAPABILITY_TYPE)
         );
         auto size_bits = buffer.get_element(CAPABILITY_SIZE_BITS);
@@ -121,7 +121,7 @@ namespace kernel
 
         // "device" Generic can only be converted to a frame object.
         if (this_info.is_device()
-            && target_type != library::capability::capability_type::FRAME)
+            && target_type != liba9n::capability::capability_type::FRAME)
         {
             return -1;
         };
@@ -167,7 +167,7 @@ namespace kernel
         const message_buffer  &buffer
     ) const
     {
-        using namespace library::capability::convert_argument;
+        using namespace liba9n::capability::convert_argument;
 
         auto target_descriptor = buffer.get_element(ROOT_DESCRIPTOR);
         auto target_depth      = buffer.get_element(ROOT_DEPTH);
@@ -187,7 +187,7 @@ namespace kernel
         return target_slot;
     }
 
-    common::error generic::revoke()
+    a9n::error generic::revoke()
     {
         return 0;
     }

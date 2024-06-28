@@ -7,7 +7,7 @@
 #include <library/libcxx/__type_traits/is_class.hpp>
 #include <library/libcxx/__type_traits/is_union.hpp>
 
-namespace library::std
+namespace liba9n::std
 {
     template<typename T>
     struct is_object
