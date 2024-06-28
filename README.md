@@ -94,6 +94,7 @@ Currently supported architectures:
 - [Google Test](https://github.com/google/googletest)
 
 ### Run
+
 - QEMU
 
 ## Build (with Docker)
@@ -145,11 +146,12 @@ Misskey : [@horizon](https://misskey.io/@horizon)
 
 ## Acknowledgements
 
-[Mitou Jr](https://jr.mitou.org) : This project was supported by the Mitou Junior program.  
-[@kyasbal](https://github.com/kyasbal) : My mentor during the Mitou Junior program, who provided valuable advice.  
-[@nuta](https://github.com/nuta) : Gave me a advice on the implementation.  
+[MITOU JR](https://jr.mitou.org/projects/2023/a9n) : This project was supported by the MITOU Junior program.  
+- [@kyasbal](https://github.com/kyasbal) : My mentor during the MITOU Junior program, who provided valuable advice.  
+- [@nuta](https://github.com/nuta) : Gave me a advice on the implementation.  
 
-[MITOU IT](https://www.ipa.go.jp/jinzai/mitou/it/2024/gaiyou-sg-2.html) : This project was supported by the MITOU IT Program.
+[MITOU IT](https://www.ipa.go.jp/jinzai/mitou/it/2024/gaiyou-sg-2.html) : This project was supported by the MITOU IT program.
+- [@sowawa](https://github.com/sowawa) : My mentor during the MITOU IT program, who provided valuable advice.
 
 And I would also like to thank everyone who supported this project.  
 
