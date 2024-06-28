@@ -5,7 +5,7 @@
 #include <liba9n/libcxx/type_traits>
 #include <liba9n/libcxx/functional>
 
-namespace liba9n::common
+namespace liba9n
 {
     struct option_none_tag
     {
