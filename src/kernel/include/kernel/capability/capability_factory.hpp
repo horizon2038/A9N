@@ -2,8 +2,8 @@
 #define CAPABILITY_FACTORY_HPP
 
 #include <kernel/capability/capability_component.hpp>
-#include <library/common/types.hpp>
-#include <library/capability/capability_types.hpp>
+#include <liba9n/common/types.hpp>
+#include <liba9n/capability/capability_types.hpp>
 
 namespace a9n::kernel
 {

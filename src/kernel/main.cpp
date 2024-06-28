@@ -1,6 +1,6 @@
 #include "kernel/ipc/message_buffer.hpp"
 #include <stdint.h>
-#include <library/cpp_dependent/new.hpp>
+#include <liba9n/cpp_dependent/new.hpp>
 
 #include <hal/interface/interrupt.hpp>
 #include <hal/interface/port_io.hpp>
@@ -18,13 +18,13 @@
 #include <kernel/process/process_manager.hpp>
 #include <kernel/kernel.hpp>
 
-#include <library/capability/capability_descriptor.hpp>
+#include <liba9n/capability/capability_descriptor.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/generic.hpp>
 
-#include <library/libc/string.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/libc/string.hpp>
+#include <liba9n/common/types.hpp>
 
 #include <hal/x86_64/factory/hal_factory.hpp>
 

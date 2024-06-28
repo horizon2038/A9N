@@ -1,8 +1,8 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include <library/common/types.hpp>
-#include <library/ipc/message.hpp>
+#include <liba9n/common/types.hpp>
+#include <liba9n/ipc/message.hpp>
 
 #include <stdint.h>
 

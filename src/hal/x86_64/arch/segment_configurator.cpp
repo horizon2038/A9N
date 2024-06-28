@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 #include <kernel/utility/logger.hpp>
-#include <library/libc/string.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/libc/string.hpp>
+#include <liba9n/common/types.hpp>
 
 namespace a9n::hal::x86_64
 {

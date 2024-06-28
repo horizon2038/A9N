@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 #include <kernel/memory/memory_type.hpp>
 
 #include <kernel/process/process.hpp>

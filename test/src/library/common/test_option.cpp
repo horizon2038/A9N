@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <library/common/option.hpp>
+#include <liba9n/common/option.hpp>
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
-#include <library/libcxx/functional>
+#include <liba9n/libcxx/functional>
 
 TEST(option_test, is_some_test)
 {

@@ -4,10 +4,10 @@
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_factory.hpp>
 
-#include <library/capability/generic_operation.hpp>
-#include <library/capability/capability_types.hpp>
-#include <library/common/types.hpp>
-#include <library/common/calculate.hpp>
+#include <liba9n/capability/generic_operation.hpp>
+#include <liba9n/capability/capability_types.hpp>
+#include <liba9n/common/types.hpp>
+#include <liba9n/common/calculate.hpp>
 
 #include <kernel/utility/logger.hpp>
 

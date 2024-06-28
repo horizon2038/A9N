@@ -6,7 +6,7 @@
 #include <kernel/process/process.hpp>
 
 #include <stdint.h>
-#include <library/libc/string.hpp>
+#include <liba9n/libc/string.hpp>
 
 namespace a9n::kernel
 {

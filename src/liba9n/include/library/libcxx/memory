@@ -1,6 +1,0 @@
-#ifndef LIBCXX_MEMORY
-#define LIBCXX_MEMORY
-
-#include <library/libcxx/__memory/addressof.hpp>
-
-#endif

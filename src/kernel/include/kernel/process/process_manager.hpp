@@ -1,7 +1,7 @@
 #ifndef PROCESS_MANAGER_HPP
 #define PROCESS_MANAGER_HPP
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 #include <kernel/process/process.hpp>
 #include <hal/interface/process_manager.hpp>
 #include <hal/interface/interrupt.hpp>

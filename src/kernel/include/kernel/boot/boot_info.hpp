@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 #include <kernel/memory/memory_type.hpp>
 
 namespace a9n::kernel

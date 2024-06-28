@@ -5,7 +5,7 @@
 #include <kernel/process/process.hpp>
 #include <kernel/utility/logger.hpp>
 
-#include <library/libc/string.hpp>
+#include <liba9n/libc/string.hpp>
 
 extern "C" void _switch_context(
     a9n::virtual_address *preview_stack_pointer,

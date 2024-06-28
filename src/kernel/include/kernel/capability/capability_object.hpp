@@ -2,7 +2,7 @@
 #define CAPABILITY_OBJECT_HPP
 
 #include <kernel/ipc/message_buffer.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 
 namespace a9n::kernel

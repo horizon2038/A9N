@@ -3,7 +3,7 @@
 
 #include <hal/interface/interrupt.hpp>
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
 #include "interrupt_descriptor.hpp"
 #include "pic.hpp"

@@ -3,10 +3,10 @@
 
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/message_buffer.hpp>
-#include <library/common/types.hpp>
-#include <library/capability/capability_descriptor.hpp>
+#include <liba9n/common/types.hpp>
+#include <liba9n/capability/capability_descriptor.hpp>
 
-#include <library/libc/string.hpp>
+#include <liba9n/libc/string.hpp>
 
 namespace a9n::kernel
 {

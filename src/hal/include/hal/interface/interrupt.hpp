@@ -1,7 +1,7 @@
 #ifndef HAL_INTERRUPT_HPP
 #define HAL_INTERRUPT_HPP
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 #include <stdint.h>
 
 namespace a9n::hal

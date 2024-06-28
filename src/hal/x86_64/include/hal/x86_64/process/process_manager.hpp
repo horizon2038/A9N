@@ -1,7 +1,7 @@
 #ifndef X86_64_CONTEXT_SWITCH_HPP
 #define X86_64_CONTEXT_SWITCH_HPP
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 #include <hal/interface/process_manager.hpp>
 
 #include <hal/x86_64/arch/segment_configurator.hpp>

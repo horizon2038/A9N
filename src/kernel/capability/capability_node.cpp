@@ -3,9 +3,9 @@
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
 
-#include <library/capability/capability_descriptor.hpp>
-#include <library/capability/capability_node_operation.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/capability/capability_descriptor.hpp>
+#include <liba9n/capability/capability_node_operation.hpp>
+#include <liba9n/common/types.hpp>
 
 namespace a9n::kernel
 {

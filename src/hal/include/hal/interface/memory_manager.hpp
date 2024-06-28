@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/process/process.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
 namespace a9n::hal
 {

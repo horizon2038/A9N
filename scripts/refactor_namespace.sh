@@ -21,8 +21,7 @@ echo "Processing files in directory: $TARGET_DIR"
 find "$TARGET_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" \) |\
     xargs \
     gsed -i \
-        -e 's/\bliba9n::common::PAGE_SIZE\b/a9n::PAGE_SIZE/g' \
-        -e 's/\bcommon::PAGE_SIZE\b/a9n::PAGE_SIZE/g'
+        -e 's/#include <library\//#include <liba9n\//g'
 echo "Replacement complete."
 
 # find "$TARGET_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" \)

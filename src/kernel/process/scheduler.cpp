@@ -1,7 +1,7 @@
 #include <kernel/process/scheduler.hpp>
 
 #include <kernel/utility/logger.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
 namespace a9n::kernel
 {

@@ -1,11 +1,11 @@
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
 #include <kernel/capability/capability_factory.hpp>
 
 #include <kernel/capability/generic.hpp>
 
 #include <kernel/utility/logger.hpp>
-#include <library/capability/capability_types.hpp>
+#include <liba9n/capability/capability_types.hpp>
 
 namespace a9n::kernel
 {

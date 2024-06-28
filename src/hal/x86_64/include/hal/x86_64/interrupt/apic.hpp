@@ -1,7 +1,7 @@
 #ifndef HAL_x86_64_APIC_HPP
 #define HAL_x86_64_APIC_HPP
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
 namespace a9n::hal::x86_64
 {

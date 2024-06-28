@@ -1,0 +1,52 @@
+#ifndef LIBCXX_TYPE_TRAITS
+#define LIBCXX_TYPE_TRAITS
+
+// remove
+#include <liba9n/libcxx/__type_traits/remove_reference.hpp>
+#include <liba9n/libcxx/__type_traits/remove_cv.hpp>
+#include <liba9n/libcxx/__type_traits/remove_cvref.hpp>
+#include <liba9n/libcxx/__type_traits/remove_pointer.hpp>
+#include <liba9n/libcxx/__type_traits/remove_extent.hpp>
+
+// constant
+#include <liba9n/libcxx/__type_traits/integral_constant.hpp>
+#include <liba9n/libcxx/__type_traits/bool_constant.hpp>
+
+// type constant
+#include <liba9n/libcxx/__type_traits/is_same.hpp>
+#include <liba9n/libcxx/__type_traits/is_integral.hpp>
+#include <liba9n/libcxx/__type_traits/is_floating_point.hpp>
+#include <liba9n/libcxx/__type_traits/is_arithmetic.hpp>
+#include <liba9n/libcxx/__type_traits/is_enum.hpp>
+#include <liba9n/libcxx/__type_traits/is_pointer.hpp>
+#include <liba9n/libcxx/__type_traits/is_member_pointer.hpp>
+#include <liba9n/libcxx/__type_traits/is_null_pointer.hpp>
+#include <liba9n/libcxx/__type_traits/is_scalar.hpp>
+#include <liba9n/libcxx/__type_traits/is_array.hpp>
+#include <liba9n/libcxx/__type_traits/is_class.hpp>
+#include <liba9n/libcxx/__type_traits/is_object.hpp>
+#include <liba9n/libcxx/__type_traits/is_void.hpp>
+#include <liba9n/libcxx/__type_traits/is_reference.hpp>
+#include <liba9n/libcxx/__type_traits/is_function.hpp>
+
+// add
+#include <liba9n/libcxx/__type_traits/add_value_reference.hpp>
+#include <liba9n/libcxx/__type_traits/add_pointer.hpp>
+
+// condition
+#include <liba9n/libcxx/__type_traits/enable_if.hpp>
+#include <liba9n/libcxx/__type_traits/conditional.hpp>
+
+// other
+#include <liba9n/libcxx/__type_traits/type_identity.hpp>
+#include <liba9n/libcxx/__type_traits/decay.hpp>
+#include <liba9n/libcxx/__type_traits/invoke_result.hpp>
+
+// NOTE: headers using compiler extensions
+#include <liba9n/libcxx/__type_traits/is_union.hpp>
+#include <liba9n/libcxx/__type_traits/is_convertible.hpp>
+#include <liba9n/libcxx/__type_traits/is_trivially.hpp>
+#include <liba9n/libcxx/__type_traits/is_base_of.hpp>
+#include <liba9n/libcxx/__type_traits/is_constructible.hpp>
+
+#endif

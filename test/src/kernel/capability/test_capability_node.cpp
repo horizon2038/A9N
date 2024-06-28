@@ -4,7 +4,7 @@
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 
-#include <library/common/types.hpp>
+#include <liba9n/common/types.hpp>
 
 class capability_node_test : public ::testing::Test
 {

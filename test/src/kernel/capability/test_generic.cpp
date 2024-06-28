@@ -5,8 +5,8 @@
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/ipc/message_buffer.hpp>
 
-#include <library/capability/generic_operation.hpp>
-#include <library/common/types.hpp>
+#include <liba9n/capability/generic_operation.hpp>
+#include <liba9n/common/types.hpp>
 
 class generic_test : public ::testing::Test
 {

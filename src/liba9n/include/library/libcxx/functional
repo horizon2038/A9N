@@ -1,8 +1,0 @@
-#ifndef LIBCXX_FUNCTIONAL
-#define LIBCXX_FUNCTIONAL
-
-#include <library/libcxx/__functional/reference_wrapper.hpp>
-#include <library/libcxx/__functional/invoke.hpp>
-#include <library/libcxx/__functional/function.hpp>
-
-#endif

@@ -4,8 +4,8 @@
 #include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/capability_component.hpp>
 
-#include <library/common/types.hpp>
-#include <library/capability/capability_descriptor.hpp>
+#include <liba9n/common/types.hpp>
+#include <liba9n/capability/capability_descriptor.hpp>
 
 namespace a9n::kernel
 {
