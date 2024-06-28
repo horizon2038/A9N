@@ -3,7 +3,7 @@
 
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/message_buffer.hpp>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <liba9n/capability/capability_descriptor.hpp>
 
 #include <liba9n/libc/string.hpp>

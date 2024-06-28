@@ -1,4 +1,4 @@
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 
 #include <hal/x86_64/arch/arch_types.hpp>

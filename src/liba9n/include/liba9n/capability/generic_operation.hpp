@@ -1,7 +1,7 @@
 #ifndef GENERIC_OPERATION_HPP
 #define GENERIC_OPERATION_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace liba9n::capability
 {

@@ -6,7 +6,7 @@
 
 #include <liba9n/capability/generic_operation.hpp>
 #include <liba9n/capability/capability_types.hpp>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <liba9n/common/calculate.hpp>
 
 #include <kernel/utility/logger.hpp>

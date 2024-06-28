@@ -1,7 +1,7 @@
 #ifndef CALCULATE_HPP
 #define CALCULATE_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace liba9n::common
 {

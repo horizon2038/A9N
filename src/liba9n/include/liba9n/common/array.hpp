@@ -1,7 +1,7 @@
 #ifndef ARRAY_HPP
 #define ARRAY_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace liba9n::common
 {

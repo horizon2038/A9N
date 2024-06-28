@@ -1,7 +1,7 @@
 #ifndef X86_64_PAGING_HPP
 #define X86_64_PAGING_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <stdint.h>
 
 #include <kernel/utility/logger.hpp>

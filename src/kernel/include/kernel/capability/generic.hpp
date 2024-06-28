@@ -5,7 +5,7 @@
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/ipc/message_buffer.hpp>
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::kernel
 {

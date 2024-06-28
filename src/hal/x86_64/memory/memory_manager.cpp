@@ -5,7 +5,7 @@
 
 #include <kernel/utility/logger.hpp>
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <liba9n/libc/string.hpp>
 
 namespace a9n::hal::x86_64

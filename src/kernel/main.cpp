@@ -24,7 +24,7 @@
 #include <kernel/capability/generic.hpp>
 
 #include <liba9n/libc/string.hpp>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 #include <hal/x86_64/factory/hal_factory.hpp>
 

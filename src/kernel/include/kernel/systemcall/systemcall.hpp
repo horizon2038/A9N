@@ -1,7 +1,7 @@
 #ifndef SYSCALL_HPP
 #define SYSCALL_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <stdint.h>
 
 namespace a9n::kernel

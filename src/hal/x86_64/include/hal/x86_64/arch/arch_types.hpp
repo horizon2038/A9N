@@ -2,7 +2,7 @@
 #define X86_64_COMMON_HPP
 
 #include <stdint.h>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
 {

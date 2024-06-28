@@ -1,7 +1,7 @@
 #ifndef CAPABILITY_TYPE_HPP
 #define CAPABILITY_TYPE_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace liba9n::capability
 {

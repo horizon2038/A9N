@@ -6,7 +6,7 @@
 #include <kernel/ipc/message_buffer.hpp>
 
 #include <liba9n/capability/generic_operation.hpp>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 class generic_test : public ::testing::Test
 {

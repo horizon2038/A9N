@@ -1,7 +1,7 @@
 #ifndef CAPABILITY_DESCRIPTOR_HPP
 #define CAPABILITY_DESCRIPTOR_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace liba9n::capability
 {

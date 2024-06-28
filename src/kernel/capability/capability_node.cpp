@@ -5,7 +5,7 @@
 
 #include <liba9n/capability/capability_descriptor.hpp>
 #include <liba9n/capability/capability_node_operation.hpp>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::kernel
 {

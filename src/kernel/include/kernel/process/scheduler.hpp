@@ -2,7 +2,7 @@
 #define SCHEDULER_HPP
 
 #include <stdint.h>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <kernel/process/process.hpp>
 
 namespace a9n::kernel

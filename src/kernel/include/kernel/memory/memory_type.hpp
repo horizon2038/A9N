@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::kernel
 {

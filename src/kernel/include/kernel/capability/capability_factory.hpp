@@ -2,7 +2,7 @@
 #define CAPABILITY_FACTORY_HPP
 
 #include <kernel/capability/capability_component.hpp>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <liba9n/capability/capability_types.hpp>
 
 namespace a9n::kernel

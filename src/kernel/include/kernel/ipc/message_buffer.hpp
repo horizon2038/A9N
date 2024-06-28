@@ -1,7 +1,7 @@
 #ifndef MESSAGE_BUFFER_HPP
 #define MESSAGE_BUFFER_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <liba9n/common/array.hpp>
 
 namespace a9n::kernel

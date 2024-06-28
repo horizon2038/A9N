@@ -26,18 +26,6 @@ namespace a9n
     constexpr static word PAGE_SIZE = 4096;
 }
 
-/*
-namespace a9n::kernel
-{
-    namespace common = liba9n::common;
-}
-
-namespace a9n::hal
-{
-    namespace common = liba9n::common;
-}
-*/
-
 #else
 
 // for C

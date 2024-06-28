@@ -1,7 +1,7 @@
 #ifndef HAL_X86_64_ACPI_HPP
 #define HAL_X86_64_ACPI_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
 {

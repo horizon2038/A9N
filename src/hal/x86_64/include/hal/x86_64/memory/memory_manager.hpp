@@ -4,7 +4,7 @@
 #include <hal/interface/memory_manager.hpp>
 
 #include <stdint.h>
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include "paging.hpp"
 
 namespace a9n::hal::x86_64

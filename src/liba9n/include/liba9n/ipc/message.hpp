@@ -1,7 +1,7 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <stdint.h>
 
 namespace liba9n::ipc

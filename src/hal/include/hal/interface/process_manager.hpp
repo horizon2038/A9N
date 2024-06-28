@@ -3,7 +3,7 @@
 
 #include <kernel/process/process.hpp>
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::hal
 {

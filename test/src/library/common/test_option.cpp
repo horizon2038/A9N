@@ -2,7 +2,7 @@
 
 #include <liba9n/common/option.hpp>
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 
 #include <liba9n/libcxx/functional>
 

@@ -4,7 +4,7 @@
 #include <hal/x86_64/arch/segment_configurator.hpp>
 #include <hal/x86_64/interrupt/interrupt_descriptor.hpp>
 
-#include <liba9n/common/types.hpp>
+#include <kernel/types.hpp>
 #include <stdint.h>
 
 // TODO : Research GS and FS for TLS; How to activate and management MP
