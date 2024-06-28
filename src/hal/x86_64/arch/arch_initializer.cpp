@@ -1,4 +1,4 @@
-#include "hal/x86_64/arch/arch_types.hpp"
+#include <hal/x86_64/arch/arch_types.hpp>
 #include <hal/x86_64/arch/arch_initializer.hpp>
 
 #include <hal/x86_64/interrupt/pic.hpp>

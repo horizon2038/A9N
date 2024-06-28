@@ -1,4 +1,4 @@
-#include "library/common/types.hpp"
+#include <library/common/types.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 
 #include <hal/x86_64/arch/arch_types.hpp>
@@ -63,7 +63,8 @@ namespace a9n::hal::x86_64
             print_sdt_header_info(header);
             if (header->validate_sdt_signature("FACP"))
             {
-                a9n::kernel::utility::logger::printk("\e[32mFACP found!\e[0m\n");
+                a9n::kernel::utility::logger::printk("\e[32mFACP found!\e[0m\n"
+                );
                 a9n::kernel::utility::logger::split();
             }
         }
@@ -89,7 +90,10 @@ namespace a9n::hal::x86_64
         liba9n::std::memcpy(signature, rsdp_pointer->signature, 8);
         liba9n::std::memcpy(oem_id, rsdp_pointer->oem_id, 6);
 
-        a9n::kernel::utility::logger::printk("signature\e[55G : %s\n", signature);
+        a9n::kernel::utility::logger::printk(
+            "signature\e[55G : %s\n",
+            signature
+        );
         a9n::kernel::utility::logger::printk(
             "checksum\e[55G : %d\n",
             rsdp_pointer->checksum
@@ -147,7 +151,10 @@ namespace a9n::hal::x86_64
             "checksum\e[55G : %d\n",
             header->checksum
         );
-        a9n::kernel::utility::logger::printk("oem_id\e[55G : %s\n", fixed_oem_id);
+        a9n::kernel::utility::logger::printk(
+            "oem_id\e[55G : %s\n",
+            fixed_oem_id
+        );
         a9n::kernel::utility::logger::printk(
             "oem_table_id\e[55G : %s\n",
             fixed_oem_table_id

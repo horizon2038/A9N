@@ -1,4 +1,4 @@
-#include "kernel/capability/capability_component.hpp"
+#include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/ipc_port.hpp>
 
 namespace a9n::kernel
