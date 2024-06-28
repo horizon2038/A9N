@@ -1,7 +1,7 @@
 #ifndef LIBRARY_COMMON_RESULT_IMPL_HPP
 #define LIBRARY_COMMON_RESULT_IMPL_HPP
 
-#include <liba9n/common/__result/result_common.hpp>
+#include <liba9n/result/__result/result_common.hpp>
 
 #include <liba9n/libcxx/functional>
 #include <liba9n/libcxx/utility>

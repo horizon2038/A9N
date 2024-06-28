@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <liba9n/common/result.hpp>
+#include <liba9n/result/result.hpp>
 #include <iostream>
 
 using word = uintmax_t;
