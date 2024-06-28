@@ -1,5 +1,5 @@
-#ifndef LIBRARY_COMMON_RESULT_IMPL_HPP
-#define LIBRARY_COMMON_RESULT_IMPL_HPP
+#ifndef LIBA9N_RESULT_IMPL_HPP
+#define LIBA9N_RESULT_IMPL_HPP
 
 #include <liba9n/result/__result/result_common.hpp>
 

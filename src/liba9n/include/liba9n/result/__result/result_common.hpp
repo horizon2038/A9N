@@ -1,5 +1,5 @@
-#ifndef LIBRARY_COMMON_RESULT_COMMON_HPP
-#define LIBRARY_COMMON_RESULT_COMMON_HPP
+#ifndef LIBA9N_RESULT_COMMON_HPP
+#define LIBA9N_RESULT_COMMON_HPP
 
 #include <liba9n/libcxx/type_traits>
 
