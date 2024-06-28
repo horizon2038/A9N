@@ -22,15 +22,15 @@ HAL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/hal/, $(addsuffix .o, $(basename $(HA
 OBJS += $(HAL_OBJS)
 DEPS += $(HAL_OBJS:.o=.d)
 
-LIB_SRCS :=  $(shell find $(SRCDIR)/library -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
-LIB_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/library/, $(addsuffix .o, $(basename $(LIB_SRCS:$(SRCDIR)/library/%=%))))
+LIB_SRCS :=  $(shell find $(SRCDIR)/liba9n -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
+LIB_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/liba9n/, $(addsuffix .o, $(basename $(LIB_SRCS:$(SRCDIR)/liba9n/%=%))))
 OBJS += $(LIB_OBJS)
 DEPS += $(LIB_OBJS:.o=.d)
 
 INCDIR = $(SRCDIR)/kernel/include
 INCDIR += $(SRCDIR)/hal/include
 INCDIR += $(SRCDIR)/hal/$(ARCH)/include
-INCDIR += $(SRCDIR)/library/include
+INCDIR += $(SRCDIR)/liba9n/include
 INCFLAGS = $(addprefix -I,$(INCDIR))
 
 CC := clang-16 
@@ -122,19 +122,19 @@ $(BUILDDIR)/$(ARCH)/hal/%.o: $(SRCDIR)/hal/%.s
 	$(ASM) $(ASFLAGS) $< -o $@ 
 
 # library
-$(BUILDDIR)/$(ARCH)/library/$(TARGET): $(OBJS) $(LIBS)
+$(BUILDDIR)/$(ARCH)/liba9n/$(TARGET): $(OBJS) $(LIBS)
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.c
+$(BUILDDIR)/$(ARCH)/liba9n/%.o: $(SRCDIR)/liba9n/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.cpp
+$(BUILDDIR)/$(ARCH)/liba9n/%.o: $(SRCDIR)/liba9n/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-$(BUILDDIR)/$(ARCH)/library/%.o: $(SRCDIR)/library/%.s
+$(BUILDDIR)/$(ARCH)/liba9n/%.o: $(SRCDIR)/liba9n/%.s
 	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) $< -o $@ 
 
