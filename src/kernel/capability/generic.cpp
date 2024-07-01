@@ -32,7 +32,7 @@ namespace a9n::kernel
         auto request_unit_size
             = (static_cast<a9n::word>(1) << memory_size_bits);
         auto aligned_watermark
-            = liba9n::common::align_value(watermark, request_unit_size);
+            = liba9n::align_value(watermark, request_unit_size);
         auto target_end_address
             = aligned_watermark + (request_unit_size * count);
 
@@ -44,7 +44,7 @@ namespace a9n::kernel
         auto request_unit_size
             = (static_cast<a9n::word>(1) << memory_size_bits);
         auto aligned_watermark
-            = liba9n::common::align_value(watermark, request_unit_size);
+            = liba9n::align_value(watermark, request_unit_size);
         watermark = aligned_watermark + request_unit_size;
 
         return 0;

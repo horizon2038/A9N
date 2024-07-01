@@ -3,7 +3,7 @@
 
 #include <kernel/types.hpp>
 
-namespace liba9n::common
+namespace liba9n
 {
     inline a9n::word round_up_power_of_2(a9n::word value)
     {
