@@ -4,48 +4,42 @@
 
 title capability_architecture
 
-rectangle composite {
+skinparam linetype ortho
 
+rectangle composite {
     interface capability_component <<component>>
     {
-        + execute(operation)
+        + execute()
         + revoke()
-        + traverse(descriptor)
+
+        + traverse_slot()
+        + retrieve_slot()
     }
 
-    class capability_entry <<leaf>>
+    struct capability_slot<<leaf>>
     {
-        - capability_object_pointer
-        - entry_local_state
-        + execute(operation)
-        + revoke()
+        + local_state
     }
 
-    class capability_node <<node>>
+    class capability_node<<node>>
     {
-        + execute(operation)
-        + traverse(descriptor)
+    }
+}
+
+rectangle memory {
+    class generic
+    {
     }
 
+    class frame
+    {
+    }
+
+    class page_table
+    {
+    }
 }
 
-struct entry_local_state
-{
-    + entry_data
-    + dependency_node
-}
-
-capability_entry -> entry_local_state
-
-interface capability_object
-{
-    + execute(operation, local_state)
-    + revoke()
-}
-
-class generic
-{
-}
 
 class process_control_block
 {
@@ -55,24 +49,22 @@ class ipc_port
 {
 }
 
-class frame
-{
-}
+capability_node o-r-> capability_slot : 0..n
 
 capability_node .u.|> capability_component
-capability_entry .u.|> capability_component
 
-capability_node o-r-> capability_component : 0..n
-capability_object <-r- capability_entry
+capability_slot -u> capability_component
 
-generic .u.|> capability_object
-process_control_block .u.|> capability_object
-ipc_port .u.|> capability_object
-frame .u.|> capability_object
+frame -[hidden]-> ipc_port
+page_table -[hidden]-> process_control_block
 
-generic -u-> capability_component
+generic .l.|> capability_component
+process_control_block .l.|> capability_component
+ipc_port .l.|> capability_component
+frame .l.|> capability_component
+page_table .l.|> capability_component
 
-@enduml
+@endlml
 
 ## Capability Component
 Capability Component is a Composite pattern. It enables unified operation of node and leaf.
