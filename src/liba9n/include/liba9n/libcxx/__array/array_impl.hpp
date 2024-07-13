@@ -10,6 +10,10 @@ namespace liba9n::std
     template<typename T, auto Size>
     class array
     {
+      private:
+        // common data sections
+        T elements[Size];
+
       public:
         using reference       = T &;
         using const_reference = const T &;
@@ -29,10 +33,6 @@ namespace liba9n::std
         using pointer       = T *;
         using const_pointer = const T *;
         using value_type    = T;
-
-      private:
-        // common data sections
-        T elements[Size];
 
         // common functions
         constexpr T *get_elements_first()
