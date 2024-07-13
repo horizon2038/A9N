@@ -24,6 +24,8 @@ namespace a9n
     using error = sword;
 
     constexpr static word PAGE_SIZE = 4096;
+
+    using capability_descriptor = word;
 }
 
 #else
