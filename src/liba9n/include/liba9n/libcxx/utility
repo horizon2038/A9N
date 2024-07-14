@@ -5,4 +5,7 @@
 #include <liba9n/libcxx/__utility/move.hpp>
 #include <liba9n/libcxx/__utility/declval.hpp>
 
+// NOTE: headers using compiler extensions
+#include <liba9n/libcxx/__utility/integer_sequence.hpp>
+
 #endif
