@@ -1,7 +1,7 @@
 #ifndef CAPABILITY_LOCAL_STATE_HPP
 #define CAPABILITY_LOCAL_STATE_HPP
 
-#include <liba9n/common/array.hpp>
+#include <kernel/types.hpp>
 #include <liba9n/libcxx/array>
 
 namespace a9n::kernel

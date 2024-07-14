@@ -1,9 +1,8 @@
 #ifndef A9N_KERNEL_IPC_BUFFER_HPP
 #define A9N_KERNEL_IPC_BUFFER_HPP
 
-#include <liba9n/common/array.hpp>
-#include <liba9n/libcxx/array>
 #include <kernel/types.hpp>
+#include <liba9n/libcxx/array>
 
 namespace a9n::kernel
 {
@@ -49,12 +48,12 @@ namespace a9n::kernel
             return messages[Index];
         }
 
-        constexpr a9n::word get_message(auto index)
+        constexpr a9n::word get_message(a9n::word index)
         {
             return messages[index];
         }
 
-        constexpr const a9n::word get_message(auto index) const
+        constexpr const a9n::word get_message(a9n::word index) const
         {
             return messages[index];
         };
@@ -66,7 +65,7 @@ namespace a9n::kernel
             messages[Index] = value;
         }
 
-        constexpr void set_message(auto index, a9n::word value)
+        constexpr void set_message(a9n::word index, a9n::word value)
         {
             messages[index] = value;
         }

@@ -48,38 +48,38 @@ namespace a9n::kernel
             return true;
         }
 
-        template<auto Index>
+        template<a9n::word Index>
             requires(Index < ENTRY_DATA_MAX)
         constexpr a9n::word get_local_data()
         {
             return data[Index];
         }
 
-        template<auto Index>
+        template<a9n::word Index>
             requires(Index < ENTRY_DATA_MAX)
         constexpr const a9n::word get_local_data() const
         {
             return data[Index];
         }
 
-        constexpr a9n::word get_local_data(auto index)
+        constexpr a9n::word get_local_data(a9n::word index)
         {
             return data[index];
         }
 
-        constexpr const a9n::word get_local_data(auto index) const
+        constexpr const a9n::word get_local_data(a9n::word index) const
         {
             return data[index];
         }
 
-        template<auto Index>
+        template<a9n::word Index>
             requires(Index < ENTRY_DATA_MAX)
         constexpr void set_local_data(a9n::word value)
         {
             data[Index] = value;
         }
 
-        constexpr void set_local_data(auto index, a9n::word value)
+        constexpr void set_local_data(a9n::word index, a9n::word value)
         {
             data[index] = value;
         }
@@ -88,8 +88,6 @@ namespace a9n::kernel
     class capability_component
     {
       public:
-        // virtual ~capability_component() {};
-
         // called from user
         virtual a9n::error execute(
             capability_slot *this_slot,

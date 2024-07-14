@@ -4,6 +4,7 @@
 #include <kernel/types.hpp>
 #include <liba9n/common/array.hpp>
 
+// TODO: remove this
 namespace a9n::kernel
 {
     constexpr static a9n::word MESSAGE_BUFFER_MAX = 64;
