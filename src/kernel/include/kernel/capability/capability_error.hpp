@@ -12,6 +12,8 @@ namespace a9n::kernel
         INVALID_DESCRIPTOR,
         INVALID_DEPTH,
         INVALID_ARGUMENT,
+
+        DEBUG_UNIMPLEMENTED,
     };
 
     using capability_error = liba9n::result<void, capability_error_type>;

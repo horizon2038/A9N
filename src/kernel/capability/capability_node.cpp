@@ -1,4 +1,3 @@
-#include "kernel/ipc/ipc_buffer.hpp"
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
@@ -30,7 +29,6 @@ namespace a9n::kernel
         auto result = decode_operation(buffer);
 
         return result;
-        // return result;
     }
 
     capability_error capability_node::decode_operation(ipc_buffer *buffer)
@@ -49,31 +47,25 @@ namespace a9n::kernel
             case liba9n::capability::node_operation_type::COPY :
                 {
                     a9n::kernel::utility::logger::printk("node : copy\n");
-                    auto e = operation_copy(buffer);
-                    return e;
+                    return operation_copy(buffer);
                 }
 
             case liba9n::capability::node_operation_type::MOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : move\n");
-                    auto e = operation_move(buffer);
-                    return e;
+                    return operation_move(buffer);
                 }
 
             case liba9n::capability::node_operation_type::REVOKE :
                 {
-                    // the size of the ipc_buffer must be the same as one
-                    // entry in the message buffer, so the size of the message
-                    // buffer is the same as the size of a word.
                     a9n::kernel::utility::logger::printk("node : revoke\n");
-                    // auto e = operation_revoke(buffer);
-                    return {};
+                    return operation_revoke(buffer);
                 }
 
             case liba9n::capability::node_operation_type::REMOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : remove\n");
-                    return {};
+                    return operation_remove(buffer);
                 }
 
             default :
@@ -81,8 +73,8 @@ namespace a9n::kernel
                     a9n::kernel::utility::logger::error(
                         "node : illegal operation!\n"
                     );
-                    break;
-                    // ERROR: illegal operation !
+
+                    return capability_error_type::ILLEGAL_OPERATION;
                 }
         };
 
@@ -95,16 +87,8 @@ namespace a9n::kernel
         auto source_descriptor = buffer->get_message<1>();
         auto source_depth      = buffer->get_message<2>();
         auto source_index      = buffer->get_message<3>();
-        // TODO: create root_node
-        // auto source_root_node = root_node->traverse(source_descriptor,
-        // source_depth, 0);
-        // auto source_component =
-        // source_root_node->retrieve_child(source_index);
-        // auto e =
-        // add_child(destination_index, source_component);
-        //
-        // return e;
-        return {};
+
+        return capability_error_type::DEBUG_UNIMPLEMENTED;
     }
 
     // return of empty slots is allowed
@@ -125,22 +109,19 @@ namespace a9n::kernel
         auto source_descriptor = buffer->get_message<1>();
         auto source_depth      = buffer->get_message<2>();
         auto source_index      = buffer->get_message<3>();
-        // TODO: create root_node
-        // auto source_root_node = root_node->traverse(source_descriptor,
-        // source_depth, 0);
-        // auto source_component =
-        // source_root_node->retrieve_child(source_index);
-        // auto e =
-        // add_child(destination_index, source_component);
-        // e = source_root_node->remove_child(source_index);
-        //
-        // return e;
-        return {};
+
+        return capability_error_type::DEBUG_UNIMPLEMENTED;
     }
 
-    // USECASE of Generic::Convert
-    // convert -> create new slot(component and local_state)
-    // target_node.add_slot(index, new_slot)
+    capability_error capability_node::operation_revoke(ipc_buffer *buffer)
+    {
+        return capability_error_type::DEBUG_UNIMPLEMENTED;
+    }
+
+    capability_error capability_node::operation_remove(ipc_buffer *buffer)
+    {
+        return capability_error_type::DEBUG_UNIMPLEMENTED;
+    }
 
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
@@ -174,6 +155,8 @@ namespace a9n::kernel
         );
 
         // if next_slot has no children (i.e., it is a terminal)
+        // HACK: replace to result<capability_slot*, capability_traverse_error>
+        // - to distinguish between missing slots and terminations
         if (next_slot == nullptr)
         {
             return slot;
