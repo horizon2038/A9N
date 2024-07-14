@@ -3,7 +3,6 @@
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
 
-#include <liba9n/capability/capability_descriptor.hpp>
 #include <liba9n/capability/capability_node_operation.hpp>
 #include <kernel/types.hpp>
 
@@ -146,12 +145,11 @@ namespace a9n::kernel
     // USECASE of Generic::Convert
     // convert -> create new slot(component and local_state)
     // target_node.add_slot(index, new_slot)
-    //
 
     // recursively explores entries. this is a composite pattern that allows
     // handling single and multiple capabilities with the same interface.
     capability_slot *capability_node::traverse_slot(
-        liba9n::capability::capability_descriptor descriptor,
+        a9n::capability_descriptor descriptor,
         a9n::word descriptor_max_bits, // usually WORD_BITS is used.
         a9n::word descriptor_used_bits
     )
@@ -189,8 +187,8 @@ namespace a9n::kernel
     }
 
     capability_slot *capability_node::lookup_slot(
-        liba9n::capability::capability_descriptor descriptor,
-        a9n::word                                 descriptor_used_bits
+        a9n::capability_descriptor descriptor,
+        a9n::word                  descriptor_used_bits
     )
     {
         a9n::kernel::utility::logger::printk("lookup_capability\n");

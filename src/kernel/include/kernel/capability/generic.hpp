@@ -94,9 +94,9 @@ namespace a9n::kernel
         }
 
         capability_slot *traverse_slot(
-            liba9n::capability::capability_descriptor descriptor,
-            a9n::word                                 max_bits,
-            a9n::word                                 used_bits
+            a9n::capability_descriptor descriptor,
+            a9n::word                  max_bits,
+            a9n::word                  used_bits
         ) override
         {
             return nullptr;

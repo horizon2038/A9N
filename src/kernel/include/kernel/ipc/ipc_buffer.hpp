@@ -70,6 +70,7 @@ namespace a9n::kernel
             messages[index] = value;
         }
     };
+
 }
 
 #endif

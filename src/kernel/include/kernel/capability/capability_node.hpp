@@ -4,7 +4,6 @@
 #include <kernel/capability/capability_component.hpp>
 
 #include <kernel/types.hpp>
-#include <liba9n/capability/capability_descriptor.hpp>
 
 namespace a9n::kernel
 {
@@ -33,9 +32,9 @@ namespace a9n::kernel
         capability_slot *retrieve_slot(a9n::word index) override;
 
         capability_slot *traverse_slot(
-            liba9n::capability::capability_descriptor descriptor,
-            a9n::word                                 descriptor_max_bits,
-            a9n::word                                 descriptor_used_bits
+            a9n::capability_descriptor descriptor,
+            a9n::word                  descriptor_max_bits,
+            a9n::word                  descriptor_used_bits
         ) override;
 
       private:
@@ -59,8 +58,8 @@ namespace a9n::kernel
         a9n::error operation_remove(ipc_buffer *buffer);
 
         capability_slot *lookup_slot(
-            liba9n::capability::capability_descriptor target_descriptor,
-            a9n::word                                 descriptor_used_bits
+            a9n::capability_descriptor target_descriptor,
+            a9n::word                  descriptor_used_bits
         );
 
         // inline section
@@ -82,8 +81,8 @@ namespace a9n::kernel
         }
 
         inline const a9n::word calculate_capability_index(
-            liba9n::capability::capability_descriptor descriptor,
-            a9n::word                                 descriptor_used_bits
+            a9n::capability_descriptor descriptor,
+            a9n::word                  descriptor_used_bits
         )
         {
             auto mask_bits = static_cast<a9n::word>((1 << radix_bits) - 1);

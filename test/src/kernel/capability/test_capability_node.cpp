@@ -105,7 +105,7 @@ TEST_F(capability_node_test, retrieve_slot_index_out_of_range_test)
 
 TEST_F(capability_node_test, traverse_slot_index_min_depth_root_test)
 {
-    liba9n::capability::capability_descriptor descriptor = 0x0000000000000000;
+    a9n::capability_descriptor descriptor = 0x0000000000000000;
 
     auto slot = node_root->traverse_slot(descriptor, 32, 0);
 
@@ -114,7 +114,7 @@ TEST_F(capability_node_test, traverse_slot_index_min_depth_root_test)
 
 TEST_F(capability_node_test, traverse_slot_index_max_depth_root_test)
 {
-    liba9n::capability::capability_descriptor descriptor = 0x000000ff00000000;
+    a9n::capability_descriptor descriptor = 0x000000ff00000000;
 
     auto slot = node_root->traverse_slot(descriptor, NODE_ROOT_ALLBITS, 0);
 
@@ -123,7 +123,7 @@ TEST_F(capability_node_test, traverse_slot_index_max_depth_root_test)
 
 TEST_F(capability_node_test, traverse_slot_index_min_depth_1_test)
 {
-    liba9n::capability::capability_descriptor descriptor = 0x0000000000000000;
+    a9n::capability_descriptor descriptor = 0x0000000000000000;
 
     auto slot = node_root->traverse_slot(descriptor, NODE_1_ALLBITS, 0);
 
@@ -132,7 +132,7 @@ TEST_F(capability_node_test, traverse_slot_index_min_depth_1_test)
 
 TEST_F(capability_node_test, traverse_slot_index_max_depth_1_test)
 {
-    liba9n::capability::capability_descriptor descriptor = 0x000000000fff0000;
+    a9n::capability_descriptor descriptor = 0x000000000fff0000;
 
     auto slot = node_root->traverse_slot(descriptor, NODE_1_ALLBITS, 0);
 
@@ -141,7 +141,7 @@ TEST_F(capability_node_test, traverse_slot_index_max_depth_1_test)
 
 TEST_F(capability_node_test, traverse_slot_index_min_depth_2_test)
 {
-    liba9n::capability::capability_descriptor descriptor = 0x0000000000000000;
+    a9n::capability_descriptor descriptor = 0x0000000000000000;
 
     auto slot = node_root->traverse_slot(descriptor, NODE_2_ALLBITS, 0);
 
@@ -150,7 +150,7 @@ TEST_F(capability_node_test, traverse_slot_index_min_depth_2_test)
 
 TEST_F(capability_node_test, traverse_slot_index_max_depth_2_test)
 {
-    liba9n::capability::capability_descriptor descriptor = 0x0000000000000fff;
+    a9n::capability_descriptor descriptor = 0x0000000000000fff;
 
     auto slot = node_root->traverse_slot(descriptor, NODE_2_ALLBITS, 0);
 

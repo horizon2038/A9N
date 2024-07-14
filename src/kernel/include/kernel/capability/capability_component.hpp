@@ -4,7 +4,6 @@
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/types.hpp>
-#include <liba9n/capability/capability_descriptor.hpp>
 
 #include <liba9n/libc/string.hpp>
 
@@ -102,9 +101,9 @@ namespace a9n::kernel
         virtual capability_slot *retrieve_slot(a9n::word index) = 0;
 
         virtual capability_slot *traverse_slot(
-            liba9n::capability::capability_descriptor descriptor,
-            a9n::word                                 descriptor_max_bits,
-            a9n::word                                 descriptor_used_bits
+            a9n::capability_descriptor descriptor,
+            a9n::word                  descriptor_max_bits,
+            a9n::word                  descriptor_used_bits
         ) = 0;
     };
 }
