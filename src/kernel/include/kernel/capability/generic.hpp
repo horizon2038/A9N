@@ -3,6 +3,7 @@
 
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/capability_factory.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 
 #include <kernel/types.hpp>
@@ -103,13 +104,14 @@ namespace a9n::kernel
         };
 
       private:
-        a9n::error decode_operation(
-            capability_slot  &this_slot,
-            capability_slot  &root_slot,
-            const ipc_buffer &buffer
-        );
+        capability_factory factory {};
+        capability_error   decode_operation(
+              capability_slot  &this_slot,
+              capability_slot  &root_slot,
+              const ipc_buffer &buffer
+          );
 
-        a9n::error convert(
+        capability_error convert(
             capability_slot  &this_slot,
             capability_slot  &root_slot,
             const ipc_buffer &buffer

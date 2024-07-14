@@ -72,7 +72,7 @@ namespace a9n::kernel
         return {};
     }
 
-    a9n::error generic::decode_operation(
+    capability_error generic::decode_operation(
         capability_slot  &this_slot,
         capability_slot  &root_slot,
         const ipc_buffer &buffer
@@ -89,21 +89,20 @@ namespace a9n::kernel
             case liba9n::capability::generic_operation::CONVERT :
                 {
                     a9n::kernel::utility::logger::printk("generic : CONVERT\n");
-                    auto e = convert(this_slot, root_slot, buffer);
-                    return e;
+                    return convert(this_slot, root_slot, buffer);
                 }
 
             default :
                 {
                     a9n::kernel::utility::logger::printk("illegal operaton\n");
-                    return -1;
+                    return capability_error_type::ILLEGAL_OPERATION;
                 }
         }
 
-        return 0;
+        return {};
     }
 
-    a9n::error generic::convert(
+    capability_error generic::convert(
         capability_slot  &this_slot,
         capability_slot  &root_slot,
         const ipc_buffer &buffer
@@ -111,8 +110,7 @@ namespace a9n::kernel
     {
         using namespace liba9n::capability::convert_argument;
 
-        auto               this_info = create_generic_info(this_slot.data);
-        capability_factory factory {};
+        auto this_info   = create_generic_info(this_slot.data);
         auto target_type = static_cast<liba9n::capability::capability_type>(
             buffer.get_message<CAPABILITY_TYPE>()
         );
@@ -124,7 +122,7 @@ namespace a9n::kernel
         if (this_info.is_device()
             && target_type != liba9n::capability::capability_type::FRAME)
         {
-            return -1;
+            return capability_error_type::INVALID_ARGUMENT;
         };
 
         auto target_root_slot = retrieve_target_root_slot(root_slot, buffer);
@@ -136,8 +134,9 @@ namespace a9n::kernel
         {
             if (!this_info.is_allocatable(memory_size_bits, 1))
             {
-                return -1;
+                return capability_error_type::INVALID_ARGUMENT;
             }
+
             this_info.apply_allocate(memory_size_bits);
             auto target_empty_slot
                 = target_root_slot->component->retrieve_slot(base_index + i);
@@ -148,9 +147,10 @@ namespace a9n::kernel
             );
         }
 
+        // update slot local data
         this_slot.data = this_info.dump_slot_data();
 
-        return 0;
+        return {};
     }
 
     generic_info generic::create_generic_info(const capability_slot_data &data)
