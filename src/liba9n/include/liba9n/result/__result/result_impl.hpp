@@ -6,6 +6,7 @@
 #include <liba9n/libcxx/functional>
 #include <liba9n/libcxx/utility>
 #include <liba9n/libcxx/type_traits>
+#include <liba9n/libcxx/new>
 
 namespace liba9n
 {
