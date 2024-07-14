@@ -1,5 +1,5 @@
-#ifndef ARRAY_HPP
-#define ARRAY_HPP
+#ifndef LIBA9N_ARRAY_HPP
+#define LIBA9N_ARRAY_HPP
 
 #include <kernel/types.hpp>
 
@@ -50,24 +50,25 @@ namespace liba9n::common
         T elements[Size];
 
       public:
-        liba9n::option<T> get_element(size_type index)
+        template<size_type Index>
+            requires(0 <= Index && Index < Size)
+        constexpr T &get()
         {
-            if (index >= Size) [[unlikely]]
-            {
-                return {};
-            }
-
-            return elements[index];
+            return elements[Index];
         }
 
-        void set_element(size_type index, const T &value)
+        template<size_type Index>
+            requires(0 <= Index && Index < Size)
+        constexpr const T &get() const
         {
-            if (index >= Size) [[unlikely]]
-            {
-                return;
-            }
+            return elements[Index];
+        }
 
-            elements[index] = value;
+        template<size_type Index>
+            requires(0 <= Index && Index < Size)
+        constexpr void set(const T &value)
+        {
+            elements[Index] = value;
         }
 
         void fill(const T &data)
@@ -77,7 +78,41 @@ namespace liba9n::common
                 elements[i] = data;
             }
         }
+
+        // iterator sections
+        T *begin() &
+        {
+            return &(elements[0]);
+        }
+
+        const T *begin() const &
+        {
+            return &(elements[0]);
+        };
+
+        T *end() &
+        {
+            return &(elements[Size - 1]);
+        }
+
+        const T *end() const &
+        {
+            return &(elements[Size - 1]);
+        }
     };
+
+    inline void test_array()
+    {
+        safe_array<a9n::word, 16> sa {};
+
+        auto idx_0 = sa.get<0>();
+        auto idx_1 = sa.get<1>();
+        sa.set<15>(0xdeadbeaf);
+
+        for (auto &&x : sa)
+        {
+        };
+    }
 }
 
 #endif

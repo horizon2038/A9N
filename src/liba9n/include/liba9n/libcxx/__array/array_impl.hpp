@@ -163,21 +163,11 @@ namespace liba9n::std
         // operators
         constexpr T &operator[](size_type index)
         {
-            static_assert(
-                index < Size,
-                "out of bounds access in liba9n::std::array"
-            );
-
             return elements[index];
         }
 
         constexpr const T &operator[](size_type index) const
         {
-            static_assert(
-                index < Size,
-                "out of bounds access in liba9n::std::array"
-            );
-
             return elements[index];
         }
 
