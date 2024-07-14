@@ -24,12 +24,12 @@ namespace liba9n::capability
         // 7 : target node depth
         // 8 : target node index
 
-        constexpr inline a9n::word CAPABILITY_TYPE      = 3;
-        constexpr inline a9n::word CAPABILITY_SIZE_BITS = 4;
-        constexpr inline a9n::word CAPABILITY_COUNT     = 5;
-        constexpr inline a9n::word ROOT_DESCRIPTOR      = 6;
-        constexpr inline a9n::word ROOT_DEPTH           = 7;
-        constexpr inline a9n::word SLOT_INDEX           = 8;
+        inline constexpr a9n::word CAPABILITY_TYPE      = 0;
+        inline constexpr a9n::word CAPABILITY_SIZE_BITS = 1;
+        inline constexpr a9n::word CAPABILITY_COUNT     = 2;
+        inline constexpr a9n::word ROOT_DESCRIPTOR      = 3;
+        inline constexpr a9n::word ROOT_DEPTH           = 4;
+        inline constexpr a9n::word SLOT_INDEX           = 5;
     };
 }
 

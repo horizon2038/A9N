@@ -11,7 +11,7 @@ namespace a9n::kernel
         a9n::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer  *buffer
+            ipc_buffer      *buffer
         ) override;
 
         a9n::error revoke() override
@@ -34,7 +34,7 @@ namespace a9n::kernel
         };
 
       private:
-        a9n::error decode_operation(message_buffer *buffer);
+        a9n::error decode_operation(ipc_buffer *buffer);
     };
 }
 

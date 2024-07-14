@@ -2,13 +2,13 @@
 #define CAPABILITY_LOCAL_STATE_HPP
 
 #include <liba9n/common/array.hpp>
+#include <liba9n/libcxx/array>
 
 namespace a9n::kernel
 {
-    constexpr static a9n::word ENTRY_DATA_MAX = 3;
+    inline constexpr a9n::word ENTRY_DATA_MAX = 3;
 
-    using capability_slot_data
-        = liba9n::common::bounded_array<a9n::word, ENTRY_DATA_MAX>;
+    using capability_slot_data = liba9n::std::array<a9n::word, ENTRY_DATA_MAX>;
 
     struct dependency_node
     {

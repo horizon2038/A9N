@@ -1,6 +1,6 @@
 #include <kernel/capability/generic.hpp>
 
-#include <kernel/ipc/message_buffer.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_factory.hpp>
 
@@ -54,9 +54,9 @@ namespace a9n::kernel
     {
         capability_slot_data data;
 
-        data.set_element(0, base_address);
-        data.set_element(1, serialize_generic_flags(device, size_bits));
-        data.set_element(2, watermark);
+        data[0] = base_address;
+        data[1] = serialize_generic_flags(device, size_bits);
+        data[2] = watermark;
 
         return data;
     }
@@ -64,7 +64,7 @@ namespace a9n::kernel
     a9n::error generic::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
-        message_buffer  *buffer
+        ipc_buffer      *buffer
     )
     {
         auto e = decode_operation(*this_slot, *root_slot, *buffer);
@@ -72,15 +72,15 @@ namespace a9n::kernel
     }
 
     a9n::error generic::decode_operation(
-        capability_slot      &this_slot,
-        capability_slot      &root_slot,
-        const message_buffer &buffer
+        capability_slot  &this_slot,
+        capability_slot  &root_slot,
+        const ipc_buffer &buffer
     )
     {
         a9n::kernel::utility::logger::printk("generic : decode_operation\n");
         auto operation_type
             = static_cast<liba9n::capability::generic_operation>(
-                buffer.get_element(2)
+                buffer.message_tag
             );
 
         switch (operation_type)
@@ -103,9 +103,9 @@ namespace a9n::kernel
     }
 
     a9n::error generic::convert(
-        capability_slot      &this_slot,
-        capability_slot      &root_slot,
-        const message_buffer &buffer
+        capability_slot  &this_slot,
+        capability_slot  &root_slot,
+        const ipc_buffer &buffer
     )
     {
         using namespace liba9n::capability::convert_argument;
@@ -113,9 +113,9 @@ namespace a9n::kernel
         auto               this_info = create_generic_info(this_slot.data);
         capability_factory factory {};
         auto target_type = static_cast<liba9n::capability::capability_type>(
-            buffer.get_element(CAPABILITY_TYPE)
+            buffer.get_message<CAPABILITY_TYPE>()
         );
-        auto size_bits = buffer.get_element(CAPABILITY_SIZE_BITS);
+        auto size_bits = buffer.get_message<CAPABILITY_SIZE_BITS>();
         auto memory_size_bits
             = factory.calculate_memory_size_bits(target_type, size_bits);
 
@@ -128,8 +128,8 @@ namespace a9n::kernel
 
         auto target_root_slot = retrieve_target_root_slot(root_slot, buffer);
 
-        auto count      = buffer.get_element(CAPABILITY_COUNT);
-        auto base_index = buffer.get_element(SLOT_INDEX);
+        auto count      = buffer.get_message<CAPABILITY_COUNT>();
+        auto base_index = buffer.get_message<SLOT_INDEX>();
 
         for (auto i = 0; i < count; i++)
         {
@@ -155,23 +155,23 @@ namespace a9n::kernel
     generic_info generic::create_generic_info(const capability_slot_data &data)
     {
         return generic_info {
-            data.get_element(0),
-            generic_flags_size_bits(data.get_element(1)),
-            generic_flags_is_device(data.get_element(1)),
-            data.get_element(2),
+            data[0],
+            generic_flags_size_bits(data[1]),
+            generic_flags_is_device(data[1]),
+            data[2],
         };
     }
 
     capability_slot *generic::retrieve_target_root_slot(
         const capability_slot &root_slot,
-        const message_buffer  &buffer
+        const ipc_buffer      &buffer
     ) const
     {
         using namespace liba9n::capability::convert_argument;
 
-        auto target_descriptor = buffer.get_element(ROOT_DESCRIPTOR);
-        auto target_depth      = buffer.get_element(ROOT_DEPTH);
-        auto target_index      = buffer.get_element(SLOT_INDEX);
+        auto target_descriptor = buffer.get_message<ROOT_DESCRIPTOR>();
+        auto target_depth      = buffer.get_message<ROOT_DEPTH>();
+        auto target_index      = buffer.get_message<SLOT_INDEX>();
 
         if (target_depth == 0)
         {

@@ -51,12 +51,11 @@ namespace a9n::kernel
             case capability_type::GENERIC :
                 {
                     // generic ptr
-                    slot.data.set_element(0, target_address);
-                    slot.data.set_element(
-                        1,
+                    slot.set_local_data<0>(target_address);
+                    slot.set_local_data<1>(
                         serialize_generic_flags(false, size_bits)
                     );
-                    slot.data.set_element(2, target_address);
+                    slot.set_local_data<2>(target_address);
                     break;
                 }
 

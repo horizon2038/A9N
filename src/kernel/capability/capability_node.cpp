@@ -1,4 +1,4 @@
-#include "kernel/ipc/message_buffer.hpp"
+#include "kernel/ipc/ipc_buffer.hpp"
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/utility/logger.hpp>
@@ -23,7 +23,7 @@ namespace a9n::kernel
     a9n::error capability_node::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
-        message_buffer  *buffer
+        ipc_buffer      *buffer
     )
     {
         a9n::kernel::utility::logger::printk("execute : node\n");
@@ -36,15 +36,15 @@ namespace a9n::kernel
         return result;
     }
 
-    a9n::error capability_node::decode_operation(message_buffer *buffer)
+    a9n::error capability_node::decode_operation(ipc_buffer *buffer)
     {
         auto operation_type
             = static_cast<liba9n::capability::node_operation_type>(
-                buffer->get_element(2)
+                buffer->message_tag
             );
         a9n::kernel::utility::logger::printk(
             "operation type : %llu\n",
-            buffer->get_element(2)
+            buffer->message_tag
         );
 
         switch (operation_type)
@@ -67,7 +67,7 @@ namespace a9n::kernel
 
             case liba9n::capability::node_operation_type::REVOKE :
                 {
-                    // the size of the message_buffer must be the same as one
+                    // the size of the ipc_buffer must be the same as one
                     // entry in the message buffer, so the size of the message
                     // buffer is the same as the size of a word.
                     a9n::kernel::utility::logger::printk("node : revoke\n");
@@ -94,12 +94,12 @@ namespace a9n::kernel
         return 0;
     }
 
-    a9n::error capability_node::operation_copy(message_buffer *buffer)
+    a9n::error capability_node::operation_copy(ipc_buffer *buffer)
     {
-        auto destination_index = buffer->get_element(3);
-        auto source_descriptor = buffer->get_element(4);
-        auto source_depth      = buffer->get_element(5);
-        auto source_index      = buffer->get_element(6);
+        auto destination_index = buffer->get_message<0>();
+        auto source_descriptor = buffer->get_message<1>();
+        auto source_depth      = buffer->get_message<2>();
+        auto source_index      = buffer->get_message<3>();
         // TODO: create root_node
         // auto source_root_node = root_node->traverse(source_descriptor,
         // source_depth, 0);
@@ -124,12 +124,12 @@ namespace a9n::kernel
         return &(capability_slots[index]);
     }
 
-    a9n::error capability_node::operation_move(message_buffer *buffer)
+    a9n::error capability_node::operation_move(ipc_buffer *buffer)
     {
-        auto destination_index = buffer->get_element(3);
-        auto source_descriptor = buffer->get_element(4);
-        auto source_depth      = buffer->get_element(5);
-        auto source_index      = buffer->get_element(6);
+        auto destination_index = buffer->get_message<0>();
+        auto source_descriptor = buffer->get_message<1>();
+        auto source_depth      = buffer->get_message<2>();
+        auto source_index      = buffer->get_message<3>();
         // TODO: create root_node
         // auto source_root_node = root_node->traverse(source_descriptor,
         // source_depth, 0);

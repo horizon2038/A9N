@@ -1,4 +1,3 @@
-#include "kernel/ipc/message_buffer.hpp"
 #include <stdint.h>
 #include <liba9n/libcxx/new>
 

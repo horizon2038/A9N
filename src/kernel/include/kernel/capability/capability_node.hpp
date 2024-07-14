@@ -1,7 +1,6 @@
 #ifndef CAPABILITY_NODE_HPP
 #define CAPABILITY_NODE_HPP
 
-#include "kernel/ipc/message_buffer.hpp"
 #include <kernel/capability/capability_component.hpp>
 
 #include <kernel/types.hpp>
@@ -23,7 +22,7 @@ namespace a9n::kernel
         a9n::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer  *buffer
+            ipc_buffer      *buffer
         ) override;
 
         a9n::error revoke() override
@@ -49,15 +48,15 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        a9n::error decode_operation(message_buffer *buffer);
+        a9n::error decode_operation(ipc_buffer *buffer);
 
-        a9n::error operation_copy(message_buffer *buffer);
+        a9n::error operation_copy(ipc_buffer *buffer);
 
-        a9n::error operation_move(message_buffer *buffer);
+        a9n::error operation_move(ipc_buffer *buffer);
 
-        a9n::error operation_revoke(message_buffer *buffer);
+        a9n::error operation_revoke(ipc_buffer *buffer);
 
-        a9n::error operation_remove(message_buffer *buffer);
+        a9n::error operation_remove(ipc_buffer *buffer);
 
         capability_slot *lookup_slot(
             liba9n::capability::capability_descriptor target_descriptor,

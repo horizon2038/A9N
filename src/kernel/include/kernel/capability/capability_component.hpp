@@ -2,7 +2,7 @@
 #define CAPABILITY_COMPONENT_HPP
 
 #include <kernel/capability/capability_local_state.hpp>
-#include <kernel/ipc/message_buffer.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/types.hpp>
 #include <liba9n/capability/capability_descriptor.hpp>
 
@@ -47,6 +47,42 @@ namespace a9n::kernel
 
             return true;
         }
+
+        template<auto Index>
+            requires(Index < ENTRY_DATA_MAX)
+        constexpr a9n::word get_local_data()
+        {
+            return data[Index];
+        }
+
+        template<auto Index>
+            requires(Index < ENTRY_DATA_MAX)
+        constexpr const a9n::word get_local_data() const
+        {
+            return data[Index];
+        }
+
+        constexpr a9n::word get_local_data(auto index)
+        {
+            return data[index];
+        }
+
+        constexpr const a9n::word get_local_data(auto index) const
+        {
+            return data[index];
+        }
+
+        template<auto Index>
+            requires(Index < ENTRY_DATA_MAX)
+        constexpr void set_local_data(a9n::word value)
+        {
+            data[Index] = value;
+        }
+
+        constexpr void set_local_data(auto index, a9n::word value)
+        {
+            data[index] = value;
+        }
     };
 
     class capability_component
@@ -58,7 +94,7 @@ namespace a9n::kernel
         virtual a9n::error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
-            message_buffer  *buffer
+            ipc_buffer      *buffer
         ) = 0;
 
         // called from node

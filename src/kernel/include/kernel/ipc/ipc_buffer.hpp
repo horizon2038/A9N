@@ -37,16 +37,38 @@ namespace a9n::kernel
         // compile-time boundary check
         template<a9n::word Index>
             requires(Index < MESSAGE_BUFFER_SIZE_MAX)
-        constexpr a9n::word &get_message()
+        constexpr a9n::word get_message()
         {
             return messages[Index];
         }
 
         template<a9n::word Index>
             requires(Index < MESSAGE_BUFFER_SIZE_MAX)
-        constexpr const a9n::word &get_message() const
+        constexpr const a9n::word get_message() const
         {
             return messages[Index];
+        }
+
+        constexpr a9n::word get_message(auto index)
+        {
+            return messages[index];
+        }
+
+        constexpr const a9n::word get_message(auto index) const
+        {
+            return messages[index];
+        };
+
+        template<a9n::word Index>
+            requires(Index < MESSAGE_BUFFER_SIZE_MAX)
+        constexpr void set_message(a9n::word value)
+        {
+            messages[Index] = value;
+        }
+
+        constexpr void set_message(auto index, a9n::word value)
+        {
+            messages[index] = value;
         }
     };
 }
