@@ -106,7 +106,7 @@ namespace a9n::kernel
         a9n::error decode_operation(
             capability_slot      &this_slot,
             capability_slot      &root_slot,
-            const message_buffer &huffer
+            const message_buffer &buffer
         );
 
         a9n::error convert(
