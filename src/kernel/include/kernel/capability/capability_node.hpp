@@ -47,15 +47,15 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        a9n::error decode_operation(ipc_buffer *buffer);
+        capability_error decode_operation(ipc_buffer *buffer);
 
-        a9n::error operation_copy(ipc_buffer *buffer);
+        capability_error operation_copy(ipc_buffer *buffer);
 
-        a9n::error operation_move(ipc_buffer *buffer);
+        capability_error operation_move(ipc_buffer *buffer);
 
-        a9n::error operation_revoke(ipc_buffer *buffer);
+        capability_error operation_revoke(ipc_buffer *buffer);
 
-        a9n::error operation_remove(ipc_buffer *buffer);
+        capability_error operation_remove(ipc_buffer *buffer);
 
         capability_slot *lookup_slot(
             a9n::capability_descriptor target_descriptor,

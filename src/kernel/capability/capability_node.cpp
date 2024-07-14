@@ -27,16 +27,13 @@ namespace a9n::kernel
     {
         a9n::kernel::utility::logger::printk("execute : node\n");
 
-        // 1. decode operation
         auto result = decode_operation(buffer);
-        // 2. dispatch operation
-        // 3.run operation
 
-        return {};
+        return result;
         // return result;
     }
 
-    a9n::error capability_node::decode_operation(ipc_buffer *buffer)
+    capability_error capability_node::decode_operation(ipc_buffer *buffer)
     {
         auto operation_type
             = static_cast<liba9n::capability::node_operation_type>(
@@ -54,7 +51,6 @@ namespace a9n::kernel
                     a9n::kernel::utility::logger::printk("node : copy\n");
                     auto e = operation_copy(buffer);
                     return e;
-                    break;
                 }
 
             case liba9n::capability::node_operation_type::MOVE :
@@ -62,7 +58,6 @@ namespace a9n::kernel
                     a9n::kernel::utility::logger::printk("node : move\n");
                     auto e = operation_move(buffer);
                     return e;
-                    break;
                 }
 
             case liba9n::capability::node_operation_type::REVOKE :
@@ -72,14 +67,13 @@ namespace a9n::kernel
                     // buffer is the same as the size of a word.
                     a9n::kernel::utility::logger::printk("node : revoke\n");
                     // auto e = operation_revoke(buffer);
-                    return 0;
-                    break;
+                    return {};
                 }
 
             case liba9n::capability::node_operation_type::REMOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : remove\n");
-                    return 0;
+                    return {};
                 }
 
             default :
@@ -91,10 +85,11 @@ namespace a9n::kernel
                     // ERROR: illegal operation !
                 }
         };
-        return 0;
+
+        return {};
     }
 
-    a9n::error capability_node::operation_copy(ipc_buffer *buffer)
+    capability_error capability_node::operation_copy(ipc_buffer *buffer)
     {
         auto destination_index = buffer->get_message<0>();
         auto source_descriptor = buffer->get_message<1>();
@@ -109,7 +104,7 @@ namespace a9n::kernel
         // add_child(destination_index, source_component);
         //
         // return e;
-        return 0;
+        return {};
     }
 
     // return of empty slots is allowed
@@ -124,7 +119,7 @@ namespace a9n::kernel
         return &(capability_slots[index]);
     }
 
-    a9n::error capability_node::operation_move(ipc_buffer *buffer)
+    capability_error capability_node::operation_move(ipc_buffer *buffer)
     {
         auto destination_index = buffer->get_message<0>();
         auto source_descriptor = buffer->get_message<1>();
@@ -140,7 +135,7 @@ namespace a9n::kernel
         // e = source_root_node->remove_child(source_index);
         //
         // return e;
-        return 0;
+        return {};
     }
 
     // USECASE of Generic::Convert
