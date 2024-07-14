@@ -11,6 +11,7 @@ LIBDIR := ./library
 
 INCDIR := ../src/kernel/include
 INCDIR += ../src/hal/include
+INCDIR += ../src/hal/test
 INCDIR += ../src/liba9n/include
 INCDIR += ./src/include
 LIBINCDIR := ./library/include
