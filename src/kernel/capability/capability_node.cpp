@@ -19,7 +19,7 @@ namespace a9n::kernel
     {
     }
 
-    a9n::error capability_node::execute(
+    capability_error capability_node::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         ipc_buffer      *buffer
@@ -32,7 +32,8 @@ namespace a9n::kernel
         // 2. dispatch operation
         // 3.run operation
 
-        return result;
+        return {};
+        // return result;
     }
 
     a9n::error capability_node::decode_operation(ipc_buffer *buffer)

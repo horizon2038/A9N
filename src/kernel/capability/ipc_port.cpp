@@ -3,7 +3,7 @@
 
 namespace a9n::kernel
 {
-    a9n::error ipc_port::execute(
+    capability_error ipc_port::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         ipc_buffer      *buffer

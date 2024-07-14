@@ -79,13 +79,13 @@ namespace a9n::kernel
     class generic final : public capability_component
     {
       public:
-        a9n::error execute(
+        capability_error execute(
             capability_slot *this_slot,
             capability_slot *root_slot,
             ipc_buffer      *buffer
         ) override;
 
-        a9n::error revoke() override;
+        capability_error revoke() override;
 
         // empty implements (for composite-pattern)
         capability_slot *retrieve_slot(a9n::word index) override

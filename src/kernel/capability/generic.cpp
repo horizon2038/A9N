@@ -61,14 +61,15 @@ namespace a9n::kernel
         return data;
     }
 
-    a9n::error generic::execute(
+    capability_error generic::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         ipc_buffer      *buffer
     )
     {
         auto e = decode_operation(*this_slot, *root_slot, *buffer);
-        return e;
+        // TODO: handle error
+        return {};
     }
 
     a9n::error generic::decode_operation(
@@ -187,9 +188,9 @@ namespace a9n::kernel
         return target_slot;
     }
 
-    a9n::error generic::revoke()
+    capability_error generic::revoke()
     {
-        return 0;
+        return {};
     }
 
 }
