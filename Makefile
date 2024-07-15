@@ -37,8 +37,13 @@ CC := clang-16
 CXX := clang++-16
 ASM := nasm
 LD = ld.lld-16
-CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
-CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding -mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -masm=intel
+CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding \
+	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer \
+	-mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2 \
+	-flto
+CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding \
+	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -masm=intel \
+	-flto -fwhole-program-vtables -fforce-emit-vtables -fvirtual-function-elimination
 
 CPPFLAGS = $(INCFLAGS) -MMD -MP
 ASFLAGS = -f elf64
