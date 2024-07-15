@@ -9,7 +9,7 @@ RUN apt-get update && \
         bash \
         llvm \
         clang-16 \
-        lld \
+        lld-16 \
         libc++-16-dev \
         libc++abi-16-dev \
         nasm \
