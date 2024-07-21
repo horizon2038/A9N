@@ -13,6 +13,7 @@
 
 namespace a9n::kernel
 {
+    // generic_info
     a9n::physical_address generic_info::current_watermark() const
     {
         return watermark;
@@ -61,15 +62,14 @@ namespace a9n::kernel
         return data;
     }
 
+    // generic
     capability_error generic::execute(
         capability_slot *this_slot,
         capability_slot *root_slot,
         ipc_buffer      *buffer
     )
     {
-        auto e = decode_operation(*this_slot, *root_slot, *buffer);
-        // TODO: handle error
-        return {};
+        return decode_operation(*this_slot, *root_slot, *buffer);
     }
 
     capability_error generic::decode_operation(

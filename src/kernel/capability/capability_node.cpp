@@ -33,16 +33,15 @@ namespace a9n::kernel
 
     capability_error capability_node::decode_operation(ipc_buffer *buffer)
     {
-        auto operation_type
-            = static_cast<liba9n::capability::node_operation_type>(
-                buffer->message_tag
-            );
         a9n::kernel::utility::logger::printk(
             "operation type : %llu\n",
             buffer->message_tag
         );
 
-        switch (operation_type)
+        switch (auto operation_type
+                = static_cast<liba9n::capability::node_operation_type>(
+                    buffer->message_tag
+                ))
         {
             case liba9n::capability::node_operation_type::COPY :
                 {

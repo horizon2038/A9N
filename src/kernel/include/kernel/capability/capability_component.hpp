@@ -57,7 +57,7 @@ namespace a9n::kernel
 
         template<a9n::word Index>
             requires(Index < ENTRY_DATA_MAX)
-        constexpr const a9n::word get_local_data() const
+        constexpr a9n::word get_local_data() const
         {
             return data[Index];
         }
@@ -67,7 +67,7 @@ namespace a9n::kernel
             return data[index];
         }
 
-        constexpr const a9n::word get_local_data(a9n::word index) const
+        constexpr a9n::word get_local_data(a9n::word index) const
         {
             return data[index];
         }
@@ -84,6 +84,16 @@ namespace a9n::kernel
             data[index] = value;
         }
     };
+
+    enum class capability_lookup_error : a9n::word
+    {
+        TERMINAL,
+        INDEX_OUT_OF_RANGE,
+        UNAVAILABLE
+    };
+
+    using capability_lookup_result
+        = liba9n::result<capability_slot *, capability_lookup_error>;
 
     class capability_component
     {
