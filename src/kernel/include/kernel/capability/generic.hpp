@@ -89,18 +89,18 @@ namespace a9n::kernel
         capability_error revoke() override;
 
         // empty implements (for composite-pattern)
-        capability_slot *retrieve_slot(a9n::word index) override
+        capability_lookup_result retrieve_slot(a9n::word index) override
         {
-            return nullptr;
+            return capability_lookup_error::TERMINAL;
         }
 
-        capability_slot *traverse_slot(
+        capability_lookup_result traverse_slot(
             a9n::capability_descriptor descriptor,
             a9n::word                  max_bits,
             a9n::word                  used_bits
         ) override
         {
-            return nullptr;
+            return capability_lookup_error::TERMINAL;
         };
 
       private:

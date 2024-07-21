@@ -29,9 +29,9 @@ namespace a9n::kernel
             return {};
         };
 
-        capability_slot *retrieve_slot(a9n::word index) override;
+        capability_lookup_result retrieve_slot(a9n::word index) override;
 
-        capability_slot *traverse_slot(
+        capability_lookup_result traverse_slot(
             a9n::capability_descriptor descriptor,
             a9n::word                  descriptor_max_bits,
             a9n::word                  descriptor_used_bits
@@ -43,21 +43,25 @@ namespace a9n::kernel
 
         // the number of slots for a capability_node is not fixed,
         // and thhe number can be specified when creating it.
-
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        capability_error decode_operation(ipc_buffer *buffer);
+        capability_error
+            decode_operation(ipc_buffer *buffer, capability_slot *root_slot);
 
-        capability_error operation_copy(ipc_buffer *buffer);
+        capability_error
+            operation_copy(ipc_buffer *buffer, capability_slot *root_slot);
 
-        capability_error operation_move(ipc_buffer *buffer);
+        capability_error
+            operation_move(ipc_buffer *buffer, capability_slot *root_slot);
 
-        capability_error operation_revoke(ipc_buffer *buffer);
+        capability_error
+            operation_revoke(ipc_buffer *buffer, capability_slot *root_slot);
 
-        capability_error operation_remove(ipc_buffer *buffer);
+        capability_error
+            operation_remove(ipc_buffer *buffer, capability_slot *root_slot);
 
-        capability_slot *lookup_slot(
+        capability_lookup_result lookup_slot(
             a9n::capability_descriptor target_descriptor,
             a9n::word                  descriptor_used_bits
         );
@@ -99,7 +103,6 @@ namespace a9n::kernel
             return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }
     };
-
 }
 
 #endif

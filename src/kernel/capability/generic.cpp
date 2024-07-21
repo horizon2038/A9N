@@ -138,8 +138,11 @@ namespace a9n::kernel
             }
 
             this_info.apply_allocate(memory_size_bits);
+
+            // HACK: stop using unwrap()
             auto target_empty_slot
-                = target_root_slot->component->retrieve_slot(base_index + i);
+                = target_root_slot->component->retrieve_slot(base_index + i)
+                      .unwrap();
             *target_empty_slot = factory.make(
                 target_type,
                 size_bits,
@@ -179,11 +182,11 @@ namespace a9n::kernel
             return const_cast<capability_slot *>(&root_slot);
         }
 
-        auto target_slot = root_slot.component->traverse_slot(
-            target_descriptor,
-            target_depth,
-            0
-        );
+        // HACK: stop using unwrap()
+        auto target_slot
+            = root_slot.component
+                  ->traverse_slot(target_descriptor, target_depth, 0)
+                  .unwrap();
 
         return target_slot;
     }

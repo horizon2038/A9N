@@ -89,7 +89,8 @@ namespace a9n::kernel
     {
         TERMINAL,
         INDEX_OUT_OF_RANGE,
-        UNAVAILABLE
+        UNAVAILABLE,
+        EMPTY,
     };
 
     using capability_lookup_result
@@ -109,9 +110,9 @@ namespace a9n::kernel
         virtual capability_error revoke() = 0;
 
         // for tree
-        virtual capability_slot *retrieve_slot(a9n::word index) = 0;
+        virtual capability_lookup_result retrieve_slot(a9n::word index) = 0;
 
-        virtual capability_slot *traverse_slot(
+        virtual capability_lookup_result traverse_slot(
             a9n::capability_descriptor descriptor,
             a9n::word                  descriptor_max_bits,
             a9n::word                  descriptor_used_bits
