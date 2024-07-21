@@ -59,7 +59,7 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     a9n::kernel::generic    g;
     a9n::kernel::ipc_buffer buffer;
 
-    auto generic_slot       = root_slot.component->retrieve_slot(0);
+    auto generic_slot       = root_slot.component->retrieve_slot(0).unwrap();
     generic_slot->component = &g;
     generic_slot->set_local_data(0, 0x1000);
     auto generic_flags = calculate_generic_flags(0, 0xc);
@@ -89,7 +89,7 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     auto watermark = generic_slot->get_local_data(2);
     ASSERT_EQ(watermark, (0x1000 + 0x100));
 
-    auto child      = root_slot.component->retrieve_slot(1);
+    auto child      = root_slot.component->retrieve_slot(1).unwrap();
     auto child_size = calculate_size(child->get_local_data(1));
     ASSERT_EQ(0x100, child_size);
 }
@@ -99,7 +99,7 @@ TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
     a9n::kernel::generic    g;
     a9n::kernel::ipc_buffer buffer;
 
-    auto generic_slot       = root_slot.component->retrieve_slot(0);
+    auto generic_slot       = root_slot.component->retrieve_slot(0).unwrap();
     generic_slot->component = &g;
     generic_slot->set_local_data(0, 0x1000);
     auto generic_flags = calculate_generic_flags(0, 0xc);
