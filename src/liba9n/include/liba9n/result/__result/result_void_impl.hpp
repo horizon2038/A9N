@@ -114,7 +114,7 @@ namespace liba9n
 
         template<typename U = void>
             requires(!is_result<U> && liba9n::std::is_convertible_v<U, void>)
-        constexpr result(U &&new_ok_value) noexcept
+        constexpr result([[maybe_unused]] U &&new_ok_value) noexcept
             : dummy {}
             , is_ok_flag { true }
         {
