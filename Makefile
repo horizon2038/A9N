@@ -152,7 +152,7 @@ $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 
 test:
 	$(MAKE) -C $(TESTDIR)
-	$(TESTDIR)/build/test --gtest_color=yes
+	$(TESTDIR)/build/test --gtest_color=yes --gtest_break_on_failure
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(BUILDDIR)/$(ARCH)/kernel/$(TARGET)
