@@ -56,6 +56,8 @@ MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All
 PackConstructorInitializers: CurrentLine
 PenaltyExcessCharacter: 100
+# for chaining lambda functions 
+PenaltyIndentedWhitespace: 1
 PointerAlignment: Right
 ReferenceAlignment: Right
 ReflowComments: true
