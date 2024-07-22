@@ -8,13 +8,13 @@ namespace a9n::kernel
     class ipc_port : public capability_component
     {
       public:
-        capability_error execute(
+        capability_result execute(
             ipc_buffer      *buffer,
             capability_slot *this_slot,
             capability_slot *root_slot
         ) override;
 
-        capability_error revoke() override
+        capability_result revoke() override
         {
             return {};
         }

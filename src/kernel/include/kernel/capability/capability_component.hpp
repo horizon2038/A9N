@@ -2,7 +2,7 @@
 #define CAPABILITY_COMPONENT_HPP
 
 #include <kernel/capability/capability_local_state.hpp>
-#include <kernel/capability/capability_error.hpp>
+#include <kernel/capability/capability_result.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/types.hpp>
 
@@ -100,14 +100,14 @@ namespace a9n::kernel
     {
       public:
         // called from user
-        virtual capability_error execute(
+        virtual capability_result execute(
             ipc_buffer      *buffer,
             capability_slot *this_slot,
             capability_slot *root_slot
         ) = 0;
 
         // called from node
-        virtual capability_error revoke() = 0;
+        virtual capability_result revoke() = 0;
 
         // for tree
         virtual capability_lookup_result retrieve_slot(a9n::word index) = 0;

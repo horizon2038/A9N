@@ -19,7 +19,7 @@ namespace a9n::kernel
     {
     }
 
-    capability_error capability_node::execute(
+    capability_result capability_node::execute(
         ipc_buffer      *buffer,
         capability_slot *this_slot,
         capability_slot *root_slot
@@ -27,13 +27,14 @@ namespace a9n::kernel
     {
         a9n::kernel::utility::logger::printk("execute : node\n");
 
-        auto result = decode_operation(buffer, root_slot);
+        auto result = decode_operation(buffer, this_slot, root_slot);
 
         return result;
     }
 
-    capability_error capability_node::decode_operation(
+    capability_result capability_node::decode_operation(
         ipc_buffer      *buffer,
+        capability_slot *this_slot,
         capability_slot *root_slot
     )
     {
@@ -50,25 +51,25 @@ namespace a9n::kernel
             case liba9n::capability::node_operation_type::COPY :
                 {
                     a9n::kernel::utility::logger::printk("node : copy\n");
-                    return operation_copy(buffer, root_slot);
+                    return operation_copy(buffer, this_slot, root_slot);
                 }
 
             case liba9n::capability::node_operation_type::MOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : move\n");
-                    return operation_move(buffer, root_slot);
+                    return operation_move(buffer, this_slot, root_slot);
                 }
 
             case liba9n::capability::node_operation_type::REVOKE :
                 {
                     a9n::kernel::utility::logger::printk("node : revoke\n");
-                    return operation_revoke(buffer, root_slot);
+                    return operation_revoke(buffer, this_slot, root_slot);
                 }
 
             case liba9n::capability::node_operation_type::REMOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : remove\n");
-                    return operation_remove(buffer, root_slot);
+                    return operation_remove(buffer, this_slot, root_slot);
                 }
 
             default :
@@ -77,15 +78,16 @@ namespace a9n::kernel
                         "node : illegal operation!\n"
                     );
 
-                    return capability_error_type::ILLEGAL_OPERATION;
+                    return capability_error::ILLEGAL_OPERATION;
                 }
         };
 
         return {};
     }
 
-    capability_error capability_node::operation_copy(
+    capability_result capability_node::operation_copy(
         ipc_buffer      *buffer,
+        capability_slot *this_slot,
         capability_slot *root_slot
     )
     {
@@ -103,14 +105,15 @@ namespace a9n::kernel
 
         if (!root_slot)
         {
-            return capability_error_type::INVALID_ARGUMENT;
+            return capability_error::INVALID_ARGUMENT;
         }
 
-        return capability_error_type::DEBUG_UNIMPLEMENTED;
+        return capability_error::DEBUG_UNIMPLEMENTED;
     }
 
-    capability_error capability_node::operation_move(
+    capability_result capability_node::operation_move(
         ipc_buffer      *buffer,
+        capability_slot *this_slot,
         capability_slot *root_slot
     )
     {
@@ -119,23 +122,52 @@ namespace a9n::kernel
         auto source_depth      = buffer->get_message<2>();
         auto source_index      = buffer->get_message<3>();
 
-        return capability_error_type::DEBUG_UNIMPLEMENTED;
+        return capability_error::DEBUG_UNIMPLEMENTED;
     }
 
-    capability_error capability_node::operation_revoke(
+    capability_result capability_node::operation_revoke(
         ipc_buffer      *buffer,
+        capability_slot *this_slot,
         capability_slot *root_slot
     )
     {
-        return capability_error_type::DEBUG_UNIMPLEMENTED;
+        auto this_depth = this_slot->family_node.depth;
+
+        for (auto start_slot = this_slot->family_node.next_slot;
+             start_slot->family_node.depth < this_depth;
+             start_slot = start_slot->family_node.next_slot)
+        {
+            if (!start_slot->component)
+            {
+                return capability_error::ILLEGAL_OPERATION;
+            }
+
+            start_slot->component->revoke();
+        }
+
+        return {};
     }
 
-    capability_error capability_node::operation_remove(
+    capability_result capability_node::operation_remove(
         ipc_buffer      *buffer,
+        capability_slot *this_slot,
         capability_slot *root_slot
     )
     {
-        return capability_error_type::DEBUG_UNIMPLEMENTED;
+        auto destination_index = buffer->get_message<0>();
+
+        auto target_slot_result
+            = this_slot->component->retrieve_slot(destination_index);
+
+        if (!target_slot_result)
+        {
+            return capability_error::INVALID_ARGUMENT;
+        }
+
+        target_slot_result.unwrap()->component->revoke();
+        target_slot_result.unwrap()->data.fill(0);
+
+        return capability_error::DEBUG_UNIMPLEMENTED;
     }
 
     capability_lookup_result capability_node::retrieve_slot(a9n::word index)

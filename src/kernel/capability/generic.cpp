@@ -63,7 +63,7 @@ namespace a9n::kernel
     }
 
     // generic
-    capability_error generic::execute(
+    capability_result generic::execute(
         ipc_buffer      *buffer,
         capability_slot *this_slot,
         capability_slot *root_slot
@@ -72,7 +72,7 @@ namespace a9n::kernel
         return decode_operation(*buffer, *this_slot, *root_slot);
     }
 
-    capability_error generic::decode_operation(
+    capability_result generic::decode_operation(
         const ipc_buffer &buffer,
         capability_slot  &this_slot,
         capability_slot  &root_slot
@@ -95,14 +95,14 @@ namespace a9n::kernel
             default :
                 {
                     a9n::kernel::utility::logger::printk("illegal operaton\n");
-                    return capability_error_type::ILLEGAL_OPERATION;
+                    return capability_error::ILLEGAL_OPERATION;
                 }
         }
 
         return {};
     }
 
-    capability_error generic::convert(
+    capability_result generic::convert(
         const ipc_buffer &buffer,
         capability_slot  &this_slot,
         capability_slot  &root_slot
@@ -122,7 +122,7 @@ namespace a9n::kernel
         if (this_info.is_device()
             && target_type != liba9n::capability::capability_type::FRAME)
         {
-            return capability_error_type::INVALID_ARGUMENT;
+            return capability_error::INVALID_ARGUMENT;
         };
 
         auto target_root_slot = retrieve_target_root_slot(buffer, root_slot);
@@ -134,7 +134,7 @@ namespace a9n::kernel
         {
             if (!this_info.is_allocatable(memory_size_bits, 1))
             {
-                return capability_error_type::INVALID_ARGUMENT;
+                return capability_error::INVALID_ARGUMENT;
             }
 
             this_info.apply_allocate(memory_size_bits);
@@ -191,7 +191,7 @@ namespace a9n::kernel
         return target_slot;
     }
 
-    capability_error generic::revoke()
+    capability_result generic::revoke()
     {
         return {};
     }

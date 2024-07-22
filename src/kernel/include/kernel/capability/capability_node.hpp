@@ -18,13 +18,13 @@ namespace a9n::kernel
             capability_slot *initial_capability_slots
         );
 
-        capability_error execute(
+        capability_result execute(
             ipc_buffer      *buffer,
             capability_slot *this_slot,
             capability_slot *root_slot
         ) override;
 
-        capability_error revoke() override
+        capability_result revoke() override
         {
             return {};
         };
@@ -46,20 +46,35 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        capability_error
-            decode_operation(ipc_buffer *buffer, capability_slot *root_slot);
+        capability_result decode_operation(
+            ipc_buffer      *buffer,
+            capability_slot *this_slot,
+            capability_slot *root_slot
+        );
 
-        capability_error
-            operation_copy(ipc_buffer *buffer, capability_slot *root_slot);
+        capability_result operation_copy(
+            ipc_buffer      *buffer,
+            capability_slot *this_slot,
+            capability_slot *root_slot
+        );
 
-        capability_error
-            operation_move(ipc_buffer *buffer, capability_slot *root_slot);
+        capability_result operation_move(
+            ipc_buffer      *buffer,
+            capability_slot *this_slot,
+            capability_slot *root_slot
+        );
 
-        capability_error
-            operation_revoke(ipc_buffer *buffer, capability_slot *root_slot);
+        capability_result operation_revoke(
+            ipc_buffer      *buffer,
+            capability_slot *this_slot,
+            capability_slot *root_slot
+        );
 
-        capability_error
-            operation_remove(ipc_buffer *buffer, capability_slot *root_slot);
+        capability_result operation_remove(
+            ipc_buffer      *buffer,
+            capability_slot *this_slot,
+            capability_slot *root_slot
+        );
 
         capability_lookup_result lookup_slot(
             a9n::capability_descriptor target_descriptor,
