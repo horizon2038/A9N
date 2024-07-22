@@ -20,9 +20,9 @@ namespace a9n::kernel
     }
 
     capability_error capability_node::execute(
+        ipc_buffer      *buffer,
         capability_slot *this_slot,
-        capability_slot *root_slot,
-        ipc_buffer      *buffer
+        capability_slot *root_slot
     )
     {
         a9n::kernel::utility::logger::printk("execute : node\n");
@@ -138,7 +138,6 @@ namespace a9n::kernel
         return capability_error_type::DEBUG_UNIMPLEMENTED;
     }
 
-    // return of empty slots is allowed
     capability_lookup_result capability_node::retrieve_slot(a9n::word index)
     {
         [[unlikely]] if (!capability_slots)

@@ -4,9 +4,9 @@
 namespace a9n::kernel
 {
     capability_error ipc_port::execute(
+        ipc_buffer      *buffer,
         capability_slot *this_slot,
-        capability_slot *root_slot,
-        ipc_buffer      *buffer
+        capability_slot *root_slot
     )
     {
     }

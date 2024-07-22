@@ -84,7 +84,7 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     buffer.set_message(5, 1); // target index
 
     auto e
-        = generic_slot->component->execute(generic_slot, &root_slot, &buffer);
+        = generic_slot->component->execute(&buffer, generic_slot, &root_slot);
 
     auto watermark = generic_slot->get_local_data(2);
     ASSERT_EQ(watermark, (0x1000 + 0x100));
@@ -127,7 +127,7 @@ TEST_F(generic_test, generic_convert_generic_size_10_watermark_test)
     buffer.set_message(4, 0);  // target capability_node desc
     buffer.set_message(5, 1);  // target index
 
-    g.execute(generic_slot, &root_slot, &buffer);
+    g.execute(&buffer, generic_slot, &root_slot);
 
     auto watermark = generic_slot->get_local_data(2);
     ASSERT_EQ(watermark, (0x1000 + 0x400));

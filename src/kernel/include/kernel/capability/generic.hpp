@@ -81,9 +81,9 @@ namespace a9n::kernel
     {
       public:
         capability_error execute(
+            ipc_buffer      *buffer,
             capability_slot *this_slot,
-            capability_slot *root_slot,
-            ipc_buffer      *buffer
+            capability_slot *root_slot
         ) override;
 
         capability_error revoke() override;
@@ -106,22 +106,22 @@ namespace a9n::kernel
       private:
         capability_factory factory {};
         capability_error   decode_operation(
+              const ipc_buffer &buffer,
               capability_slot  &this_slot,
-              capability_slot  &root_slot,
-              const ipc_buffer &buffer
+              capability_slot  &root_slot
           );
 
         capability_error convert(
+            const ipc_buffer &buffer,
             capability_slot  &this_slot,
-            capability_slot  &root_slot,
-            const ipc_buffer &buffer
+            capability_slot  &root_slot
         );
 
         generic_info create_generic_info(const capability_slot_data &data);
 
         capability_slot *retrieve_target_root_slot(
-            const capability_slot &root_slot,
-            const ipc_buffer      &buffer
+            const ipc_buffer      &buffer,
+            const capability_slot &root_slot
         ) const;
     };
 }

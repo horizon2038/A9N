@@ -43,7 +43,7 @@ namespace a9n::kernel
 
         template<a9n::word Index>
             requires(Index < MESSAGE_BUFFER_SIZE_MAX)
-        constexpr const a9n::word get_message() const
+        constexpr a9n::word get_message() const
         {
             return messages[Index];
         }
@@ -53,7 +53,7 @@ namespace a9n::kernel
             return messages[index];
         }
 
-        constexpr const a9n::word get_message(a9n::word index) const
+        constexpr a9n::word get_message(a9n::word index) const
         {
             return messages[index];
         };

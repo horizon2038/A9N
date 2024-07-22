@@ -64,18 +64,18 @@ namespace a9n::kernel
 
     // generic
     capability_error generic::execute(
+        ipc_buffer      *buffer,
         capability_slot *this_slot,
-        capability_slot *root_slot,
-        ipc_buffer      *buffer
+        capability_slot *root_slot
     )
     {
-        return decode_operation(*this_slot, *root_slot, *buffer);
+        return decode_operation(*buffer, *this_slot, *root_slot);
     }
 
     capability_error generic::decode_operation(
+        const ipc_buffer &buffer,
         capability_slot  &this_slot,
-        capability_slot  &root_slot,
-        const ipc_buffer &buffer
+        capability_slot  &root_slot
     )
     {
         a9n::kernel::utility::logger::printk("generic : decode_operation\n");
@@ -89,7 +89,7 @@ namespace a9n::kernel
             case liba9n::capability::generic_operation::CONVERT :
                 {
                     a9n::kernel::utility::logger::printk("generic : CONVERT\n");
-                    return convert(this_slot, root_slot, buffer);
+                    return convert(buffer, this_slot, root_slot);
                 }
 
             default :
@@ -103,9 +103,9 @@ namespace a9n::kernel
     }
 
     capability_error generic::convert(
+        const ipc_buffer &buffer,
         capability_slot  &this_slot,
-        capability_slot  &root_slot,
-        const ipc_buffer &buffer
+        capability_slot  &root_slot
     )
     {
         using namespace liba9n::capability::convert_argument;
@@ -125,7 +125,7 @@ namespace a9n::kernel
             return capability_error_type::INVALID_ARGUMENT;
         };
 
-        auto target_root_slot = retrieve_target_root_slot(root_slot, buffer);
+        auto target_root_slot = retrieve_target_root_slot(buffer, root_slot);
 
         auto count      = buffer.get_message<CAPABILITY_COUNT>();
         auto base_index = buffer.get_message<SLOT_INDEX>();
@@ -167,8 +167,8 @@ namespace a9n::kernel
     }
 
     capability_slot *generic::retrieve_target_root_slot(
-        const capability_slot &root_slot,
-        const ipc_buffer      &buffer
+        const ipc_buffer      &buffer,
+        const capability_slot &root_slot
     ) const
     {
         using namespace liba9n::capability::convert_argument;

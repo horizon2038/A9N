@@ -9,9 +9,9 @@ namespace a9n::kernel
     {
       public:
         capability_error execute(
+            ipc_buffer      *buffer,
             capability_slot *this_slot,
-            capability_slot *root_slot,
-            ipc_buffer      *buffer
+            capability_slot *root_slot
         ) override;
 
         capability_error revoke() override

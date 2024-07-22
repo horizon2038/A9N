@@ -101,9 +101,9 @@ namespace a9n::kernel
       public:
         // called from user
         virtual capability_error execute(
+            ipc_buffer      *buffer,
             capability_slot *this_slot,
-            capability_slot *root_slot,
-            ipc_buffer      *buffer
+            capability_slot *root_slot
         ) = 0;
 
         // called from node
