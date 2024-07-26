@@ -32,7 +32,19 @@ BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
 BreakStringLiterals: true
+
+# ColumnLimit Settings
 ColumnLimit: 80
+PenaltyBreakAssignment: 20
+PenaltyBreakBeforeFirstCallParameter: 20
+PenaltyBreakComment: 20
+PenaltyBreakString: 20
+PenaltyBreakOpenParenthesis: 20
+PenaltyExcessCharacter: 10
+PenaltyReturnTypeOnItsOwnLine: 30
+# for chaining lambda functions 
+PenaltyIndentedWhitespace: 4
+
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
@@ -55,9 +67,6 @@ LambdaBodyIndentation: Signature
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All
 PackConstructorInitializers: CurrentLine
-PenaltyExcessCharacter: 100
-# for chaining lambda functions 
-PenaltyIndentedWhitespace: 1
 PointerAlignment: Right
 ReferenceAlignment: Right
 ReflowComments: true
