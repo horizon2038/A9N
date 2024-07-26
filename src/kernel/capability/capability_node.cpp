@@ -4,7 +4,7 @@
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
-#include <liba9n/capability/capability_node_operation.hpp>
+#include <kernel/capability/operation/capability_node_operation.hpp>
 
 namespace a9n::kernel
 {
@@ -44,29 +44,28 @@ namespace a9n::kernel
         );
 
         switch (auto operation_type
-                = static_cast<liba9n::capability::node_operation_type>(
-                    buffer->message_tag
+                = static_cast<a9n::kernel::capability_node_operation>(buffer->message_tag
                 ))
         {
-            case liba9n::capability::node_operation_type::COPY :
+            case capability_node_operation::COPY :
                 {
                     a9n::kernel::utility::logger::printk("node : copy\n");
                     return operation_copy(buffer, this_slot, root_slot);
                 }
 
-            case liba9n::capability::node_operation_type::MOVE :
+            case capability_node_operation::MOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : move\n");
                     return operation_move(buffer, this_slot, root_slot);
                 }
 
-            case liba9n::capability::node_operation_type::REVOKE :
+            case capability_node_operation::REVOKE :
                 {
                     a9n::kernel::utility::logger::printk("node : revoke\n");
                     return operation_revoke(buffer, this_slot, root_slot);
                 }
 
-            case liba9n::capability::node_operation_type::REMOVE :
+            case capability_node_operation::REMOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : remove\n");
                     return operation_remove(buffer, this_slot, root_slot);
@@ -74,9 +73,8 @@ namespace a9n::kernel
 
             default :
                 {
-                    a9n::kernel::utility::logger::error(
-                        "node : illegal operation!\n"
-                    );
+                    a9n::kernel::utility::logger::error("node : illegal "
+                                                        "operation!\n");
 
                     return capability_error::ILLEGAL_OPERATION;
                 }
@@ -93,10 +91,12 @@ namespace a9n::kernel
     {
         // it is not just about copying data.
         // after copying, we need to configure the Dependency Node.
-        auto destination_index = buffer->get_message<0>();
-        auto source_descriptor = buffer->get_message<1>();
-        auto source_depth      = buffer->get_message<2>();
-        auto source_index      = buffer->get_message<3>();
+        namespace argument = capability_node_copy_argument;
+
+        auto destination_index = buffer->get_message<argument::DESTINATION_INDEX>();
+        auto source_descriptor = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
+        auto source_depth     = buffer->get_message<argument::SOURCE_DEPTH>();
+        auto source_index     = buffer->get_message<argument::SOURCE_INDEX>();
 
         auto destination_slot = retrieve_slot(destination_index);
         if (!destination_slot)
@@ -117,10 +117,12 @@ namespace a9n::kernel
         capability_slot *root_slot
     )
     {
-        auto destination_index = buffer->get_message<0>();
-        auto source_descriptor = buffer->get_message<1>();
-        auto source_depth      = buffer->get_message<2>();
-        auto source_index      = buffer->get_message<3>();
+        namespace argument = capability_node_move_argument;
+
+        auto destination_index = buffer->get_message<argument::DESTINATION_INDEX>();
+        auto source_descriptor = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
+        auto source_depth = buffer->get_message<argument::SOURCE_DEPTH>();
+        auto source_index = buffer->get_message<argument::SOURCE_INDEX>();
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
@@ -164,7 +166,39 @@ namespace a9n::kernel
             return capability_error::INVALID_ARGUMENT;
         }
 
+        // if the target capability is the last,
+        // revoke the capability and then delete it.
         target_slot_result.unwrap()->component->revoke();
+
+        auto target_depth = target_slot_result.unwrap()->family_node.depth;
+        auto next_depth
+            = (*target_slot_result)->family_node.next_slot->family_node.depth;
+
+        auto preview_depth
+            = (*target_slot_result)->family_node.next_slot->family_node.depth;
+
+        auto target_slot  = (*target_slot_result);
+        auto next_slot    = (*target_slot_result)->family_node.next_slot;
+        auto preview_slot = (*target_slot_result)->family_node.preview_slot;
+
+        if (target_slot->is_same_slot(next_slot)
+            || target_slot->is_same_slot(preview_slot))
+        {
+            target_slot->component->revoke();
+        }
+
+        // compare target depth
+        // | A | A_a |
+        // A : target_depth > next_depth = have child
+        // A_a : target_depth < preview_depth = have child
+        // 削除要件 :  dependency nodeにIdentityが等しいnodeが登録されているか?
+        // is_same_slotを使えばできそう
+        if (target_depth > next_depth || target_depth < preview_depth)
+        {
+            (*target_slot_result)->component->revoke();
+        }
+
+        // remove
         target_slot_result.unwrap()->data.fill(0);
 
         return capability_error::DEBUG_UNIMPLEMENTED;
@@ -206,8 +240,7 @@ namespace a9n::kernel
                     }
                     */
 
-                    auto new_used_bits
-                        = calculate_used_bits(descriptor_used_bits);
+                    auto new_used_bits = calculate_used_bits(descriptor_used_bits);
 
                     if (new_used_bits == descriptor_max_bits)
                     {
@@ -224,14 +257,9 @@ namespace a9n::kernel
                     }
 
                     return slot->component
-                        ->traverse_slot(
-                            descriptor,
-                            descriptor_max_bits,
-                            new_used_bits
-                        )
+                        ->traverse_slot(descriptor, descriptor_max_bits, new_used_bits)
                         .or_else(
-                            [slot](capability_lookup_error e
-                            ) -> capability_lookup_result
+                            [slot](capability_lookup_error e) -> capability_lookup_result
                             {
                                 // if the search result for a capability_slot is
                                 // terminal (typecally leaf), the slot itself is
@@ -256,8 +284,7 @@ namespace a9n::kernel
     {
         a9n::kernel::utility::logger::printk("lookup_capability\n");
 
-        auto index
-            = calculate_capability_index(descriptor, descriptor_used_bits);
+        auto index = calculate_capability_index(descriptor, descriptor_used_bits);
         auto slot = retrieve_slot(index);
         if (!slot)
         {
