@@ -35,11 +35,11 @@ BreakStringLiterals: true
 
 # ColumnLimit Settings
 ColumnLimit: 80
-PenaltyBreakAssignment: 20
-PenaltyBreakBeforeFirstCallParameter: 20
+PenaltyBreakAssignment: 50
+PenaltyBreakBeforeFirstCallParameter: 30
 PenaltyBreakComment: 20
 PenaltyBreakString: 20
-PenaltyBreakOpenParenthesis: 20
+PenaltyBreakOpenParenthesis: 30 
 PenaltyExcessCharacter: 10
 PenaltyReturnTypeOnItsOwnLine: 30
 # for chaining lambda functions 
