@@ -4,6 +4,10 @@
 #include <kernel/types.hpp>
 #include <liba9n/ipc/message.hpp>
 
+// [experimental] A9N::Gloria
+#include <kernel/capability/capability_component.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
+
 #include <stdint.h>
 
 namespace a9n::kernel
@@ -43,9 +47,9 @@ namespace a9n::kernel
         a9n::sword                 count = 0;
     };
 
-    constexpr static a9n::word QUANTUM_MAX      = 10;
-    constexpr static a9n::word STACK_SIZE_MAX   = 8192;
-    constexpr static a9n::word PROCESS_NAME_MAX = 128;
+    static constexpr a9n::word QUANTUM_MAX      = 10;
+    static constexpr a9n::word STACK_SIZE_MAX   = 8192;
+    static constexpr a9n::word PROCESS_NAME_MAX = 128;
 
     enum class process_status : uint16_t
     {
@@ -92,7 +96,36 @@ namespace a9n::kernel
         // resolver solves various process-related problems.
         process *resolver;
 
+        // [experimental] A9N::Gloria
+        capability_slot *root_slot;
+        // WARN: user-space address
+        // discuttion: Should it be re-configurable ?
+        ipc_buffer *ipc_buffer;
+
       private:
+    };
+
+    namespace v2
+    {
+        // single kernel stack
+        class process
+        {
+          public:
+            // for process scheduling
+            process_status status { process_status::BLOCKED };
+            a9n::sword     priority { 0 };
+            a9n::word      quantum { 0 };
+            process       *preview;
+            process       *next;
+            struct hardware_context;
+
+            // for ipc
+            ipc_buffer *buffer;
+            process    *next_ipc_queue;
+            process    *preview_ipc_queue;
+
+            capability_slot *root_slot;
+        };
     };
 
 }

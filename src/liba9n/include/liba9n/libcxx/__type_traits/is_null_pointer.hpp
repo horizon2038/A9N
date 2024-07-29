@@ -1,9 +1,9 @@
 #ifndef LIBCXX_IS_NULL_POINTER_HPP
 #define LIBCXX_IS_NULL_POINTER_HPP
 
-#include <liba9n/libcxx/cstddef>
 #include <liba9n/libcxx/__type_traits/is_same.hpp>
 #include <liba9n/libcxx/__type_traits/remove_cv.hpp>
+#include <liba9n/libcxx/cstddef>
 
 namespace liba9n::std
 {

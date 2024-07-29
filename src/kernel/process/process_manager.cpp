@@ -2,21 +2,20 @@
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/kernel.hpp>
-#include <kernel/utility/logger.hpp>
 #include <kernel/process/process.hpp>
+#include <kernel/utility/logger.hpp>
 
-#include <stdint.h>
 #include <liba9n/libc/string.hpp>
+#include <stdint.h>
 
 namespace a9n::kernel
 {
-    process_manager::process_manager(
-        a9n::hal::process_manager &target_process_manager
+    process_manager::process_manager(a9n::hal::process_manager &target_process_manager
     )
         : _scheduler(process_list)
         , _process_manager(target_process_manager)
     {
-        current_process = &process_list[0];
+        current_process  = &process_list[0];
 
         highest_priority = 0;
     }
@@ -38,12 +37,7 @@ namespace a9n::kernel
         }
 
         process *current_process = &process_list[process_id];
-        init_process(
-            current_process,
-            process_id,
-            process_name,
-            entry_point_address
-        );
+        init_process(current_process, process_id, process_name, entry_point_address);
         _process_manager.create_process(current_process, entry_point_address);
         current_process->status = process_status::READY;
 
@@ -117,10 +111,8 @@ namespace a9n::kernel
     void process_manager::switch_context()
     {
         process *temp_current_process = current_process;
-        process *next_process         = _scheduler.schedule_next_process(
-            priority_groups,
-            highest_priority
-        );
+        process *next_process
+            = _scheduler.schedule_next_process(priority_groups, highest_priority);
         if (next_process == nullptr)
         {
             return;
@@ -130,8 +122,7 @@ namespace a9n::kernel
         _process_manager.switch_context(temp_current_process, next_process);
     }
 
-    process *
-        process_manager::search_process_from_id(process_id target_process_id)
+    process *process_manager::search_process_from_id(process_id target_process_id)
     {
         if (target_process_id <= 0)
         {

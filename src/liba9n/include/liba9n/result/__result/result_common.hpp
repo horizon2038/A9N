@@ -52,11 +52,7 @@ namespace liba9n
         requires(!liba9n::std::is_same_v<T, E>)
     constexpr result<T, E> make_result_ok(Args... args) noexcept
     {
-        return result<T, E>(
-            result_in_place,
-            result_ok,
-            static_cast<Args &&>(args)...
-        );
+        return result<T, E>(result_in_place, result_ok, static_cast<Args &&>(args)...);
     }
 
     template<typename T, typename E, typename... Args>

@@ -1,19 +1,15 @@
 #include "file_reader.h"
 
-#include <Uefi.h>
-#include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Uefi.h>
 
-EFI_STATUS read_file(
-    EFI_FILE_PROTOCOL *file,
-    uint64_t           offset,
-    uint64_t           size,
-    void             **buffer
-)
+EFI_STATUS
+    read_file(EFI_FILE_PROTOCOL *file, uint64_t offset, uint64_t size, void **buffer)
 {
     EFI_STATUS efi_status = EFI_SUCCESS;
 
-    efi_status = gBS->AllocatePool(
+    efi_status            = gBS->AllocatePool(
         EfiLoaderData,
         size,
         buffer

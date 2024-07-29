@@ -3,9 +3,9 @@
 
 #include <liba9n/option/__option/option_common.hpp>
 
-#include <liba9n/libcxx/utility>
-#include <liba9n/libcxx/type_traits>
 #include <liba9n/libcxx/functional>
+#include <liba9n/libcxx/type_traits>
+#include <liba9n/libcxx/utility>
 
 namespace liba9n
 {
@@ -23,6 +23,7 @@ namespace liba9n
             char dummy;
             T    some_value;
         };
+
         bool is_some_flag;
 
         // helper methods
@@ -53,7 +54,7 @@ namespace liba9n
 
       public:
         // conditionally trivial special member functions
-        constexpr option(option const &other)
+        constexpr option(const option &other)
             requires(liba9n::std::is_trivially_copy_constructible_v<T>)
         = default;
 
@@ -65,7 +66,7 @@ namespace liba9n
             requires(liba9n::std::is_trivially_destructible_v<T>)
         = default;
 
-        constexpr option &operator=(option const &other)
+        constexpr option &operator=(const option &other)
             requires(liba9n::std::is_trivially_copy_assignable_v<T>)
         = default;
 
@@ -86,10 +87,7 @@ namespace liba9n
         }
 
         template<typename... Args>
-        constexpr option(
-            [[maybe_unused]] option_in_place_tag,
-            Args... args
-        ) noexcept
+        constexpr option([[maybe_unused]] option_in_place_tag, Args... args) noexcept
             : is_some_flag(true)
         {
             new (&some_value) T(static_cast<Args &&>(args)...);
@@ -385,7 +383,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Tcvref = T const &,
+            typename Tcvref = const T &,
             typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
             requires is_option<liba9n::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) const &
@@ -421,7 +419,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Tcvref = T const &&,
+            typename Tcvref = const T &&,
             typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
             requires is_option<liba9n::std::remove_cvref_t<U>>
         constexpr auto and_then(Function &&function) const &&
@@ -437,9 +435,7 @@ namespace liba9n
             );
         }
 
-        template<
-            typename Function,
-            typename U = liba9n::std::invoke_result_t<Function>>
+        template<typename Function, typename U = liba9n::std::invoke_result_t<Function>>
             requires is_option<liba9n::std::remove_cvref_t<U>>
                   && liba9n::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) &
@@ -452,9 +448,7 @@ namespace liba9n
             return liba9n::std::forward<Function>(function)();
         }
 
-        template<
-            typename Function,
-            typename U = liba9n::std::invoke_result_t<Function>>
+        template<typename Function, typename U = liba9n::std::invoke_result_t<Function>>
             requires is_option<liba9n::std::remove_cvref_t<U>>
                   && liba9n::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) const &
@@ -467,9 +461,7 @@ namespace liba9n
             return liba9n::std::forward<Function>(function)();
         }
 
-        template<
-            typename Function,
-            typename U = liba9n::std::invoke_result_t<Function>>
+        template<typename Function, typename U = liba9n::std::invoke_result_t<Function>>
             requires is_option<liba9n::std::remove_cvref_t<U>>
                   && liba9n::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) &&
@@ -482,9 +474,7 @@ namespace liba9n
             return liba9n::std::forward<Function>(function)();
         }
 
-        template<
-            typename Function,
-            typename U = liba9n::std::invoke_result_t<Function>>
+        template<typename Function, typename U = liba9n::std::invoke_result_t<Function>>
             requires is_option<liba9n::std::remove_cvref_t<U>>
                   && liba9n::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) const &&
@@ -517,7 +507,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Tcvref = T const &,
+            typename Tcvref = const T &,
             typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
             requires(!liba9n::std::is_same_v<U, option_in_place_tag> && !liba9n::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) const &
@@ -553,7 +543,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Tcvref = T const &&,
+            typename Tcvref = const T &&,
             typename U      = liba9n::std::invoke_result_t<Function, Tcvref>>
             requires(!liba9n::std::is_same_v<U, option_in_place_tag> && !liba9n::std::is_same_v<U, option_none_tag>)
         constexpr auto transform(Function &&function) const &&

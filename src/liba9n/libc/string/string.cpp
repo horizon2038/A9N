@@ -17,9 +17,8 @@ namespace liba9n::std
 
     void *memcpy(void *buffer, const void *source, size_t size)
     {
-        uint8_t       *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
-        const uint8_t *source_pointer
-            = reinterpret_cast<const uint8_t *>(source);
+        uint8_t *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
+        const uint8_t *source_pointer = reinterpret_cast<const uint8_t *>(source);
 
         for (size_t i = 0; i < size; i++)
         {

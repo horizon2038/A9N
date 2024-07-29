@@ -137,8 +137,8 @@ namespace liba9n::std
         constexpr void swap(array &other)
         {
             // TODO: replace to liba9n::std::swap_ranges
-            using forward_iterator_1 = decltype(begin());
-            using forward_iterator_2 = decltype(other.begin());
+            using forward_iterator_1       = decltype(begin());
+            using forward_iterator_2       = decltype(other.begin());
 
             forward_iterator_1 this_begin  = begin();
             forward_iterator_1 this_end    = end();

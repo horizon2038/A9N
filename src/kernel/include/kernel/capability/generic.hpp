@@ -1,9 +1,9 @@
 #ifndef GENERIC_HPP
 #define GENERIC_HPP
 
-#include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_factory.hpp>
+#include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 
 #include <kernel/types.hpp>
@@ -16,14 +16,13 @@ namespace a9n::kernel
         a9n::physical_address end_address;
     };
 
-    inline a9n::word
-        serialize_generic_flags(bool is_device, a9n::word size_bits)
+    inline a9n::word serialize_generic_flags(bool is_device, a9n::word size_bits)
     {
         a9n::word value {};
 
-        value |= (static_cast<a9n::word>(is_device) << 7);
-        auto size_bits_mask = (1 << 7) - 1;
-        value |= (size_bits & size_bits_mask);
+        value               |= (static_cast<a9n::word>(is_device) << 7);
+        auto size_bits_mask  = (1 << 7) - 1;
+        value               |= (size_bits & size_bits_mask);
 
         return value;
     }
@@ -105,11 +104,11 @@ namespace a9n::kernel
 
       private:
         capability_factory factory {};
-        capability_result   decode_operation(
-              const ipc_buffer &buffer,
-              capability_slot  &this_slot,
-              capability_slot  &root_slot
-          );
+        capability_result  decode_operation(
+             const ipc_buffer &buffer,
+             capability_slot  &this_slot,
+             capability_slot  &root_slot
+         );
 
         capability_result convert(
             const ipc_buffer &buffer,

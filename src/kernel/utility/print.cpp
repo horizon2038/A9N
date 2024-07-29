@@ -1,8 +1,8 @@
 #include <kernel/utility/print.hpp>
 
 #include <hal/interface/serial.hpp>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 namespace a9n::kernel::utility
 {
@@ -33,8 +33,7 @@ namespace a9n::kernel::utility
         __builtin_va_end(args);
     }
 
-    void
-        print::vsprintf(char *buffer, const char *format, __builtin_va_list args)
+    void print::vsprintf(char *buffer, const char *format, __builtin_va_list args)
     {
         char *destination = buffer;
 
@@ -85,8 +84,8 @@ namespace a9n::kernel::utility
             {
                 if (*(*format_pointer + 1) == 'l')
                 {
-                    long_long_modifier = true;
-                    *format_pointer += 2;
+                    long_long_modifier  = true;
+                    *format_pointer    += 2;
                 }
                 else
                 {
@@ -105,12 +104,7 @@ namespace a9n::kernel::utility
             case 'd' :
                 if (long_modifier)
                 {
-                    write_int(
-                        destination,
-                        __builtin_va_arg(args, long),
-                        width,
-                        zero_pad
-                    );
+                    write_int(destination, __builtin_va_arg(args, long), width, zero_pad);
                     break;
                 }
                 if (long_long_modifier)
@@ -124,12 +118,7 @@ namespace a9n::kernel::utility
                     break;
                 }
 
-                write_int(
-                    destination,
-                    __builtin_va_arg(args, int),
-                    width,
-                    zero_pad
-                );
+                write_int(destination, __builtin_va_arg(args, int), width, zero_pad);
                 break;
 
             case 'x' :
@@ -237,10 +226,13 @@ namespace a9n::kernel::utility
                 break;
 
             case 'c' :
-                write_char(
-                    destination,
-                    __builtin_va_arg(args, int)
-                ); // char is promoted to int when passed through ...
+                write_char(destination, __builtin_va_arg(args, int)); // char is
+                                                                      // promoted
+                                                                      // to int
+                                                                      // when
+                                                                      // passed
+                                                                      // through
+                                                                      // ...
                 break;
 
             default :
@@ -282,8 +274,7 @@ namespace a9n::kernel::utility
         }
     }
 
-    void
-        print::write_int(char **destination, int count, int width, bool zero_pad)
+    void print::write_int(char **destination, int count, int width, bool zero_pad)
     {
         if (count < 0)
         {
@@ -297,8 +288,8 @@ namespace a9n::kernel::utility
 
         do
         {
-            *--pointer = '0' + (count % 10);
-            count /= 10;
+            *--pointer  = '0' + (count % 10);
+            count      /= 10;
             --width;
         } while (count > 0);
 
@@ -312,12 +303,8 @@ namespace a9n::kernel::utility
             write_char(destination, *pointer++);
         }
     }
-    void print::write_int_ll(
-        char    **destination,
-        long long count,
-        int       width,
-        bool      zero_pad
-    )
+
+    void print::write_int_ll(char **destination, long long count, int width, bool zero_pad)
     {
         if (count < 0)
         {
@@ -331,8 +318,8 @@ namespace a9n::kernel::utility
 
         do
         {
-            *--pointer = '0' + (count % 10);
-            count /= 10;
+            *--pointer  = '0' + (count % 10);
+            count      /= 10;
             --width;
         } while (count > 0);
 
@@ -347,20 +334,15 @@ namespace a9n::kernel::utility
         }
     }
 
-    void print::write_uint(
-        char       **destination,
-        unsigned int count,
-        int          width,
-        bool         zero_pad
-    )
+    void print::write_uint(char **destination, unsigned int count, int width, bool zero_pad)
     {
         char  buffer[10];
         char *pointer = buffer + 10;
 
         do
         {
-            *--pointer = '0' + (count % 10);
-            count /= 10;
+            *--pointer  = '0' + (count % 10);
+            count      /= 10;
             --width;
         } while (count > 0);
 
@@ -387,8 +369,8 @@ namespace a9n::kernel::utility
 
         do
         {
-            *--pointer = '0' + (count % 10);
-            count /= 10;
+            *--pointer  = '0' + (count % 10);
+            count      /= 10;
             --width;
         } while (count > 0);
 
@@ -416,10 +398,10 @@ namespace a9n::kernel::utility
 
         do
         {
-            int digit  = count % 16;
-            *--pointer = (digit < 10) ? ('0' + digit) :
-                                        ((uppercase ? 'A' : 'a') + digit - 10);
-            count /= 16;
+            int digit   = count % 16;
+            *--pointer  = (digit < 10) ? ('0' + digit) :
+                                         ((uppercase ? 'A' : 'a') + digit - 10);
+            count      /= 16;
             --width;
         } while (count > 0);
 
@@ -449,10 +431,10 @@ namespace a9n::kernel::utility
 
         do
         {
-            int digit  = count % 16;
-            *--pointer = (digit < 10) ? ('0' + digit) :
-                                        ((uppercase ? 'A' : 'a') + digit - 10);
-            count /= 16;
+            int digit   = count % 16;
+            *--pointer  = (digit < 10) ? ('0' + digit) :
+                                         ((uppercase ? 'A' : 'a') + digit - 10);
+            count      /= 16;
             --width;
         } while (count > 0);
 

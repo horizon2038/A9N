@@ -11,10 +11,9 @@ namespace a9n::hal::x86_64
     extern "C" uint64_t __kernel_pml4;
     extern "C" void     _load_cr3(a9n::physical_address cr3_address);
     extern "C" void     _flush_tlb();
-    extern "C" void _invalidate_page(a9n::virtual_address target_virtual_address
-    );
+    extern "C" void _invalidate_page(a9n::virtual_address target_virtual_address);
 
-    constexpr static uint16_t PAGE_TABLE_COUNT = 512;
+    static constexpr uint16_t PAGE_TABLE_COUNT = 512;
 
     union x86_64_virtual_address
     {
@@ -56,8 +55,7 @@ namespace a9n::hal::x86_64
             return reinterpret_cast<a9n::physical_address>(address << 12);
         }
 
-        void configure_physical_address(
-            a9n::physical_address target_physical_address
+        void configure_physical_address(a9n::physical_address target_physical_address
         )
         {
             address = (target_physical_address >> 12);
@@ -66,14 +64,14 @@ namespace a9n::hal::x86_64
 
     namespace PAGE_DEPTH
     {
-        constexpr static uint16_t PML4   = 4;
-        constexpr static uint16_t PDPT   = 3;
-        constexpr static uint16_t PD     = 2;
-        constexpr static uint16_t PT     = 1;
-        constexpr static uint16_t OFFSET = 0;
+        static constexpr uint16_t PML4   = 4;
+        static constexpr uint16_t PDPT   = 3;
+        static constexpr uint16_t PD     = 2;
+        static constexpr uint16_t PT     = 1;
+        static constexpr uint16_t OFFSET = 0;
     }
 
-    static inline uint64_t calculate_page_table_index(
+    inline static uint64_t calculate_page_table_index(
         a9n::virtual_address target_virtual_address,
         uint16_t             table_depth
     )

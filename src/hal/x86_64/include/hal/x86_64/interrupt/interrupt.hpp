@@ -10,7 +10,7 @@
 
 namespace a9n::hal::x86_64
 {
-    static inline a9n::hal::interrupt_handler interrupt_handler_table[256];
+    inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
 
     class interrupt final : public a9n::hal::interrupt
     {

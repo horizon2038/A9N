@@ -1,8 +1,8 @@
 #include <kernel/memory/memory_manager.hpp>
 
+#include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 #include <liba9n/libc/string.hpp>
-#include <kernel/types.hpp>
 
 namespace a9n::kernel
 {
@@ -26,8 +26,7 @@ namespace a9n::kernel
         // init kernel_page_map
     }
 
-    void memory_manager::init_memory_block(const memory_info &target_memory_info
-    )
+    void memory_manager::init_memory_block(const memory_info &target_memory_info)
     {
         /*
         memory_block is like a header placed at the beginning of free memory.
@@ -58,12 +57,11 @@ namespace a9n::kernel
                 = a9n::PAGE_SIZE * (_memory_map_entry->page_count)
                 - memory_block_size;
 
-            memory_block *current_memory_block
-                = reinterpret_cast<memory_block *>(
-                    convert_physical_to_virtual_address(
-                        _memory_map_entry->start_physical_address
-                    )
-                );
+            memory_block *current_memory_block = reinterpret_cast<memory_block *>(
+                convert_physical_to_virtual_address(
+                    _memory_map_entry->start_physical_address
+                )
+            );
             // a9n::kernel::utility::logger::printk("current_memory_block_address
             // : 0x%llx\n",
             // reinterpret_cast<virtual_address>(current_memory_block));
@@ -97,9 +95,7 @@ namespace a9n::kernel
         */
     }
 
-    void memory_manager::print_memory_block_info(
-        memory_block &target_memory_block
-    )
+    void memory_manager::print_memory_block_info(memory_block &target_memory_block)
     {
         using logger = a9n::kernel::utility::logger;
 
@@ -205,12 +201,7 @@ namespace a9n::kernel
         a9n::word    &start_frame_index
     )
     {
-        return find_frames(
-            target_memory_block,
-            page_count,
-            start_frame_index,
-            false
-        );
+        return find_frames(target_memory_block, page_count, start_frame_index, false);
     }
 
     bool memory_manager::find_frames(
@@ -261,8 +252,7 @@ namespace a9n::kernel
     )
     {
         memory_block *current_memory_block = head_memory_block;
-        a9n::word     page_count
-            = align_size(size, a9n::PAGE_SIZE) / a9n::PAGE_SIZE;
+        a9n::word page_count = align_size(size, a9n::PAGE_SIZE) / a9n::PAGE_SIZE;
         a9n::word start_frame_index = 0;
 
         while (current_memory_block)
@@ -273,17 +263,17 @@ namespace a9n::kernel
                 = current_memory_block->start_physical_address
                 + current_memory_block->size;
 
-            if (start_physical_address
-                    > current_memory_block->start_physical_address
+            if (start_physical_address > current_memory_block->start_physical_address
                 || end_memory_block_address < end_physical_address)
             {
                 current_memory_block = current_memory_block->next;
                 continue;
             }
 
-            start_frame_index = (start_physical_address
-                                 - current_memory_block->start_physical_address)
-                              / a9n::PAGE_SIZE;
+            start_frame_index
+                = (start_physical_address
+                   - current_memory_block->start_physical_address)
+                / a9n::PAGE_SIZE;
             configure_memory_frames(
                 &(current_memory_block->memory_frames[start_frame_index]),
                 page_count,

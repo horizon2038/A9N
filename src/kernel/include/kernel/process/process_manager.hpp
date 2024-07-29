@@ -1,11 +1,11 @@
 #ifndef PROCESS_MANAGER_HPP
 #define PROCESS_MANAGER_HPP
 
-#include <kernel/types.hpp>
-#include <kernel/process/process.hpp>
-#include <hal/interface/process_manager.hpp>
 #include <hal/interface/interrupt.hpp>
+#include <hal/interface/process_manager.hpp>
+#include <kernel/process/process.hpp>
 #include <kernel/process/scheduler.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::kernel
 {

@@ -1,7 +1,7 @@
 #include <kernel/process/scheduler.hpp>
 
-#include <kernel/utility/logger.hpp>
 #include <kernel/types.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
 {
@@ -123,7 +123,7 @@ namespace a9n::kernel
 
         target_process->next->preview = target_process->preview;
 
-        process *temp_process = head_process;
+        process *temp_process         = head_process;
 
         while (temp_process->next != nullptr)
         {

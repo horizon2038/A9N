@@ -1,10 +1,10 @@
 #ifndef HAL_MEMORY_MANAGER_HPP
 #define HAL_MEMORY_MANAGER_HPP
 
-#include <stdint.h>
-#include <stddef.h>
 #include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
+#include <stddef.h>
+#include <stdint.h>
 
 namespace a9n::hal
 {
@@ -13,9 +13,8 @@ namespace a9n::hal
       public:
         virtual void init_memory() = 0;
 
-        virtual void
-            init_virtual_memory(a9n::physical_address top_page_table_address)
-            = 0;
+        virtual void init_virtual_memory(a9n::physical_address top_page_table_address
+        )                          = 0;
 
         virtual bool is_table_exists(
             a9n::physical_address top_page_table,

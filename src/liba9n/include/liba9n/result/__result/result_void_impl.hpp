@@ -4,9 +4,9 @@
 #include <liba9n/result/__result/result_common.hpp>
 
 #include <liba9n/libcxx/functional>
-#include <liba9n/libcxx/utility>
-#include <liba9n/libcxx/type_traits>
 #include <liba9n/libcxx/new>
+#include <liba9n/libcxx/type_traits>
+#include <liba9n/libcxx/utility>
 
 namespace liba9n
 {
@@ -31,6 +31,7 @@ namespace liba9n
             char dummy;
             E    error_value;
         };
+
         bool is_ok_flag;
 
         template<typename F>
@@ -74,7 +75,7 @@ namespace liba9n
             requires liba9n::std::is_trivially_destructible_v<E>
         = default;
 
-        constexpr result &operator=(result const &other)
+        constexpr result &operator=(const result &other)
             requires liba9n::std::is_trivially_copy_assignable_v<E>
         = default;
 
@@ -418,8 +419,7 @@ namespace liba9n
                 return U(result_error, unwrap_error());
             }
 
-            return liba9n::std::invoke(liba9n::std::forward<Function>(function)
-            );
+            return liba9n::std::invoke(liba9n::std::forward<Function>(function));
         }
 
         template<
@@ -436,8 +436,7 @@ namespace liba9n
                 return U(result_error, unwrap_error());
             }
 
-            return liba9n::std::invoke(liba9n::std::forward<Function>(function)
-            );
+            return liba9n::std::invoke(liba9n::std::forward<Function>(function));
         }
 
         template<
@@ -454,8 +453,7 @@ namespace liba9n
                 return U(result_error, liba9n::std::move(unwrap_error()));
             }
 
-            return liba9n::std::invoke(liba9n::std::forward<Function>(function)
-            );
+            return liba9n::std::invoke(liba9n::std::forward<Function>(function));
         }
 
         template<
@@ -472,8 +470,7 @@ namespace liba9n
                 return U(result_error, liba9n::std::move(unwrap_error()));
             }
 
-            return liba9n::std::invoke(liba9n::std::forward<Function>(function)
-            );
+            return liba9n::std::invoke(liba9n::std::forward<Function>(function));
         }
 
         template<
@@ -497,7 +494,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Ecvref = E const &,
+            typename Ecvref = const E &,
             typename F      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) const &
@@ -533,7 +530,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Ecvref = E const &&,
+            typename Ecvref = const E &&,
             typename F      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) const &&
@@ -572,8 +569,7 @@ namespace liba9n
                 return result<U, E>(
                     result_in_place,
                     result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
+                    liba9n::std::invoke(liba9n::std::forward<Function>(function))
                 );
             }
         }
@@ -600,8 +596,7 @@ namespace liba9n
                 return result<U, E>(
                     result_in_place,
                     result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
+                    liba9n::std::invoke(liba9n::std::forward<Function>(function))
                 );
             }
         }
@@ -615,10 +610,7 @@ namespace liba9n
         {
             if (is_error())
             {
-                return result<U, E>(
-                    result_error,
-                    liba9n::std::move(unwrap_error())
-                );
+                return result<U, E>(result_error, liba9n::std::move(unwrap_error()));
             }
 
             if constexpr (liba9n::std::is_void_v<U>)
@@ -631,8 +623,7 @@ namespace liba9n
                 return result<U, E>(
                     result_in_place,
                     result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
+                    liba9n::std::invoke(liba9n::std::forward<Function>(function))
                 );
             }
         }
@@ -646,10 +637,7 @@ namespace liba9n
         {
             if (is_error())
             {
-                return result<U, E>(
-                    result_error,
-                    liba9n::std::move(unwrap_error())
-                );
+                return result<U, E>(result_error, liba9n::std::move(unwrap_error()));
             }
 
             if constexpr (liba9n::std::is_void_v<U>)
@@ -662,8 +650,7 @@ namespace liba9n
                 return result<U, E>(
                     result_in_place,
                     result_ok,
-                    liba9n::std::invoke(liba9n::std::forward<Function>(function)
-                    )
+                    liba9n::std::invoke(liba9n::std::forward<Function>(function))
                 );
             }
         }
@@ -692,7 +679,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Ecvref = E const &,
+            typename Ecvref = const E &,
             typename F      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_copy_constructible_v<E>
@@ -736,7 +723,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Ecvref = E const &&,
+            typename Ecvref = const E &&,
             typename F      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_move_constructible_v<E>
@@ -772,12 +759,10 @@ namespace liba9n
         }
 
         template<typename F>
-            requires liba9n::std::
-                is_convertible_v<liba9n::std::remove_cvref_t<F>, E>
-            friend constexpr bool operator==(const result &lhs, const F &rhs)
+            requires liba9n::std::is_convertible_v<liba9n::std::remove_cvref_t<F>, E>
+        friend constexpr bool operator==(const result &lhs, const F &rhs)
         {
-            return lhs.is_error()
-                && static_cast<bool>(lhs.unwrap_error() == rhs);
+            return lhs.is_error() && static_cast<bool>(lhs.unwrap_error() == rhs);
         }
     };
 }

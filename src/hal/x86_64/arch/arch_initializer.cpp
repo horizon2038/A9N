@@ -1,8 +1,8 @@
-#include <hal/x86_64/arch/arch_types.hpp>
 #include <hal/x86_64/arch/arch_initializer.hpp>
+#include <hal/x86_64/arch/arch_types.hpp>
 
-#include <hal/x86_64/interrupt/pic.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
+#include <hal/x86_64/interrupt/pic.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 
 #include <kernel/boot/boot_info.hpp>

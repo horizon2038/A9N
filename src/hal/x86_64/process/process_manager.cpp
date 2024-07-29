@@ -29,10 +29,7 @@ namespace a9n::hal::x86_64
     {
         _load_cr3(next_process->page_table);
         _segment_configurator.configure_rsp0(next_process->stack_pointer);
-        _switch_context(
-            &preview_process->stack_pointer,
-            &next_process->stack_pointer
-        );
+        _switch_context(&preview_process->stack_pointer, &next_process->stack_pointer);
     }
 
     void process_manager::create_process(
@@ -40,11 +37,7 @@ namespace a9n::hal::x86_64
         a9n::virtual_address  entry_point_address
     )
     {
-        liba9n::std::memset(
-            &target_process->stack,
-            0,
-            a9n::kernel::STACK_SIZE_MAX
-        );
+        liba9n::std::memset(&target_process->stack, 0, a9n::kernel::STACK_SIZE_MAX);
         a9n::virtual_address *target_stack_pointer
             = reinterpret_cast<a9n::virtual_address *>(
                 &target_process->stack[a9n::kernel::STACK_SIZE_MAX]

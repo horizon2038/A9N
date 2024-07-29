@@ -7,7 +7,7 @@
 // TODO: remove this
 namespace a9n::kernel
 {
-    constexpr static a9n::word MESSAGE_BUFFER_MAX = 64;
+    static constexpr a9n::word MESSAGE_BUFFER_MAX = 64;
     using message_buffer
         = liba9n::common::bounded_array<a9n::word, MESSAGE_BUFFER_MAX>;
 }

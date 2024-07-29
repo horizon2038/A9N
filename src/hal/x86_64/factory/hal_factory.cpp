@@ -1,20 +1,18 @@
 #include <hal/x86_64/factory/hal_factory.hpp>
 
 #include <hal/interface/arch_initializer.hpp>
-#include <hal/interface/process_manager.hpp>
 #include <hal/interface/memory_manager.hpp>
 #include <hal/interface/process_manager.hpp>
 
-#include <hal/x86_64/time/pit_timer.hpp>
 #include <hal/x86_64/io/port_io.hpp>
+#include <hal/x86_64/time/pit_timer.hpp>
 
-#include <liba9n/libcxx/new>
 #include <liba9n/libc/string.hpp>
+#include <liba9n/libcxx/new>
 
 namespace a9n::hal::x86_64
 {
-    alignas(a9n::hal::hal) char hal_factory::hal_buffer[hal_factory::hal_size]
-        = {};
+    alignas(a9n::hal::hal) char hal_factory::hal_buffer[hal_factory::hal_size] = {};
 
     alignas(a9n::hal::x86_64::memory_manager
     ) char hal_factory::memory_manager_buffer[hal_factory::memory_manager_size]
@@ -26,8 +24,8 @@ namespace a9n::hal::x86_64
     ) char hal_factory::interrupt_buffer[hal_factory::interrupt_size]
         = {};
 
-    alignas(a9n::hal::x86_64::arch_initializer) char hal_factory::
-        arch_initializer_buffer[hal_factory::arch_initializer_size]
+    alignas(a9n::hal::x86_64::arch_initializer
+    ) char hal_factory::arch_initializer_buffer[hal_factory::arch_initializer_size]
         = {};
 
     alignas(a9n::hal::x86_64::port_io
@@ -48,15 +46,15 @@ namespace a9n::hal::x86_64
             = new (memory_manager_buffer) memory_manager();
         a9n::hal::process_manager *process_manager_pointer
             = new (process_manager_buffer) process_manager();
-        a9n::hal::interrupt *interrupt_pointer
-            = new (interrupt_buffer) interrupt();
+        a9n::hal::interrupt *interrupt_pointer = new (interrupt_buffer)
+            interrupt();
 
         a9n::hal::arch_initializer *arch_initializer_pointer
             = new (arch_initializer_buffer) arch_initializer();
 
         a9n::hal::port_io *port_io_pointer = new (port_io_buffer) port_io();
-        a9n::hal::serial  *serial_pointer
-            = new (serial_buffer) serial(*port_io_pointer);
+        a9n::hal::serial  *serial_pointer  = new (serial_buffer)
+            serial(*port_io_pointer);
         a9n::hal::timer *timer_pointer = new (timer_buffer) pit_timer();
 
         hal_pointer->_memory_manager   = memory_manager_pointer;

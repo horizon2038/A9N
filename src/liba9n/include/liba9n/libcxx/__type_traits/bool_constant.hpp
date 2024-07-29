@@ -8,9 +8,9 @@ namespace liba9n::std
     template<bool B>
     using bool_constant = integral_constant<bool, B>;
 
-    using true_type = bool_constant<true>;
+    using true_type     = bool_constant<true>;
 
-    using false_type = bool_constant<false>;
+    using false_type    = bool_constant<false>;
 
 }
 

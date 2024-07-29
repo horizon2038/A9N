@@ -128,8 +128,7 @@ namespace a9n::hal::x86_64
                 continue;
             }
 
-            current_page_table_entry.configure_physical_address(
-                page_table_address
+            current_page_table_entry.configure_physical_address(page_table_address
             );
             current_page_table_entry.present = true;
             current_page_table_entry.rw      = true;
@@ -180,8 +179,7 @@ namespace a9n::hal::x86_64
         uint64_t pt_index
             = calculate_page_table_index(target_virtual_address, PAGE_DEPTH::PT);
         current_page_table_entry.all = current_page_table[pt_index];
-        current_page_table_entry.configure_physical_address(
-            target_physical_address
+        current_page_table_entry.configure_physical_address(target_physical_address
         );
         current_page_table_entry.present = true;
         current_page_table_entry.rw      = true;

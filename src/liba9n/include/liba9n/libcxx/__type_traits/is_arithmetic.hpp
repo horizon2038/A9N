@@ -2,8 +2,8 @@
 #define LIBCXX_IS_ARITHMETIC_HPP
 
 #include <liba9n/libcxx/__type_traits/integral_constant.hpp>
-#include <liba9n/libcxx/__type_traits/is_integral.hpp>
 #include <liba9n/libcxx/__type_traits/is_floating_point.hpp>
+#include <liba9n/libcxx/__type_traits/is_integral.hpp>
 
 namespace liba9n::std
 {

@@ -33,7 +33,7 @@ void __attribute__((section(".boot"))) init_page_table(void)
         // 512 entries for 2MiB pages cover 1GiB
         uint64_t physical_addr = i * 0x200000; // 2MiB per page
         uint64_t virtual_addr  = 0xFFFF800000000000 + i * 0x200000;
-        pd_table[i]
-            = physical_addr | 0x83; // Present, Writeable, and Page Size flag
+        pd_table[i] = physical_addr | 0x83; // Present, Writeable, and Page Size
+                                            // flag
     }
 }

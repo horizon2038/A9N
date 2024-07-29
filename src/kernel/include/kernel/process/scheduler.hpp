@@ -1,9 +1,9 @@
 #ifndef SCHEDULER_HPP
 #define SCHEDULER_HPP
 
-#include <stdint.h>
-#include <kernel/types.hpp>
 #include <kernel/process/process.hpp>
+#include <kernel/types.hpp>
+#include <stdint.h>
 
 namespace a9n::kernel
 {
@@ -13,7 +13,7 @@ namespace a9n::kernel
         process_node *next;
     };
 
-    constexpr static a9n::sword PRIORITY_MAX = 32;
+    static constexpr a9n::sword PRIORITY_MAX = 32;
 
     class scheduler
     {
@@ -22,10 +22,8 @@ namespace a9n::kernel
         ~scheduler();
 
         process *schedule_next_process();
-        process *schedule_next_process(
-            process    *priority_groups[],
-            a9n::sword &priority
-        );
+        process *
+            schedule_next_process(process *priority_groups[], a9n::sword &priority);
 
       private:
         process  *_process_list; // process array pointer<

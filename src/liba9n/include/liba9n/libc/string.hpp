@@ -1,8 +1,8 @@
 #ifndef STRING_H
 #define STRING_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 namespace liba9n::std
 {

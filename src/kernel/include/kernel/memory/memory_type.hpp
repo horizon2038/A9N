@@ -1,9 +1,9 @@
 #ifndef MEMORY_TYPE_H
 #define MEMORY_TYPE_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <kernel/types.hpp>
+#include <stdbool.h>
+#include <stdint.h>
 
 namespace a9n::kernel
 {

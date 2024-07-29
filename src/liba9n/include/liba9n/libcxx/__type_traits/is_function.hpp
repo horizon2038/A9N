@@ -79,6 +79,7 @@ namespace liba9n::std
     struct is_function<R(Args..., ...) const volatile &> : true_type
     {
     };
+
     template<typename R, typename... Args>
     struct is_function<R(Args...) const &&> : true_type
     {
@@ -180,6 +181,7 @@ namespace liba9n::std
     struct is_function<R(Args..., ...) const volatile & noexcept> : true_type
     {
     };
+
     template<typename R, typename... Args>
     struct is_function<R(Args...) const && noexcept> : true_type
     {

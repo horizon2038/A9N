@@ -1,7 +1,7 @@
 #include "kernel_jumper.h"
 
-#include <Uefi.h>
 #include <Library/UefiLib.h>
+#include <Uefi.h>
 
 void jump_kernel(uint64_t entry_point_address, boot_info *target_boot_info)
 {

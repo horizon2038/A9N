@@ -1,8 +1,8 @@
 #ifndef BOOT_INFO_H
 #define BOOT_INFO_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "memory_type.h"
 

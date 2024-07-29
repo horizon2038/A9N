@@ -1,9 +1,9 @@
-#include <kernel/types.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
+#include <kernel/types.hpp>
 
 #include <hal/x86_64/arch/arch_types.hpp>
-#include <liba9n/libc/string.hpp>
 #include <kernel/utility/logger.hpp>
+#include <liba9n/libc/string.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -27,12 +27,9 @@ namespace a9n::hal::x86_64
 
     a9n::virtual_address *xsdt::calculate_table_head()
     {
-        return reinterpret_cast<a9n::virtual_address *>(
-            convert_physical_to_virtual_address(
-                reinterpret_cast<a9n::physical_address>(this)
-                + (sizeof(uint8_t) * 36)
-            )
-        );
+        return reinterpret_cast<a9n::virtual_address *>(convert_physical_to_virtual_address(
+            reinterpret_cast<a9n::physical_address>(this) + (sizeof(uint8_t) * 36)
+        ));
     }
 
     acpi_configurator::acpi_configurator() {};
@@ -63,8 +60,7 @@ namespace a9n::hal::x86_64
             print_sdt_header_info(header);
             if (header->validate_sdt_signature("FACP"))
             {
-                a9n::kernel::utility::logger::printk("\e[32mFACP found!\e[0m\n"
-                );
+                a9n::kernel::utility::logger::printk("\e[32mFACP found!\e[0m\n");
                 a9n::kernel::utility::logger::split();
             }
         }
@@ -74,8 +70,7 @@ namespace a9n::hal::x86_64
     {
         rsdp *rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
         return (
-            liba9n::std::memcmp(rsdp_pointer->signature, ACPI_MAGIC::RSDP, 8)
-            == 0
+            liba9n::std::memcmp(rsdp_pointer->signature, ACPI_MAGIC::RSDP, 8) == 0
         );
     }
 
@@ -90,10 +85,7 @@ namespace a9n::hal::x86_64
         liba9n::std::memcpy(signature, rsdp_pointer->signature, 8);
         liba9n::std::memcpy(oem_id, rsdp_pointer->oem_id, 6);
 
-        a9n::kernel::utility::logger::printk(
-            "signature\e[55G : %s\n",
-            signature
-        );
+        a9n::kernel::utility::logger::printk("signature\e[55G : %s\n", signature);
         a9n::kernel::utility::logger::printk(
             "checksum\e[55G : %d\n",
             rsdp_pointer->checksum
@@ -135,26 +127,14 @@ namespace a9n::hal::x86_64
         fixed_oem_table_id[8] = '\0';
         liba9n::std::memcpy(fixed_oem_table_id, header->oem_table_id, 8);
 
-        a9n::kernel::utility::logger::printk(
-            "signature\e[55G : %s\n",
-            fixed_signature
-        );
+        a9n::kernel::utility::logger::printk("signature\e[55G : %s\n", fixed_signature);
         a9n::kernel::utility::logger::printk(
             "length\e[55G : 0x%08lx\n",
             header->length
         );
-        a9n::kernel::utility::logger::printk(
-            "revision\e[55G : %d\n",
-            header->revision
-        );
-        a9n::kernel::utility::logger::printk(
-            "checksum\e[55G : %d\n",
-            header->checksum
-        );
-        a9n::kernel::utility::logger::printk(
-            "oem_id\e[55G : %s\n",
-            fixed_oem_id
-        );
+        a9n::kernel::utility::logger::printk("revision\e[55G : %d\n", header->revision);
+        a9n::kernel::utility::logger::printk("checksum\e[55G : %d\n", header->checksum);
+        a9n::kernel::utility::logger::printk("oem_id\e[55G : %s\n", fixed_oem_id);
         a9n::kernel::utility::logger::printk(
             "oem_table_id\e[55G : %s\n",
             fixed_oem_table_id

@@ -1,8 +1,8 @@
 #ifndef LIBCXX_IS_TRIVIALLY_HPP
 #define LIBCXX_IS_TRIVIALLY_HPP
 
-#include <liba9n/libcxx/__type_traits/integral_constant.hpp>
 #include <liba9n/libcxx/__type_traits/add_value_reference.hpp>
+#include <liba9n/libcxx/__type_traits/integral_constant.hpp>
 
 namespace liba9n::std
 {
@@ -61,8 +61,7 @@ namespace liba9n::std
 #endif
 
     template<typename T>
-    inline constexpr bool is_trivially_copyable_v
-        = is_trivially_copyable<T>::value;
+    inline constexpr bool is_trivially_copyable_v = is_trivially_copyable<T>::value;
 
     template<typename T>
     inline constexpr bool is_trivially_copy_constructible_v

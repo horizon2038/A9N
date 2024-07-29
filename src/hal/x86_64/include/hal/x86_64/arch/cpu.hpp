@@ -14,7 +14,7 @@ namespace a9n::hal::x86_64
     // CPU Local Variables (CLV).
     // class cpu per CPU-1core.
 
-    constexpr static uint16_t CPU_COUNT_MAX = 32;
+    static constexpr uint16_t CPU_COUNT_MAX = 32;
 
     class cpu_local_variable
     {
@@ -27,10 +27,10 @@ namespace a9n::hal::x86_64
 
     namespace segment_selector
     {
-        constexpr static uint16_t KERNEL_STACK_POINTER_OFFSET = 0x00;
-        constexpr static uint16_t USER_STACK_POINTER_OFFSET   = 0x08;
-        constexpr static uint16_t GDT_OFFSET                  = 0x10;
-        constexpr static uint16_t IDT_OFFSET
+        static constexpr uint16_t KERNEL_STACK_POINTER_OFFSET = 0x00;
+        static constexpr uint16_t USER_STACK_POINTER_OFFSET   = 0x08;
+        static constexpr uint16_t GDT_OFFSET                  = 0x10;
+        static constexpr uint16_t IDT_OFFSET
             = sizeof(global_descriptor_table) + GDT_OFFSET;
     }
 

@@ -1,9 +1,9 @@
 #ifndef UEFI_MEMORYMAP_H
 #define UEFI_MEMORYMAP_H
 
-#include <Uefi.h>
-#include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Uefi.h>
 
 #include "stdint.h"
 

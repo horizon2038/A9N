@@ -17,8 +17,7 @@ namespace liba9n::std
     };
 
     template<typename T, typename... Args>
-    inline constexpr bool is_constructible_v
-        = is_constructible<T, Args...>::value;
+    inline constexpr bool is_constructible_v = is_constructible<T, Args...>::value;
 
     template<typename T>
     struct is_copy_constructible
@@ -29,20 +28,16 @@ namespace liba9n::std
     };
 
     template<typename T>
-    inline constexpr bool is_copy_constructible_v
-        = is_copy_constructible<T>::value;
+    inline constexpr bool is_copy_constructible_v = is_copy_constructible<T>::value;
 
     template<typename T>
     struct is_move_constructible
-        : public integral_constant<
-              bool,
-              is_constructible_v<T, add_rvalue_reference_t<T>>>
+        : public integral_constant<bool, is_constructible_v<T, add_rvalue_reference_t<T>>>
     {
     };
 
     template<typename T>
-    inline constexpr bool is_move_constructible_v
-        = is_move_constructible<T>::value;
+    inline constexpr bool is_move_constructible_v = is_move_constructible<T>::value;
 }
 
 #endif

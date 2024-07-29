@@ -19,8 +19,7 @@ namespace a9n::kernel
         return max_length - reserved;
     }
 
-    inline constexpr a9n::word MESSAGE_BUFFER_SIZE_MAX
-        = calculate_buffer_length();
+    inline constexpr a9n::word MESSAGE_BUFFER_SIZE_MAX = calculate_buffer_length();
 
     using message_buffer_array
         = liba9n::std::array<a9n::word, MESSAGE_BUFFER_SIZE_MAX>;

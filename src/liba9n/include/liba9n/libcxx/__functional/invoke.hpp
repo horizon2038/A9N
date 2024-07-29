@@ -1,22 +1,18 @@
 #ifndef LIBCXX_INVOKE_HPP
 #define LIBCXX_INVOKE_HPP
 
+#include <liba9n/libcxx/__functional/reference_wrapper.hpp>
 #include <liba9n/libcxx/__type_traits/invoke_result.hpp>
 #include <liba9n/libcxx/__type_traits/is_base_of.hpp>
-#include <liba9n/libcxx/__type_traits/is_member_pointer.hpp>
 #include <liba9n/libcxx/__type_traits/is_function.hpp>
-#include <liba9n/libcxx/__functional/reference_wrapper.hpp>
+#include <liba9n/libcxx/__type_traits/is_member_pointer.hpp>
 #include <liba9n/libcxx/__type_traits/remove_cvref.hpp>
 
 namespace liba9n::std
 {
     namespace
     {
-        template<
-            typename ClassType,
-            typename Pointer,
-            typename Object,
-            typename... Args>
+        template<typename ClassType, typename Pointer, typename Object, typename... Args>
         constexpr decltype(auto) invoke_member_pointer(
             Pointer ClassType::*member,
             Object            &&object,
@@ -46,9 +42,8 @@ namespace liba9n::std
 
                 else
                 {
-                    return ((*forward<Object>(object)).*member)(
-                        forward<Args>(args)...
-                    );
+                    return ((*forward<Object>(object)).*member)(forward<Args>(args
+                    )...);
                 }
             }
 

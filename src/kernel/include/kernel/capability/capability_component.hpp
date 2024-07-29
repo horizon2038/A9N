@@ -21,9 +21,7 @@ namespace a9n::kernel
 
         bool has_child()
         {
-            return (
-                family_node.depth > family_node.next_slot->family_node.depth
-            );
+            return (family_node.depth > family_node.next_slot->family_node.depth);
         }
 
         bool is_same_slot(capability_slot *rhs)

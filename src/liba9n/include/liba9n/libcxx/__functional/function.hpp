@@ -1,8 +1,8 @@
 #ifndef LIBCXX_FUNCTION_HPP
 #define LIBCXX_FUNCTION_HPP
 
-#include <liba9n/libcxx/__utility/move.hpp>
 #include <liba9n/libcxx/__functional/invoke.hpp>
+#include <liba9n/libcxx/__utility/move.hpp>
 #include <stdint.h>
 
 namespace liba9n::std
@@ -22,8 +22,7 @@ namespace liba9n::std
       public:
         template<typename F>
         function(F func)
-            : callable { new(&buffer)
-                             callable_impl<F>(liba9n::std::move(func)) }
+            : callable { new(&buffer) callable_impl<F>(liba9n::std::move(func)) }
         {
         }
 

@@ -1,8 +1,8 @@
 #ifndef HAL_TIMER_HPP
 #define HAL_TIMER_HPP
 
-#include <stdint.h>
 #include <kernel/types.hpp>
+#include <stdint.h>
 
 namespace a9n::hal
 {

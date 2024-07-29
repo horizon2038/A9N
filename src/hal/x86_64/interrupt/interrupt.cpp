@@ -108,14 +108,14 @@ namespace a9n::hal::x86_64
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
 
-        idt_entry->type = INTERRUPT_GATE;
+        idt_entry->type                    = INTERRUPT_GATE;
     };
 
     void interrupt::disable_interrupt(a9n::word irq_number)
     {
         interrupt_descriptor_64 *idt_entry = &idt[irq_number];
 
-        idt_entry->type = INTERRUPT_GATE | PRESENT;
+        idt_entry->type                    = INTERRUPT_GATE | PRESENT;
     };
 
     void interrupt::enable_interrupt_all()

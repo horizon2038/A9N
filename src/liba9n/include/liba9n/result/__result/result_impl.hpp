@@ -4,9 +4,9 @@
 #include <liba9n/result/__result/result_common.hpp>
 
 #include <liba9n/libcxx/functional>
-#include <liba9n/libcxx/utility>
-#include <liba9n/libcxx/type_traits>
 #include <liba9n/libcxx/new>
+#include <liba9n/libcxx/type_traits>
+#include <liba9n/libcxx/utility>
 
 namespace liba9n
 {
@@ -35,6 +35,7 @@ namespace liba9n
             T    ok_value;
             E    error_value;
         };
+
         bool is_ok_flag;
 
         // helper methods
@@ -107,7 +108,7 @@ namespace liba9n
                       && liba9n::std::is_trivially_destructible_v<E>
         = default;
 
-        constexpr result &operator=(result const &other)
+        constexpr result &operator=(const result &other)
             requires liba9n::std::is_trivially_copy_assignable_v<T>
                       && liba9n::std::is_trivially_copy_assignable_v<E>
         = default;
@@ -412,7 +413,7 @@ namespace liba9n
             return liba9n::std::addressof(ok_value);
         }
 
-        constexpr auto operator->() const noexcept -> T const *
+        constexpr auto operator->() const noexcept -> const T *
         {
             return liba9n::std::addressof(ok_value);
         }
@@ -684,8 +685,7 @@ namespace liba9n
             typename Ecvref = E &,
             typename U      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::ok_type, T>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::ok_type, T>
                   && liba9n::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) &
         {
@@ -705,8 +705,7 @@ namespace liba9n
             typename Ecvref = const E &,
             typename U      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::ok_type, T>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::ok_type, T>
                   && liba9n::std::is_copy_constructible_v<T>
         constexpr auto or_else(Function &&function) const &
         {
@@ -726,8 +725,7 @@ namespace liba9n
             typename Ecvref = E &&,
             typename U      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::ok_type, T>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::ok_type, T>
                   && liba9n::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) &&
         {
@@ -747,8 +745,7 @@ namespace liba9n
             typename Ecvref = const E &&,
             typename U      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::ok_type, T>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::ok_type, T>
                   && liba9n::std::is_move_constructible_v<T>
         constexpr auto or_else(Function &&function) const &&
         {
@@ -843,10 +840,7 @@ namespace liba9n
         {
             if (is_error())
             {
-                return result<U, E>(
-                    result_error,
-                    liba9n::std::move(unwrap_error())
-                );
+                return result<U, E>(result_error, liba9n::std::move(unwrap_error()));
             }
 
             if constexpr (liba9n::std::is_void_v<U>)
@@ -877,10 +871,7 @@ namespace liba9n
         {
             if (is_error())
             {
-                return result<U, E>(
-                    result_error,
-                    liba9n::std::move(unwrap_error())
-                );
+                return result<U, E>(result_error, liba9n::std::move(unwrap_error()));
             }
 
             if constexpr (liba9n::std::is_void_v<U>)
@@ -973,7 +964,7 @@ namespace liba9n
 
         template<
             typename Function,
-            typename Ecvref = E const &&,
+            typename Ecvref = const E &&,
             typename F      = liba9n::std::remove_cvref_t<
                 liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_copy_constructible_v<T>
@@ -1019,20 +1010,17 @@ namespace liba9n
         }
 
         template<typename U>
-            requires liba9n::std::
-                is_convertible_v<liba9n::std::remove_cvref_t<U>, T>
-            friend constexpr bool operator==(const result &lhs, const U &rhs)
+            requires liba9n::std::is_convertible_v<liba9n::std::remove_cvref_t<U>, T>
+        friend constexpr bool operator==(const result &lhs, const U &rhs)
         {
             return lhs.is_ok() && static_cast<bool>(lhs.unwrap() == rhs);
         }
 
         template<typename F>
-            requires liba9n::std::
-                is_convertible_v<liba9n::std::remove_cvref_t<F>, E>
-            friend constexpr bool operator==(const result &lhs, const F &rhs)
+            requires liba9n::std::is_convertible_v<liba9n::std::remove_cvref_t<F>, E>
+        friend constexpr bool operator==(const result &lhs, const F &rhs)
         {
-            return lhs.is_error()
-                && static_cast<bool>(lhs.unwrap_error() == rhs);
+            return lhs.is_error() && static_cast<bool>(lhs.unwrap_error() == rhs);
         }
     };
 }

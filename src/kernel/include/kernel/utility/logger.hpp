@@ -1,9 +1,9 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include <stdint.h>
-#include <kernel/utility/print.hpp>
 #include <hal/interface/serial.hpp>
+#include <kernel/utility/print.hpp>
+#include <stdint.h>
 
 namespace a9n::kernel::utility
 {
@@ -21,23 +21,23 @@ namespace a9n::kernel::utility
 
     namespace terminal_color
     {
-        const static char *RESET      = "\e[0m";
-        const static char *BLACK      = "\e[30m";
-        const static char *BLACK_BG   = "\e[40m";
-        const static char *RED        = "\e[31m";
-        const static char *RED_BG     = "\e[41m";
-        const static char *GREEN      = "\e[32m";
-        const static char *GREEN_BG   = "\e[42m";
-        const static char *YELLOW     = "\e[33m";
-        const static char *YELLOW_BG  = "\e[43m";
-        const static char *BLUE       = "\e[34m";
-        const static char *BLUE_BG    = "\e[44m";
-        const static char *MAGENTA    = "\e[35m";
-        const static char *MAGENTA_BG = "\e[45m";
-        const static char *CYAN       = "\e[36m";
-        const static char *CYAN_BG    = "\e[46m";
-        const static char *WHITE      = "\e[37m";
-        const static char *WHITE_BG   = "\e[47m";
+        static const char *RESET      = "\e[0m";
+        static const char *BLACK      = "\e[30m";
+        static const char *BLACK_BG   = "\e[40m";
+        static const char *RED        = "\e[31m";
+        static const char *RED_BG     = "\e[41m";
+        static const char *GREEN      = "\e[32m";
+        static const char *GREEN_BG   = "\e[42m";
+        static const char *YELLOW     = "\e[33m";
+        static const char *YELLOW_BG  = "\e[43m";
+        static const char *BLUE       = "\e[34m";
+        static const char *BLUE_BG    = "\e[44m";
+        static const char *MAGENTA    = "\e[35m";
+        static const char *MAGENTA_BG = "\e[45m";
+        static const char *CYAN       = "\e[36m";
+        static const char *CYAN_BG    = "\e[46m";
+        static const char *WHITE      = "\e[37m";
+        static const char *WHITE_BG   = "\e[47m";
     }
 
     class logger

@@ -1,8 +1,8 @@
 #ifndef LIBCXX_IS_REFERENCE_HPP
 #define LIBCXX_IS_REFERENCE_HPP
 
-#include <liba9n/libcxx/__type_traits/integral_constant.hpp>
 #include <liba9n/libcxx/__type_traits/bool_constant.hpp>
+#include <liba9n/libcxx/__type_traits/integral_constant.hpp>
 
 namespace liba9n::std
 {

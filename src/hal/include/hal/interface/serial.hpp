@@ -1,8 +1,8 @@
 #ifndef HAL_SERIAL_HPP
 #define HAL_SERIAL_HPP
 
-#include <stdint.h>
 #include <kernel/types.hpp>
+#include <stdint.h>
 
 namespace a9n::hal
 {

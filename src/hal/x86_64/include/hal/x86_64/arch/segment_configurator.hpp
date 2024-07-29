@@ -7,13 +7,13 @@ namespace a9n::hal::x86_64
 {
     namespace segment_selector
     {
-        constexpr static uint16_t NULL_SEGMENT = 0x00;
-        constexpr static uint16_t KERNEL_CS    = 0x08;
-        constexpr static uint16_t KERNEL_DS    = 0x10;
-        constexpr static uint16_t USER_CS_NULL = 0x18;
-        constexpr static uint16_t USER_CS      = 0x20;
-        constexpr static uint16_t USER_DS      = 0x28;
-        constexpr static uint16_t KERNEL_TSS   = 0x30;
+        static constexpr uint16_t NULL_SEGMENT = 0x00;
+        static constexpr uint16_t KERNEL_CS    = 0x08;
+        static constexpr uint16_t KERNEL_DS    = 0x10;
+        static constexpr uint16_t USER_CS_NULL = 0x18;
+        static constexpr uint16_t USER_CS      = 0x20;
+        static constexpr uint16_t USER_DS      = 0x28;
+        static constexpr uint16_t KERNEL_TSS   = 0x30;
     };
 
     struct task_state_segment

@@ -1,10 +1,10 @@
 #include "kernel_opener.h" // impl
 
-#include <Uefi.h>
-#include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
 #include <Protocol/LoadedImage.h>
 #include <Protocol/SimpleFileSystem.h>
+#include <Uefi.h>
 
 static EFI_STATUS open_root_directory(EFI_HANDLE, EFI_FILE_PROTOCOL **);
 static EFI_STATUS get_image(EFI_HANDLE, EFI_LOADED_IMAGE_PROTOCOL **);
@@ -33,10 +33,8 @@ EFI_STATUS open_kernel(
     return efi_status;
 }
 
-static EFI_STATUS open_root_directory(
-    EFI_HANDLE          image_handle,
-    EFI_FILE_PROTOCOL **root_directory
-)
+static EFI_STATUS
+    open_root_directory(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory)
 {
     EFI_LOADED_IMAGE_PROTOCOL       *device_image;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *file_system;

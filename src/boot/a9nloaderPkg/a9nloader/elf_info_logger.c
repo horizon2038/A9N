@@ -1,7 +1,7 @@
 #include "elf_info_logger.h"
 
-#include <Uefi.h>
 #include <Library/UefiLib.h>
+#include <Uefi.h>
 
 void print_elf_header_info(elf64_header *header)
 {

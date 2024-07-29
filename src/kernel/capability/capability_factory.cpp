@@ -52,8 +52,7 @@ namespace a9n::kernel
                 {
                     // generic ptr
                     slot.set_local_data<0>(target_address);
-                    slot.set_local_data<1>(
-                        serialize_generic_flags(false, size_bits)
+                    slot.set_local_data<1>(serialize_generic_flags(false, size_bits)
                     );
                     slot.set_local_data<2>(target_address);
                     break;

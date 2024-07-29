@@ -1,29 +1,29 @@
-#include <stdint.h>
 #include <liba9n/libcxx/new>
+#include <stdint.h>
 
-#include <hal/interface/interrupt.hpp>
-#include <hal/interface/port_io.hpp>
-#include <hal/interface/memory_manager.hpp>
 #include <hal/interface/hal.hpp>
 #include <hal/interface/hal_factory.hpp>
+#include <hal/interface/interrupt.hpp>
+#include <hal/interface/memory_manager.hpp>
+#include <hal/interface/port_io.hpp>
 #include <hal/interface/timer.hpp>
 
-#include <kernel/utility/logger.hpp>
+#include <kernel/boot/boot_info.hpp>
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/ipc/ipc_manager.hpp>
-#include <kernel/process/process.hpp>
-#include <kernel/boot/boot_info.hpp>
-#include <kernel/memory/memory_manager.hpp>
-#include <kernel/process/process_manager.hpp>
 #include <kernel/kernel.hpp>
+#include <kernel/memory/memory_manager.hpp>
+#include <kernel/process/process.hpp>
+#include <kernel/process/process_manager.hpp>
+#include <kernel/utility/logger.hpp>
 
-#include <liba9n/capability/capability_descriptor.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/generic.hpp>
+#include <liba9n/capability/capability_descriptor.hpp>
 
-#include <liba9n/libc/string.hpp>
 #include <kernel/types.hpp>
+#include <liba9n/libc/string.hpp>
 
 #include <hal/x86_64/factory/hal_factory.hpp>
 
@@ -81,10 +81,8 @@ void console()
     {
         asm volatile("sti");
         liba9n::ipc::message m;
-        a9n::kernel::kernel_object::ipc_manager->receive(
-            a9n::kernel::ANY_PROCESS,
-            &m
-        );
+        a9n::kernel::kernel_object::ipc_manager
+            ->receive(a9n::kernel::ANY_PROCESS, &m);
 
         // Assuming that m.data holds ASCII characters
         char received_char = reinterpret_cast<char *>(m.data)[0];
@@ -120,16 +118,17 @@ void console()
         {
             if (buffer_index > 0)
             {
-                buffer[--buffer_index]
-                    = '\0'; // remove the last character from buffer
-                a9n::kernel::utility::logger::printn("\b \b"
-                ); // handle backspace on terminal
+                buffer[--buffer_index] = '\0'; // remove the last character from
+                                               // buffer
+                a9n::kernel::utility::logger::printn("\b \b"); // handle
+                                                               // backspace on
+                                                               // terminal
             }
         }
         else if (buffer_index < sizeof(buffer) - 1) // buffer not full
         {
-            buffer[buffer_index++]
-                = received_char; // store the character in buffer
+            buffer[buffer_index++] = received_char; // store the character in
+                                                    // buffer
             a9n::kernel::utility::logger::printn(
                 "%c",
                 received_char
@@ -145,10 +144,8 @@ void console_out()
         asm volatile("sti");
         liba9n::ipc::message m;
         // Assuming process ID 3 is for console_out
-        a9n::kernel::kernel_object::ipc_manager->receive(
-            a9n::kernel::ANY_PROCESS,
-            &m
-        );
+        a9n::kernel::kernel_object::ipc_manager
+            ->receive(a9n::kernel::ANY_PROCESS, &m);
 
         char *received_data = reinterpret_cast<char *>(m.data);
 
@@ -156,10 +153,7 @@ void console_out()
         {
             continue;
         }
-        a9n::kernel::utility::logger::printn(
-            "\ncout said : %s\n",
-            received_data
-        );
+        a9n::kernel::utility::logger::printn("\ncout said : %s\n", received_data);
 
         if (liba9n::std::strcmp(received_data, "about") == 0)
         {
@@ -224,10 +218,8 @@ void alpha()
     {
         asm volatile("sti");
         liba9n::ipc::message m;
-        a9n::kernel::kernel_object::ipc_manager->receive(
-            a9n::kernel::ANY_PROCESS,
-            &m
-        );
+        a9n::kernel::kernel_object::ipc_manager
+            ->receive(a9n::kernel::ANY_PROCESS, &m);
         if (m.type != 1)
         {
             continue;
@@ -245,8 +237,8 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
 {
     using logger = a9n::kernel::utility::logger;
     // make HAL and kernel objects.
-    a9n::hal::hal_factory *hal_factory_instance
-        = new (hal_factory_buffer) a9n::hal::x86_64::hal_factory();
+    a9n::hal::hal_factory *hal_factory_instance = new (hal_factory_buffer)
+        a9n::hal::x86_64::hal_factory();
     hal_instance = hal_factory_instance->make();
 
     hal_instance->_serial->init_serial(115200);
@@ -276,54 +268,49 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     logger::printk("init logger\n");
 
     logger::printk("init memory_manager\n");
-    a9n::kernel::kernel_object::memory_manager
-        = new (a9n::kernel::kernel_object::memory_manager_buffer)
-            a9n::kernel::memory_manager(
-                *hal_instance->_memory_manager,
-                target_boot_info->boot_memory_info
-            );
+    a9n::kernel::kernel_object::memory_manager = new (
+        a9n::kernel::kernel_object::memory_manager_buffer
+    )
+        a9n::kernel::memory_manager(
+            *hal_instance->_memory_manager,
+            target_boot_info->boot_memory_info
+        );
 
     logger::printk("test memory_manager\n");
-    a9n::kernel::kernel_object::memory_manager->allocate_physical_memory(
-        40,
-        nullptr
-    );
+    a9n::kernel::kernel_object::memory_manager->allocate_physical_memory(40, nullptr);
     a9n::kernel::kernel_object::memory_manager
         ->map_virtual_memory(nullptr, 0xffff800200000000, 0x0000, 3);
 
     logger::printk("init interrupt_manager\n");
-    a9n::kernel::kernel_object::interrupt_manager
-        = new (a9n::kernel::kernel_object::interrupt_manager_buffer)
-            a9n::kernel::interrupt_manager(*hal_instance->_interrupt);
+    a9n::kernel::kernel_object::interrupt_manager = new (
+        a9n::kernel::kernel_object::interrupt_manager_buffer
+    ) a9n::kernel::interrupt_manager(*hal_instance->_interrupt);
     a9n::kernel::kernel_object::interrupt_manager->init();
 
     logger::printk("init ipc_manager\n");
-    a9n::kernel::kernel_object::ipc_manager
-        = new (a9n::kernel::kernel_object::ipc_manager_buffer)
-            a9n::kernel::ipc_manager();
+    a9n::kernel::kernel_object::ipc_manager = new (
+        a9n::kernel::kernel_object::ipc_manager_buffer
+    ) a9n::kernel::ipc_manager();
 
     a9n::kernel::kernel_object::interrupt_manager->disable_interrupt_all();
 
     logger::printk("init architecture\n");
-    hal_instance->_arch_initializer->init_architecture(
-        target_boot_info->arch_info
+    hal_instance->_arch_initializer->init_architecture(target_boot_info->arch_info
     );
 
     hal_instance->_timer->init_timer();
 
     logger::printk("init process_manager\n");
-    a9n::kernel::kernel_object::process_manager
-        = new (a9n::kernel::kernel_object::process_manager_buffer)
-            a9n::kernel::process_manager(*hal_instance->_process_manager);
+    a9n::kernel::kernel_object::process_manager = new (
+        a9n::kernel::kernel_object::process_manager_buffer
+    ) a9n::kernel::process_manager(*hal_instance->_process_manager);
     logger::split();
     a9n::kernel::kernel_object::process_manager->create_process(
         "idle",
         reinterpret_cast<a9n::virtual_address>(kernel_main)
     );
-    a9n::kernel::kernel_object::process_manager->create_process(
-        "alpha",
-        reinterpret_cast<a9n::virtual_address>(alpha)
-    );
+    a9n::kernel::kernel_object::process_manager
+        ->create_process("alpha", reinterpret_cast<a9n::virtual_address>(alpha));
 
     a9n::kernel::kernel_object::interrupt_manager->enable_interrupt_all();
     a9n::kernel::kernel_object::interrupt_manager->ack_interrupt();

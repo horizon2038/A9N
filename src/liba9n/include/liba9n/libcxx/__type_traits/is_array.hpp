@@ -1,8 +1,8 @@
 #ifndef LIBCXX_IS_ARRAY_HPP
 #define LIBCXX_IS_ARRAY_HPP
 
-#include <liba9n/libcxx/cstddef>
 #include <liba9n/libcxx/__type_traits/bool_constant.hpp>
+#include <liba9n/libcxx/cstddef>
 
 namespace liba9n::std
 {

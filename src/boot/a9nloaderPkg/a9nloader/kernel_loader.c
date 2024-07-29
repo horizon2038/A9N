@@ -1,23 +1,21 @@
 #include "kernel_loader.h"
 
-#include <Library/UefiBootServicesTableLib.h>
-#include <Uefi.h>
-#include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Uefi.h>
 
-#include "file_reader.h"
 #include "elf_info_logger.h"
+#include "file_reader.h"
 
 static EFI_STATUS read_elf_header(EFI_FILE_PROTOCOL *, elf64_header **);
 static EFI_STATUS
     read_elf_program_header(EFI_FILE_PROTOCOL *, elf64_header *, elf64_program_header **);
 static EFI_STATUS
     load_elf_segment(EFI_FILE_PROTOCOL *, elf64_header *, elf64_program_header *);
-static EFI_STATUS
-    allocate_kernel_memory(elf64_header *, elf64_program_header *);
-static void
-    locate_elf_segment(elf64_header *, elf64_program_header *, uint64_t);
+static EFI_STATUS allocate_kernel_memory(elf64_header *, elf64_program_header *);
+static void locate_elf_segment(elf64_header *, elf64_program_header *, uint64_t);
 static void zero_clear(elf64_program_header *);
 
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
@@ -51,8 +49,7 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
     return efi_status;
 }
 
-static EFI_STATUS
-    read_elf_header(EFI_FILE_PROTOCOL *kernel, elf64_header **header)
+static EFI_STATUS read_elf_header(EFI_FILE_PROTOCOL *kernel, elf64_header **header)
 {
     EFI_STATUS efi_status = EFI_SUCCESS;
 
@@ -147,8 +144,7 @@ static EFI_STATUS allocate_kernel_memory(
             program_header->physical_address + program_header->memory_size
         );
     }
-    segment_size
-        = EFI_SIZE_TO_PAGES(end_segment_address - start_segment_address);
+    segment_size = EFI_SIZE_TO_PAGES(end_segment_address - start_segment_address);
     efi_status = gBS->AllocatePages(
         AllocateAddress,
         EfiLoaderData,
@@ -177,8 +173,7 @@ static void zero_clear(elf64_program_header *program_header)
     if (program_header->file_size < program_header->memory_size)
     {
         gBS->SetMem(
-            (void *)(program_header->physical_address
-                     + program_header->file_size),
+            (void *)(program_header->physical_address + program_header->file_size),
             program_header->memory_size - program_header->file_size,
             0
         );

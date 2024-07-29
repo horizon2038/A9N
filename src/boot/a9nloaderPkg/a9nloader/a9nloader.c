@@ -1,23 +1,23 @@
 #include "a9nloader.h"
 
-#include <Uefi.h>
-#include <Library/UefiLib.h>
+#include <Guid/FileInfo.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Protocol/SimpleFileSystem.h>
-#include <Guid/FileInfo.h>
+#include <Uefi.h>
 
 #include "elf.h"
-#include "kernel_opener.h"
-#include "file_info_logger.h"
-#include "kernel_loader.h"
 #include "error_handler.h"
+#include "file_info_logger.h"
 #include "kernel_jumper.h"
+#include "kernel_loader.h"
+#include "kernel_opener.h"
 #include "uefi_lifetime.h"
 
-#include "uefi_memory_map.h"
 #include "boot_info.h"
 #include "uefi_boot_info_configurator.h"
+#include "uefi_memory_map.h"
 
 EFI_STATUS EFIAPI
     efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
@@ -56,11 +56,8 @@ EFI_STATUS EFIAPI
     {
         return efi_status;
     }
-    efi_status = make_boot_info(
-        system_table,
-        &target_uefi_memory_map,
-        &target_boot_info
-    );
+    efi_status
+        = make_boot_info(system_table, &target_uefi_memory_map, &target_boot_info);
     if (EFI_ERROR(efi_status))
     {
         return efi_status;

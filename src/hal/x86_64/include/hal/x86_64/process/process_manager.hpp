@@ -1,8 +1,8 @@
 #ifndef X86_64_CONTEXT_SWITCH_HPP
 #define X86_64_CONTEXT_SWITCH_HPP
 
-#include <kernel/types.hpp>
 #include <hal/interface/process_manager.hpp>
+#include <kernel/types.hpp>
 
 #include <hal/x86_64/arch/segment_configurator.hpp>
 #include <hal/x86_64/memory/paging.hpp>

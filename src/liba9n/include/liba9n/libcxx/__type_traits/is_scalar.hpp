@@ -5,9 +5,9 @@
 
 #include <liba9n/libcxx/__type_traits/is_arithmetic.hpp>
 #include <liba9n/libcxx/__type_traits/is_enum.hpp>
-#include <liba9n/libcxx/__type_traits/is_pointer.hpp>
 #include <liba9n/libcxx/__type_traits/is_member_pointer.hpp>
 #include <liba9n/libcxx/__type_traits/is_null_pointer.hpp>
+#include <liba9n/libcxx/__type_traits/is_pointer.hpp>
 
 namespace liba9n::std
 {

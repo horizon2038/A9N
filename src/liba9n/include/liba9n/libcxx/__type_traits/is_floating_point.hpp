@@ -11,8 +11,7 @@ namespace liba9n::std
     struct is_floating_point
         : integral_constant<
               bool,
-              is_same_v<float, remove_cv_t<T>>
-                  || is_same_v<double, remove_cv_t<T>>
+              is_same_v<float, remove_cv_t<T>> || is_same_v<double, remove_cv_t<T>>
                   || is_same_v<long double, remove_cv_t<T>>>
     {
     };

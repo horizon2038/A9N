@@ -1,14 +1,13 @@
 #include "file_info_logger.h"
 
-#include <Uefi.h>
+#include "stdint.h"
+#include <Guid/FileInfo.h>
 #include <Library/UefiLib.h>
 #include <Protocol/SimpleFileSystem.h>
-#include <Guid/FileInfo.h>
-#include "stdint.h"
+#include <Uefi.h>
 
 static uint64_t calculate_file_size();
-static EFI_STATUS
-            get_file_info(EFI_FILE_PROTOCOL **, uint64_t *, EFI_FILE_INFO *);
+static EFI_STATUS get_file_info(EFI_FILE_PROTOCOL **, uint64_t *, EFI_FILE_INFO *);
 static void print_info(EFI_FILE_INFO *);
 
 EFI_STATUS print_file_info(EFI_FILE_PROTOCOL **file)
@@ -25,21 +24,17 @@ EFI_STATUS print_file_info(EFI_FILE_PROTOCOL **file)
 static uint64_t calculate_file_size()
 {
     uint64_t file_size;
-    file_size = sizeof(EFI_FILE_INFO);
+    file_size  = sizeof(EFI_FILE_INFO);
     file_size += sizeof(short) * 16;
     return file_size;
 }
 
-static EFI_STATUS get_file_info(
-    EFI_FILE_PROTOCOL **file,
-    uint64_t           *file_size,
-    EFI_FILE_INFO      *file_info
-)
+static EFI_STATUS
+    get_file_info(EFI_FILE_PROTOCOL **file, uint64_t *file_size, EFI_FILE_INFO *file_info)
 {
     EFI_STATUS efi_status;
     efi_status
-        = (*file)
-              ->GetInfo(*file, &gEfiFileInfoGuid, file_size, (VOID *)file_info);
+        = (*file)->GetInfo(*file, &gEfiFileInfoGuid, file_size, (VOID *)file_info);
     return efi_status;
 }
 

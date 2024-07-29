@@ -3,8 +3,8 @@
 
 #include <Uefi.h>
 
-#include "uefi_memory_map.h"
 #include "boot_info.h"
+#include "uefi_memory_map.h"
 
 EFI_STATUS make_boot_info(
     EFI_SYSTEM_TABLE *system_table,

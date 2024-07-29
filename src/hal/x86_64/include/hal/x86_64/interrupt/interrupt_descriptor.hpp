@@ -17,9 +17,9 @@ namespace a9n::hal::x86_64
         uint32_t reserved;
     } interrupt_descriptor_64;
 
-    constexpr static uint8_t INTERRUPT_GATE = 0xe;
-    constexpr static uint8_t TRAP_GATE      = 0xf;
-    constexpr static uint8_t PRESENT        = 0x80;
+    static constexpr uint8_t INTERRUPT_GATE = 0xe;
+    static constexpr uint8_t TRAP_GATE      = 0xf;
+    static constexpr uint8_t PRESENT        = 0x80;
 
     enum class interrupt_type : uint8_t
     {

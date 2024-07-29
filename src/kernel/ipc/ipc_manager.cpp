@@ -11,8 +11,7 @@ namespace a9n::kernel
     void ipc_manager::send(process_id receiver_process_id, ipc::message *msg)
     {
         process *receiver_process
-            = kernel_object::process_manager->search_process_from_id(
-                receiver_process_id
+            = kernel_object::process_manager->search_process_from_id(receiver_process_id
             );
         utility::logger::printk(
             "ipc_send : %s -> %s\n",
@@ -25,8 +24,7 @@ namespace a9n::kernel
             reinterpret_cast<const char *>(msg->data)
         );
 
-        process *current_process
-            = kernel_object::process_manager->current_process;
+        process *current_process = kernel_object::process_manager->current_process;
         liba9n::std::memcpy(
             &current_process->message_buffer,
             msg,
@@ -68,15 +66,13 @@ namespace a9n::kernel
 
     void ipc_manager::receive(process_id source_process_id, ipc::message *msg)
     {
-        process *current_process
-            = kernel_object::process_manager->current_process;
-        process *sender_process = nullptr;
+        process *current_process = kernel_object::process_manager->current_process;
+        process *sender_process       = nullptr;
 
         current_process->receive_from = source_process_id;
 
         // TODO: fix flag
-        bool dequeued
-            = current_process->send_wait_queue.dequeue(sender_process);
+        bool dequeued = current_process->send_wait_queue.dequeue(sender_process);
 
         if (!dequeued
             || (source_process_id != ANY_PROCESS

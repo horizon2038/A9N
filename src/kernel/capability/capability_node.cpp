@@ -1,3 +1,4 @@
+#include "kernel/capability/capability_result.hpp"
 #include <kernel/capability/capability_node.hpp>
 
 #include <kernel/capability/capability_component.hpp>
@@ -89,24 +90,48 @@ namespace a9n::kernel
         capability_slot *root_slot
     )
     {
+        if (!root_slot)
+        {
+            return capability_error::INVALID_ARGUMENT;
+        }
+
         // it is not just about copying data.
         // after copying, we need to configure the Dependency Node.
         namespace argument = capability_node_copy_argument;
 
         auto destination_index = buffer->get_message<argument::DESTINATION_INDEX>();
         auto source_descriptor = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
-        auto source_depth     = buffer->get_message<argument::SOURCE_DEPTH>();
-        auto source_index     = buffer->get_message<argument::SOURCE_INDEX>();
+        auto source_depth = buffer->get_message<argument::SOURCE_DEPTH>();
+        auto source_index = buffer->get_message<argument::SOURCE_INDEX>();
 
-        auto destination_slot = retrieve_slot(destination_index);
-        if (!destination_slot)
+        auto destination_slot_result = retrieve_slot(destination_index);
+        if (!destination_slot_result)
         {
+            return capability_error::INVALID_DESCRIPTOR;
         }
 
-        if (!root_slot)
+        auto source_slot_result
+            = root_slot->component
+                  ->traverse_slot(source_descriptor, source_depth, 0)
+                  .and_then(
+                      [=, this](capability_slot *slot) -> capability_lookup_result
+                      {
+                          return slot->component->retrieve_slot(source_index);
+                      }
+                  );
+        if (source_slot_result)
         {
-            return capability_error::INVALID_ARGUMENT;
+            return capability_error::INVALID_DESCRIPTOR;
         }
+
+        source_slot_result.unwrap()->component
+            = destination_slot_result.unwrap()->component;
+        destination_slot_result.unwrap()->data = source_slot_result.unwrap()->data;
+
+        source_slot_result.unwrap()->family_node.next_slot
+            = destination_slot_result.unwrap();
+        destination_slot_result.unwrap()->family_node.preview_slot
+            = source_slot_result.unwrap();
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }

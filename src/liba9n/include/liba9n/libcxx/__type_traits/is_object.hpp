@@ -2,9 +2,9 @@
 #define LIBCXX_IS_OBJECT_HPP
 
 #include <liba9n/libcxx/__type_traits/integral_constant.hpp>
-#include <liba9n/libcxx/__type_traits/is_scalar.hpp>
 #include <liba9n/libcxx/__type_traits/is_array.hpp>
 #include <liba9n/libcxx/__type_traits/is_class.hpp>
+#include <liba9n/libcxx/__type_traits/is_scalar.hpp>
 #include <liba9n/libcxx/__type_traits/is_union.hpp>
 
 namespace liba9n::std

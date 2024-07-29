@@ -9,10 +9,10 @@ namespace a9n::kernel
     namespace SYSTEMCALL_TYPE
     {
         // IPC section
-        constexpr static uint16_t IPC = 0;
+        static constexpr uint16_t IPC = 0;
 
         // other section
-        constexpr static uint16_t YIELD = 1;
+        static constexpr uint16_t YIELD = 1;
     }
 
     class system_call_manager

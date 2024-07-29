@@ -7,8 +7,8 @@
 #include <liba9n/libcxx/__type_traits/enable_if.hpp>
 #include <liba9n/libcxx/__type_traits/is_base_of.hpp>
 #include <liba9n/libcxx/__type_traits/remove_reference.hpp>
-#include <liba9n/libcxx/__utility/forward.hpp>
 #include <liba9n/libcxx/__utility/declval.hpp>
+#include <liba9n/libcxx/__utility/forward.hpp>
 
 namespace liba9n::std
 {
@@ -34,8 +34,7 @@ namespace liba9n::std
         {
             template<typename Function, typename... Args>
             static auto call(Function &&function, Args &&...args)
-                -> decltype(forward<Function>(function)(forward<Args>(args)...)
-                );
+                -> decltype(forward<Function>(function)(forward<Args>(args)...));
         };
 
         // member function calling
@@ -66,16 +65,11 @@ namespace liba9n::std
                 ));
 
             template<typename T>
-            static auto call(
-                MemberType ClassType::*member_function_pointer,
-                T                    &&t
-            ) -> decltype(invoke_impl::get(forward<T>(t)).*member_function_pointer);
+            static auto call(MemberType ClassType::*member_function_pointer, T &&t)
+                -> decltype(invoke_impl::get(forward<T>(t)).*member_function_pointer);
         };
 
-        template<
-            typename Function,
-            typename... Args,
-            typename FunctionDecay = decay_t<Function>>
+        template<typename Function, typename... Args, typename FunctionDecay = decay_t<Function>>
         auto run_invoke(Function &&function, Args &&...args)
             -> decltype(invoke_impl<FunctionDecay>::call(
                 forward<Function>(function),

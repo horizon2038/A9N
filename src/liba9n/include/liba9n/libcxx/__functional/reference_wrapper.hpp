@@ -14,12 +14,12 @@ namespace liba9n::std
         {
         }
 
-        reference_wrapper(reference_wrapper const &other) noexcept
+        reference_wrapper(const reference_wrapper &other) noexcept
             : pointer(other.pointer)
         {
         }
 
-        reference_wrapper &operator=(reference_wrapper const &other) noexcept
+        reference_wrapper &operator=(const reference_wrapper &other) noexcept
         {
             pointer = other.pointer;
             return *this;

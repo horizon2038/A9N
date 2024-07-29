@@ -4,11 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <kernel/types.hpp>
 #include <kernel/memory/memory_type.hpp>
+#include <kernel/types.hpp>
 
-#include <kernel/process/process.hpp>
 #include <hal/interface/memory_manager.hpp>
+#include <kernel/process/process.hpp>
 
 namespace a9n::kernel
 {

@@ -8,13 +8,13 @@ namespace a9n::hal::x86_64
 {
     namespace
     {
-        constexpr static uint8_t PIC_MASTER         = 0x20;
-        constexpr static uint8_t PIC_MASTER_COMMAND = 0x20;
-        constexpr static uint8_t PIC_MASTER_DATA    = 0x21;
-        constexpr static uint8_t PIC_SLAVE          = 0xa0;
-        constexpr static uint8_t PIC_SLAVE_COMMAND  = 0xa0;
-        constexpr static uint8_t PIC_SLAVE_DATA     = 0xa1;
-        constexpr static uint8_t PIC_EOI            = 0x20;
+        static constexpr uint8_t PIC_MASTER         = 0x20;
+        static constexpr uint8_t PIC_MASTER_COMMAND = 0x20;
+        static constexpr uint8_t PIC_MASTER_DATA    = 0x21;
+        static constexpr uint8_t PIC_SLAVE          = 0xa0;
+        static constexpr uint8_t PIC_SLAVE_COMMAND  = 0xa0;
+        static constexpr uint8_t PIC_SLAVE_DATA     = 0xa1;
+        static constexpr uint8_t PIC_EOI            = 0x20;
     }
 
     pic::pic() : _port_io()
@@ -96,7 +96,7 @@ namespace a9n::hal::x86_64
 
         if (irq_number > 8)
         {
-            port = PIC_SLAVE_DATA;
+            port        = PIC_SLAVE_DATA;
             irq_number -= 8;
         }
 
@@ -113,7 +113,7 @@ namespace a9n::hal::x86_64
 
         if (irq_number > 8)
         {
-            port = PIC_SLAVE_DATA;
+            port        = PIC_SLAVE_DATA;
             irq_number -= 8;
         }
 

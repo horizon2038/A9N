@@ -9,23 +9,23 @@
 namespace a9n
 {
     // architecture-dependent size
-    using word  = uintmax_t;
-    using sword = intmax_t;
+    using word                      = uintmax_t;
+    using sword                     = intmax_t;
 
-    constexpr static word BYTE_BITS = 8;
-    constexpr static word WORD_BITS = sizeof(word) * BYTE_BITS;
+    static constexpr word BYTE_BITS = 8;
+    static constexpr word WORD_BITS = sizeof(word) * BYTE_BITS;
 
-    using virtual_address  = word;
-    using physical_address = word;
+    using virtual_address           = word;
+    using physical_address          = word;
 
-    using virtual_pointer  = uintptr_t;
-    using physical_pointer = uintptr_t;
+    using virtual_pointer           = uintptr_t;
+    using physical_pointer          = uintptr_t;
 
-    using error = sword;
+    using error                     = sword;
 
-    constexpr static word PAGE_SIZE = 4096;
+    static constexpr word PAGE_SIZE = 4096;
 
-    using capability_descriptor = word;
+    using capability_descriptor     = word;
 }
 
 #else

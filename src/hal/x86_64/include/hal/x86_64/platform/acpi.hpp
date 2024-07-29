@@ -151,15 +151,14 @@ namespace a9n::hal::x86_64
 
     namespace ACPI_REGION
     {
-        constexpr static a9n::physical_address BIOS_MAIN_START = 0x000E0000;
-        constexpr static a9n::physical_address BIOS_MAIN_END   = 0x00100000;
-        constexpr static a9n::physical_address EBDA_SEGMENT    = 0x0000040E;
+        static constexpr a9n::physical_address BIOS_MAIN_START = 0x000E0000;
+        static constexpr a9n::physical_address BIOS_MAIN_END   = 0x00100000;
+        static constexpr a9n::physical_address EBDA_SEGMENT    = 0x0000040E;
     }
 
     namespace ACPI_MAGIC
     {
-        constexpr static char RSDP[8]
-            = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
+        static constexpr char RSDP[8] = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
     }
 
     namespace ACPI_STRUCTURES

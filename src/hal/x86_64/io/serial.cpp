@@ -1,16 +1,16 @@
 #include <hal/x86_64/io/serial.hpp>
 
-#include <hal/x86_64/io/port_io.hpp>
 #include <hal/interface/port_io.hpp>
+#include <hal/x86_64/io/port_io.hpp>
 
 #include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
 {
-    constexpr static uint16_t COM_1 = 0x3f8;
-    constexpr static uint16_t COM_2 = 0x2f8;
-    constexpr static uint16_t COM_3 = 0x3e8;
-    constexpr static uint16_t COM_4 = 0x2e8;
+    static constexpr uint16_t COM_1 = 0x3f8;
+    static constexpr uint16_t COM_2 = 0x2f8;
+    static constexpr uint16_t COM_3 = 0x3e8;
+    static constexpr uint16_t COM_4 = 0x2e8;
 
     serial::serial(a9n::hal::port_io &injected_port_io)
         : _port_io(injected_port_io)
