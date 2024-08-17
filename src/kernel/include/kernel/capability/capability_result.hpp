@@ -12,6 +12,7 @@ namespace a9n::kernel
         INVALID_DESCRIPTOR,
         INVALID_DEPTH,
         INVALID_ARGUMENT,
+        FATAL,
 
         DEBUG_UNIMPLEMENTED,
     };

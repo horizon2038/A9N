@@ -67,7 +67,8 @@ namespace a9n::kernel
         process();
         ~process();
 
-        // identifier
+        // TODO: remove this
+        //  identifier
         process_id id;
         char       name[PROCESS_NAME_MAX];
 
@@ -80,6 +81,7 @@ namespace a9n::kernel
         process *preview;
         process *next;
 
+        // TODO: remove this
         // hardware-context
         void *arch_context;
 
@@ -97,10 +99,11 @@ namespace a9n::kernel
         process *resolver;
 
         // [experimental] A9N::Gloria
+        struct hardware_context;
         capability_slot *root_slot;
-        // WARN: user-space address
-        // discuttion: Should it be re-configurable ?
-        ipc_buffer *ipc_buffer;
+        ipc_buffer      *buffer;
+        process         *next_ipc_queue;
+        process         *preview_ipc_queue;
 
       private:
     };

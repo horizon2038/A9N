@@ -14,8 +14,9 @@ namespace a9n::kernel
         // - destination_descriptor (sizeof(capability_descriptor))
         // - destination_depth      (sizeof(word))
         // - message_tag            (sizeof(message_tag))
+        // - message_size           (sizeof(message_tag))
         constexpr a9n::word max_length = a9n::PAGE_SIZE / a9n::WORD_BITS;
-        constexpr a9n::word reserved   = sizeof(a9n::word) * 3;
+        constexpr a9n::word reserved   = sizeof(a9n::word) * 4;
         return max_length - reserved;
     }
 
@@ -29,6 +30,7 @@ namespace a9n::kernel
         a9n::capability_descriptor destination_descriptor;
         a9n::word                  destination_depth;
         a9n::word                  message_tag;
+        a9n::word                  message_size;
         message_buffer_array       messages;
 
         // similar to std::get<auto Index>()

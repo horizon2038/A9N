@@ -12,9 +12,10 @@ namespace a9n::kernel
 {
     class capability_component;
 
-    struct capability_slot
+    struct alignas(a9n::WORD_BITS) capability_slot
     {
         capability_component *component;
+        a9n::word             authority;
 
         capability_slot_data data;
         dependency_node      family_node;

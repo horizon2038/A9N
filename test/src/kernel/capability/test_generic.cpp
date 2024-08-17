@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <kernel/ipc/ipc_buffer.hpp>
-#include <kernel/capability/generic.hpp>
-#include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/capability_node.hpp>
+#include <kernel/capability/generic.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
 
-#include <liba9n/capability/generic_operation.hpp>
 #include <kernel/types.hpp>
+#include <liba9n/capability/generic_operation.hpp>
 
 class generic_test : public ::testing::Test
 {
@@ -18,8 +18,7 @@ class generic_test : public ::testing::Test
     void SetUp() override
     {
         this->root_node_slot = new a9n::kernel::capability_slot[256];
-        this->root_node
-            = new a9n::kernel::capability_node(56, 8, root_node_slot);
+        this->root_node = new a9n::kernel::capability_node(56, 8, root_node_slot);
         this->root_slot.component = root_node;
         return;
     }
@@ -36,9 +35,9 @@ a9n::word calculate_generic_flags(bool is_device, a9n::word size_bits)
 {
     a9n::word generic_flags {};
 
-    generic_flags |= (is_device << 7);
-    auto size_bits_mask = (1 << 7) - 1;
-    generic_flags |= (size_bits & size_bits_mask);
+    generic_flags       |= (is_device << 7);
+    auto size_bits_mask  = (1 << 7) - 1;
+    generic_flags       |= (size_bits & size_bits_mask);
 
     return generic_flags;
 }
@@ -83,8 +82,7 @@ TEST_F(generic_test, generic_convert_generic_size_8_watermark_test)
     buffer.set_message(4, 0); // target apability_node desc
     buffer.set_message(5, 1); // target index
 
-    auto e
-        = generic_slot->component->execute(&buffer, generic_slot, &root_slot);
+    auto e = generic_slot->component->execute(&buffer, generic_slot, &root_slot);
 
     auto watermark = generic_slot->get_local_data(2);
     ASSERT_EQ(watermark, (0x1000 + 0x100));
