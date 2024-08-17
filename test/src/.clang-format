@@ -2,7 +2,12 @@ BasedOnStyle: WebKit
 AccessModifierOffset: -2
 AlignAfterOpenBracket: BlockIndent
 AlignArrayOfStructures: None
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true
 AlignConsecutiveBitFields: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: None
@@ -32,7 +37,28 @@ BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
 BreakStringLiterals: true
+
+# ColumnLimit Settings
 ColumnLimit: 80
+PenaltyBreakAssignment: 50
+PenaltyBreakBeforeFirstCallParameter: 30
+PenaltyBreakComment: 20
+PenaltyBreakString: 20
+PenaltyBreakOpenParenthesis: 30 
+PenaltyExcessCharacter: 10
+PenaltyReturnTypeOnItsOwnLine: 30
+# PenaltyBreakTemplateDeclaration: 20
+# for chaining lambda functions 
+PenaltyIndentedWhitespace: 4
+
+# Qualifer Settings
+# linkage > cvref > type
+QualifierAlignment: Custom
+QualifierOrder: ['inline', 'static', 'constexpr', 'const', 'volatile', 'type']
+
+# Separate Settings
+SeparateDefinitionBlocks: Always
+
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
@@ -55,11 +81,11 @@ LambdaBodyIndentation: Signature
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All
 PackConstructorInitializers: CurrentLine
-PenaltyExcessCharacter: 100
 PointerAlignment: Right
 ReferenceAlignment: Right
 ReflowComments: true
-SortIncludes: Never
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
 SortUsingDeclarations: false
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
