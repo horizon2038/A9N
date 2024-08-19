@@ -11,7 +11,7 @@ LIBDIR := ./library
 
 INCDIR := ../src/kernel/include
 INCDIR += ../src/hal/include
-INCDIR += ../src/hal/test
+INCDIR += ../src/hal/test/include
 INCDIR += ../src/liba9n/include
 INCDIR += ./src/include
 LIBINCDIR := ./library/include
@@ -35,7 +35,9 @@ $(info $(SRCS))
 
 CXX = clang++-16
 CXXFLAGS = -std=c++20 -O2 -Wall -Wextra -stdlib=libc++ -pthread -flto -fstrict-vtable-pointers
+# -fsanitize=address,undefined
 CXXTESTFLAGS = -lgtest_main -lgtest -lgmock_main -lgmock
+# -fsanitize=address,undefined
 
 CPPFLAGS = $(INCFLAGS) -MMD -MP
 
