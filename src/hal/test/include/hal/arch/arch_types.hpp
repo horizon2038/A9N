@@ -9,8 +9,10 @@ namespace a9n::hal
     inline constexpr a9n::word PAGE_SIZE = 0x1000; // 4096
 
     // no virtual-memory management
-    inline constexpr a9n::word KERNEL_VIRTUAL_BASE = 0x0;
-    inline constexpr a9n::word USER_VIRTUAL_BASE   = 0x0;
+    inline constexpr a9n::word KERNEL_VIRTUAL_BASE   = 0x0;
+    inline constexpr a9n::word USER_VIRTUAL_BASE     = 0x0;
+
+    inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 8;
 }
 
 #endif
