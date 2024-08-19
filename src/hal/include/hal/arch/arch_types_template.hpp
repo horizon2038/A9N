@@ -16,6 +16,8 @@ namespace a9n::hal
     inline constexpr a9n::word KERNEL_VIRTUAL_BASE = 0xFFFF800000000000;
     inline constexpr a9n::word USER_VIRTUAL_BASE   = 0x0000000000000000;
 
+    inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 64;
+
     */
 }
 
