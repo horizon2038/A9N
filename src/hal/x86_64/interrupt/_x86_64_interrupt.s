@@ -36,6 +36,30 @@ interrupt_handlers:
 %endrep
 
 interrupt_handler_common:
+    ;  current stack :
+    ;  +------+------------+----------+
+    ;  | 0x30 | ss         |          |
+    ;  | 0x28 | rsp        |          |
+    ;  | 0x20 | rflags     |          |
+    ;  | 0x18 | cs         | for cpl  |
+    ;  | 0x10 | rip        |          |
+    ;  | 0x08 | error code |          |
+    ;  | 0x00 | irq number | current  |
+    ;  +------+------------+----------+
+
+    ; `swapgs` must be used only for 
+    ; user -> kernel and kernel -> user.
+    ; in other words, `swapgs` are not allowed for
+    ; kernel -> kernel transitions.
+
+    ; the lower 2 bits of cs register represent the cpl (current privilege level).
+    ; to check the source of the transition,
+    ; take the cs register out of the interrupt frame and check if it's 3 (0b11).
+    test qword [rsp + 0x18], 3
+    jz interrupt_handler_entry
+    swapgs
+
+interrupt_handler_entry:
     xchg rdi, [rsp] ; push i (in stack-top) => rdi (1st argument)
     push r15
     push r14
@@ -71,11 +95,14 @@ interrupt_handler_common:
     pop r13
     pop r14
     pop r15
-    pop rdi
+    pop rdi ; same stack offset as irq number
     
-    add rsp, 8
+    add rsp, 8 ; same stack offset as error code
 
-    ; set current rsp to tss.rsp0
+    test qword [rsp + 8], 3
+    jz interrupt_handler_exit
+    swapgs
 
+interrupt_handler_exit:
     o64 iret
     
