@@ -89,7 +89,7 @@ interrupt_handler_common:
     ; `swapgs` absolutely must be executed only when transitioning from user!
     swapgs
 
-    ; at this point, the kernel stack from TSS.RSP0 is loaded into rsp.
+    ; at this point, the kernel stack from TSS.RSP0 is loaded into RSP.
     ; NOTE: error code and IRET Frame are loaded into kernel stack; not hardware_context.
     ; what we need to do is to load hardware_context into RSP and store registers into it.
     mov rsp, [gs:0x08]
@@ -217,11 +217,11 @@ _restore_user_context:
     mov rax, [gs:0x08]
 
     ; restore IRET Frame
-    push qword [rax + 0x08 * 19] ; ss
-    push qword [rax + 0x08 * 18] ; rsp
-    push qword [rax + 0x08 * 17] ; rflags
-    push qword [rax + 0x08 * 16] ; cs
-    push qword [rax + 0x08 * 15] ; rip
+    push qword [rax + 0x08 * 19] ; SS
+    push qword [rax + 0x08 * 18] ; RSP
+    push qword [rax + 0x08 * 17] ; RFLAGS
+    push qword [rax + 0x08 * 16] ; CS
+    push qword [rax + 0x08 * 15] ; RIP
 
     ; since we are going back to user from kernel, it is necessary to re-swap the swapped GS back.  
     swapgs
