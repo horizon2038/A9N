@@ -3,8 +3,8 @@ global _interrupt_handlers
 global _restore_kernel_context
 global _restore_user_context
 
-extern do_irq_from_user
 extern do_irq_from_kernel
+extern do_irq_from_user
 
 align 16
 _interrupt_handlers:
@@ -15,7 +15,6 @@ interrupt_handler_%+i:
     align 16
 
     ; Exception { 8, 10, 11, 12, 13, 14, 17, 21, 29, 30 }: with error code.
-    ; cf., wiki.osdev.org/Exceptions
     %if i == 8 || (10<= i && i <= 14) || i == 17 || i == 21 || i = 29 || i = 30
         ; error_code has been pushed.
     %else
@@ -33,25 +32,26 @@ interrupt_handler_%+i:
 interrupt_handler_common:
     ;  current kernel stack :
     ;  +-------+------------+---------+
-    ;  | +0x30 | ss         |         |
-    ;  | +0x28 | rsp        |         |
-    ;  | +0x20 | rflags     |         |
-    ;  | +0x18 | cs         | for cpl |
-    ;  | +0x10 | rip        |         |
+    ;  | +0x30 | SS         |         |
+    ;  | +0x28 | RSP        |         |
+    ;  | +0x20 | RFLAGS     |         |
+    ;  | +0x18 | CS         | for CPL |
+    ;  | +0x10 | RIP        |         |
     ;  | +0x08 | error code |         |
     ;  | +0x00 | irq number | current |
     ;  +-------+------------+---------+
     ; `swapgs` must be used only for user -> kernel and kernel -> user.
     ; in other words, `swapgs` are not allowed for kernel -> kernel transitions.
 
-    ; the lower 2 bits of cs register represent the cpl (current privilege level).
+    ; the lower 2 bits of CS register represent the CPL (current privilege level).
     ; to check the source of the transition,
-    ; take the cs register out of the interrupt frame and check if it's 3 (0b11).
+    ; take the CS register out of the IRET Frame and check if it's 3 (0b11).
     test qword [rsp + 0x18], 3
     jnz .from_user 
 
 .from_kernel:
-    ; idle rsp is 0
+    ; the RSP of IDLE is zero.
+    ; since IDLE has a context, it uses the same handler as user.
     cmp qword [rsp + 0x28], 0 
     jnz .from_user
 
@@ -72,39 +72,30 @@ interrupt_handler_common:
     push rax
 
     mov rdi, [rsp + 0x08 * 17] ; irq_number
-    ; and rdi, 0xff
     mov rsi, [rsp + 0x08 * 18] ; error_code
 
-    ; align 16-byte boundary
-    ; and rsp, qword -0x08
-    ; sub rsp, 0x10
-
+    ; align 16-byte boundary 
     and rsp, qword -0x10
     sub rsp, 8 ; for call (return address)
 
-    ; signature : void do_irq_from_kernel(irq_number, error_code)
+    ; void do_irq_from_kernel(irq_number, error_code)
     call do_irq_from_kernel
 
     add rsp, 0x10
 
     ; unreachable
 
-.from_kernel_with_context:
-
-
 .from_user:
-    ; swapgs absolutely must be executed only when transitioning from user!
+    ; `swapgs` absolutely must be executed only when transitioning from user!
     swapgs
 
-    ; at this point, the kernel stack from tss.rsp0 is loaded into rsp.
-    ; NOTE: error codes and iret frames are loaded into kernel stack; not hardware_context.
-    ; what we need to do is to load hardware_context into rsp and store registers into it.
-    ; load hardware_context
+    ; at this point, the kernel stack from TSS.RSP0 is loaded into rsp.
+    ; NOTE: error code and IRET Frame are loaded into kernel stack; not hardware_context.
+    ; what we need to do is to load hardware_context into RSP and store registers into it.
     mov rsp, [gs:0x08]
 
     ; need to reserve register space.
     add rsp, 0x08 * 15 
-    ; lea rsp, [gs:0x08 + 0x08 * 15]
 
     ; these are saved to hardware_context
     push r15
@@ -123,31 +114,33 @@ interrupt_handler_common:
     push rbx
     push rax
 
-    ; in order to move iret frame from kernel_stack to hardware_context,
-    ; load the address to kernel_stack to rax insted of rsp.
+    ; in order to move IRET Frame from kernel_stack to hardware_context,
+    ; load the address to kernel_stack to RAX insted of RSP.
     mov rax, [gs:0x00]
 
     ; configure stack offset : sizeof(registers) + sizeof(iret_frame) + sizeof(segment_base)
     add rsp, 0x08 * 22 
 
-    ; switch to user segment
+    ; switch to user segment base
     swapgs
 
-    ; save segment base
+    ; save user segment base
     rdgsbase rbx 
     push rbx
     rdfsbase rbx
     push rbx
 
+    ; switch to kernel segment base
     swapgs
 
-    ; save iret frame
-    ; push qword [rax - 0x00] ; ss
-    push qword [rax - 0x08] ; ss
-    push qword [rax - 0x10] ; rsp
-    push qword [rax - 0x18] ; rflags
-    push qword [rax - 0x20] ; cs
-    push qword [rax - 0x28] ; rip
+    ; save IRET Frame 
+    ; `push` decrements the RSP and then stores the value !
+    ; therefore, SS becomes [rax - 0x08] instead of [rax - 0x00] !
+    push qword [rax - 0x08] ; SS
+    push qword [rax - 0x10] ; RSP
+    push qword [rax - 0x18] ; RFLAGS
+    push qword [rax - 0x20] ; CS
+    push qword [rax - 0x28] ; RIP
 
     mov rsi, [rax - 0x30] ; irq_number
     mov rdi, [rax - 0x38] ; error_code 
@@ -155,14 +148,11 @@ interrupt_handler_common:
     ; use kernel_stack since do_irq
     mov rsp, [gs:0x00]
 
-    ; sub rsp, 0x08
-    ; and rsp, qword -0x08
-
     ; align 16-byte boundary
     and rsp, qword -0x10
     sub rsp, 8 ; for call (return address)
 
-    ; signature : void do_irq_from_user(irq_number, error_code)
+    ; void do_irq_from_user(irq_number, error_code)
     call do_irq_from_user
 
     add rsp, 0x08
@@ -171,7 +161,8 @@ interrupt_handler_common:
 
 _restore_kernel_context:
     mov rsp, [gs:0x00]
-    add rsp, 0x08 * 7 ; skip ss, rsp, rflags, cs, rip, error_code, irq_number
+    ; skip SS, RSP, RFLAGS, CS, RIP, error_code, irq_number
+    add rsp, 0x08 * 7
     pop rax
     pop rbx
     pop rcx
@@ -225,14 +216,14 @@ _restore_user_context:
     mov rsp, [gs:0x00]
     mov rax, [gs:0x08]
 
-    ; restore iret frame
+    ; restore IRET Frame
     push qword [rax + 0x08 * 19] ; ss
     push qword [rax + 0x08 * 18] ; rsp
     push qword [rax + 0x08 * 17] ; rflags
     push qword [rax + 0x08 * 16] ; cs
     push qword [rax + 0x08 * 15] ; rip
 
-    ; since we are going back to user from kernel, it is necessary to re-swap the swapped gs back.  
+    ; since we are going back to user from kernel, it is necessary to re-swap the swapped GS back.  
     swapgs
 
     o64 iret
