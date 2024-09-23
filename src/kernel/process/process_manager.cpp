@@ -70,6 +70,32 @@ namespace a9n::kernel
         current_process->preview = temp_process;
     }
 
+    void process_manager::create_idle_process()
+    {
+        process *idle_process = &process_list[0];
+        init_process(idle_process, 0, "idle", 0);
+        _process_manager.create_idle_process(&process_list[0]);
+        current_process->status = process_status::READY;
+
+        utility::logger::printk("create idle\n");
+
+        // test priority-scheduling
+        a9n::sword priority = current_process->priority;
+        if (priority_groups[priority] == nullptr)
+        {
+            priority_groups[priority] = current_process;
+            return;
+        }
+
+        process *temp_process = priority_groups[priority];
+        while (temp_process->next != nullptr)
+        {
+            temp_process = temp_process->next;
+        }
+        temp_process->next       = current_process;
+        current_process->preview = temp_process;
+    }
+
     void process_manager::init_process(
         process             *process,
         process_id           target_process_id,
@@ -80,11 +106,18 @@ namespace a9n::kernel
         process->id = target_process_id;
         liba9n::std::strcpy(process->name, process_name);
 
-        process->status   = process_status::BLOCKED;
-        process->priority = 0;
-        process->quantum  = QUANTUM_MAX;
+        process->status = process_status::BLOCKED;
+        if (liba9n::std::strcmp(process_name, "idle") == 0)
+        {
+            process->priority = -10;
+        }
+        else
+        {
+            process->priority = 0;
+        }
+        process->quantum = QUANTUM_MAX;
 
-        liba9n::std::memset(process->stack, 0, STACK_SIZE_MAX);
+        // liba9n::std::memset(process->stack, 0, STACK_SIZE_MAX);
         kernel_object::memory_manager->init_virtual_memory(process);
     }
 
@@ -118,7 +151,13 @@ namespace a9n::kernel
             return;
         }
 
+        if (next_process != current_process)
+        {
+            a9n::kernel::utility::logger::printk("switch to %s\n", next_process->name);
+        }
+
         current_process = next_process;
+
         _process_manager.switch_context(temp_current_process, next_process);
     }
 
@@ -130,5 +169,10 @@ namespace a9n::kernel
         }
 
         return &process_list[target_process_id];
+    }
+
+    process *process_manager::retrieve_current_process()
+    {
+        return current_process;
     }
 }

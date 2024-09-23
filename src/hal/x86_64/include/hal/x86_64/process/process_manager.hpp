@@ -14,14 +14,19 @@ namespace a9n::hal::x86_64
       public:
         process_manager();
         ~process_manager();
+
         void switch_context(
             a9n::kernel::process *preview_process,
             a9n::kernel::process *next_process
         ) override;
+
         void create_process(
             a9n::kernel::process *target_process,
             a9n::virtual_address  entry_point_address
         ) override;
+
+        void create_idle_process(a9n::kernel::process *target_process) override;
+
         void delete_process(a9n::kernel::process *target_process) override;
 
       private:

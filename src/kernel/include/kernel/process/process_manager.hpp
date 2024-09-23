@@ -28,6 +28,9 @@ namespace a9n::kernel
             const char          *process_name,
             a9n::virtual_address entry_point_address
         );
+
+        void create_idle_process();
+
         void init_process(
             process             *process,
             process_id           target_process_id,
@@ -38,6 +41,8 @@ namespace a9n::kernel
         void switch_context();
 
         process *search_process_from_id(process_id target_process_id);
+
+        process *retrieve_current_process();
 
       private:
         process  process_list[PROCESS_COUNT_MAX];

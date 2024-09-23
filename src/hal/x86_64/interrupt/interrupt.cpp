@@ -10,15 +10,46 @@ namespace a9n::hal::x86_64
     extern "C" void _enable_interrupt_all();
     extern "C" void _disable_interrupt_all();
 
+    // size of interrupt handler (cf., _x86_64_interrupt.s)
     using interrupt_handler_asm = uint8_t[16];
-    extern "C" interrupt_handler_asm interrupt_handlers[];
+    extern "C" interrupt_handler_asm _interrupt_handlers[];
 
-    extern "C" void do_irq(uint16_t irq_number, uint64_t error_code)
+    extern "C" [[noreturn]] void _restore_kernel_context();
+    extern "C" [[noreturn]] void _restore_user_context();
+
+    extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code)
     {
-        // a9n::kernel::utility::logger::printk("irq_number : %d\n", irq_number);
-        bool        is_exception   = false;
+        a9n::kernel::utility::logger::printk("uwu\n");
         const char *exception_type = get_exception_type_string(irq_number);
 
+        switch (irq_number)
+        {
+            case 0 :
+                a9n::kernel::utility::logger::printk(
+                    "[kernel -> kernel] exception [%2d] : %s : %llu\n",
+                    static_cast<int>(irq_number),
+                    exception_type,
+                    error_code
+                );
+                interrupt_handler_table[irq_number]();
+                break;
+
+            default :
+                a9n::kernel::utility::logger::printk(
+                    "[kernel -> kernel] exception [%2d] : %s : %llu\n",
+                    static_cast<int>(irq_number),
+                    exception_type,
+                    error_code
+                );
+                for (;;)
+                    ;
+        }
+
+        _restore_kernel_context();
+    }
+
+    extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code)
+    {
         switch (irq_number)
         {
             case 0 :
@@ -26,13 +57,21 @@ namespace a9n::hal::x86_64
                 break;
 
             default :
+                /*
+                const char *exception_type =
+                get_exception_type_string(irq_number);
                 a9n::kernel::utility::logger::printk(
-                    "exception [%2d] : %s : %llu\n",
-                    irq_number,
+                    "[user -> kernel] exception [%2d] : %s : %llu\n",
+                    static_cast<int>(irq_number),
                     exception_type,
                     error_code
                 );
+                */
+                interrupt_handler_table[irq_number]();
+                break;
         }
+
+        _restore_user_context();
     }
 
     interrupt::interrupt() : _pic()
@@ -57,7 +96,7 @@ namespace a9n::hal::x86_64
         {
             register_idt_handler(
                 i,
-                (a9n::hal::interrupt_handler)&interrupt_handlers[i]
+                (a9n::hal::interrupt_handler)&_interrupt_handlers[i]
             );
         }
     }
@@ -82,7 +121,7 @@ namespace a9n::hal::x86_64
         idt_entry->offset_low  = interrupt_handler_address & 0xffff;
         idt_entry->kernel_cs   = 0x08; // kernel code segment
         idt_entry->ist         = 0;
-        idt_entry->type        = INTERRUPT_GATE | PRESENT;
+        idt_entry->type        = INTERRUPT_GATE | PRESENT | DPL_3;
         idt_entry->offset_mid  = (interrupt_handler_address >> 16) & 0xffff;
         idt_entry->offset_high = (interrupt_handler_address >> 32) & 0xffffffff;
         idt_entry->reserved    = 0;
