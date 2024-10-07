@@ -1,15 +1,27 @@
 section .text
-global _read, _write
+global _port_read_8, _port_write_8
+global _port_read_32, _port_write_32
 
-_read:
+_port_read_8:
     mov rdx, rdi
     in ax, dx
     nop
     ret
 
-_write:
+_port_write_8:
     mov rdx, rdi
     mov rax, rsi
     out dx, ax
     nop
+    ret
+
+_port_read_32:
+    mov rdx, rdi
+    in eax, dx
+    ret
+
+_port_write_32:
+    mov rdx, rdi
+    mov rax, rsi
+    out dx, eax
     ret

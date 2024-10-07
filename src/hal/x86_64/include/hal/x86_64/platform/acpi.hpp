@@ -1,6 +1,7 @@
 #ifndef HAL_X86_64_ACPI_HPP
 #define HAL_X86_64_ACPI_HPP
 
+#include <hal/hal_result.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
@@ -49,16 +50,7 @@ namespace a9n::hal::x86_64
 
     } __attribute__((packed));
 
-    struct generic_address_structure
-    {
-        uint8_t  address_space;
-        uint8_t  bit_width;
-        uint8_t  bit_offset;
-        uint8_t  access_size;
-        uint64_t address;
-    } __attribute__((packed));
-
-    enum class GENERIC_ADDRESS_SPACE_TYPE : uint8_t
+    enum class generic_address_space_type : uint8_t
     {
         SYSTEM_MEMORY                                  = 0x00,
         SYSTEM_IO                                      = 0x01,
@@ -71,20 +63,80 @@ namespace a9n::hal::x86_64
         GENERAL_PURPOSE_IO                             = 0x08,
         GENERIC_SERIAL_BUS                             = 0x09,
         PLATFORM_COMMUNICATION_CHANNEL                 = 0x0A,
+        PLATFORM_RUNTIME_MECHANISM                     = 0x0B,
+        // 0x0C to 0x7E is reserved
+        FUNCTIONAL_FIXED_HARDWARE = 0x7F,
+        // 0x80 to 0xFF is oem defined
     };
 
-    enum class GENERIC_ADDRESS_ACCESS_SIZE : uint8_t
+    enum class generic_address_access_size : uint8_t
     {
         UNDEFINED     = 0x00,
-        BYTE_ACCESS   = 0x01,
-        BIT_16_ACCESS = 0x02,
-        BIT_32_ACCESS = 0x03,
-        BIT_64_ACCESS = 0x04,
+        BYTE_1_ACCESS = 0x01,
+        BYTE_2_ACCESS = 0x02,
+        BYTE_4_ACCESS = 0x03,
+        BYTE_8_ACCESS = 0x04,
     };
+
+    struct generic_address_structure
+    {
+        generic_address_space_type  address_space;
+        uint8_t                     bit_width;
+        uint8_t                     bit_offset;
+        generic_address_access_size access_size;
+        uint64_t                    address;
+    } __attribute__((packed));
+
+    struct madt
+    {
+        sdt_header header;
+        uint32_t   local_apic_address;
+        uint32_t   flags;
+    } __attribute__((packed));
+
+    struct madt_entry_header
+    {
+        uint8_t type;
+        uint8_t length;
+    } __attribute__((packed));
+
+    enum class madt_entry_type
+    {
+        LOCAL_APIC                    = 0,
+        IO_APIC                       = 1,
+        INTERRUPT_SOURCE_OVERRIDE     = 2,
+        NON_MASKABLE_INTERRUPT_SOURCE = 3,
+        LOCAL_APIC_NMI                = 4,
+        LOCAL_APIC_ADDRESS_OVERRIDE   = 5,
+        IO_SAPIC                      = 6,
+        LOCAL_SAPIC                   = 7,
+        PLATFORM_INTERRUPT_SOURCES    = 8,
+        PROCESSOR_LOCAL_X2APIC        = 9,
+        LOCAL_X2APIC_NMI              = 10,
+    };
+
+    struct madt_local_apic
+    {
+        uint8_t  type;
+        uint8_t  length;
+        uint8_t  acpi_processor_id;
+        uint8_t  apic_id;
+        uint32_t flags;
+    } __attribute__((packed));
+
+    struct madt_io_apic
+    {
+        uint8_t  type;
+        uint8_t  length;
+        uint8_t  io_apic_id;
+        uint8_t  reserved;
+        uint32_t io_apic_address;
+        uint32_t global_system_interrupt_base;
+    } __attribute__((packed));
 
     struct fadt
     {
-        sdt_header header;
+        sdt_header header; // 36 byte
         uint32_t   firmware_control;
         uint32_t   dsdt;
 
@@ -142,26 +194,26 @@ namespace a9n::hal::x86_64
         generic_address_structure x_pm1a_event_block;
         generic_address_structure x_pm1b_event_block;
         generic_address_structure x_pm1a_control_block;
-        generic_address_structure x_pm1_bcontrol_block;
+        generic_address_structure x_pm1b_bcontrol_block;
         generic_address_structure x_pm2_control_block;
         generic_address_structure x_pm_timer_block;
         generic_address_structure x_gpe0_block;
         generic_address_structure x_gpe1_block;
     } __attribute__((packed));
 
-    namespace ACPI_REGION
+    namespace acpi_region
     {
         static constexpr a9n::physical_address BIOS_MAIN_START = 0x000E0000;
         static constexpr a9n::physical_address BIOS_MAIN_END   = 0x00100000;
         static constexpr a9n::physical_address EBDA_SEGMENT    = 0x0000040E;
     }
 
-    namespace ACPI_MAGIC
+    namespace acpi_magic
     {
         static constexpr char RSDP[8] = { 'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ' };
     }
 
-    namespace ACPI_STRUCTURES
+    namespace acpi_structures
     {
         inline static rsdp *rsdp_pointer;
         inline static xsdt *xsdt_pointer;
@@ -170,16 +222,28 @@ namespace a9n::hal::x86_64
     class acpi_configurator
     {
       public:
-        acpi_configurator();
-        ~acpi_configurator();
-
-        void init_acpi(a9n::virtual_address rsdp_address);
+        void init(a9n::virtual_address rsdp_address);
+        liba9n::result<rsdp *, hal_error>       current_rsdp();
+        liba9n::result<sdt_header *, hal_error> current_rsdt();
+        liba9n::result<xsdt *, hal_error>       current_xsdt();
+        liba9n::result<fadt *, hal_error>       current_fadt();
+        liba9n::result<madt *, hal_error>       current_madt();
+        liba9n::result<sdt_header *, hal_error> current_hpet();
 
       private:
         bool validate_rsdp(a9n::virtual_address rsdp_address);
         void print_rsdp_info(rsdp *target_rsdp);
         void print_sdt_header_info(sdt_header *header);
+
+        rsdp       *rsdp_address;
+        sdt_header *rsdt_address;
+        xsdt       *xsdt_address;
+        fadt       *fadt_address;
+        madt       *madt_address;
+        sdt_header *hpet_address;
     };
+
+    inline acpi_configurator acpi_core {};
 
 }
 

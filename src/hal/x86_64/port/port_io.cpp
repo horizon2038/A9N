@@ -2,16 +2,34 @@
 
 namespace a9n::hal::x86_64
 {
-    extern "C" uint8_t _read(uint16_t address);
-    extern "C" void    _write(uint16_t address, uint8_t data);
 
     uint8_t port_io::read(uint16_t address)
     {
-        return _read(address);
+        return _port_read_8(address);
     }
 
     void port_io::write(uint16_t address, uint8_t data)
     {
-        _write(address, data);
+        _port_write_8(address, data);
+    }
+
+    uint8_t port_read_8(uint16_t address)
+    {
+        return _port_read_8(address);
+    }
+
+    void port_write_8(uint16_t address, uint8_t data)
+    {
+        _port_write_8(address, data);
+    }
+
+    uint32_t port_read_32(uint16_t address)
+    {
+        return _port_read_32(address);
+    }
+
+    void port_write_32(uint16_t address, uint32_t data)
+    {
+        _port_write_32(address, data);
     }
 }

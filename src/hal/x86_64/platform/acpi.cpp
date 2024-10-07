@@ -1,7 +1,10 @@
 #include <hal/x86_64/platform/acpi.hpp>
+
+#include "kernel/memory/memory.hpp"
+#include <hal/hal_result.hpp>
+#include <hal/x86_64/arch/arch_types.hpp>
 #include <kernel/types.hpp>
 
-#include <hal/x86_64/arch/arch_types.hpp>
 #include <kernel/utility/logger.hpp>
 #include <liba9n/libc/string.hpp>
 
@@ -20,57 +23,75 @@ namespace a9n::hal::x86_64
     sdt_header *xsdt::search_sdt_header(uint32_t count)
     {
         a9n::virtual_address *sdt_address_table = calculate_table_head();
-        a9n::virtual_address  sdt_virtual_address
-            = convert_physical_to_virtual_address(sdt_address_table[count]);
-        return reinterpret_cast<sdt_header *>(sdt_virtual_address);
+        return a9n::kernel::physical_to_virtual_pointer<sdt_header>(
+            sdt_address_table[count]
+        );
     }
 
     a9n::virtual_address *xsdt::calculate_table_head()
     {
-        return reinterpret_cast<a9n::virtual_address *>(convert_physical_to_virtual_address(
+        return a9n::kernel::physical_to_virtual_pointer<a9n::virtual_address>(
             reinterpret_cast<a9n::physical_address>(this) + (sizeof(uint8_t) * 36)
-        ));
+        );
     }
 
-    acpi_configurator::acpi_configurator() {};
-    acpi_configurator::~acpi_configurator() {};
-
-    void acpi_configurator::init_acpi(a9n::virtual_address rsdp_address)
+    void acpi_configurator::init(a9n::virtual_address initial_rsdp_address)
     {
-        a9n::kernel::utility::logger::printk("init acpi\n");
-        if (!validate_rsdp(rsdp_address))
+        a9n::kernel::utility::logger::printk("init ACPI\n");
+
+        if (!validate_rsdp(initial_rsdp_address))
         {
-            a9n::kernel::utility::logger::printk("rsdp is invalid\n");
+            a9n::kernel::utility::logger::printk("RSDP is invalid\n");
             return;
         }
-        a9n::kernel::utility::logger::printk("rsdp is valid\n");
 
-        auto rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
+        auto rsdp_pointer = reinterpret_cast<rsdp *>(initial_rsdp_address);
         print_rsdp_info(rsdp_pointer);
 
-        xsdt *xsdt_pointer = reinterpret_cast<xsdt *>(
-            convert_physical_to_virtual_address(rsdp_pointer->xsdt_address)
+        xsdt *xsdt_pointer = a9n::kernel::physical_to_virtual_pointer<xsdt>(
+            (rsdp_pointer->xsdt_address)
         );
         a9n::kernel::utility::logger::split();
         print_sdt_header_info(&xsdt_pointer->header);
+
+        rsdt_address = a9n::kernel::physical_to_virtual_pointer<sdt_header>(
+            rsdp_pointer->rsdt_address
+        );
+        xsdt_address = xsdt_pointer;
 
         for (auto i = 0; i < xsdt_pointer->count(); i++)
         {
             sdt_header *header = xsdt_pointer->search_sdt_header(i);
             print_sdt_header_info(header);
+
             if (header->validate_sdt_signature("FACP"))
             {
-                a9n::kernel::utility::logger::printk("\e[32mFACP found!\e[0m\n");
-                a9n::kernel::utility::logger::split();
+                fadt_address = reinterpret_cast<fadt *>(header);
+                a9n::kernel::utility::logger::printk("configure FADT address\n");
+                continue;
+            }
+
+            if (header->validate_sdt_signature("APIC"))
+            {
+                madt_address = reinterpret_cast<madt *>(header);
+                a9n::kernel::utility::logger::printk("configure MADT address\n");
+                continue;
+            }
+
+            if (header->validate_sdt_signature("HPET"))
+            {
+                hpet_address = header;
+                a9n::kernel::utility::logger::printk("configure HPET address\n");
+                continue;
             }
         }
     };
 
-    bool acpi_configurator::validate_rsdp(a9n::virtual_address rsdp_address)
+    bool acpi_configurator::validate_rsdp(a9n::virtual_address init_rsdp_address)
     {
-        rsdp *rsdp_pointer = reinterpret_cast<rsdp *>(rsdp_address);
+        rsdp *rsdp_pointer = reinterpret_cast<rsdp *>(init_rsdp_address);
         return (
-            liba9n::std::memcmp(rsdp_pointer->signature, ACPI_MAGIC::RSDP, 8) == 0
+            liba9n::std::memcmp(rsdp_pointer->signature, acpi_magic::RSDP, 8) == 0
         );
     }
 
@@ -154,4 +175,63 @@ namespace a9n::hal::x86_64
         a9n::kernel::utility::logger::split();
     };
 
+    liba9n::result<rsdp *, hal_error> acpi_configurator::current_rsdp()
+    {
+        if (!rsdp_address)
+        {
+            return hal_error::NO_SUCH_ADDRESS;
+        }
+
+        return rsdp_address;
+    }
+
+    liba9n::result<sdt_header *, hal_error> acpi_configurator::current_rsdt()
+    {
+        if (!rsdt_address)
+        {
+            return hal_error::NO_SUCH_ADDRESS;
+        }
+
+        return rsdt_address;
+    }
+
+    liba9n::result<xsdt *, hal_error> acpi_configurator::current_xsdt()
+    {
+        if (!xsdt_address)
+        {
+            return hal_error::NO_SUCH_ADDRESS;
+        }
+
+        return xsdt_address;
+    }
+
+    liba9n::result<fadt *, hal_error> acpi_configurator::current_fadt()
+    {
+        if (!fadt_address)
+        {
+            return hal_error::NO_SUCH_ADDRESS;
+        }
+
+        return fadt_address;
+    }
+
+    liba9n::result<madt *, hal_error> acpi_configurator::current_madt()
+    {
+        if (!madt_address)
+        {
+            return hal_error::NO_SUCH_ADDRESS;
+        }
+
+        return madt_address;
+    }
+
+    liba9n::result<sdt_header *, hal_error> acpi_configurator::current_hpet()
+    {
+        if (!hpet_address)
+        {
+            return hal_error::NO_SUCH_ADDRESS;
+        }
+
+        return hpet_address;
+    }
 }
