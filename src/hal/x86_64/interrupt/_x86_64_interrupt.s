@@ -14,6 +14,9 @@ _interrupt_handlers:
 interrupt_handler_%+i:
     align 16
 
+    ; stop interrupt
+    cli
+
     ; Exception { 8, 10, 11, 12, 13, 14, 17, 21, 29, 30 }: with error code.
     %if i == 8 || (10<= i && i <= 14) || i == 17 || i == 21 || i = 29 || i = 30
         ; error_code has been pushed.
@@ -50,10 +53,8 @@ interrupt_handler_common:
     jnz .from_user 
 
 .from_kernel:
-    ; the RSP of IDLE is zero.
-    ; since IDLE has a context, it uses the same handler as user.
-    cmp qword [rsp + 0x28], 0 
-    jnz .from_user
+    ; cmp qword [rsp + 0x28], 0 
+    ; jnz .from_user
 
     push r15
     push r14
@@ -71,8 +72,8 @@ interrupt_handler_common:
     push rbx
     push rax
 
-    mov rdi, [rsp + 0x08 * 17] ; irq_number
-    mov rsi, [rsp + 0x08 * 18] ; error_code
+    mov rdi, [rsp + 0x08 * 15] ; irq_number
+    mov rsi, [rsp + 0x08 * 16] ; error_code
 
     ; align 16-byte boundary 
     and rsp, qword -0x10
@@ -125,9 +126,9 @@ interrupt_handler_common:
     swapgs
 
     ; save user segment base
-    rdgsbase rbx 
-    push rbx
     rdfsbase rbx
+    push rbx
+    rdgsbase rbx 
     push rbx
 
     ; switch to kernel segment base
@@ -142,15 +143,15 @@ interrupt_handler_common:
     push qword [rax - 0x20] ; CS
     push qword [rax - 0x28] ; RIP
 
-    mov rsi, [rax - 0x30] ; irq_number
-    mov rdi, [rax - 0x38] ; error_code 
+    mov rdi, [rax - 0x38] ; irq_number 
+    and rdi, 0xFF
+    mov rsi, [rax - 0x30] ; error_code
 
     ; use kernel_stack since do_irq
     mov rsp, [gs:0x00]
 
     ; align 16-byte boundary
     and rsp, qword -0x10
-    sub rsp, 8 ; for call (return address)
 
     ; void do_irq_from_user(irq_number, error_code)
     call do_irq_from_user
@@ -162,7 +163,7 @@ interrupt_handler_common:
 _restore_kernel_context:
     mov rsp, [gs:0x00]
     ; skip SS, RSP, RFLAGS, CS, RIP, error_code, irq_number
-    add rsp, 0x08 * 7
+    add rsp, 0x08 * 8
     pop rax
     pop rbx
     pop rcx
@@ -190,9 +191,9 @@ _restore_user_context:
 
     swapgs
     ; restore segment base
-    lea rbx, [rsp + 0x08 * 20]
+    mov rbx, [rsp + 0x08 * 20]
     wrgsbase rbx
-    lea rbx, [rsp + 0x08 * 21]
+    mov rbx, [rsp + 0x08 * 21]
     wrfsbase rbx
     swapgs
 
