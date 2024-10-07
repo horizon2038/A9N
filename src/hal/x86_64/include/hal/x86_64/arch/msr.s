@@ -8,7 +8,7 @@ _write_msr:
     ; rsi = value
     mov ecx, edi
     mov eax, esi
-    mov edx, esi
+    mov rdx, rsi
     shr rdx, 32
     wrmsr
     ret
