@@ -15,9 +15,9 @@ namespace a9n::hal::x86_64
         inline constexpr uint32_t APIC_BASE_BSP = 0x100;
 
         inline constexpr uint32_t EFER          = 0xC0000080;
-        inline constexpr uint32_t STAR          = 0xc0000082;
-        inline constexpr uint32_t LSTAR         = 0xc0000083;
-        inline constexpr uint32_t CSTAR         = 0xc0000084;
+        inline constexpr uint32_t STAR          = 0xc0000081;
+        inline constexpr uint32_t LSTAR         = 0xc0000082;
+        inline constexpr uint32_t CSTAR         = 0xc0000083;
         inline constexpr uint32_t SFMASK        = 0xc0000084;
     }
 
