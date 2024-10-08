@@ -2,7 +2,7 @@
 
 # A9N microkernel
 
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 ![LLVM](https://img.shields.io/badge/ASM-00599C?style=for-the-badge&logoColor=white)
 ![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
@@ -10,7 +10,7 @@
 ![LLVM](https://img.shields.io/badge/llvm-00599C?style=for-the-badge&logo=llvm&logoColor=white)
 ![EDK2](https://img.shields.io/badge/%2Aedk2-00599C?style=for-the-badge&logoColor=white)
 
-A9N is a **capability-based microkernel** that supports a variety of hardware platforms through appropriate **HAL**.  
+A9N is a **Capability-Based Microkernel** that supports a variety of hardware platforms through appropriate **HAL**.  
 It is implemented with an object-oriented interface, making it easy to use and extend.  
 It combines high portability, stability, and scalability.
 
