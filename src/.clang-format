@@ -39,7 +39,7 @@ BreakInheritanceList: BeforeComma
 BreakStringLiterals: true
 
 # ColumnLimit Settings
-ColumnLimit: 80
+ColumnLimit: 100
 PenaltyBreakAssignment: 50
 PenaltyBreakBeforeFirstCallParameter: 30
 PenaltyBreakComment: 20
