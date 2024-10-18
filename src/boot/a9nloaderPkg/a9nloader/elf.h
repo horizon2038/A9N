@@ -56,4 +56,28 @@ typedef struct
 #define PT_PHDR 6
 #define PT_TLS 7
 
+typedef struct
+{
+    elf64_word    name;
+    elf64_word    type;
+    elf64_xword   flags;
+    elf64_address virtual_address;
+    elf64_offset  offset;
+    elf64_xword   size;
+    elf64_word    link;
+    elf64_word    info;
+    elf64_xword   alignment;
+    elf64_xword   entry_size;
+} elf64_section_header;
+
+typedef struct
+{
+    elf64_word    name;
+    unsigned char info;
+    unsigned char other;
+    elf64_half    section_header_index;
+    elf64_address value;
+    elf64_xword   size;
+} elf64_symbol;
+
 #endif
