@@ -5,6 +5,16 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Uefi.h>
 
-EFI_STATUS open_kernel(EFI_HANDLE, EFI_FILE_PROTOCOL **, EFI_FILE_PROTOCOL **);
+EFI_STATUS open_kernel(
+    EFI_HANDLE          image_handle,
+    EFI_FILE_PROTOCOL **root_directory,
+    EFI_FILE_PROTOCOL **kernel_file
+);
+
+EFI_STATUS open_init_server(
+    EFI_HANDLE          image_handle,
+    EFI_FILE_PROTOCOL **root_directory,
+    EFI_FILE_PROTOCOL **init_server_file
+);
 
 #endif

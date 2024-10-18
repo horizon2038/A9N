@@ -19,13 +19,28 @@ static EFI_STATUS get_root_directory(
 );
 
 EFI_STATUS
-open_kernel(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory, EFI_FILE_PROTOCOL **kernel)
+open_kernel(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root_directory, EFI_FILE_PROTOCOL **kernel_file)
 {
     EFI_STATUS efi_status;
 
     efi_status = open_root_directory(image_handle, root_directory);
     (*root_directory)
-        ->Open(*root_directory, kernel, u"kernel\\kernel.elf", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+        ->Open(*root_directory, kernel_file, u"kernel\\kernel.elf", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    return efi_status;
+}
+
+EFI_STATUS
+open_init_server(
+    EFI_HANDLE          image_handle,
+    EFI_FILE_PROTOCOL **root_directory,
+    EFI_FILE_PROTOCOL **init_server_file
+)
+{
+    EFI_STATUS efi_status;
+
+    efi_status = open_root_directory(image_handle, root_directory);
+    (*root_directory)
+        ->Open(*root_directory, init_server_file, u"kernel\\init.elf", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
     return efi_status;
 }
 
