@@ -19,14 +19,21 @@
 #include "uefi_boot_info_configurator.h"
 #include "uefi_memory_map.h"
 
-EFI_STATUS EFIAPI
-    efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
+EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
 {
-    EFI_STATUS         efi_status = EFI_SUCCESS;
-    EFI_FILE_PROTOCOL *root_directory;
-    EFI_FILE_PROTOCOL *kernel;
-    uint64_t           entry_point_address = 0;
+    EFI_STATUS efi_status = EFI_SUCCESS;
 
+    EFI_FILE_PROTOCOL *root_directory;
+
+    // kernel
+    EFI_FILE_PROTOCOL *kernel;
+    uint64_t           kernel_entry_point = 0;
+
+    // init server
+    EFI_FILE_PROTOCOL *init_server;
+    // uint64_t           init_server_entry_point = 0;
+
+    // common
     uefi_memory_map target_uefi_memory_map;
     boot_info       target_boot_info;
 
@@ -36,39 +43,58 @@ EFI_STATUS EFIAPI
     Print(L"[ RUN ] efi_main\r\n");
     Print(L"\r\n");
 
+    // open and load kernel
     efi_status = open_kernel(image_handle, &root_directory, &kernel);
     if (EFI_ERROR(efi_status))
     {
         return efi_status;
     }
+
     efi_status = print_file_info(&kernel);
     if (EFI_ERROR(efi_status))
     {
         return efi_status;
     }
-    efi_status = load_kernel(kernel, &entry_point_address);
+
+    efi_status = load_kernel(kernel, &kernel_entry_point);
     if (EFI_ERROR(efi_status))
     {
         return efi_status;
     }
+
+    // open and load init server
+    efi_status = open_init_server(image_handle, &root_directory, &init_server);
+    if (EFI_ERROR(efi_status))
+    {
+        return efi_status;
+    }
+
+    efi_status = print_file_info(&init_server);
+    if (EFI_ERROR(efi_status))
+    {
+        return efi_status;
+    }
+
+    // common
     efi_status = get_uefi_memory_map(&target_uefi_memory_map);
     if (EFI_ERROR(efi_status))
     {
         return efi_status;
     }
-    efi_status
-        = make_boot_info(system_table, &target_uefi_memory_map, &target_boot_info);
+
+    efi_status = make_boot_info(system_table, &target_uefi_memory_map, &target_boot_info);
     if (EFI_ERROR(efi_status))
     {
         return efi_status;
     }
+
     efi_status = exit_uefi(image_handle, &target_uefi_memory_map);
     // known issues: checking efi_status in exit_uefi causes "EFI Hard Drive"
     // error.
 
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_GREEN);
 
-    jump_kernel(entry_point_address, &target_boot_info);
+    jump_kernel(kernel_entry_point, &target_boot_info);
 
     while (1)
         ;
