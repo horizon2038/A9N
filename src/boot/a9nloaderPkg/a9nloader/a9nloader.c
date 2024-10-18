@@ -43,35 +43,61 @@ EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *syst
     Print(L"[ RUN ] efi_main\r\n");
     Print(L"\r\n");
 
-    // open and load kernel
-    efi_status = open_kernel(image_handle, &root_directory, &kernel);
+    efi_status = open_root_directory(image_handle, &root_directory);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to open_root_directory\r\n");
+        return efi_status;
+    }
+
+    // open and load kernel
+    efi_status = open_kernel(root_directory, &kernel);
+    if (EFI_ERROR(efi_status))
+    {
+        Print(L"[ ERROR ] failed to open_kernel\r\n");
         return efi_status;
     }
 
     efi_status = print_file_info(&kernel);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to print_file_info (kernel)\r\n");
         return efi_status;
     }
 
     efi_status = load_kernel(kernel, &kernel_entry_point);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to load_kernel\r\n");
         return efi_status;
     }
 
     // open and load init server
-    efi_status = open_init_server(image_handle, &root_directory, &init_server);
+    efi_status = open_init_server(root_directory, &init_server);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to open_init_server\r\n");
         return efi_status;
     }
 
     efi_status = print_file_info(&init_server);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to print_file_info (init_server)\r\n");
+        return efi_status;
+    }
+
+    efi_status = load_init_server(
+        init_server,
+        &target_boot_info.boot_init_image_info.loaded_address,
+        &target_boot_info.boot_init_image_info.init_image_size,
+        &target_boot_info.boot_init_image_info.entry_point_address,
+        &target_boot_info.boot_init_image_info.init_info_address,
+        &target_boot_info.boot_init_image_info.init_ipc_buffer_address
+    );
+    if (EFI_ERROR(efi_status))
+    {
+        Print(L"[ ERROR ] failed to load_init_server\r\n");
         return efi_status;
     }
 

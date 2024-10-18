@@ -7,10 +7,11 @@ typedef struct
 {
     // physical address of load destination
     uintmax_t loaded_address;
-    // virtual entry point address
-    uintmax_t entry_point_address;
     // init_image physical size
     uintmax_t init_image_size;
+
+    // virtual entry point address
+    uintmax_t entry_point_address;
 
     // virtual init info address
     uintmax_t init_info_address;
