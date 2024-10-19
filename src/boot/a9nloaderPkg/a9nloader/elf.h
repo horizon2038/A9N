@@ -70,6 +70,20 @@ typedef struct
     elf64_xword   entry_size;
 } elf64_section_header;
 
+// section header types
+#define SHT_NULL 0
+#define SHT_PROGBITS 1
+#define SHT_SYMTAB 2
+#define SHT_STRTAB 3
+#define SHT_RELA 4
+#define SHT_HASH 5
+#define SHT_DYNAMIC 6
+#define SHT_NOTE 7
+#define SHT_NOBITS 8
+#define SHT_REL 9
+#define SHT_SHLIB 10
+#define SHT_DYNSYM 11
+
 typedef struct
 {
     elf64_word    name;
