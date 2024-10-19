@@ -426,7 +426,7 @@ static EFI_STATUS search_elf_symbol_address(
         symbol_name
     );
 
-    Print(L"[ INFO ] : symbol %a : 0x%016llx\r\n", symbol_name, *symbol_address);
+    Print(L"[ INFO ] symbol %a : 0x%016llx\r\n", symbol_name, *symbol_address);
     Print(L"\r\n");
 
     FreePool(section_header_table);

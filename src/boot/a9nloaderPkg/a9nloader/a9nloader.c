@@ -39,7 +39,7 @@ EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *syst
 
     system_table->ConOut->ClearScreen(system_table->ConOut);
     system_table->ConOut->SetAttribute(system_table->ConOut, EFI_WHITE);
-    Print(L"[ INFO ] a9nloader v0.0.1\r\n");
+    Print(L"[ INFO ] a9nloader v0.2.1\r\n");
     Print(L"[ RUN ] efi_main\r\n");
     Print(L"\r\n");
 
