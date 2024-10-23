@@ -64,16 +64,21 @@ ipc_port .l.|> capability_component
 frame .l.|> capability_component
 page_table .l.|> capability_component
 
-@endlml
+@enduml
 
-## Capability Component
-Capability Component is a Composite pattern. It enables unified operation of node and leaf.
-Node has capability_component_slots with 2^radix capability_components, which contain pointers to entries or nodes.
-Since capability_entry is usually used more, by default there is a 1:1 correspondence between the array of capability_entry and the slots.
+Capability is composed of a Composite Pattern.
+This structure makes it possible to search Capability in a *Type-Safe* and *Object-Oriented* manner.
 
-## Unsolved
-- How do we define a common interface for objects that need to track their children
-(e.g. generic) ?
-    - Define methods on local_state ?
-    - Define a method on capability_component ?
-        - add(free_descriptor, *capability_component)
+> [!NOTE]
+> Down Cast is needed when a Capability wantas to Access another Capability from its internal implementation.
+
+## Capability Slot
+
+Every Capability is an implementation of Capability Component.
+Its pointer is stored in *Capability Slot*.
+Slot contains *Slot-Local Data*, and a single *Capability-Component* is used to realize Capability of memory system that does not need to have an entity.
+
+## Capability Node
+
+*Capability Node* is like a *directory* with `2^radix_bits` of *Capability Slots*.
+Nodes can be nested because Capability *Node* is also a Capability.
