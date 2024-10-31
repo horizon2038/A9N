@@ -48,5 +48,6 @@
 #include <liba9n/libcxx/__type_traits/is_trivially.hpp>
 #include <liba9n/libcxx/__type_traits/is_base_of.hpp>
 #include <liba9n/libcxx/__type_traits/is_constructible.hpp>
+#include <liba9n/libcxx/__type_traits/underlying_type.hpp>
 
 #endif
