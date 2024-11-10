@@ -1,6 +1,6 @@
 ![A9N_header](https://github.com/horizon2038/A9N/assets/89717194/1ad9d635-c165-4609-bf47-cd592998409f)
 
-# A9N microkernel
+# A9N Microkernel
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
@@ -139,9 +139,9 @@ make -j8
 
 ## Author
 
-horizon2k38 ( Rekka "horizon" Igumi )
+horizon2k38 ( Rekka "horizon" IGUMI )
 
-email : [address](<mailto:rekka728@gmail.com>)  
+Email : rekka728 "at" gmail.com  
 X : [@horizon2k38](https://x.com/horizon2k38)  
 Mastodon : [@horizon2k38@mstdn.jp](https://mstdn.jp/@horizon2k38)  
 Misskey : [@horizon](https://misskey.io/@horizon)  
@@ -156,6 +156,22 @@ Misskey : [@horizon](https://misskey.io/@horizon)
 - [@sowawa](https://github.com/sowawa) : My mentor during the MITOU IT program, who provided valuable advice.
 
 And I would also like to thank everyone who supported this project.  
+
+<!--
+I want to express my heartfelt gratitude to my IDOL, who has been a true source of strength for me :
+
+- Yukiho HAGIWARA
+- Nono MORIKUBO
+- Nagi HISAKAWA
+- Arisu TACHIBANA
+- Tsumugi SHIRAISHI
+- Roco HANDA
+- Tenka OSAKI
+- Koito FUKUMARU
+- Lilja KATSURAGI
+
+Thank you so much!
+-->
 
 ## License
 
