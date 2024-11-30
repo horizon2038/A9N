@@ -1,9 +1,9 @@
 #ifndef LIBA9N_NOT_NULL_HPP
 #define LIBA9N_NOT_NULL_HPP
 
-#include "liba9n/libcxx/__type_traits/is_convertible.hpp"
 #include <liba9n/libcxx/type_traits>
 #include <liba9n/libcxx/utility>
+#include <liba9n/result/result.hpp>
 
 namespace liba9n
 {
@@ -28,6 +28,15 @@ namespace liba9n
         {
         }
 
+        template<typename U = T>
+            requires(liba9n::std::is_convertible_v<
+                     liba9n::std::remove_reference_t<liba9n::std::remove_pointer_t<U>> *,
+                     TPointer>)
+        constexpr not_null(U &&reference)
+            : pointer(liba9n::std::addressof(liba9n::std::forward<U>(reference)))
+        {
+        }
+
         constexpr not_null(const not_null &other) = default;
         constexpr not_null(not_null &&other)      = default;
 
@@ -44,6 +53,15 @@ namespace liba9n
         }
 
         // operator section
+        template<typename U = T>
+            requires(liba9n::std::is_convertible_v<
+                     liba9n::std::remove_reference_t<liba9n::std::remove_pointer_t<U>> *,
+                     TPointer>)
+        constexpr not_null &operator=(U &&reference)
+        {
+            pointer = liba9n::std::addressof(liba9n::std::forward<U>(reference));
+        }
+
         template<typename U = T>
             requires(liba9n::std::is_convertible_v<
                      liba9n::std::remove_reference_t<liba9n::std::remove_pointer_t<U>> *,
