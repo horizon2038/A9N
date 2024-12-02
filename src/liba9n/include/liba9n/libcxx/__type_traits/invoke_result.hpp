@@ -25,8 +25,11 @@ namespace liba9n::std
         };
 
         template<typename T>
-        inline constexpr bool is_reference_wrapper_v
-            = is_reference_wrapper<T>::value;
+        inline constexpr bool is_reference_wrapper_v = is_reference_wrapper<T>::value;
+    }
+
+    namespace detail
+    {
 
         // normal function calling
         template<typename T>
@@ -55,14 +58,9 @@ namespace liba9n::std
 
             template<typename T, typename... Args, typename MemberTypeOther>
                 requires(is_function_v<MemberTypeOther>)
-            static auto call(
-                MemberTypeOther ClassType::*member_function_pointer,
-                T                         &&t,
-                Args &&...args
-            )
-                -> decltype((invoke_impl::get(forward<T>(t)).*member_function_pointer)(
-                    forward<Args>(args)...
-                ));
+            static auto call(MemberTypeOther ClassType::*member_function_pointer, T &&t, Args &&...args)
+                -> decltype((invoke_impl::get(forward<T>(t)).*member_function_pointer)(forward<Args>(args
+                )...));
 
             template<typename T>
             static auto call(MemberType ClassType::*member_function_pointer, T &&t)
@@ -87,14 +85,13 @@ namespace liba9n::std
             Function,
             Args...>
         {
-            using type
-                = decltype(run_invoke(declval<Function>(), declval<Args>()...));
+            using type = decltype(run_invoke(declval<Function>(), declval<Args>()...));
         };
 
     }
 
     template<typename Function, typename... ArgTypes>
-    struct invoke_result : invoke_result_definition<void, Function, ArgTypes...>
+    struct invoke_result : detail::invoke_result_definition<void, Function, ArgTypes...>
     {
     };
 
