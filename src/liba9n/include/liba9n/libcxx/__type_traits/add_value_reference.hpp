@@ -5,7 +5,7 @@
 
 namespace liba9n::std
 {
-    namespace
+    namespace detail
     {
         template<typename T>
         auto try_add_lvalue_reference(int) -> type_identity<T &>;
@@ -22,12 +22,12 @@ namespace liba9n::std
     }
 
     template<typename T>
-    struct add_lvalue_reference : decltype(try_add_lvalue_reference<T>(0))
+    struct add_lvalue_reference : decltype(detail::try_add_lvalue_reference<T>(0))
     {
     };
 
     template<typename T>
-    struct add_rvalue_reference : decltype(try_add_rvalue_reference<T>(0))
+    struct add_rvalue_reference : decltype(detail::try_add_rvalue_reference<T>(0))
     {
     };
 

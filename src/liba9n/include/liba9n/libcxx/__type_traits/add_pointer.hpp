@@ -6,7 +6,7 @@
 
 namespace liba9n::std
 {
-    namespace
+    namespace detail
     {
         template<typename T>
         auto try_add_pointer(int) -> type_identity<remove_reference_t<T> *>;
@@ -16,7 +16,7 @@ namespace liba9n::std
     }
 
     template<typename T>
-    struct add_pointer : decltype(try_add_pointer<T>(0))
+    struct add_pointer : decltype(detail::try_add_pointer<T>(0))
     {
     };
 

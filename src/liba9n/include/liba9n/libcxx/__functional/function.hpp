@@ -7,7 +7,7 @@
 
 namespace liba9n::std
 {
-    namespace
+    namespace detail
     {
         inline constexpr uintmax_t FUNCTION_BUFFER_SIZE = 16;
     }
@@ -21,8 +21,7 @@ namespace liba9n::std
     {
       public:
         template<typename F>
-        function(F func)
-            : callable { new(&buffer) callable_impl<F>(liba9n::std::move(func)) }
+        function(F func) : callable { new(&buffer) callable_impl<F>(liba9n::std::move(func)) }
         {
         }
 
@@ -54,7 +53,7 @@ namespace liba9n::std
             T callable;
         };
 
-        uint8_t        buffer[FUNCTION_BUFFER_SIZE];
+        uint8_t        buffer[detail::FUNCTION_BUFFER_SIZE];
         callable_base *callable;
     };
 }

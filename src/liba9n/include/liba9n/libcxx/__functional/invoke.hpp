@@ -10,18 +10,14 @@
 
 namespace liba9n::std
 {
-    namespace
+    namespace detail
     {
         template<typename ClassType, typename Pointer, typename Object, typename... Args>
-        constexpr decltype(auto) invoke_member_pointer(
-            Pointer ClassType::*member,
-            Object            &&object,
-            Args &&...args
-        )
+        constexpr decltype(auto
+        ) invoke_member_pointer(Pointer ClassType::*member, Object &&object, Args &&...args)
         {
             constexpr bool is_member_function = is_function_v<Pointer>;
-            constexpr bool is_wrapped
-                = is_reference_wrapper_v<remove_cvref_t<Object>>;
+            constexpr bool is_wrapped         = is_reference_wrapper_v<remove_cvref_t<Object>>;
             constexpr bool is_derived_object
                 = is_same_v<ClassType, remove_cvref_t<Object>>
                || is_base_of_v<ClassType, remove_cvref_t<Object>>;
@@ -31,8 +27,7 @@ namespace liba9n::std
             {
                 if constexpr (is_derived_object)
                 {
-                    return (forward<Object>(object).*member)(forward<Args>(args
-                    )...);
+                    return (forward<Object>(object).*member)(forward<Args>(args)...);
                 }
 
                 else if constexpr (is_wrapped)
@@ -42,8 +37,7 @@ namespace liba9n::std
 
                 else
                 {
-                    return ((*forward<Object>(object)).*member)(forward<Args>(args
-                    )...);
+                    return ((*forward<Object>(object)).*member)(forward<Args>(args)...);
                 }
             }
 
@@ -70,12 +64,11 @@ namespace liba9n::std
     }
 
     template<typename Function, typename... Args>
-    constexpr invoke_result_t<Function, Args...>
-        invoke(Function &&function, Args &&...args) noexcept
+    constexpr invoke_result_t<Function, Args...> invoke(Function &&function, Args &&...args) noexcept
     {
         if constexpr (is_member_pointer_v<remove_cvref_t<Function>>)
         {
-            return invoke_member_pointer(function, forward<Args>(args)...);
+            return detail::invoke_member_pointer(function, forward<Args>(args)...);
         }
 
         else
