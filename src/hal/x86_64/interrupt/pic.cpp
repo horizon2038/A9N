@@ -6,16 +6,13 @@
 
 namespace a9n::hal::x86_64
 {
-    namespace
-    {
-        static constexpr uint8_t PIC_MASTER         = 0x20;
-        static constexpr uint8_t PIC_MASTER_COMMAND = 0x20;
-        static constexpr uint8_t PIC_MASTER_DATA    = 0x21;
-        static constexpr uint8_t PIC_SLAVE          = 0xa0;
-        static constexpr uint8_t PIC_SLAVE_COMMAND  = 0xa0;
-        static constexpr uint8_t PIC_SLAVE_DATA     = 0xa1;
-        static constexpr uint8_t PIC_EOI            = 0x20;
-    }
+    inline constexpr uint8_t PIC_MASTER         = 0x20;
+    inline constexpr uint8_t PIC_MASTER_COMMAND = 0x20;
+    inline constexpr uint8_t PIC_MASTER_DATA    = 0x21;
+    inline constexpr uint8_t PIC_SLAVE          = 0xa0;
+    inline constexpr uint8_t PIC_SLAVE_COMMAND  = 0xa0;
+    inline constexpr uint8_t PIC_SLAVE_DATA     = 0xa1;
+    inline constexpr uint8_t PIC_EOI            = 0x20;
 
     pic::pic() : _port_io()
     {
@@ -131,6 +128,36 @@ namespace a9n::hal::x86_64
             _port_io.write(PIC_SLAVE_COMMAND, PIC_EOI);
         }
         _port_io.write(PIC_MASTER_COMMAND, PIC_EOI);
+    }
+
+    void disable_pic()
+    {
+        /*
+        // mask master pic
+        port_write_8(PIC_MASTER_DATA, 0xFF);
+        // mask slave pic
+        port_write_8(PIC_SLAVE_DATA, 0xFF);
+
+        // icw1
+        port_write_8(PIC_MASTER_COMMAND, 0x11); // send init command to master
+        port_write_8(PIC_SLAVE_COMMAND, 0x11);  // send init command to slave
+
+        // icw2
+        port_write_8(PIC_MASTER_DATA, 0x20); // notify connection to master
+        port_write_8(PIC_SLAVE_DATA, 0x028); // notify connection to slave
+
+        // icw3
+        port_write_8(PIC_MASTER_DATA, 0x04); // set master to normal mode
+        port_write_8(PIC_SLAVE_DATA, 0x02);  // set slave to normal mode
+
+        // icw4 : 8086
+        port_write_8(PIC_MASTER_DATA, 0x01);
+        port_write_8(PIC_SLAVE_DATA, 0x01);
+        */
+
+        // mask all interrupts
+        port_write_8(PIC_MASTER_DATA, 0xFF);
+        port_write_8(PIC_SLAVE_DATA, 0xFF);
     }
 
 }
