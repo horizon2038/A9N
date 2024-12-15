@@ -16,46 +16,40 @@ EFI_STATUS make_boot_info(
     boot_info        *target_boot_info
 )
 {
-    for (uintmax_t i = 0; i < 8; i++)
+    Print(L"make boot_info ...\r\n");
+    if (!target_boot_info->boot_memory_info.memory_map)
     {
-        target_boot_info->arch_info[i] = 0xdeadbeaf;
+        return EFI_NOT_FOUND;
     }
-    target_boot_info->arch_info[0] = (uintmax_t)(find_rsdp(system_table));
 
     if (target_uefi_memory_map->descriptor_size == 0)
     {
         return EFI_INVALID_PARAMETER;
     }
 
-    uint16_t entries_count = target_uefi_memory_map->map_size / target_uefi_memory_map->descriptor_size;
-    target_boot_info->boot_memory_info.memory_map_count = entries_count;
-    target_boot_info->boot_memory_info.memory_size      = 0;
-
-    EFI_PHYSICAL_ADDRESS memory_info_map_address        = 0;
-    EFI_STATUS           efi_status                     = gBS->AllocatePages(
-        AllocateAnyPages,
-        EfiReservedMemoryType,
-        EFI_SIZE_TO_PAGES(entries_count * sizeof(memory_map_entry)),
-        &memory_info_map_address
-    );
-    target_boot_info->boot_memory_info.memory_map = (memory_map_entry *)memory_info_map_address;
-
-    if (EFI_ERROR(efi_status))
-        return efi_status;
-
-    if (target_boot_info->boot_memory_info.memory_map == NULL)
+    for (uintmax_t i = 0; i < 8; i++)
     {
-        return EFI_OUT_OF_RESOURCES;
+        target_boot_info->arch_info[i] = 0xdeadbeaf;
     }
-    for (uint16_t i = 0; i < entries_count; i++)
+    target_boot_info->arch_info[0] = (uintmax_t)(find_rsdp(system_table));
+
+    UINTN entries_count = target_uefi_memory_map->map_size / target_uefi_memory_map->descriptor_size;
+    target_boot_info->boot_memory_info.memory_map_count = 0;
+    target_boot_info->boot_memory_info.memory_size      = 0;
+    memory_map_entry *last_entry                        = NULL;
+
+    for (UINTN i = 0; i < entries_count; i++)
     {
-        memory_map_entry *target_memory_map_entry = &target_boot_info->boot_memory_info.memory_map[i];
+        Print(L"entries count [%04llx] \r\n", i);
+        // memory_map_entry *target_memory_map_entry =
+        // &target_boot_info->boot_memory_info.memory_map[i];
         EFI_MEMORY_DESCRIPTOR *uefi_desc
             = (EFI_MEMORY_DESCRIPTOR *)((char *)target_uefi_memory_map->buffer
                                         + i * target_uefi_memory_map->descriptor_size);
 
-        target_memory_map_entry->physical_address_start = uefi_desc->PhysicalStart;
-        target_memory_map_entry->page_count             = uefi_desc->NumberOfPages;
+        memory_map_entry new_entry;
+        new_entry.physical_address_start = uefi_desc->PhysicalStart;
+        new_entry.page_count             = uefi_desc->NumberOfPages;
 
         switch (uefi_desc->Type)
         {
@@ -63,7 +57,7 @@ EFI_STATUS make_boot_info(
             case EfiConventionalMemory :
             case EfiBootServicesCode :
             case EfiBootServicesData :
-                target_memory_map_entry->type = FREE_MEMORY;
+                new_entry.type = FREE_MEMORY;
                 break;
 
             // device
@@ -71,7 +65,7 @@ EFI_STATUS make_boot_info(
             case EfiMemoryMappedIOPortSpace :
             case EfiACPIReclaimMemory :
             case EfiACPIMemoryNVS :
-                target_memory_map_entry->type = DEVICE_MEMORY;
+                new_entry.type = DEVICE_MEMORY;
                 break;
 
             // reserved
@@ -79,11 +73,28 @@ EFI_STATUS make_boot_info(
             case EfiRuntimeServicesData :
             case EfiReservedMemoryType :
             default :
-                target_memory_map_entry->type = RESERVED_MEMORY;
+                new_entry.type = RESERVED_MEMORY;
         }
 
-        target_boot_info->boot_memory_info.memory_size
-            += (target_memory_map_entry->page_count * EFI_PAGE_SIZE);
+        // combine memory areas
+        if (last_entry
+            && (last_entry->physical_address_start + (last_entry->page_count * EFI_PAGE_SIZE)
+                == new_entry.physical_address_start)
+            && (last_entry->type == new_entry.type))
+        {
+            last_entry->page_count += new_entry.page_count;
+        }
+        else
+        {
+            memory_map_entry *current_entry
+                = &target_boot_info->boot_memory_info
+                       .memory_map[target_boot_info->boot_memory_info.memory_map_count];
+            *current_entry = new_entry;
+            last_entry     = current_entry;
+            target_boot_info->boot_memory_info.memory_map_count++;
+        }
+
+        target_boot_info->boot_memory_info.memory_size += (new_entry.page_count * EFI_PAGE_SIZE);
     }
 
     return EFI_SUCCESS;

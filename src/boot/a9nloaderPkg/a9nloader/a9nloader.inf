@@ -19,6 +19,7 @@
   uefi_memory_map.c
   uefi_boot_info_configurator.c
   acpi.c
+  boot_info_allocator.c
 
 [Packages]
   MdePkg/MdePkg.dec

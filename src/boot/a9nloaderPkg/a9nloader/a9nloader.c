@@ -7,16 +7,16 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Uefi.h>
 
+#include "boot_info.h"
+#include "boot_info_allocator.h"
 #include "elf.h"
 #include "error_handler.h"
 #include "file_info_logger.h"
 #include "kernel_jumper.h"
 #include "kernel_loader.h"
 #include "kernel_opener.h"
-#include "uefi_lifetime.h"
-
-#include "boot_info.h"
 #include "uefi_boot_info_configurator.h"
+#include "uefi_lifetime.h"
 #include "uefi_memory_map.h"
 
 EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *system_table)
@@ -98,6 +98,14 @@ EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *syst
     if (EFI_ERROR(efi_status))
     {
         Print(L"[ ERROR ] failed to load_init_server\r\n");
+        return efi_status;
+    }
+
+    // boot_info must be allocated before getting UEFI memory map
+    efi_status = allocate_boot_info(&target_boot_info);
+    if (EFI_ERROR(efi_status))
+    {
+        Print(L"[ ERROR ] failed to allocate memory_info\r\n");
         return efi_status;
     }
 
