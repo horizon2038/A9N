@@ -1,72 +1,125 @@
 ENTRY(_boot_kernel_gateway)
 
-/* KERNEL_VMA = 0xFFFF800000000000; */
-KERNEL_VMA = 0xFFFF800000000000;
-KERNEL_LMA = 0x200000;
+KERNEL_VMA_BASE = 0xFFFF800000000000;
+KERNEL_LMA_BASE = 0x200000;
+BOOT_SIZE = 0x2000;
+
+MEMORY
+{
+    trampoline (rwx) : ORIGIN = 0x6000, LENGTH = 0x2000
+    boot       (rwx) : ORIGIN = KERNEL_LMA_BASE, LENGTH = 1M
+
+    /* kernel section */
+    kernel_lma (rwx) : ORIGIN = KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 1M
+    kernel_vma (rwx) : ORIGIN = KERNEL_VMA_BASE + KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 1M
+}
 
 SECTIONS
 {
-    . = KERNEL_LMA;
-
-    .boot ALIGN(0x1000) :
+    /* not working ! */
+    /*
+    .trampoline :
     {
+        __boot_ap_trampoline_start = .;
+        . += 0x1000;
+        __boot_ap_trampoline_end = .;
+    } > trampoline
+    */
+    
+    /* temp */
+    __boot_ap_trampoline_start = .;
+    . += 0x1000;
+    __boot_ap_trampoline_end = .;
+
+    .boot :
+    {
+        . = ALIGN(0x1000);
         /* . = ALIGN(8); */
         KEEP(*(.boot));
-    }
+    } > boot
 
-    . = KERNEL_VMA + KERNEL_LMA + 0x1000;
-
-    .text ALIGN(8) : AT(ADDR(.text) - KERNEL_VMA)
+    .text : 
     {
-        __kernel_start = . - KERNEL_VMA;
+        . = ALIGN(0x1000);
+        __kernel_start = . - KERNEL_VMA_BASE;
         *(.text);
         *(.text.*);
-    }
+        *(.*text);
+        *(.*text.*);
+    } > kernel_vma AT > kernel_lma
 
-    .rodata ALIGN(8) : AT(ADDR(.rodata) - KERNEL_VMA)
+    .rodata :
     {
+        . = ALIGN(0x1000);
         *(.rodata);
         *(.rodata.*);
-    }
+        *(.*rodata);
+        *(.*rodata.*);
+    } > kernel_vma AT > kernel_lma
 
-    .data ALIGN(8) : AT(ADDR(.data) - KERNEL_VMA)
+    .data : 
     {
+        . = ALIGN(0x1000);
         *(.data);
         *(.data.*);
-    }
+        *(.*data);
+        *(.*data.*);
+    } > kernel_vma AT > kernel_lma
 
-    .bss ALIGN(8) : AT(ADDR(.bss) - KERNEL_VMA)
+    .bss :
     {
-        __bss_start = . - KERNEL_VMA;
+        . = ALIGN(0x1000);
+        __bss_start = . - KERNEL_VMA_BASE;
         *(COMMON);
         *(.bss);
         *(.bss.*);
-        __bss_end = . - KERNEL_VMA;
+        *(.*bss);
+        *(.*bss.*);
+        __bss_end = . - KERNEL_VMA_BASE;
 
         . = ALIGN(0x1000);
-        __kernel_pml4 = . - KERNEL_VMA;
+        __kernel_pml4 = . - KERNEL_VMA_BASE;
         . += 0x1000;
 
         . = ALIGN(0x1000);
-        __kernel_pdpt = . - KERNEL_VMA;
+        __kernel_pdpt = . - KERNEL_VMA_BASE;
         . += 0x1000;
 
         . = ALIGN(0x1000);
-        __kernel_pd = . - KERNEL_VMA;
+        __kernel_pd = . - KERNEL_VMA_BASE;
         . += 4 * 512 * 8;
 
         . = ALIGN(0x1000);
-        __boot_stack_start = . - KERNEL_VMA;
+        __boot_stack_start = . - KERNEL_VMA_BASE;
         . += 0x1000 * 16;
-        __boot_stack_end = . - KERNEL_VMA; 
+        __boot_stack_end = . - KERNEL_VMA_BASE; 
 
         . = ALIGN(0x1000);
-        __kernel_end = . - KERNEL_VMA;
-    }
+        __kernel_end = . - KERNEL_VMA_BASE;
+    } > kernel_vma AT > kernel_lma
+
+    .init_array :
+    {
+        . = ALIGN(0x1000);
+        __init_array_start = .;
+        KEEP(*(
+            .init_array
+            .init_array.*
+            .ctors
+            .ctors.*
+        ))
+        __init_array_end = .;
+    } > kernel_vma AT > kernel_lma
+
+    .got :
+    {
+        *(*.got);
+        *(*.got.*);
+    } > kernel_vma AT > kernel_lma
 
     /DISCARD/ :
     {
         *(*.eh_frame);
-    }
+    } > kernel_vma AT > kernel_lma
 }
 
