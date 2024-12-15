@@ -1,3 +1,5 @@
+#include "kernel/process/process.hpp"
+#include "liba9n/result/__result/result_impl.hpp"
 #include <kernel/process/scheduler.hpp>
 
 #include <kernel/types.hpp>
@@ -5,146 +7,148 @@
 
 namespace a9n::kernel
 {
-    scheduler::scheduler(process *process_list)
-        : _process_list(process_list)
-        , _current_process(nullptr)
+    // simple benno scheduler (round-robin with priority)
+    // the preview pointer may seem unnecessary, but it is necessary for direct-switch
+    liba9n::result<process *, scheduler_error> scheduler::schedule()
     {
-        current_process_index = 0;
-    }
+        using a9n::kernel::utility::logger;
+        process *next_process {};
 
-    scheduler::~scheduler()
-    {
-    }
-
-    process *scheduler::schedule_next_process()
-    {
-        process  *target_process = nullptr;
-        a9n::word start_index    = current_process_index;
-
-        do
+        for (a9n::sword i = highest_priority; i >= 0; i--)
         {
-            if (current_process_index >= 12)
+            auto head = queue[i].head;
+            if (!head)
             {
-                current_process_index = 0;
+                continue;
             }
 
-            target_process = &_process_list[current_process_index];
+            // get process
+            next_process = head;
 
-            utility::logger::printk("cpi : %llu\n", current_process_index);
-            utility::logger::printk(
-                "target_process_status : %llu\n",
-                target_process->status
-            );
-            current_process_index++;
+            // remove process
+            queue[i].head = next_process->next;
+            if (queue[i].head)
+            {
+                queue[i].head->preview = nullptr;
+            }
+            else
+            {
+                // queue is empty now
+                queue[i].tail = nullptr;
+            }
 
-        } while (target_process->status != process_status::READY
-                 && current_process_index != start_index);
+            // update status
+            highest_priority      = next_process->priority;
 
-        if (target_process->status != process_status::READY)
-        {
-            utility::logger::printk("can't find schedulable process\n");
-            return nullptr;
+            next_process->next    = nullptr;
+            next_process->preview = nullptr;
+
+            return next_process;
         }
 
-        if (_current_process != nullptr)
+        // no executable process exists (basically the caller would run IDLE)
+        return scheduler_error::PROCESS_NOT_IN_QUEUE;
+    }
+
+    // direct context switch to accelerate ipc
+    liba9n::result<process *, scheduler_error> scheduler::try_direct_schedule(process *target_process)
+    {
+        if (!target_process)
         {
-            _current_process->status = process_status::READY;
+            return scheduler_error::INVALID_PROCESS;
         }
 
-        target_process->status = process_status::RUNNING;
-        _current_process       = target_process;
+        auto target_priority = target_process->priority;
+        if (target_priority < 0 || target_priority >= PRIORITY_MAX)
+        {
+            return scheduler_error::INVALID_PRIORITY;
+        }
+        if (target_priority < highest_priority)
+        {
+            if (target_process->status != process_status::READY)
+            {
+                return scheduler_error::INVALID_PROCESS;
+            }
+
+            add_process(target_process);
+
+            return schedule();
+        }
+
+        bool has_next    = static_cast<bool>(target_process->next);
+        bool has_preview = static_cast<bool>(target_process->preview);
+
+        // target_process is head
+        if (has_next && !has_preview)
+        {
+            queue[target_priority].head          = target_process->next;
+            queue[target_priority].head->preview = nullptr;
+        }
+        // target_process is tail
+        else if (!has_next && has_preview)
+        {
+            queue[target_priority].tail       = target_process->preview;
+            queue[target_priority].tail->next = nullptr;
+        }
+        // target_process exists at the center of queue
+        else if (has_next && has_preview)
+        {
+            target_process->preview->next = target_process->next;
+            target_process->next->preview = target_process->preview;
+        }
+        // if target_process does not exist in queue, it can be scheduled as it is
+
+        // update status
+        highest_priority        = target_process->priority;
+
+        target_process->next    = nullptr;
+        target_process->preview = nullptr;
 
         return target_process;
     }
 
-    process *scheduler::schedule_next_process(
-        process    *priority_groups[],
-        a9n::sword &highest_priority
-    )
+    scheduler_result scheduler::add_process(process *target_process)
     {
-        if (highest_priority == -1)
+        if (!target_process)
         {
-            return nullptr;
+            return scheduler_error::INVALID_PROCESS;
         }
 
-        process *current_process = priority_groups[highest_priority];
-
-        current_process->quantum--;
-        // utility::logger::printk("%s quantum : [ %04d ]\n",
-        // current_process->name, current_process->quantum);
-        if (current_process->quantum == 0
-            || current_process->status == process_status::BLOCKED)
+        if (target_process->status != process_status::READY)
         {
-            // utility::logger::printk("%s : %016s [ %04d ]\n",
-            // current_process->name, current_process->quantum == 0 ? "TIMEOUT"
-            // : "BLOCKED", current_process->quantum);
-            current_process->quantum = QUANTUM_MAX;
-            move_to_end(current_process, priority_groups[highest_priority]);
+            // in benno scheduling, only executable processes exist in the ready-queue
+            return scheduler_error::INVALID_PROCESS;
         }
 
-        highest_priority = update_highest_priority(priority_groups);
-
-        if (priority_groups[highest_priority] == nullptr)
+        auto target_priority = target_process->priority;
+        if (target_priority < 0 || target_priority >= PRIORITY_MAX)
         {
-            return nullptr;
+            return scheduler_error::INVALID_PRIORITY;
         }
 
-        if (_current_process != nullptr)
+        if (target_process->next || target_process->preview)
         {
-            _current_process->status = process_status::READY;
+            return scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE;
         }
 
-        priority_groups[highest_priority]->status = process_status::RUNNING;
-        _current_process = priority_groups[highest_priority];
-
-        // utility::logger::printk("target_process_status : %llu\n",
-        // priority_groups[highest_priority]->status);
-        return priority_groups[highest_priority];
-    }
-
-    void scheduler::move_to_end(process *target_process, process *&head_process)
-    {
-        if (target_process->next == nullptr)
+        if (target_priority > highest_priority)
         {
-            utility::logger::printk("Target process is already at the end\n");
-            return;
+            highest_priority = target_priority;
         }
 
-        if (head_process == target_process)
+        if (!queue[target_priority].head || !queue[target_priority].tail)
         {
-            head_process          = target_process->next;
-            head_process->preview = nullptr;
+            queue[target_priority].head = target_process;
+            queue[target_priority].tail = target_process;
+
+            return {};
         }
 
-        if (target_process->preview != nullptr)
-        {
-            target_process->preview->next = target_process->next;
-        }
+        queue[target_priority].tail->next = target_process;
+        target_process->preview           = queue[target_priority].tail;
+        queue[target_priority].tail       = target_process;
+        target_process->next              = nullptr;
 
-        target_process->next->preview = target_process->preview;
-
-        process *temp_process         = head_process;
-
-        while (temp_process->next != nullptr)
-        {
-            temp_process = temp_process->next;
-        }
-
-        temp_process->next      = target_process;
-        target_process->preview = temp_process;
-        target_process->next    = nullptr;
-    }
-
-    a9n::sword scheduler::update_highest_priority(process *priority_groups[])
-    {
-        for (uint16_t i = (PRIORITY_MAX - 1); i >= 0; i--)
-        {
-            if (priority_groups[i] != nullptr)
-            {
-                return i;
-            }
-        }
-
-        return -1;
+        return {};
     }
 }
