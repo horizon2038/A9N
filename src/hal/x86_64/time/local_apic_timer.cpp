@@ -25,6 +25,7 @@ namespace a9n::hal::x86_64
                 [this](void) -> hal_result
                 {
                     // TODO : stop using magic number
+                    // TODO: move to kernel (call hal)
                     return configure_cycle(250);
                 }
             )
@@ -32,8 +33,7 @@ namespace a9n::hal::x86_64
                 [this](void) -> hal_result
                 {
                     // configure irq
-                    return local_apic_core
-                        .write(local_apic_offset::LVT_TIMER, 0x20 | (1 << 17));
+                    return local_apic_core.write(local_apic_offset::LVT_TIMER, 0x20 | (1 << 17));
                 }
             )
             .or_else(
@@ -60,8 +60,7 @@ namespace a9n::hal::x86_64
                         "clear Local APIC "
                         "Timer\n"
                     );
-                    return local_apic_core
-                        .write(local_apic_offset::TIMER_INIT_COUNT, 0xFFFFFFFF);
+                    return local_apic_core.write(local_apic_offset::TIMER_INIT_COUNT, 0xFFFFFFFF);
                 }
             )
             .and_then(
@@ -69,10 +68,7 @@ namespace a9n::hal::x86_64
                 {
                     // configure divide
                     a9n::kernel::utility::logger::printk("configure divide\n");
-                    return local_apic_core.write(
-                        local_apic_offset::TIMER_DIVIDE,
-                        divide_config & 0x0F
-                    );
+                    return local_apic_core.write(local_apic_offset::TIMER_DIVIDE, divide_config & 0x0F);
                 }
             )
             .and_then(
@@ -83,8 +79,7 @@ namespace a9n::hal::x86_64
                         "start Local APIC "
                         "Timer measurement ...\n"
                     );
-                    return local_apic_core
-                        .write(local_apic_offset::TIMER_INIT_COUNT, 0xFFFFFFFF);
+                    return local_apic_core.write(local_apic_offset::TIMER_INIT_COUNT, 0xFFFFFFFF);
                 }
             )
             .and_then(
@@ -97,8 +92,7 @@ namespace a9n::hal::x86_64
             .and_then(
                 [&, this](void) -> liba9n::result<uint32_t, hal_error>
                 {
-                    return local_apic_core.read(local_apic_offset::TIMER_CURRENT_COUNT
-                    );
+                    return local_apic_core.read(local_apic_offset::TIMER_CURRENT_COUNT);
                 }
             )
             .and_then(
@@ -112,10 +106,7 @@ namespace a9n::hal::x86_64
                     uint32_t elapsed_clock = 0xFFFFFFFF - start_clock;
                     frequency              = (elapsed_clock * 100);
 
-                    a9n::kernel::utility::logger::printk(
-                        "elapsed_clock : %8llu times\n",
-                        elapsed_clock
-                    );
+                    a9n::kernel::utility::logger::printk("elapsed_clock : %8llu times\n", elapsed_clock);
 
                     a9n::kernel::utility::logger::printk(
                         "Local APIC Timer frequency : %10llu Hz ( %4llu MHz "
@@ -135,21 +126,17 @@ namespace a9n::hal::x86_64
 
         if (frequency == 0)
         {
-            return hal_error::INIT_FIRST;
+            return hal_error::ILLEGAL_ARGUMENT;
         }
 
         auto initial_count = frequency / hz;
 
-        return local_apic_core
-            .write(local_apic_offset::TIMER_DIVIDE, divide_config & 0x0F)
+        return local_apic_core.write(local_apic_offset::TIMER_DIVIDE, divide_config & 0x0F)
             .and_then(
                 [&, this](void) -> hal_result
                 {
                     // configure divide
-                    return local_apic_core.write(
-                        local_apic_offset::TIMER_INIT_COUNT,
-                        initial_count
-                    );
+                    return local_apic_core.write(local_apic_offset::TIMER_INIT_COUNT, initial_count);
                 }
             )
             .or_else(
