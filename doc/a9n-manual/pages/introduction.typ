@@ -1,4 +1,4 @@
-#import "layout.typ" : template
+#import "/components/layout.typ" : template
 
 #show: doc => template(
     [introduction],
@@ -7,23 +7,32 @@
 
 = Introduction
 
-== about A9N
+== A9N Microkernel Overview
 
-A9Nは, HALを用いて移植容易性を実現する, Capability-Based Microkernelです.
-ユーザーからのカーネルに対するすべての操作は, Capabilityと呼ばれるアクセス権を用いて実行されます.
-基本的に, ユーザーからのカーネル呼び出しであるシステムコールは`ipc()`メカニズムを用いて,
+*A9N Microkernel*とは, 
+A9NはHALを用いて移植容易性を実現するCapability-Based Microkernelです.
+
+== Capability
+
+A9N KernelはObject-Capability Modelによる強固なセキュリティ機構を実現します.
+*Capability*とは, 偽造不可能かつ譲渡可能なTokenです.
+Userによる特権的呼び出しはKernel ObjectへのCapabilityを介した操作としてモデル化されます.
+
+== Capabilityの使用
+
+基本的に, Userからの特権的呼び出しであるCapability Callは`capability_call()`メカニズムを用いて,
 
 ```cpp
-ipc(capability_descriptor, args ... )
+capability_call(capability_descriptor, ... )
 ```
 
 のように行われます.
 
-しかしながら, この`ipc()`を直接呼び出す形式は最も低レベルなものであるため, `liba9n`ライブラリを用いた呼び出しを使用することが推奨されます.
+しかしながら, この`capability_call()`は最もPrimitiveなAPIであるため, 実際の使用にはそれらをラップする`liba9n`ライブラリを使用することが推奨されます.
 
 例えば, Generic Capabilityに対するConvert操作には, 
 ```cpp
-common::error convert(
+generic_result<> convert(
     generic_descriptor,
     type,
     size,
@@ -35,4 +44,4 @@ common::error convert(
 ```
 のようなライブラリ関数が用意されます.
 
-同様に, 他すべてのCapabilityに対する操作へ, ラッパーであるライブラリ関数が用意されます.
+同様に, 他すべてのCapabilityに対する操作へライブラリ関数が用意されます.

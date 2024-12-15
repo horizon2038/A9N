@@ -1,4 +1,5 @@
-#import "layout.typ" : template
+#import "/components/layout.typ" : template
+#import "/components/api_table.typ" : api_table
 
 #show: doc => template(
     [generic],
@@ -22,33 +23,20 @@ A9Nカーネルはヒープを持たないため, カーネルオブジェクト
 === `convert`
 ```cpp
 common::error convert(
-    library::capability::capability_descriptor generic_descriptor, 
-    library::capability::capability_type       type,               
-    library::common::word                      size,               
-    library::common::word                      count,              
-    library::capability::capability_descriptor node_descriptor,    
-    library::common::word                      node_depth,         
-    library::common::word                      node_index,         
+    a9n::capability_descriptor  generic_descriptor, 
+    a9n::kernel::capability_type               type,               
+    a9n::word                                  size,               
+    a9n::word                                 count,              
+    a9n::capability_descriptor      node_descriptor,    
+    a9n::word                            node_index,         
 )
 ```
 
-#table(
-    columns: 2,
-    inset: (
-        x: 1.5em,
-        y: 1em,
-    ),
-    align: (x, y) => ((left + horizon), left).at(x),
-    fill: (col, row) => if row == 0 {luma(240)},
-    [*name*], [description],
-    [`generic_descriptor`], [対象GenericへのDescriptor],
-    [`type`], [作成するCapabilityのType],
-    [`size`],
-    [作成するCapabilityのSize \ #list(
-        [Capabilityが固定長の場合, 値は無視される]
-    )],
-    [`count`], [作成するCapabilityの個数],
-    [`node_descriptor`], [格納先NodeへのDescriptor],
-    [`node_depth`], [格納先Nodeを探索する深さ],
-    [`node_index`], [格納先NodeのSlot],
+#api_table(
+    "generic_descriptor", "対象GenericへのDescriptor",
+    "type", "作成するCapabilityのType",
+    "size", "作成するCapabilityのSize",
+    "count", "作成するCapabilityの個数",
+    "node_descriptor", "格納先NodeへのDescriptor",
+    "node_index", "格納先NodeのIndex",
 )

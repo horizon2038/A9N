@@ -52,7 +52,7 @@
   })
 }
 
-#import "layout.typ" : template
+#import "/components/layout.typ" : template
 
 #show: doc => template(
     [contents],
