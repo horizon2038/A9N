@@ -38,7 +38,7 @@ This document outlines the coding standards and practices for the project. The p
 
 ## Assembly (ASM) Guidelines
 
-- All ASM functions should have a prefix `_` to avoid naming conflicts and indicate low-level code.
+- All global ASM functions should have a prefix `_` to avoid naming conflicts and indicate low-level code.
 
 ## Testing Guidelines
 
