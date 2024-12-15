@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <kernel/types.hpp>
+
 namespace a9n::hal
 {
     class port_io
@@ -12,6 +14,8 @@ namespace a9n::hal
         virtual void    write(uint16_t address, uint8_t data) = 0;
     };
 
+    uint8_t read_io_port(a9n::word address);
+    uint8_t write_io_port(a9n::word address);
 }
 
 #endif
