@@ -4,12 +4,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+enum memory_map_type
+{
+    FREE_MEMORY,
+    DEVICE_MEMORY,
+    RESERVED_MEMORY,
+};
+
 typedef struct
 {
-    uint64_t physical_address_start;
-    uint64_t page_count;
-    bool     is_free;
-    bool     is_device;
+    uint64_t             physical_address_start;
+    uint64_t             page_count;
+    enum memory_map_type type;
+    // bool     is_free;
+    // bool     is_device;
 } memory_map_entry;
 
 typedef struct
