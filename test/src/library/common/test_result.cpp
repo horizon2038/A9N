@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <liba9n/result/result.hpp>
 #include <iostream>
+#include <liba9n/result/result.hpp>
 
 using word = uintmax_t;
 
@@ -146,6 +146,7 @@ TEST(result_test, operator_bool_test)
         ASSERT_EQ(r.unwrap_error(), test_error::error_a);
     }
 }
+
 struct foo_has_constructor
 {
     constexpr foo_has_constructor(int target_a, int target_b)
@@ -495,4 +496,45 @@ TEST(result_void_test, transform_test)
             }
         );
     // clang-format on
+}
+
+enum class v_error
+{
+    ERROR_1,
+    ERROR_2,
+};
+
+using h_result = liba9n::result<void, v_error>;
+
+class v_base
+{
+  public:
+    virtual h_result test();
+};
+
+class v_impl : v_base
+{
+  public:
+    h_result test() override
+    {
+        std::cout << "test()" << std::endl;
+        return {};
+    }
+};
+
+inline v_impl impl;
+
+TEST(result_void_test, calling_virtual_function_test)
+{
+    auto result = impl.test();
+    ASSERT_TRUE(result.is_ok());
+
+    result = impl.test().and_then(
+        [&, this](void) -> h_result
+        {
+            return impl.test();
+        }
+    );
+
+    ASSERT_TRUE(result.is_ok());
 }

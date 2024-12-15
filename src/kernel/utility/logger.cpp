@@ -35,10 +35,8 @@ namespace a9n::kernel::utility
     {
         this_logger->print_log_id();
         this_logger->print_sender("ERROR", terminal_color::RED);
-        this_logger->print_splitter();
+        // this_logger->print_splitter();
         this_logger->_print.printf("%s\n", message);
-        while (true)
-            ;
     }
 
     void logger::printk(const char *format, ...)
@@ -52,12 +50,39 @@ namespace a9n::kernel::utility
         __builtin_va_end(args);
     }
 
+    void logger::printh(const char *format, ...)
+    {
+        __builtin_va_list args;
+        __builtin_va_start(args, format);
+        this_logger->print_log_id(terminal_color::YELLOW);
+        this_logger->print_sender("HAL");
+        this_logger->print_splitter();
+        this_logger->_print.vprintf(format, args);
+        __builtin_va_end(args);
+    }
+
+    void logger::printu(const char *format, ...)
+    {
+        __builtin_va_list args;
+        __builtin_va_start(args, format);
+        this_logger->print_log_id(terminal_color::YELLOW);
+        this_logger->print_sender("USER");
+        this_logger->print_splitter();
+        this_logger->_print.vprintf(format, args);
+        __builtin_va_end(args);
+    }
+
     void logger::printn(const char *format, ...)
     {
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->_print.vprintf(format, args);
         __builtin_va_end(args);
+    }
+
+    void logger::put_char(char target)
+    {
+        this_logger->_print.put_char(target);
     }
 
     void logger::split()
@@ -135,25 +160,15 @@ namespace a9n::kernel::utility
 
     void logger::print_log_id(const char *color_id)
     {
-        this_logger->_print.printf(
-            "[ %s%s%010d%s ] ",
-            terminal_color::RESET,
-            color_id,
-            log_id,
-            terminal_color::RESET
-        );
+        this_logger->_print
+            .printf("[ %s%s%010d%s ] ", terminal_color::RESET, color_id, log_id, terminal_color::RESET);
         log_id++;
     }
 
     void logger::print_sender(const char *sender, const char *color_id)
     {
-        this_logger->_print.printf(
-            "[ %s%s%8s%s ] ",
-            terminal_color::RESET,
-            color_id,
-            sender,
-            terminal_color::RESET
-        );
+        this_logger->_print
+            .printf("[ %s%s%8s%s ] ", terminal_color::RESET, color_id, sender, terminal_color::RESET);
     }
 
     void logger::print_splitter()

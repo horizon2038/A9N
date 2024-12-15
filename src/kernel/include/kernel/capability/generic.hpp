@@ -54,6 +54,8 @@ namespace a9n::kernel
         {
         }
 
+        a9n::physical_address base() const;
+
         a9n::physical_address current_watermark() const;
 
         bool is_device() const;
@@ -79,11 +81,7 @@ namespace a9n::kernel
     class generic final : public capability_component
     {
       public:
-        capability_result execute(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        ) override;
+        capability_result execute(process &this_process, capability_slot &this_slot) override;
 
         capability_result revoke() override;
 
@@ -110,19 +108,16 @@ namespace a9n::kernel
              capability_slot  &root_slot
          );
 
-        capability_result convert(
-            const ipc_buffer &buffer,
-            capability_slot  &this_slot,
-            capability_slot  &root_slot
-        );
+        capability_result
+            convert(const ipc_buffer &buffer, capability_slot &this_slot, capability_slot &root_slot);
 
         generic_info create_generic_info(const capability_slot_data &data);
 
-        capability_slot *retrieve_target_root_slot(
-            const ipc_buffer      &buffer,
-            const capability_slot &root_slot
-        ) const;
+        capability_slot *
+            retrieve_target_root_slot(const ipc_buffer &buffer, const capability_slot &root_slot) const;
     };
+
+    inline generic generic_core {};
 }
 
 #endif

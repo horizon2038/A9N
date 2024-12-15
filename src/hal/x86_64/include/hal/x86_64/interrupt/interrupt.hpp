@@ -5,39 +5,47 @@
 
 #include <kernel/types.hpp>
 
-#include "interrupt_descriptor.hpp"
-#include "pic.hpp"
-
 namespace a9n::hal::x86_64
 {
-    inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
+    alignas(sizeof(a9n::hal::interrupt_handler)
+    ) inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
 
-    class interrupt final : public a9n::hal::interrupt
+    extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code);
+    extern "C" void do_irq_from_user(uint64_t irq_number, uint64_t error_code);
+
+    extern "C" void _enable_interrupt_all(void);
+    extern "C" void _disable_interrupt_all(void);
+
+    extern "C" [[noreturn]] void _restore_kernel_context(void);
+    extern "C" [[noreturn]] void _restore_user_context(void);
+
+    hal_result init_idt_handler(void);
+    hal_result register_idt_handler(a9n::word irq_number, a9n::hal::interrupt_handler target_handler);
+
+    enum class ipi_destination_shorthand : uint8_t
     {
-      public:
-        interrupt();
-        ~interrupt();
-        void init_interrupt() override;
-        void register_handler(
-            a9n::word                   irq_number,
-            a9n::hal::interrupt_handler target_interrupt_handler
-        ) override;
-        void enable_interrupt(a9n::word irq_number) override;
-        void disable_interrupt(a9n::word irq_number) override;
-        void enable_interrupt_all() override;
-        void disable_interrupt_all() override;
-        void ack_interrupt() override;
-
-      private:
-        void init_handler();
-        void load_idt();
-        void register_idt_handler(
-            a9n::word                   irq_number,
-            a9n::hal::interrupt_handler target_interrupt_handler
-        );
-        interrupt_descriptor_64 idt[256];
-        pic                     _pic;
+        NO_SHORTHAND       = 0x00,
+        SELF               = 0x01,
+        ALL_EXCLUDING_SELF = 0x02,
+        ALL_INCLUDING_SELF = 0x03,
     };
+
+    enum class ipi_delivery_mode : a9n::word
+    {
+        FIXED                       = 0x00,
+        LOWEST_PRIORITY             = 0x01,
+        SYSTEM_MANAGEMENT_INTERRUPT = 0x02,
+        NON_MASKABLE_INTERRUPT      = 0x04,
+        INIT                        = 0x05,
+        STARTUP                     = 0x06,
+        EXTERNAL_INTERRUPT          = 0x07,
+    };
+
+    hal_result
+        ipi(uint8_t vector, ipi_delivery_mode mode, ipi_destination_shorthand shorthand, uint8_t receiver_cpu
+        );
+    hal_result ipi_init(uint8_t receiver_cpu);
+    hal_result ipi_startup(a9n::physical_address trampoline_address, uint8_t receiver_cpu);
 
     enum class EXCEPTION_TYPE : uint16_t
     {
@@ -69,7 +77,7 @@ namespace a9n::hal::x86_64
         SECURITY_EXCEPTION             = 30,
     };
 
-    inline static const char *get_exception_type_string(uint16_t type)
+    inline constexpr const char *get_exception_type_string(uint8_t type)
     {
         auto exception_type = static_cast<EXCEPTION_TYPE>(type);
         switch (exception_type)
@@ -150,6 +158,8 @@ namespace a9n::hal::x86_64
                 return "reserved";
         }
     }
+
+    // inline interrupt interrupt_core {};
 
 }
 #endif

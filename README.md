@@ -164,6 +164,7 @@ I want to express my heartfelt gratitude to my IDOL, who has been a true source 
 - Nono MORIKUBO
 - Nagi HISAKAWA
 - Arisu TACHIBANA
+- Akira SUNAZUKA
 - Tsumugi SHIRAISHI
 - Roco HANDA
 - Tenka OSAKI

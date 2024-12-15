@@ -33,6 +33,8 @@ namespace a9n::hal::x86_64
       private:
         a9n::hal::x86_64::port_io _port_io;
     };
+
+    void disable_pic();
 }
 
 #endif

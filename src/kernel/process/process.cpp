@@ -9,12 +9,4 @@ namespace a9n::kernel
     }
     */
 
-    process::process()
-    {
-    }
-
-    process::~process()
-    {
-    }
-
 }

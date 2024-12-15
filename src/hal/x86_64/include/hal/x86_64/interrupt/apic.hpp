@@ -20,6 +20,8 @@ namespace a9n::hal::x86_64
         inline constexpr uint32_t LOGICAL_DESITINATION = 0x0D0;
         inline constexpr uint32_t DESTINATION_FORMAT   = 0x0E0;
         inline constexpr uint32_t SPURIOUS_INTERRUPT   = 0x0F0;
+        inline constexpr uint32_t ICR_LOW              = 0x300;
+        inline constexpr uint32_t ICR_HIGH             = 0x310;
         inline constexpr uint32_t LVT_TIMER            = 0x320;
         inline constexpr uint32_t LVT_ERROR            = 0x370;
         inline constexpr uint32_t TIMER_INIT_COUNT     = 0x380;
@@ -65,7 +67,7 @@ namespace a9n::hal::x86_64
         hal_result enable_interrupt_all();
 
         liba9n::result<uint32_t, hal_error> read(uint32_t io_apic_register);
-        hal_result write(uint32_t io_apic_register, uint32_t value);
+        hal_result                          write(uint32_t io_apic_register, uint32_t value);
 
       private:
         uint8_t  id;
@@ -86,7 +88,7 @@ namespace a9n::hal::x86_64
         hal_result init();
 
         liba9n::result<uint32_t, hal_error> read(uint32_t offset);
-        hal_result write(uint32_t offset, uint64_t value);
+        hal_result                          write(uint32_t offset, uint64_t value);
 
         hal_result end_of_interrupt();
 

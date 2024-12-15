@@ -88,6 +88,17 @@ static uintmax_t search_elf_symbol_address_from_table(
     const char           *target_symbol_name
 );
 
+static EFI_STATUS mark_reserved_ap_trampoline_section(void);
+
+static EFI_STATUS mark_reserved_ap_trampoline_section(void)
+{
+    // mark reserved to uefi memory map for guard *trampoline* sections
+    // user by kernel
+    EFI_PHYSICAL_ADDRESS mp_trampoline_base = 0x6000;
+    Print(L"try reserve mp_trampolibe_base : 0x%llx\r\n", mp_trampoline_base);
+    return gBS->AllocatePages(AllocateAddress, EfiReservedMemoryType, 1, &mp_trampoline_base);
+}
+
 EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
 {
     EFI_STATUS            efi_status = EFI_SUCCESS;
@@ -97,6 +108,7 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
     efi_status = read_elf_header(kernel, &loaded_elf64_header);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to read_elf_header\r\n");
         return efi_status;
     }
 
@@ -104,12 +116,14 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
         = read_elf_program_header_table(kernel, loaded_elf64_header, &loaded_elf64_program_header_table);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to read_elf_program_header_table\r\n");
         return efi_status;
     }
 
     efi_status = allocate_elf_memory_direct(loaded_elf64_header, loaded_elf64_program_header_table);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to allocate_elf_memory_direct\r\n");
         return efi_status;
     }
 
@@ -117,6 +131,14 @@ EFI_STATUS load_kernel(EFI_FILE_PROTOCOL *kernel, uint64_t *entry_point)
     efi_status = load_elf_segment(kernel, loaded_elf64_header, loaded_elf64_program_header_table, 0);
     if (EFI_ERROR(efi_status))
     {
+        Print(L"[ ERROR ] failed to load_elf_segment\r\n");
+        return efi_status;
+    }
+
+    efi_status = mark_reserved_ap_trampoline_section();
+    if (EFI_ERROR(efi_status))
+    {
+        Print(L"[ ERROR ] failed to reserve ap trampoline section!\r\n");
         return efi_status;
     }
 
@@ -264,8 +286,15 @@ static EFI_STATUS
 
     calculate_elf_segment_range(header, program_header_table, &start_segment_address, &end_segment_address);
     segment_size = EFI_SIZE_TO_PAGES(end_segment_address - start_segment_address);
+    Print(
+        L"target segment : [0x%016llx - 0x%016llx) (0x%08llx * 4KiB)\r\n",
+        start_segment_address,
+        end_segment_address,
+        segment_size
+    );
+    // EfiLoaderData => EfiReservedMemory
     efi_status
-        = gBS->AllocatePages(AllocateAddress, EfiLoaderData, segment_size, &start_segment_address);
+        = gBS->AllocatePages(AllocateAddress, EfiReservedMemoryType, segment_size, &start_segment_address);
 
     return efi_status;
 }
@@ -285,9 +314,12 @@ static EFI_STATUS allocate_elf_memory_any_address(
     calculate_elf_segment_range(header, program_header_table, &start_segment_address, &end_segment_address);
     segment_size = EFI_SIZE_TO_PAGES(end_segment_address - start_segment_address);
     efi_status
-        = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, segment_size, &start_segment_address);
+        = gBS->AllocatePages(AllocateAnyPages, EfiReservedMemoryType, segment_size, &start_segment_address);
 
     *physical_address_offset = start_segment_address;
+
+    // FIXME
+    *elf_segment_physical_size = segment_size;
 
     return efi_status;
 }
@@ -341,6 +373,7 @@ static EFI_STATUS load_elf_segment(
         efi_status = read_file(kernel, program_header->offset, program_header->file_size, &buffer);
         if (EFI_ERROR(efi_status))
         {
+            Print(L"failed to read_file\r\n");
             return efi_status;
         }
 

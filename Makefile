@@ -11,6 +11,7 @@ A9NLOADER = a9nloaderPkg
 SCRIPTSDIR = ./scripts
 TESTDIR := ./test
 LLVMDIR = /usr/local/opt/llvm/bin
+SERVERDIR := ./src/servers
 
 KERNEL_SRCS :=  $(shell find $(SRCDIR)/kernel -type f \( -name "*.c" -or -name "*.cpp" -or -name "*.s" \))
 KERNEL_OBJS = $(addprefix $(BUILDDIR)/$(ARCH)/kernel/, $(addsuffix .o, $(basename $(KERNEL_SRCS:$(SRCDIR)/kernel/%=%))))
@@ -38,12 +39,13 @@ CXX := clang++-16
 ASM := nasm
 LD = ld.lld-16
 CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding \
-	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -masm=intel -fomit-frame-pointer \
-	-mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2 \
-	-flto
+	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -fomit-frame-pointer \
+	-mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2 -fno-threadsafe-statics
+# -flto
+
 CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding \
-	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -masm=intel \
-	-flto -fwhole-program-vtables -fforce-emit-vtables -fvirtual-function-elimination
+	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -fno-threadsafe-statics
+# -flto -fwhole-program-vtables -fforce-emit-vtables -fvirtual-function-elimination
 
 CPPFLAGS = $(INCFLAGS) -MMD -MP
 ASFLAGS = -f elf64
@@ -53,9 +55,9 @@ LIBS =
 
 $(info $(make show-targets))
 
-.PHONY: all show-targets kernel boot test clean clean-kernel clean-boot clean-test
+.PHONY: all show-targets kernel boot server test clean clean-kernel clean-boot clean-server clean-test 
 
-all: kernel boot test
+all: kernel boot server test
 
 show-targets:
 	@echo -e "\e[44mTOOLS\e[0m :"
@@ -150,6 +152,9 @@ $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	mkdir -p $(BUILDDIR)/$(ARCH)/boot
 	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
 
+server:
+	$(MAKE) -C $(SERVERDIR)
+
 test:
 	$(MAKE) -C $(TESTDIR)
 	$(TESTDIR)/build/test --gtest_color=yes --gtest_break_on_failure
@@ -164,6 +169,9 @@ clean-kernel:
 
 clean-boot:
 	rm -f $(BUILDDIR)/$(ARCH)/boot/$(BOOT)
+
+clean-server:
+	make -C $(SERVERDIR) clean
 
 clean-test:
 	make -C $(TESTDIR) clean

@@ -9,7 +9,7 @@ _load_idt:
     mov [idtr], di
     mov [idtr + 2], rsi
     lidt [idtr]
-    call _enable_interrupt_all
+    ; call _enable_interrupt_all
     ret
 
 _enable_interrupt_all:

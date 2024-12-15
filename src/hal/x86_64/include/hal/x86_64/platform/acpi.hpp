@@ -94,44 +94,55 @@ namespace a9n::hal::x86_64
         uint32_t   flags;
     } __attribute__((packed));
 
+    enum class madt_entry_type : uint8_t
+    {
+        LOCAL_APIC                    = 0x00,
+        IO_APIC                       = 0x01,
+        INTERRUPT_SOURCE_OVERRIDE     = 0x02,
+        NON_MASKABLE_INTERRUPT_SOURCE = 0x03,
+        LOCAL_APIC_NMI                = 0x04,
+        LOCAL_APIC_ADDRESS_OVERRIDE   = 0x05,
+        IO_SAPIC                      = 0x06,
+        LOCAL_SAPIC                   = 0x07,
+        PLATFORM_INTERRUPT_SOURCES    = 0x08,
+        PROCESSOR_LOCAL_X2APIC        = 0x09,
+        LOCAL_X2APIC_NMI              = 0x0a,
+    };
+
     struct madt_entry_header
     {
-        uint8_t type;
-        uint8_t length;
+        madt_entry_type type;
+        uint8_t         length;
     } __attribute__((packed));
-
-    enum class madt_entry_type
-    {
-        LOCAL_APIC                    = 0,
-        IO_APIC                       = 1,
-        INTERRUPT_SOURCE_OVERRIDE     = 2,
-        NON_MASKABLE_INTERRUPT_SOURCE = 3,
-        LOCAL_APIC_NMI                = 4,
-        LOCAL_APIC_ADDRESS_OVERRIDE   = 5,
-        IO_SAPIC                      = 6,
-        LOCAL_SAPIC                   = 7,
-        PLATFORM_INTERRUPT_SOURCES    = 8,
-        PROCESSOR_LOCAL_X2APIC        = 9,
-        LOCAL_X2APIC_NMI              = 10,
-    };
 
     struct madt_local_apic
     {
-        uint8_t  type;
-        uint8_t  length;
-        uint8_t  acpi_processor_id;
-        uint8_t  apic_id;
-        uint32_t flags;
+        madt_entry_type type;
+        uint8_t         length;
+        uint8_t         acpi_processor_id;
+        uint8_t         apic_id;
+        uint32_t        flags;
+    } __attribute__((packed));
+
+    struct madt_local_x2_apic
+    {
+        madt_entry_type type;
+        uint8_t         length;
+        uint16_t        reserved;
+        uint32_t        apic_id;
+        uint32_t        flags;
+        uint32_t        acpi_processor_id;
+
     } __attribute__((packed));
 
     struct madt_io_apic
     {
-        uint8_t  type;
-        uint8_t  length;
-        uint8_t  io_apic_id;
-        uint8_t  reserved;
-        uint32_t io_apic_address;
-        uint32_t global_system_interrupt_base;
+        madt_entry_type type;
+        uint8_t         length;
+        uint8_t         io_apic_id;
+        uint8_t         reserved;
+        uint32_t        io_apic_address;
+        uint32_t        global_system_interrupt_base;
     } __attribute__((packed));
 
     struct fadt
@@ -222,7 +233,7 @@ namespace a9n::hal::x86_64
     class acpi_configurator
     {
       public:
-        void init(a9n::virtual_address rsdp_address);
+        void                                    init(a9n::virtual_address rsdp_address);
         liba9n::result<rsdp *, hal_error>       current_rsdp();
         liba9n::result<sdt_header *, hal_error> current_rsdt();
         liba9n::result<xsdt *, hal_error>       current_xsdt();

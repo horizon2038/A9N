@@ -288,6 +288,7 @@ namespace a9n::kernel
             .transform_error(
                 [&](memory_map_error e) -> kernel_error
                 {
+                    logger::error("failed to map search unset table depth");
                     return kernel_error::NO_SUCH_ADDRESS;
                 }
             )
@@ -326,6 +327,7 @@ namespace a9n::kernel
                                               .transform_error(
                                                   [&](memory_map_error e) -> kernel_error
                                                   {
+                                                      logger::error("failed to map root table");
                                                       return kernel_error::NO_SUCH_ADDRESS;
                                                   }
                                               )
@@ -422,7 +424,7 @@ namespace a9n::kernel
         auto root_table = convert_slot_data_to_page_table(pcb.process_core.root_address_space.data);
 
         // create frames
-        for (auto i = 0; i < info.init_image_size; i++)
+        for (auto i = 0; i <= info.init_image_size; i++)
         {
             a9n::physical_address base_address = info.loaded_address + (a9n::PAGE_SIZE * i);
             a9n::virtual_address  map_address  = a9n::PAGE_SIZE * i;
@@ -494,9 +496,13 @@ namespace a9n::kernel
             }
 
             a9n::kernel::utility::logger::printk("create generic info ...\n");
-            auto current_generic_info = a9n::kernel::generic_info(
+
+            auto memory_size               = a9n::PAGE_SIZE * entry->page_count;
+            auto memory_size_aligned_radix = liba9n::calculate_radix_floor(memory_size);
+
+            auto current_generic_info      = a9n::kernel::generic_info(
                 entry->start_physical_address,
-                liba9n::calculate_radix_floor(a9n::PAGE_SIZE * entry->page_count),
+                memory_size_aligned_radix,
                 (entry->type == DEVICE),
                 entry->start_physical_address
             );
@@ -523,9 +529,15 @@ namespace a9n::kernel
             }
 
             a9n::kernel::utility::logger::printk(
-                "[0x%016llx - 0x%016llx) : %s\n",
+                "raw    : [0x%016llx - 0x%016llx) : %s\n",
                 current_generic_info.base(),
-                current_generic_info.base() + (a9n::PAGE_SIZE * entry->page_count),
+                current_generic_info.base() + memory_size,
+                memory_status
+            );
+            a9n::kernel::utility::logger::printk(
+                "actual : [0x%016llx - 0x%016llx) : %s\n",
+                current_generic_info.base(),
+                current_generic_info.base() + (static_cast<a9n::word>(1) << memory_size_aligned_radix),
                 memory_status
             );
 

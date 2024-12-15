@@ -1,11 +1,11 @@
-#include "kernel/capability/capability_result.hpp"
 #include <kernel/capability/capability_node.hpp>
 
 #include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/capability_result.hpp>
+#include <kernel/capability/operation/capability_node_operation.hpp>
+#include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
-
-#include <kernel/capability/operation/capability_node_operation.hpp>
 
 namespace a9n::kernel
 {
@@ -20,15 +20,11 @@ namespace a9n::kernel
     {
     }
 
-    capability_result capability_node::execute(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result capability_node::execute(process &this_process, capability_slot &this_slot)
     {
         a9n::kernel::utility::logger::printk("execute : node\n");
 
-        auto result = decode_operation(buffer, this_slot, root_slot);
+        auto result = decode_operation(this_process.buffer, &this_slot, &this_process.root_slot);
 
         return result;
     }
@@ -39,14 +35,10 @@ namespace a9n::kernel
         capability_slot *root_slot
     )
     {
-        a9n::kernel::utility::logger::printk(
-            "operation type : %llu\n",
-            buffer->message_tag
-        );
+        a9n::kernel::utility::logger::printk("operation type : %llu\n", buffer->message_tag);
 
         switch (auto operation_type
-                = static_cast<a9n::kernel::capability_node_operation>(buffer->message_tag
-                ))
+                = static_cast<a9n::kernel::capability_node_operation>(buffer->message_tag))
         {
             case capability_node_operation::COPY :
                 {
@@ -75,7 +67,7 @@ namespace a9n::kernel
             default :
                 {
                     a9n::kernel::utility::logger::error("node : illegal "
-                                                        "operation!\n");
+                                                        "operation!");
 
                     return capability_error::ILLEGAL_OPERATION;
                 }
@@ -97,12 +89,12 @@ namespace a9n::kernel
 
         // it is not just about copying data.
         // after copying, we need to configure the Dependency Node.
-        namespace argument = capability_node_copy_argument;
+        namespace argument           = capability_node_copy_argument;
 
-        auto destination_index = buffer->get_message<argument::DESTINATION_INDEX>();
-        auto source_descriptor = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
-        auto source_depth = buffer->get_message<argument::SOURCE_DEPTH>();
-        auto source_index = buffer->get_message<argument::SOURCE_INDEX>();
+        auto destination_index       = buffer->get_message<argument::DESTINATION_INDEX>();
+        auto source_descriptor       = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
+        auto source_depth            = buffer->get_message<argument::SOURCE_DEPTH>();
+        auto source_index            = buffer->get_message<argument::SOURCE_INDEX>();
 
         auto destination_slot_result = retrieve_slot(destination_index);
         if (!destination_slot_result)
@@ -111,8 +103,7 @@ namespace a9n::kernel
         }
 
         auto source_slot_result
-            = root_slot->component
-                  ->traverse_slot(source_descriptor, source_depth, 0)
+            = root_slot->component->traverse_slot(source_descriptor, source_depth, 0)
                   .and_then(
                       [=, this](capability_slot *slot) -> capability_lookup_result
                       {
@@ -124,14 +115,11 @@ namespace a9n::kernel
             return capability_error::INVALID_DESCRIPTOR;
         }
 
-        source_slot_result.unwrap()->component
-            = destination_slot_result.unwrap()->component;
+        source_slot_result.unwrap()->component = destination_slot_result.unwrap()->component;
         destination_slot_result.unwrap()->data = source_slot_result.unwrap()->data;
 
-        source_slot_result.unwrap()->family_node.next_slot
-            = destination_slot_result.unwrap();
-        destination_slot_result.unwrap()->family_node.preview_slot
-            = source_slot_result.unwrap();
+        source_slot_result.unwrap()->next_slot = destination_slot_result.unwrap();
+        destination_slot_result.unwrap()->preview_slot = source_slot_result.unwrap();
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
@@ -142,12 +130,12 @@ namespace a9n::kernel
         capability_slot *root_slot
     )
     {
-        namespace argument = capability_node_move_argument;
+        namespace argument     = capability_node_move_argument;
 
         auto destination_index = buffer->get_message<argument::DESTINATION_INDEX>();
         auto source_descriptor = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
-        auto source_depth = buffer->get_message<argument::SOURCE_DEPTH>();
-        auto source_index = buffer->get_message<argument::SOURCE_INDEX>();
+        auto source_depth      = buffer->get_message<argument::SOURCE_DEPTH>();
+        auto source_index      = buffer->get_message<argument::SOURCE_INDEX>();
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
@@ -158,11 +146,10 @@ namespace a9n::kernel
         capability_slot *root_slot
     )
     {
-        auto this_depth = this_slot->family_node.depth;
+        auto this_depth = this_slot->depth;
 
-        for (auto start_slot = this_slot->family_node.next_slot;
-             start_slot->family_node.depth < this_depth;
-             start_slot = start_slot->family_node.next_slot)
+        for (auto start_slot = this_slot->next_slot; start_slot->depth < this_depth;
+             start_slot      = start_slot->next_slot)
         {
             if (!start_slot->component)
             {
@@ -181,10 +168,9 @@ namespace a9n::kernel
         capability_slot *root_slot
     )
     {
-        auto destination_index = buffer->get_message<0>();
+        auto destination_index  = buffer->get_message<0>();
 
-        auto target_slot_result
-            = this_slot->component->retrieve_slot(destination_index);
+        auto target_slot_result = this_slot->component->retrieve_slot(destination_index);
 
         if (!target_slot_result)
         {
@@ -195,19 +181,16 @@ namespace a9n::kernel
         // revoke the capability and then delete it.
         target_slot_result.unwrap()->component->revoke();
 
-        auto target_depth = target_slot_result.unwrap()->family_node.depth;
-        auto next_depth
-            = (*target_slot_result)->family_node.next_slot->family_node.depth;
+        auto target_depth  = target_slot_result.unwrap()->depth;
+        auto next_depth    = (*target_slot_result)->next_slot->depth;
 
-        auto preview_depth
-            = (*target_slot_result)->family_node.next_slot->family_node.depth;
+        auto preview_depth = (*target_slot_result)->next_slot->depth;
 
-        auto target_slot  = (*target_slot_result);
-        auto next_slot    = (*target_slot_result)->family_node.next_slot;
-        auto preview_slot = (*target_slot_result)->family_node.preview_slot;
+        auto target_slot   = (*target_slot_result);
+        auto next_slot     = (*target_slot_result)->next_slot;
+        auto preview_slot  = (*target_slot_result)->preview_slot;
 
-        if (target_slot->is_same_slot(next_slot)
-            || target_slot->is_same_slot(preview_slot))
+        if (target_slot->is_same_slot(*next_slot) || target_slot->is_same_slot(*preview_slot))
         {
             target_slot->component->revoke();
         }
@@ -250,8 +233,8 @@ namespace a9n::kernel
     // handling single and multiple capabilities with the same interface.
     capability_lookup_result capability_node::traverse_slot(
         a9n::capability_descriptor descriptor,
-        a9n::word descriptor_max_bits, // usually WORD_BITS is used.
-        a9n::word descriptor_used_bits
+        a9n::word                  descriptor_max_bits, // usually WORD_BITS is used.
+        a9n::word                  descriptor_used_bits
     )
     {
         return lookup_slot(descriptor, descriptor_used_bits)
@@ -302,22 +285,14 @@ namespace a9n::kernel
             );
     }
 
-    capability_lookup_result capability_node::lookup_slot(
-        a9n::capability_descriptor descriptor,
-        a9n::word                  descriptor_used_bits
-    )
+    capability_lookup_result
+        capability_node::lookup_slot(a9n::capability_descriptor descriptor, a9n::word descriptor_used_bits)
     {
         a9n::kernel::utility::logger::printk("lookup_capability\n");
 
         auto index = calculate_capability_index(descriptor, descriptor_used_bits);
-        auto slot = retrieve_slot(index);
-        if (!slot)
-        {
-            // a9n::kernel::utility::logger::error("null entry !\n");
-            return capability_lookup_error::UNAVAILABLE;
-        }
 
-        return slot;
+        return retrieve_slot(index);
     }
 
 }

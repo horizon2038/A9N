@@ -2,19 +2,24 @@
 
 #include <kernel/capability/capability_factory.hpp>
 #include <kernel/capability/capability_local_state.hpp>
+#include <kernel/capability/capability_types.hpp>
 #include <kernel/capability/operation/generic_operation.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
-
+#include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
-#include <liba9n/capability/capability_types.hpp>
-#include <liba9n/common/calculate.hpp>
-
 #include <kernel/utility/logger.hpp>
+
+#include <liba9n/common/calculate.hpp>
 
 namespace a9n::kernel
 {
+    a9n::physical_address generic_info::base(void) const
+    {
+        return base_address;
+    }
+
     // generic_info
-    a9n::physical_address generic_info::current_watermark() const
+    a9n::physical_address generic_info::current_watermark(void) const
     {
         return watermark;
     }
@@ -26,9 +31,9 @@ namespace a9n::kernel
 
     bool generic_info::is_allocatable(a9n::word memory_size_bits, a9n::word count) const
     {
-        auto end_address = base_address + size();
-        auto request_unit_size = (static_cast<a9n::word>(1) << memory_size_bits);
-        auto aligned_watermark = liba9n::align_value(watermark, request_unit_size);
+        auto end_address        = base_address + size();
+        auto request_unit_size  = (static_cast<a9n::word>(1) << memory_size_bits);
+        auto aligned_watermark  = liba9n::align_value(watermark, request_unit_size);
         auto target_end_address = aligned_watermark + (request_unit_size * count);
 
         return (target_end_address < end_address);
@@ -38,7 +43,7 @@ namespace a9n::kernel
     {
         auto request_unit_size = (static_cast<a9n::word>(1) << memory_size_bits);
         auto aligned_watermark = liba9n::align_value(watermark, request_unit_size);
-        watermark = aligned_watermark + request_unit_size;
+        watermark              = aligned_watermark + request_unit_size;
 
         return 0;
     }
@@ -55,13 +60,9 @@ namespace a9n::kernel
     }
 
     // generic
-    capability_result generic::execute(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result generic::execute(process &this_process, capability_slot &this_slot)
     {
-        return decode_operation(*buffer, *this_slot, *root_slot);
+        return decode_operation(*(this_process.buffer), this_slot, this_process.root_slot);
     }
 
     capability_result generic::decode_operation(
@@ -73,8 +74,7 @@ namespace a9n::kernel
         a9n::kernel::utility::logger::printk("generic : decode_operation\n");
 
         using enum generic_operation;
-        switch (auto operation_type
-                = static_cast<generic_operation>(buffer.message_tag))
+        switch (auto operation_type = static_cast<generic_operation>(buffer.message_tag))
         {
             case generic_operation::CONVERT :
                 {
@@ -92,33 +92,27 @@ namespace a9n::kernel
         return {};
     }
 
-    capability_result generic::convert(
-        const ipc_buffer &buffer,
-        capability_slot  &this_slot,
-        capability_slot  &root_slot
-    )
+    capability_result
+        generic::convert(const ipc_buffer &buffer, capability_slot &this_slot, capability_slot &root_slot)
     {
         namespace argument = generic_convert_argument;
 
         auto this_info     = create_generic_info(this_slot.data);
-        auto target_type   = static_cast<liba9n::capability::capability_type>(
-            buffer.get_message<argument::CAPABILITY_TYPE>()
-        );
-        auto size_bits = buffer.get_message<argument::CAPABILITY_SIZE_BITS>();
-        auto memory_size_bits
-            = factory.calculate_memory_size_bits(target_type, size_bits);
+        auto target_type
+            = static_cast<capability_type>(buffer.get_message<argument::CAPABILITY_TYPE>());
+        auto size_bits        = buffer.get_message<argument::CAPABILITY_SIZE_BITS>();
+        auto memory_size_bits = factory.calculate_memory_size_bits(target_type, size_bits);
 
         // "device" Generic can only be converted to a frame object.
-        if (this_info.is_device()
-            && target_type != liba9n::capability::capability_type::FRAME)
+        if (this_info.is_device() && target_type != capability_type::FRAME)
         {
             return capability_error::INVALID_ARGUMENT;
         };
 
         auto target_root_slot = retrieve_target_root_slot(buffer, root_slot);
 
-        auto count      = buffer.get_message<argument::CAPABILITY_COUNT>();
-        auto base_index = buffer.get_message<argument::SLOT_INDEX>();
+        auto count            = buffer.get_message<argument::CAPABILITY_COUNT>();
+        auto base_index       = buffer.get_message<argument::SLOT_INDEX>();
 
         for (auto i = 0; i < count; i++)
         {
@@ -132,11 +126,7 @@ namespace a9n::kernel
             // HACK: stop using unwrap()
             auto target_empty_slot
                 = target_root_slot->component->retrieve_slot(base_index + i).unwrap();
-            *target_empty_slot = factory.make(
-                target_type,
-                size_bits,
-                this_info.current_watermark()
-            );
+            *target_empty_slot = factory.make(target_type, size_bits, this_info.current_watermark());
         }
 
         // update slot local data
@@ -155,16 +145,14 @@ namespace a9n::kernel
         };
     }
 
-    capability_slot *generic::retrieve_target_root_slot(
-        const ipc_buffer      &buffer,
-        const capability_slot &root_slot
-    ) const
+    capability_slot *
+        generic::retrieve_target_root_slot(const ipc_buffer &buffer, const capability_slot &root_slot) const
     {
-        namespace argument = generic_convert_argument;
+        namespace argument     = generic_convert_argument;
 
         auto target_descriptor = buffer.get_message<argument::ROOT_DESCRIPTOR>();
-        auto target_depth = buffer.get_message<argument::ROOT_DEPTH>();
-        auto target_index = buffer.get_message<argument::SLOT_INDEX>();
+        auto target_depth      = buffer.get_message<argument::ROOT_DEPTH>();
+        auto target_index      = buffer.get_message<argument::SLOT_INDEX>();
 
         if (target_depth == 0)
         {
@@ -173,9 +161,7 @@ namespace a9n::kernel
 
         // HACK: stop using unwrap()
         auto target_slot
-            = root_slot.component
-                  ->traverse_slot(target_descriptor, target_depth, 0)
-                  .unwrap();
+            = root_slot.component->traverse_slot(target_descriptor, target_depth, 0).unwrap();
 
         return target_slot;
     }

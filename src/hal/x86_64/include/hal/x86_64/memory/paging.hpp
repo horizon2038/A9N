@@ -11,7 +11,7 @@ namespace a9n::hal::x86_64
     extern "C" uint64_t __kernel_pml4;
     extern "C" void     _load_cr3(a9n::physical_address cr3_address);
     extern "C" void     _flush_tlb();
-    extern "C" void _invalidate_page(a9n::virtual_address target_virtual_address);
+    extern "C" void     _invalidate_page(a9n::virtual_address target_virtual_address);
 
     static constexpr uint16_t PAGE_TABLE_COUNT = 512;
 
@@ -50,15 +50,19 @@ namespace a9n::hal::x86_64
             uint64_t                 : 12;
         } __attribute__((packed));
 
-        a9n::physical_address get_physical_address()
+        a9n::physical_address get_physical_address() const
         {
             return reinterpret_cast<a9n::physical_address>(address << 12);
         }
 
-        void configure_physical_address(a9n::physical_address target_physical_address
-        )
+        void configure_physical_address(a9n::physical_address target_physical_address)
         {
             address = (target_physical_address >> 12);
+        }
+
+        void init()
+        {
+            all = 0;
         }
     };
 
@@ -71,13 +75,13 @@ namespace a9n::hal::x86_64
         static constexpr uint16_t OFFSET = 0;
     }
 
-    inline static uint64_t calculate_page_table_index(
-        a9n::virtual_address target_virtual_address,
-        uint16_t             table_depth
-    )
+    inline constexpr uint64_t
+        calculate_page_table_index(a9n::virtual_address target_virtual_address, uint16_t table_depth)
     {
         // depth = PAGE_DEPTH::{PAGE_TABLE_NAME}
-        uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 0;
+        // uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 0;
+        uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 12;
+        // uint64_t shift = (table_depth > 0) ? (12 + (9 * (table_depth - 1))) : 12;
         return (target_virtual_address >> shift) & 0x1FF;
     }
 

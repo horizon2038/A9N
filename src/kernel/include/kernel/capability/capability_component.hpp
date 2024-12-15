@@ -3,6 +3,7 @@
 
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_result.hpp>
+#include <kernel/capability/capability_types.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/types.hpp>
 
@@ -10,41 +11,91 @@
 
 namespace a9n::kernel
 {
+
     class capability_component;
+
+    struct capability_slot_state
+    {
+    };
 
     struct alignas(a9n::WORD_BITS) capability_slot
     {
         capability_component *component;
-        a9n::word             authority;
+
+        // padding to a9n::word width
+        union
+        {
+            a9n::word       reserved;
+            capability_type type { capability_type::NONE };
+        };
 
         capability_slot_data data;
-        dependency_node      family_node;
+        capability_slot     *next_slot;
+        capability_slot     *preview_slot;
 
-        bool has_child()
+        // child capability_entry
+        // capability_entry *child_capability_entry;
+        a9n::word depth;
+
+        bool has_child(void) const
         {
-            return (family_node.depth > family_node.next_slot->family_node.depth);
+            if (!next_slot)
+            {
+                return false;
+            }
+
+            return (depth > next_slot->depth);
         }
 
-        bool is_same_slot(capability_slot *rhs)
+        bool has_sibling(void) const
         {
-            auto is_same_data = liba9n::std::memcmp(
-                &data,
-                &rhs->data,
-                sizeof(capability_slot_data)
-            );
-
-            if (is_same_data != 0)
+            if (!next_slot)
             {
                 return false;
             }
 
-            // for memory object (e.g. generic, frame, page_table ...)
-            if (component != rhs->component)
-            {
-                return false;
-            }
+            return (depth == next_slot->depth);
+        }
 
-            return true;
+        bool is_same_slot(const capability_slot &rhs) const;
+
+        void insert_child(capability_slot &child_slot)
+        {
+            child_slot.depth = depth + 1;
+            insert(child_slot);
+        }
+
+        void insert_sibling(capability_slot &sibling_slot)
+        {
+            sibling_slot.depth = depth;
+            insert(sibling_slot);
+        }
+
+        void insert(capability_slot &slot)
+        {
+            // +--------+    +--------+    +--------+
+            // |        | -> |        | -> |        |
+            // |  this  |    |  slot  |    |  next  |
+            // |        | <- |        | <- |        |
+            // +--------+    +--------+    +--------+
+
+            auto temp_next_slot = next_slot;
+
+            // configure this
+            next_slot = &slot;
+
+            // TODO: consider the case where the dependency node of the target_slot
+            // has already been set
+            slot.preview_slot = this;
+            slot.next_slot    = temp_next_slot;
+            slot.depth        = depth + 1;
+
+            // configure old next slot
+            if (!temp_next_slot)
+            {
+                return;
+            }
+            temp_next_slot->preview_slot = &slot;
         }
 
         template<a9n::word Index>
@@ -92,21 +143,46 @@ namespace a9n::kernel
         EMPTY,
     };
 
-    using capability_lookup_result
-        = liba9n::result<capability_slot *, capability_lookup_error>;
+    using capability_lookup_result = liba9n::result<capability_slot *, capability_lookup_error>;
+
+    inline constexpr const char *capability_lookup_error_to_string(capability_lookup_error error)
+    {
+        switch (error)
+        {
+            case capability_lookup_error::TERMINAL :
+                return "TERMINAL";
+
+            case capability_lookup_error::INDEX_OUT_OF_RANGE :
+                return "INDEX OUT OF RANGE";
+
+            case capability_lookup_error::UNAVAILABLE :
+                return "UNAVAILABLE";
+
+            case capability_lookup_error::EMPTY :
+                return "EMPTY";
+
+            default :
+                return "ERROR NOT FOUND";
+        }
+    };
+
+    // src/kernel/process/process.hpp
+    class process;
 
     class capability_component
     {
       public:
         // called from user
-        virtual capability_result execute(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        ) = 0;
+        virtual capability_result execute(process &this_process, capability_slot &this_slot) = 0;
 
         // called from node
         virtual capability_result revoke() = 0;
+
+        virtual bool
+            is_same_slot(const capability_slot &this_slot, const capability_slot &target_slot) const
+        {
+            return false;
+        }
 
         // for tree
         virtual capability_lookup_result retrieve_slot(a9n::word index) = 0;
@@ -117,6 +193,16 @@ namespace a9n::kernel
             a9n::word                  descriptor_used_bits
         ) = 0;
     };
+
+    inline bool capability_slot::is_same_slot(const capability_slot &rhs) const
+    {
+        if (!rhs.component)
+        {
+            return false;
+        }
+
+        return rhs.component->is_same_slot(rhs, *this);
+    }
 }
 
 #endif

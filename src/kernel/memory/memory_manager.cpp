@@ -6,25 +6,36 @@
 
 namespace a9n::kernel
 {
-    memory_manager::memory_manager(
-        a9n::hal::memory_manager &target_memory_manager,
+    kernel_result memory_manager::init(
+        a9n::hal::memory_manager *target_hal_memory_manager,
         const memory_info        &target_memory_info
     )
-        : _memory_manager(target_memory_manager)
-        , head_memory_block(nullptr)
     {
-        init(target_memory_info);
+        a9n::kernel::utility::logger::printk("init memory_manager (krv)\n");
+        if (!target_hal_memory_manager)
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+        hal_memory_manager = target_hal_memory_manager;
+
+        init_memory_block(target_memory_info);
+        hal_memory_manager->init_memory();
+
+        return {};
     }
 
-    void memory_manager::init(const memory_info &target_memory_info)
+    /*
+    kernel_result memory_manager::init(const memory_info &target_memory_info)
     {
         a9n::kernel::utility::logger::printk("init physical_memory\n");
         init_memory_block(target_memory_info);
 
         a9n::kernel::utility::logger::printk("init virtual_memory\n");
-        _memory_manager.init_memory();
+        hal_memory_manager->init_memory();
+        // info_physical_memory();
         // init kernel_page_map
     }
+    */
 
     void memory_manager::init_memory_block(const memory_info &target_memory_info)
     {
@@ -37,30 +48,26 @@ namespace a9n::kernel
         memory_map_entry *_memory_map_entry     = nullptr;
         memory_block     *previous_memory_block = nullptr;
 
+        a9n::kernel::utility::logger::printk("start configure pm ...\n");
         for (uint16_t i = 0; i < target_memory_info.memory_map_count; i++)
         {
             _memory_map_entry = &target_memory_info.memory_map[i];
 
-            if (!(_memory_map_entry->is_free))
+            // if (!(_memory_map_entry->is_free))
+            if (!(_memory_map_entry->type == memory_map_type::FREE))
             {
                 continue;
             }
 
             a9n::word memory_block_size
-                = sizeof(memory_block)
-                + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
+                = sizeof(memory_block) + sizeof(memory_frame) * (_memory_map_entry->page_count - 1);
             a9n::physical_address adjusted_address
                 = _memory_map_entry->start_physical_address + memory_block_size;
-            adjusted_address
-                = align_physical_address(adjusted_address, a9n::PAGE_SIZE);
-            size_t adjusted_size
-                = a9n::PAGE_SIZE * (_memory_map_entry->page_count)
-                - memory_block_size;
+            adjusted_address = align_physical_address(adjusted_address, a9n::PAGE_SIZE);
+            size_t adjusted_size = a9n::PAGE_SIZE * (_memory_map_entry->page_count) - memory_block_size;
 
             memory_block *current_memory_block = reinterpret_cast<memory_block *>(
-                convert_physical_to_virtual_address(
-                    _memory_map_entry->start_physical_address
-                )
+                convert_physical_to_virtual_address(_memory_map_entry->start_physical_address)
             );
             // a9n::kernel::utility::logger::printk("current_memory_block_address
             // : 0x%llx\n",
@@ -68,8 +75,7 @@ namespace a9n::kernel
             current_memory_block->start_physical_address = adjusted_address;
             current_memory_block->size                   = adjusted_size;
             current_memory_block->next                   = nullptr;
-            current_memory_block->memory_frame_count
-                = adjusted_size / a9n::PAGE_SIZE;
+            current_memory_block->memory_frame_count     = adjusted_size / a9n::PAGE_SIZE;
 
             init_memory_frame(*current_memory_block);
 
@@ -86,6 +92,10 @@ namespace a9n::kernel
 
         memory_block *now_memory_block = head_memory_block;
 
+        // TODO: fix this
+        a9n::kernel::utility::logger::printk("move head\n");
+        head_memory_block = head_memory_block->next;
+
         /*
         while (now_memory_block)
         {
@@ -97,10 +107,9 @@ namespace a9n::kernel
 
     void memory_manager::print_memory_block_info(memory_block &target_memory_block)
     {
-        using logger = a9n::kernel::utility::logger;
+        using logger                 = a9n::kernel::utility::logger;
 
-        a9n::word memory_map_size
-            = target_memory_block.memory_frame_count * a9n::PAGE_SIZE;
+        a9n::word memory_map_size    = target_memory_block.memory_frame_count * a9n::PAGE_SIZE;
         a9n::word memory_map_size_kb = memory_map_size / 1024;
         a9n::word memory_map_size_mb = memory_map_size_kb / 1024;
 
@@ -147,25 +156,50 @@ namespace a9n::kernel
         }
     }
 
-    a9n::physical_address
-        memory_manager::allocate_physical_memory(size_t size, process *owner)
+    a9n::physical_address memory_manager::allocate_physical_memory(size_t size, process *owner)
     {
+        a9n::kernel::utility::logger::printk("configure values\n");
         size_t aligned_requested_size = align_size(size, a9n::PAGE_SIZE);
-        size_t requested_page_count   = aligned_requested_size / a9n::PAGE_SIZE;
+        a9n::kernel::utility::logger::printk(
+            "requested size (aligned) : "
+            "%10llu B\n",
+            aligned_requested_size
+        );
+        size_t        requested_page_count = aligned_requested_size / a9n::PAGE_SIZE;
         memory_block *current_memory_block = head_memory_block;
         a9n::word     start_frame_index;
         bool          has_free_frames;
 
+        a9n::kernel::utility::logger::printk("start find frames\n");
+        auto i = 0;
+
+        a9n::kernel::utility::logger::printk(
+            "current_memory_block_"
+            "size : 0x%016llx B\n",
+            current_memory_block->size
+        );
+
         while (current_memory_block)
         {
-            has_free_frames = find_free_frames(
-                *current_memory_block,
-                requested_page_count,
-                start_frame_index
-            );
+            has_free_frames
+                = find_free_frames(*current_memory_block, requested_page_count, start_frame_index);
 
             if (current_memory_block->size < aligned_requested_size)
             {
+                a9n::kernel::utility::logger::printk(
+                    "current_memory_block_"
+                    "size : 0x%016llx B\n",
+                    current_memory_block->size
+                );
+                i++;
+                if (i > 64)
+                {
+                    a9n::kernel::utility::logger::printk(
+                        "failed to allocate "
+                        "pm\n"
+                    );
+                    return 0;
+                }
                 current_memory_block = current_memory_block->next;
                 continue;
             }
@@ -188,8 +222,6 @@ namespace a9n::kernel
                 );
                 return start_frame_address;
             }
-
-            current_memory_block = current_memory_block->next;
         }
 
         return 0;
@@ -252,16 +284,15 @@ namespace a9n::kernel
     )
     {
         memory_block *current_memory_block = head_memory_block;
-        a9n::word page_count = align_size(size, a9n::PAGE_SIZE) / a9n::PAGE_SIZE;
-        a9n::word start_frame_index = 0;
+        a9n::word     page_count           = align_size(size, a9n::PAGE_SIZE) / a9n::PAGE_SIZE;
+        a9n::word     start_frame_index    = 0;
 
         while (current_memory_block)
         {
             a9n::physical_address end_physical_address
                 = start_physical_address + align_size(size, a9n::PAGE_SIZE);
             a9n::physical_address end_memory_block_address
-                = current_memory_block->start_physical_address
-                + current_memory_block->size;
+                = current_memory_block->start_physical_address + current_memory_block->size;
 
             if (start_physical_address > current_memory_block->start_physical_address
                 || end_memory_block_address < end_physical_address)
@@ -271,8 +302,7 @@ namespace a9n::kernel
             }
 
             start_frame_index
-                = (start_physical_address
-                   - current_memory_block->start_physical_address)
+                = (start_physical_address - current_memory_block->start_physical_address)
                 / a9n::PAGE_SIZE;
             configure_memory_frames(
                 &(current_memory_block->memory_frames[start_frame_index]),
@@ -290,13 +320,9 @@ namespace a9n::kernel
         return aligned_size;
     }
 
-    a9n::word memory_manager::align_physical_address(
-        a9n::word physical_address,
-        uint16_t  page_size
-    )
+    a9n::word memory_manager::align_physical_address(a9n::word physical_address, uint16_t page_size)
     {
-        a9n::word aligned_address
-            = (physical_address + page_size - 1) & ~(page_size - 1);
+        a9n::word aligned_address = (physical_address + page_size - 1) & ~(page_size - 1);
         return aligned_address;
     }
 
@@ -304,28 +330,26 @@ namespace a9n::kernel
         a9n::physical_address target_physical_address
     )
     {
-        return _memory_manager.convert_physical_to_virtual_address(
-            target_physical_address
-        );
+        return hal_memory_manager->convert_physical_to_virtual_address(target_physical_address);
     }
 
     a9n::physical_address memory_manager::convert_virtual_to_physical_address(
         a9n::virtual_address target_virtual_address
     )
     {
-        return _memory_manager.convert_virtual_to_physical_address(
-            target_virtual_address
-        );
+        return hal_memory_manager->convert_virtual_to_physical_address(target_virtual_address);
     }
 
     void memory_manager::init_virtual_memory(process *target_process)
     {
         if (!target_process)
         {
+            utility::logger::printk("target process is none\n");
             return; // error
         }
 
         // allocate top_page_table
+        utility::logger::printk("allocate top page table\n");
         a9n::physical_address page_table_address
             = allocate_physical_memory(a9n::PAGE_SIZE, target_process);
         if (page_table_address == 0)
@@ -333,16 +357,16 @@ namespace a9n::kernel
             return; // error
         }
 
+        utility::logger::printk("configure top page table\n");
         target_process->page_table = page_table_address;
         liba9n::std::memset(
-            reinterpret_cast<void *>(
-                convert_physical_to_virtual_address(target_process->page_table)
-            ),
+            reinterpret_cast<void *>(convert_physical_to_virtual_address(target_process->page_table)),
             0,
             a9n::PAGE_SIZE
         );
 
-        _memory_manager.init_virtual_memory(target_process->page_table);
+        utility::logger::printk("hal : init vm\n");
+        hal_memory_manager->init_virtual_memory(target_process->page_table);
 
         return;
     }
@@ -375,14 +399,14 @@ namespace a9n::kernel
             while (true)
             {
                 bool is_table_exists;
-                is_table_exists = _memory_manager.is_table_exists(
+                is_table_exists = hal_memory_manager->is_table_exists(
                     target_page_table_address,
                     target_virtual_address + address_offset
                 );
 
                 if (is_table_exists)
                 {
-                    _memory_manager.map_virtual_memory(
+                    hal_memory_manager->map_virtual_memory(
                         target_page_table_address,
                         target_virtual_address + address_offset,
                         target_physical_address + address_offset
@@ -391,11 +415,9 @@ namespace a9n::kernel
                 }
 
                 a9n::physical_address allocated_page_table;
-                allocated_page_table = allocate_physical_memory(
-                    a9n::PAGE_SIZE,
-                    is_kernel ? nullptr : target_process
-                );
-                _memory_manager.configure_page_table(
+                allocated_page_table
+                    = allocate_physical_memory(a9n::PAGE_SIZE, is_kernel ? nullptr : target_process);
+                hal_memory_manager->configure_page_table(
                     target_page_table_address,
                     target_virtual_address + address_offset,
                     allocated_page_table
@@ -411,5 +433,4 @@ namespace a9n::kernel
     )
     {
     }
-
 }

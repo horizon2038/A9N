@@ -50,7 +50,10 @@ namespace a9n::kernel::utility
         static void debug(const char *message, ...);
         static void error(const char *message);
         static void printk(const char *format, ...);
+        static void printh(const char *format, ...);
+        static void printu(const char *format, ...);
         static void printn(const char *format, ...);
+        static void put_char(char target);
         static void split(); // for clean-log
         static void a9nout();
 
@@ -62,10 +65,7 @@ namespace a9n::kernel::utility
         print           _print;
 
         void print_log_id(const char *color_id = terminal_color::GREEN);
-        void print_sender(
-            const char *sender,
-            const char *color_id = terminal_color::RESET
-        );
+        void print_sender(const char *sender, const char *color_id = terminal_color::RESET);
         void print_splitter();
     };
 

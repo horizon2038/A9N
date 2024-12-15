@@ -15,14 +15,14 @@ void __attribute__((section(".boot"))) init_page_table(void)
     // Temporarily, PML4[0] is pointing to the same area as PML[256], but this
     // is temporary, and it is necessary to reconfigure this within the kernel
     // and unmap the identity map.
-    pml4_table[0]   = (uint64_t)&__kernel_pdpt | 0x3;
-    pml4_table[256] = (uint64_t)&__kernel_pdpt | 0x3;
+    pml4_table[0]   = (uint64_t)&__kernel_pdpt | 0x3 | 0x04;
+    pml4_table[256] = (uint64_t)&__kernel_pdpt | 0x3 | 0x04;
 
     // Set up the PDPT table
     uint64_t *pdpt_table = (uint64_t *)&__kernel_pdpt;
     for (uint64_t i = 0; i < 4; i++)
     {
-        pdpt_table[i] = (uint64_t)(&__kernel_pd + i * 512) | 0x3;
+        pdpt_table[i] = (uint64_t)(&__kernel_pd + i * 512) | 0x3 | 0x04;
     }
 
     // Set up the PD table for 2MiB pages
@@ -33,7 +33,7 @@ void __attribute__((section(".boot"))) init_page_table(void)
         // 512 entries for 2MiB pages cover 1GiB
         uint64_t physical_addr = i * 0x200000; // 2MiB per page
         uint64_t virtual_addr  = 0xFFFF800000000000 + i * 0x200000;
-        pd_table[i] = physical_addr | 0x83; // Present, Writeable, and Page Size
-                                            // flag
+        pd_table[i]            = physical_addr | 0x83 | 0x04; // Present, Writeable, and
+                                                              // Page Size flag
     }
 }

@@ -2,6 +2,7 @@
 #define HAL_HPP
 
 // core services
+#include <hal/interface/cpu.hpp>
 #include <hal/interface/interrupt.hpp>
 #include <hal/interface/memory_manager.hpp>
 #include <hal/interface/process_manager.hpp>
@@ -18,9 +19,9 @@ namespace a9n::hal
 {
     struct hal
     {
-        memory_manager  *_memory_manager;
-        process_manager *_process_manager;
-        interrupt       *_interrupt;
+        memory_manager *_memory_manager;
+
+        // interrupt *_interrupt;
 
         // platform services
         arch_initializer *_arch_initializer;

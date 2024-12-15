@@ -12,7 +12,11 @@ namespace a9n::hal
     inline constexpr a9n::word USER_VIRTUAL_BASE   = 0x0;
 
     // context
-    inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 128;
+    inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 22;
+
+    // WIP
+    inline constexpr a9n::word FPU_CONTEXT_SIZE            = 0;
+    inline constexpr a9n::word VIRTUAL_MEMORY_CONTEXT_SIZE = 1;
 }
 
 #endif

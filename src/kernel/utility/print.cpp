@@ -52,11 +52,12 @@ namespace a9n::kernel::utility
         write_char(&destination, '\0');
     }
 
-    void print::process_format(
-        char            **destination,
-        const char      **format_pointer,
-        __builtin_va_list args
-    )
+    void print::put_char(char target)
+    {
+        _serial.write_serial(target);
+    }
+
+    void print::process_format(char **destination, const char **format_pointer, __builtin_va_list args)
     {
         int  width              = 0;
         bool zero_pad           = false;
@@ -109,12 +110,7 @@ namespace a9n::kernel::utility
                 }
                 if (long_long_modifier)
                 {
-                    write_int_ll(
-                        destination,
-                        __builtin_va_arg(args, long long),
-                        width,
-                        zero_pad
-                    );
+                    write_int_ll(destination, __builtin_va_arg(args, long long), width, zero_pad);
                     break;
                 }
 
@@ -135,35 +131,17 @@ namespace a9n::kernel::utility
                 }
                 if (long_modifier)
                 {
-                    write_hex(
-                        destination,
-                        __builtin_va_arg(args, unsigned long),
-                        width,
-                        zero_pad,
-                        false
-                    );
+                    write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, false);
                     break;
                 }
 
-                write_hex(
-                    destination,
-                    __builtin_va_arg(args, unsigned int),
-                    width,
-                    zero_pad,
-                    false
-                );
+                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, false);
                 break;
 
             case 'X' :
                 if (long_modifier)
                 {
-                    write_hex(
-                        destination,
-                        __builtin_va_arg(args, unsigned long),
-                        width,
-                        zero_pad,
-                        true
-                    );
+                    write_hex(destination, __builtin_va_arg(args, unsigned long), width, zero_pad, true);
                     break;
                 }
                 if (long_long_modifier)
@@ -178,13 +156,7 @@ namespace a9n::kernel::utility
                     break;
                 }
 
-                write_hex(
-                    destination,
-                    __builtin_va_arg(args, unsigned int),
-                    width,
-                    zero_pad,
-                    true
-                );
+                write_hex(destination, __builtin_va_arg(args, unsigned int), width, zero_pad, true);
                 break;
 
             case 's' :
@@ -198,31 +170,16 @@ namespace a9n::kernel::utility
             case 'u' :
                 if (long_modifier)
                 {
-                    write_uint(
-                        destination,
-                        __builtin_va_arg(args, unsigned long),
-                        width,
-                        zero_pad
-                    );
+                    write_uint(destination, __builtin_va_arg(args, unsigned long), width, zero_pad);
                     break;
                 }
                 if (long_long_modifier)
                 {
-                    write_uint_ll(
-                        destination,
-                        __builtin_va_arg(args, unsigned long long),
-                        width,
-                        zero_pad
-                    );
+                    write_uint_ll(destination, __builtin_va_arg(args, unsigned long long), width, zero_pad);
                     break;
                 }
 
-                write_uint(
-                    destination,
-                    __builtin_va_arg(args, unsigned int),
-                    width,
-                    zero_pad
-                );
+                write_uint(destination, __builtin_va_arg(args, unsigned int), width, zero_pad);
                 break;
 
             case 'c' :
@@ -357,12 +314,7 @@ namespace a9n::kernel::utility
         }
     }
 
-    void print::write_uint_ll(
-        char             **destination,
-        unsigned long long count,
-        int                width,
-        bool               zero_pad
-    )
+    void print::write_uint_ll(char **destination, unsigned long long count, int width, bool zero_pad)
     {
         char  buffer[20];
         char *pointer = buffer + 20;
@@ -385,13 +337,7 @@ namespace a9n::kernel::utility
         }
     }
 
-    void print::write_hex(
-        char       **destination,
-        unsigned int count,
-        int          width,
-        bool         zero_pad,
-        bool         uppercase
-    )
+    void print::write_hex(char **destination, unsigned int count, int width, bool zero_pad, bool uppercase)
     {
         char  buffer[8];
         char *pointer = buffer + 8;
@@ -399,8 +345,7 @@ namespace a9n::kernel::utility
         do
         {
             int digit   = count % 16;
-            *--pointer  = (digit < 10) ? ('0' + digit) :
-                                         ((uppercase ? 'A' : 'a') + digit - 10);
+            *--pointer  = (digit < 10) ? ('0' + digit) : ((uppercase ? 'A' : 'a') + digit - 10);
             count      /= 16;
             --width;
         } while (count > 0);
@@ -418,13 +363,7 @@ namespace a9n::kernel::utility
         }
     }
 
-    void print::write_hex_ll(
-        char             **destination,
-        unsigned long long count,
-        int                width,
-        bool               zero_pad,
-        bool               uppercase
-    )
+    void print::write_hex_ll(char **destination, unsigned long long count, int width, bool zero_pad, bool uppercase)
     {
         char  buffer[16];
         char *pointer = buffer + 16;
@@ -432,8 +371,7 @@ namespace a9n::kernel::utility
         do
         {
             int digit   = count % 16;
-            *--pointer  = (digit < 10) ? ('0' + digit) :
-                                         ((uppercase ? 'A' : 'a') + digit - 10);
+            *--pointer  = (digit < 10) ? ('0' + digit) : ((uppercase ? 'A' : 'a') + digit - 10);
             count      /= 16;
             --width;
         } while (count > 0);
@@ -454,7 +392,7 @@ namespace a9n::kernel::utility
     void print::write_pointer(char **destination, const void *pointer)
     {
         static const char *hex_digits = "0123456789abcdef";
-        unsigned long      value = reinterpret_cast<unsigned long>(pointer);
+        unsigned long      value      = reinterpret_cast<unsigned long>(pointer);
 
         write_char(destination, '0');
         write_char(destination, 'x');

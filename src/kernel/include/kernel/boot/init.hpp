@@ -7,11 +7,11 @@
 
 namespace a9n::kernel
 {
-    inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX      = 256;
-    inline constexpr a9n::word INITIAL_PAGE_TABLE_COUNT_MAX = 256;
+    inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX          = 256;
+    inline constexpr a9n::word INITIAL_PAGE_TABLE_COUNT_MAX     = 256;
 
-    inline constexpr a9n::word INITIAL_GENERIC_COUNT_MAX    = 256;
-    inline constexpr a9n::word INITIAL_IPC_PORT_COUNT_MAX   = 256;
+    inline constexpr a9n::word INITIAL_GENERIC_COUNT_MAX        = 256;
+    inline constexpr a9n::word INITIAL_INTERRUPT_PORT_COUNT_MAX = 256;
 
     struct generic_descriptor
     {
@@ -51,7 +51,7 @@ namespace a9n::kernel
         a9n::word                  generic_list_count;
 
         // initial interrupt ports
-        interrupt_port_descriptor  interrupt_port_list[INITIAL_IPC_PORT_COUNT_MAX];
+        interrupt_port_descriptor  interrupt_port_list[INITIAL_INTERRUPT_PORT_COUNT_MAX];
         a9n::capability_descriptor interrupt_port_start;
         a9n::word                  interrupt_port_count;
     };

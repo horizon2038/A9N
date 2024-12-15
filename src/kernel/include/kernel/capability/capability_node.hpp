@@ -18,11 +18,7 @@ namespace a9n::kernel
             capability_slot *initial_capability_slots
         );
 
-        capability_result execute(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        ) override;
+        capability_result execute(process &this_process, capability_slot &this_slot) override;
 
         capability_result revoke() override
         {
@@ -46,40 +42,23 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        capability_result decode_operation(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        );
+        capability_result
+            decode_operation(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
 
-        capability_result operation_copy(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        );
+        capability_result
+            operation_copy(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
 
-        capability_result operation_move(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        );
+        capability_result
+            operation_move(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
 
-        capability_result operation_revoke(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        );
+        capability_result
+            operation_revoke(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
 
-        capability_result operation_remove(
-            ipc_buffer      *buffer,
-            capability_slot *this_slot,
-            capability_slot *root_slot
-        );
+        capability_result
+            operation_remove(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
 
-        capability_lookup_result lookup_slot(
-            a9n::capability_descriptor target_descriptor,
-            a9n::word                  descriptor_used_bits
-        );
+        capability_lookup_result
+            lookup_slot(a9n::capability_descriptor target_descriptor, a9n::word descriptor_used_bits);
 
         // inline section
         inline const bool is_index_valid(a9n::word index)
@@ -104,16 +83,13 @@ namespace a9n::kernel
             a9n::word                  descriptor_used_bits
         )
         {
-            auto mask_bits = static_cast<a9n::word>((1 << radix_bits) - 1);
-            auto shift_bits
-                = (a9n::WORD_BITS
-                   - (ignore_bits + radix_bits + descriptor_used_bits));
-            auto index = (descriptor >> shift_bits) & mask_bits;
+            auto mask_bits  = static_cast<a9n::word>((1 << radix_bits) - 1);
+            auto shift_bits = (a9n::WORD_BITS - (ignore_bits + radix_bits + descriptor_used_bits));
+            auto index      = (descriptor >> shift_bits) & mask_bits;
             return index;
         }
 
-        inline const a9n::word
-            calculate_used_bits(a9n::word old_descriptor_used_bits)
+        inline const a9n::word calculate_used_bits(a9n::word old_descriptor_used_bits)
         {
             return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }

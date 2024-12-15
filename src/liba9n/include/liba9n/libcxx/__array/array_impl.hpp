@@ -223,15 +223,13 @@ namespace liba9n::std
     };
 
     template<typename T, auto Size>
-    inline constexpr bool
-        operator==(const array<T, Size> &lhs, const array<T, Size> &rhs)
+    inline constexpr bool operator==(const array<T, Size> &lhs, const array<T, Size> &rhs)
     {
         return !(lhs == rhs);
     }
 
     template<typename T, auto Size>
-    inline constexpr bool
-        operator!=(const array<T, Size> &lhs, const array<T, Size> &rhs)
+    inline constexpr bool operator!=(const array<T, Size> &lhs, const array<T, Size> &rhs)
     {
         return !(lhs == rhs);
     }

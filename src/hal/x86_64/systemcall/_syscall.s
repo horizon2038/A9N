@@ -72,10 +72,11 @@ _syscall_handler:
 
     ; setup do_syscall arguments
     ; the argument has already been set
-    ; RDI : descriptor
-    ; RSI : depth
-    ; RDX : message_tag
-    ; R8  : message_length
+    ; RDI : kernel call type
+    ; RSI : message_register_0
+    ; RDX : message_register_1
+    ; R8  : message_register_2
+    ; R9  : message_register_3
     mov rcx, r8
 
     ; use kernel_stack since do_syscall

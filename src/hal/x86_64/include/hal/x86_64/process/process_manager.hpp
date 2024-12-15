@@ -1,6 +1,7 @@
 #ifndef X86_64_CONTEXT_SWITCH_HPP
 #define X86_64_CONTEXT_SWITCH_HPP
 
+#include <hal/hal_result.hpp>
 #include <hal/interface/process_manager.hpp>
 #include <kernel/types.hpp>
 
@@ -9,29 +10,15 @@
 
 namespace a9n::hal::x86_64
 {
-    class process_manager final : public a9n::hal::process_manager
-    {
-      public:
-        process_manager();
-        ~process_manager();
+    inline constexpr a9n::word MESSAGE_REGISTER_SIZE_MAX = 4;
 
-        void switch_context(
-            a9n::kernel::process *preview_process,
-            a9n::kernel::process *next_process
-        ) override;
+    // unused
+    // TODO: remove this
+    extern "C" void _switch_context(
+        a9n::virtual_address *preview_stack_pointer,
+        a9n::virtual_address *next_stack_pointer
+    );
 
-        void create_process(
-            a9n::kernel::process *target_process,
-            a9n::virtual_address  entry_point_address
-        ) override;
-
-        void create_idle_process(a9n::kernel::process *target_process) override;
-
-        void delete_process(a9n::kernel::process *target_process) override;
-
-      private:
-        segment_configurator _segment_configurator;
-    };
 }
 
 #endif

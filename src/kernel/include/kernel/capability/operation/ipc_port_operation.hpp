@@ -5,9 +5,20 @@
 
 namespace a9n::kernel
 {
-    enum class ipc_port_operation : a9n::word
+    enum class ipc_port_operation : word
     {
+        SEND,
+        RECEIVE,
+        CALL,
+        REPLY,
     };
+
+    namespace ipc_port_send_argument
+    {
+        inline constexpr bool IS_BLOCK      = 0;
+        inline constexpr bool MESSAGE_COUNT = 1;
+    }
+
 }
 
 #endif

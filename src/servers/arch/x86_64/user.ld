@@ -32,7 +32,7 @@ SECTIONS
     {
         __init_info_start = .;
         /* allocate 4KiB */
-        . += 0x1000;
+        . += 0x1000 * 2;
         __init_info_end = .;
 
         __init_ipc_buffer_start = .;
