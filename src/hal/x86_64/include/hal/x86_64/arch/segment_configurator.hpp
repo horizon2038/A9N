@@ -1,6 +1,8 @@
 #ifndef GDT_INITIALIZER_HPP
 #define GDT_INITIALIZER_HPP
 
+#include "hal/x86_64/interrupt/interrupt_descriptor.hpp"
+#include <hal/hal_result.hpp>
 #include <stdint.h>
 
 namespace a9n::hal::x86_64
@@ -11,8 +13,8 @@ namespace a9n::hal::x86_64
         static constexpr uint16_t KERNEL_CS    = 0x08;
         static constexpr uint16_t KERNEL_DS    = 0x10;
         static constexpr uint16_t USER_CS_NULL = 0x18;
-        static constexpr uint16_t USER_CS      = 0x20;
-        static constexpr uint16_t USER_DS      = 0x28;
+        static constexpr uint16_t USER_DS      = 0x20;
+        static constexpr uint16_t USER_CS      = 0x28;
         static constexpr uint16_t KERNEL_TSS   = 0x30;
     };
 
@@ -41,21 +43,32 @@ namespace a9n::hal::x86_64
         uint64_t kernel_code_segment;
         uint64_t kernel_data_segment;
         uint64_t user_code_segment_32; // unused
-        uint64_t user_code_segment;
         uint64_t user_data_segment;
+        uint64_t user_code_segment;
         uint64_t tss_low;
         uint64_t tss_high;
 
     } __attribute__((packed));
 
+    namespace segment
+    {
+        hal_result init();
+        void       configure_gdt(global_descriptor_table &gdt);
+        void       configure_idt(interrupt_descriptor_table &idt);
+        void       configure_tss(global_descriptor_table &gdt, task_state_segment &tss);
+
+        void load_gdt(global_descriptor_table &gdt);
+        void load_segment_register(uint16_t code_segment_register);
+        void load_task_register(uint16_t segment_register);
+        void load_idt(interrupt_descriptor_table &idt);
+    }
+
+    /*
     class segment_configurator
     {
       public:
-        segment_configurator();
-        ~segment_configurator();
-
-        void init_gdt();
-        void configure_rsp0(uint64_t kernel_stack_pointer);
+        hal_result init();
+        void       configure_rsp0(uint64_t kernel_stack_pointer);
 
       private:
         void configure_gdt();
@@ -64,16 +77,11 @@ namespace a9n::hal::x86_64
         void load_gdt();
         void load_segment_register(uint16_t code_segment_register);
         void load_task_register(uint16_t segment_register);
-
-        // it needs to be rewritten because it does not take into account mp
     };
+    */
 
-    inline constexpr uint64_t create_segment_descriptor(
-        uint32_t base,
-        uint32_t limit,
-        uint8_t  access,
-        uint8_t  flags
-    )
+    inline constexpr uint64_t
+        create_segment_descriptor(uint32_t base, uint32_t limit, uint8_t access, uint8_t flags)
     {
         // +------------+-------+-------+-------------+-----------+
         // |   63-56    | 55-52 | 51-48 |    47-40    |   39-32   |
@@ -187,8 +195,9 @@ namespace a9n::hal::x86_64
     }
 
     // TODO: move to cpu_local_variable
+    /*
     alignas(8) inline task_state_segment tss;
     alignas(8) inline global_descriptor_table gdt;
-
+    */
 }
 #endif
