@@ -100,6 +100,11 @@ boot_ap_64:
     add rdi, 0x1000
     mov rsp, rdi
 
+    ; update lower_half -> higher_half
+    extern __kernel_pml4
+    lea eax, [__kernel_pml4]
+    mov cr3, eax
+
     jmp boot_ap_loop
 
 boot_ap_loop:
@@ -112,7 +117,7 @@ boot_ap_loop:
 align 16
 global __boot_ap_gdt_start, __boot_ap_gdt_end
 __boot_ap_gdt_start:
-    dq 0x0000000000000000 ; null descriptor
+    dq 0x0000000000000000 ; 0x00 null descriptor
     dq 0x00cf9a000000ffff ; 0x08 code segment 32bit
     dq 0x00cf92000000ffff ; 0x10 data segment 32bit
     dq 0x00af9a000000ffff ; 0x18 code segment 64bit

@@ -42,10 +42,10 @@ function run_qemu() {
         -smp 4 \
         -M hpet=on \
         -nographic \
-        -cpu Skylake-Client,+fsgsbase
+        -cpu Skylake-Client,+fsgsbase \
+        -no-shutdown -no-reboot #-s -S
         # -s -S
         # -d int
-        # -no-shutdown -no-reboot \
         # -chardev stdio,id=char0,logfile=serial.log \
         # -serial chardev:char0
     # -monitor stdio
