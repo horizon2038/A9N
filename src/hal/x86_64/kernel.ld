@@ -16,20 +16,12 @@ MEMORY
 
 SECTIONS
 {
-    /* not working ! */
-    /*
-    .trampoline :
-    {
-        __boot_ap_trampoline_start = .;
-        . += 0x1000;
-        __boot_ap_trampoline_end = .;
-    } > trampoline
-    */
-    
-    /* temp */
+    . = 0x5000;
     __boot_ap_trampoline_start = .;
-    . += 0x1000;
+    . += 0x1000; /* reserve 1 page */
     __boot_ap_trampoline_end = .;
+    __boot_ap_trampoline_gdtr = .;
+    . += 0x1000;
 
     .boot :
     {

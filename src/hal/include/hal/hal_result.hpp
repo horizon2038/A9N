@@ -17,6 +17,7 @@ namespace a9n::hal
         TRY_AGAIN,
         UNEXPECTED,
         INIT_FIRST,
+        TIMEOUT,
     };
 
     using hal_result = liba9n::result<void, hal_error>;
@@ -48,6 +49,9 @@ namespace a9n::hal
 
             case hal_error::INIT_FIRST :
                 return "INIT FIRST";
+
+            case hal_error::TIMEOUT :
+                return "TIMEOUT";
 
             default :
                 return "ERROR NOT FOUND";

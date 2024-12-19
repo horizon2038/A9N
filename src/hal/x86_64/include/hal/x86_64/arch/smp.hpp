@@ -35,13 +35,14 @@ namespace a9n::hal::x86_64
                     return hal_error::ILLEGAL_ARGUMENT;
                 }
 
-                uint8_t *madt_entry_pointer = reinterpret_cast<uint8_t *>(madt_base + sizeof(madt));
-                uint8_t *end                = reinterpret_cast<uint8_t *>(madt_base->header.length);
+                uint8_t *madt_entry_pointer = reinterpret_cast<uint8_t *>(madt_base) + sizeof(madt);
+                uint8_t *end = reinterpret_cast<uint8_t *>(madt_base) + madt_base->header.length;
 
                 while (madt_entry_pointer < end)
                 {
                     madt_entry_header *entry = reinterpret_cast<madt_entry_header *>(madt_entry_pointer
                     );
+                    logger::printh("madt entry : 0x%016llx\n", entry);
 
                     switch (entry->type)
                     {
@@ -53,6 +54,7 @@ namespace a9n::hal::x86_64
                                     smp_info_core.local_apic_ids[smp_info_core.enabled_ap_count]
                                         = local_apic_entry->apic_id;
                                     smp_info_core.enabled_ap_count++;
+                                    logger::printh("madt type : Local APIC\n");
                                 }
 
                                 break;
@@ -68,6 +70,7 @@ namespace a9n::hal::x86_64
                                     smp_info_core.local_apic_ids[smp_info_core.enabled_ap_count]
                                         = local_x2_apic_entry->apic_id;
                                     smp_info_core.enabled_ap_count++;
+                                    logger::printh("madt type : Local X2APIC\n");
                                 }
 
                                 break;
@@ -88,6 +91,8 @@ namespace a9n::hal::x86_64
         {
             return result.unwrap_error();
         }
+
+        logger::printh("number of processor : %04d\n", smp_info_core.enabled_ap_count);
 
         return smp_info_core;
     }

@@ -1,11 +1,14 @@
-#include "hal/interface/interrupt.hpp"
-#include "hal/hal_result.hpp"
+#include <hal/interface/interrupt.hpp>
+
+#include <hal/hal_result.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
 
 #include <hal/x86_64/arch/cpu.hpp>
 #include <hal/x86_64/interrupt/apic.hpp>
 #include <hal/x86_64/interrupt/interrupt_descriptor.hpp>
 #include <hal/x86_64/systemcall/syscall.hpp>
+#include <hal/x86_64/time/acpi_pm_timer.hpp>
+
 #include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
 
@@ -87,14 +90,14 @@ namespace a9n::hal::x86_64
         bool is_shadow_stack      = error_code >> 6 & 1;
         bool is_sgx               = error_code >> 7 & 1;
 
-        logger::printk("is_present \e[52G : %s\n", is_present ? "Y" : "N");
-        logger::printk("is_write \e[52G : %s\n", is_write ? "Y" : "N");
-        logger::printk("is_user \e[52G : %s\n", is_user ? "Y" : "N");
-        logger::printk("is_reserved_write \e[52G : %s\n", is_reserved_write ? "Y" : "N");
-        logger::printk("is_instruction_fetch \e[52G : %s\n", is_instruction_fetch ? "Y" : "N");
-        logger::printk("is_protection_key \e[52G : %s\n", is_protection_key ? "Y" : "N");
-        logger::printk("is_shadow_stack \e[52G : %s\n", is_shadow_stack ? "Y" : "N");
-        logger::printk("is_sgx \e[52G : %s\n", is_sgx ? "Y" : "N");
+        logger::printh("is_present \e[52G : %s\n", is_present ? "Y" : "N");
+        logger::printh("is_write \e[52G : %s\n", is_write ? "Y" : "N");
+        logger::printh("is_user \e[52G : %s\n", is_user ? "Y" : "N");
+        logger::printh("is_reserved_write \e[52G : %s\n", is_reserved_write ? "Y" : "N");
+        logger::printh("is_instruction_fetch \e[52G : %s\n", is_instruction_fetch ? "Y" : "N");
+        logger::printh("is_protection_key \e[52G : %s\n", is_protection_key ? "Y" : "N");
+        logger::printh("is_shadow_stack \e[52G : %s\n", is_shadow_stack ? "Y" : "N");
+        logger::printh("is_sgx \e[52G : %s\n", is_sgx ? "Y" : "N");
     }
 
     inline constexpr const char *register_names[]
@@ -108,17 +111,17 @@ namespace a9n::hal::x86_64
         for (a9n::word i = 0; i < 22; i++)
         {
             a9n::word value = (*context)[i];
-            a9n::kernel::utility::logger::printk("%s \e[38G : 0x%016llx\n", register_names[i], value);
+            a9n::kernel::utility::logger::printh("%s \e[38G : 0x%016llx\n", register_names[i], value);
         }
 
-        a9n::kernel::utility::logger::printk("CR0 \e[38G : 0x%016llx\n", read_cr0());
-        a9n::kernel::utility::logger::printk("CR2 \e[38G : 0x%016llx\n", read_cr2());
-        a9n::kernel::utility::logger::printk("CR3 \e[38G : 0x%016llx\n", read_cr3());
-        a9n::kernel::utility::logger::printk("CR4 \e[38G : 0x%016llx\n", read_cr4());
+        a9n::kernel::utility::logger::printh("CR0 \e[38G : 0x%016llx\n", read_cr0());
+        a9n::kernel::utility::logger::printh("CR2 \e[38G : 0x%016llx\n", read_cr2());
+        a9n::kernel::utility::logger::printh("CR3 \e[38G : 0x%016llx\n", read_cr3());
+        a9n::kernel::utility::logger::printh("CR4 \e[38G : 0x%016llx\n", read_cr4());
 
-        a9n::kernel::utility::logger::printk("kernel_gs_base : 0x%016llx\n", read_kernel_gs_base());
+        a9n::kernel::utility::logger::printh("kernel_gs_base : 0x%016llx\n", read_kernel_gs_base());
 
-        a9n::kernel::utility::logger::printk("user_gs_base : 0x%016llx\n", read_user_gs_base());
+        a9n::kernel::utility::logger::printh("user_gs_base : 0x%016llx\n", read_user_gs_base());
         a9n::kernel::utility::logger::split();
     }
 
@@ -131,7 +134,7 @@ namespace a9n::hal::x86_64
         {
             // timer
             case 0x20 :
-                a9n::kernel::utility::logger::printk(
+                a9n::kernel::utility::logger::printh(
                     "[kernel -> kernel] exception [%2d] : %s : %llu\n",
                     static_cast<int>(irq_number),
                     exception_type,
@@ -142,7 +145,7 @@ namespace a9n::hal::x86_64
 
             default :
                 print_registers();
-                a9n::kernel::utility::logger::printk(
+                a9n::kernel::utility::logger::printh(
                     "[kernel -> kernel] exception [%2d] : %s : %llu\n",
                     static_cast<int>(irq_number),
                     exception_type,
@@ -163,7 +166,7 @@ namespace a9n::hal::x86_64
         switch (irq_number)
         {
             case 0 :
-                a9n::kernel::utility::logger::printk("zero division fault! : 0x%llx\n", error_code);
+                a9n::kernel::utility::logger::printh("zero division fault! : 0x%llx\n", error_code);
                 print_registers();
 
             // timer
@@ -173,19 +176,19 @@ namespace a9n::hal::x86_64
                 break;
 
             case 13 :
-                a9n::kernel::utility::logger::printk("gp fault!\n");
+                a9n::kernel::utility::logger::printh("gp fault!\n");
                 print_registers();
 
             case 14 :
-                a9n::kernel::utility::logger::printk("page fault! : 0x%llx\n", error_code);
-                a9n::kernel::utility::logger::printk("fault address : 0x%016llx\n", read_cr2());
+                a9n::kernel::utility::logger::printh("page fault! : 0x%llx\n", error_code);
+                a9n::kernel::utility::logger::printh("fault address : 0x%016llx\n", read_cr2());
                 print_page_fault_reason(error_code);
                 print_registers();
                 break;
 
             default :
                 const char *exception_type = get_exception_type_string(irq_number);
-                a9n::kernel::utility::logger::printk(
+                a9n::kernel::utility::logger::printh(
                     "[user -> kernel] exception [%04llu] : %s : %llu\n",
                     static_cast<int32_t>(irq_number),
                     exception_type,
@@ -242,9 +245,14 @@ namespace a9n::hal::x86_64
         );
     }
 
-    hal_result
-        ipi(uint8_t vector, ipi_delivery_mode mode, ipi_destination_shorthand shorthand, uint8_t receiver_cpu
-        )
+    hal_result ipi(
+        uint8_t                   vector,
+        ipi_delivery_mode         mode,
+        ipi_destination_shorthand shorthand,
+        uint8_t                   receiver_cpu,
+        ipi_trigger_mode          trigger_mode,
+        ipi_level_state           level_state
+    )
     {
         // cf., Intel SDM vol. 3A 11-19, figure 11-12, "Interrupt Command Register (ICR)"
         //      (combined : page 3403)
@@ -265,12 +273,61 @@ namespace a9n::hal::x86_64
         // +-------+-----------------------+-------+---------+-------+----+-----------------+------------------+---------------+--------+
         // clang-format on
 
-        uint32_t icr_high = receiver_cpu << 24;
+        uint32_t icr_high = static_cast<uint32_t>(receiver_cpu) << 24;
 
-        // enable "level" bits
-        uint32_t icr_low = (liba9n::enum_cast(shorthand) & ((1 << 2) - 1)) << 18 | (1 << 14)
-                         | (liba9n::enum_cast(mode) & ((1 << 3) - 1)) << 8 | vector;
-        // uint64_t icr = icr_low | static_cast<uint64_t>(icr_high) << 32;
+        // enable "level" bits (1<<14 => 0<<11)
+        uint32_t icr_low = 0;
+
+        /*
+        icr_low |= (static_cast<uint32_t>(shorthand) & 0x03) << 18; // Destination Shorthand
+        icr_low |= (static_cast<uint32_t>(mode) & 0x07) << 8;       // Delivery Mode
+        icr_low |= (static_cast<uint32_t>(vector) & 0xFF);          // Vector
+
+        if (mode == ipi_delivery_mode::INIT)
+        {
+            // For INIT, Trigger Mode must be Level and Level State must be set
+            icr_low |= (1 << 15);                                         // Trigger Mode = Level
+            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 14; // Level State
+        }
+        else
+        {
+            // For other modes, set Trigger Mode and Level based on parameters
+            icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 15; // Trigger Mode
+            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 14;  // Level
+        }
+        */
+
+        // Destination Shorthand
+        icr_low |= (static_cast<uint32_t>(shorthand) & 0x03) << 18;
+
+        // Delivery Mode
+        icr_low |= (static_cast<uint32_t>(mode) & 0x07) << 8;
+
+        if (mode == ipi_delivery_mode::INIT)
+        {
+            // INIT IPI: Trigger Mode = Level, Level State = Not used (0)
+            // ICR_LOW = 0x00004500
+            icr_low |= (1 << 14); // Trigger Mode = Level
+            // Level State = 0 (未設定)
+            // Vector = 0x00
+        }
+        else if (mode == ipi_delivery_mode::STARTUP)
+        {
+            // SIPI: Trigger Mode = Edge, Level State = Deassert, Vector = Page Number
+            // ICR_LOW = 0x00004600 | page_number
+            icr_low |= (1 << 14); // Trigger Mode = Edge
+            // Level State = 0 (Deassert)
+            icr_low |= (vector & 0xFF); // Vector = Page Number
+        }
+        else
+        {
+            // その他のDelivery Modeの場合
+            icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 14; // Trigger Mode
+            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 15;  // Level State
+            icr_low |= (vector & 0xFF);                                    // Vector
+        }
+
+        a9n::kernel::utility::logger::printk("ICR low : 0x%08x\n", icr_low);
 
         return local_apic_core.write(local_apic_offset::ICR_HIGH, icr_high)
             .and_then(
@@ -278,12 +335,66 @@ namespace a9n::hal::x86_64
                 {
                     return local_apic_core.write(local_apic_offset::ICR_LOW, icr_low);
                 }
-            );
+            )
+            .and_then(ipi_wait);
+    }
+
+    hal_result ipi_wait(void)
+    {
+        constexpr a9n::word TIMEOUT_MSEC = 100;
+        a9n::word           elapsed_msec = 0;
+
+        while ((local_apic_core.read(local_apic_offset::ICR_LOW).unwrap_or(static_cast<uint32_t>(0))
+                & (1 << 12))
+               != 0)
+        {
+            auto result = acpi_pm_timer_core.wait(1000);
+            if (!result)
+            {
+                result.unwrap_error();
+            }
+
+            elapsed_msec++;
+            if (elapsed_msec >= TIMEOUT_MSEC)
+            {
+                a9n::kernel::utility::logger::error("IPI timeout");
+                return hal_error::TIMEOUT;
+            }
+        }
+
+        return {};
     }
 
     hal_result ipi_init(uint8_t receiver_cpu)
     {
-        return ipi(0, ipi_delivery_mode::INIT, ipi_destination_shorthand::NO_SHORTHAND, receiver_cpu);
+        using kernel::utility::logger;
+        logger::printh("IPI init (APIC id : 0x%02x)\n", receiver_cpu);
+
+        return ipi(0,
+                   ipi_delivery_mode::INIT,
+                   ipi_destination_shorthand::NO_SHORTHAND,
+                   receiver_cpu,
+                   ipi_trigger_mode::LEVEL,
+                   ipi_level_state::ASSERT)
+            .and_then(
+                [](void) -> hal_result
+                {
+                    return acpi_pm_timer_core.wait(100);
+                }
+            )
+            .and_then(
+                [=](void) -> hal_result
+                {
+                    return ipi(
+                        0,
+                        ipi_delivery_mode::INIT,
+                        ipi_destination_shorthand::NO_SHORTHAND,
+                        receiver_cpu,
+                        ipi_trigger_mode::LEVEL,
+                        ipi_level_state::DEASSERT
+                    );
+                }
+            );
     }
 
     hal_result ipi_startup(a9n::physical_address trampoline_address, uint8_t receiver_cpu)
@@ -291,6 +402,15 @@ namespace a9n::hal::x86_64
         // in ipi starup, the first address of the target trampoline code is specified in vector
         // by *physical page frame number*.
         // therefore, a 12bit shift is performed; because base is aligned to 4KiB : 2^12.
+
+        using kernel::utility::logger;
+
+        logger::printh("IPI startup (APIC id : 0x%02x)\n", receiver_cpu);
+
+        if ((trampoline_address % a9n::PAGE_SIZE) != 0)
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
 
         if (trampoline_address > (4096 * UINT8_MAX))
         {
@@ -300,11 +420,14 @@ namespace a9n::hal::x86_64
 
         uint8_t page_number = trampoline_address >> 12;
 
+        logger::printh("IPI startup : 0x%016llx -> (APIC id : 0x%02x)\n", page_number, receiver_cpu);
+
         return ipi(
             page_number,
             ipi_delivery_mode::STARTUP,
             ipi_destination_shorthand::NO_SHORTHAND,
-            receiver_cpu
+            receiver_cpu,
+            ipi_trigger_mode::EDGE
         );
     }
 }

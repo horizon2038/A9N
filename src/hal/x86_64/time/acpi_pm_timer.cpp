@@ -49,8 +49,9 @@ namespace a9n::hal::x86_64
             {
                 case SYSTEM_MEMORY :
                     is_mmio = true;
-                    address = a9n::kernel::physical_to_virtual_pointer<
-                        volatile uint32_t>(fadt_base->x_pm_timer_block.address);
+                    address = a9n::kernel::physical_to_virtual_pointer<volatile uint32_t>(
+                        fadt_base->x_pm_timer_block.address
+                    );
                     logger::printk("ACPI PM Timer : address : %p\n", address);
                     break;
 
@@ -100,7 +101,7 @@ namespace a9n::hal::x86_64
     hal_result acpi_pm_timer::wait(uint32_t micro_seconds)
     {
         using a9n::kernel::utility::logger;
-        logger::printk("ACPI PM Timer : wait %10d ms\n", micro_seconds / 1000);
+        // logger::printk("ACPI PM Timer : wait %10d ms\n", micro_seconds / 1000);
 
         const auto MASK_BITS = (bits < 32) ? ((1u << bits) - 1) : 0xFFFFFFFFu;
 
@@ -108,8 +109,7 @@ namespace a9n::hal::x86_64
             [=, this](uint32_t start_time) -> hal_result
             {
                 uint32_t end_ticks
-                    = static_cast<uint32_t>(micro_seconds * (TIMER_FREQUENCY / 1e6))
-                    & MASK_BITS;
+                    = static_cast<uint32_t>(micro_seconds * (TIMER_FREQUENCY / 1e6)) & MASK_BITS;
                 liba9n::result<uint32_t, hal_error> result { 0 };
 
                 while (true)
@@ -124,7 +124,7 @@ namespace a9n::hal::x86_64
                         return result.unwrap_error();
                     }
 
-                    auto current_time = result.unwrap();
+                    auto     current_time = result.unwrap();
                     uint32_t elapsed_time = (current_time - start_time) & MASK_BITS;
                     if (elapsed_time >= end_ticks)
                     {

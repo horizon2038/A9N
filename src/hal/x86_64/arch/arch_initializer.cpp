@@ -26,6 +26,7 @@
 #include <liba9n/libc/string.hpp>
 
 // temp
+#include <hal/x86_64/arch/smp.hpp>
 #include <hal/x86_64/memory/memory_manager.hpp>
 
 namespace a9n::hal::x86_64
@@ -195,6 +196,11 @@ namespace a9n::hal::x86_64
     extern "C" uint8_t __boot_ap_trampoline_start[];
     extern "C" uint8_t __boot_ap_trampoline_end[];
 
+    // gdt
+    extern "C" uint8_t __boot_ap_trampoline_gdtr[];
+    extern "C" uint8_t __boot_ap_gdt_start[];
+    extern "C" uint8_t __boot_ap_gdt_end[];
+
     hal_result init_sub_cores()
     {
         using a9n::kernel::utility::logger;
@@ -207,47 +213,88 @@ namespace a9n::hal::x86_64
             = reinterpret_cast<a9n::physical_address>(__boot_ap_trampoline_original_start);
         auto boot_ap_trampoline_size = destination_trampoline_end - destination_trampoline_start;
 
+        a9n::physical_address destination_gdtr
+            = reinterpret_cast<a9n::physical_address>(__boot_ap_trampoline_gdtr);
+
+        a9n::physical_address source_gdt_start
+            = reinterpret_cast<a9n::physical_address>(__boot_ap_gdt_start);
+        a9n::physical_address source_gdt_end = reinterpret_cast<a9n::physical_address>(__boot_ap_gdt_end
+        );
+        a9n::word source_gdt_size = source_gdt_end - source_gdt_start;
+
+        // copy trampolines!
         logger::printh(
             "copy trampoline codes ... [0x%016llx - 0x%016llx) -> 0x%016llx\n",
             source_trampoline_start,
             (source_trampoline_start + boot_ap_trampoline_size),
             destination_trampoline_start
         );
-        // copy trampolines!
         liba9n::std::memcpy(
             a9n::kernel::physical_to_virtual_pointer<void *>(destination_trampoline_start),
             a9n::kernel::physical_to_virtual_pointer<void *>(source_trampoline_start),
             boot_ap_trampoline_size
         );
 
+        // make gdtr
+        logger::printh("make ap gdtr ... (0x%016llx)\n", destination_gdtr);
+        *a9n::kernel::physical_to_virtual_pointer<uint16_t>(destination_gdtr
+        ) = static_cast<uint16_t>(source_gdt_size - 1);
+        *a9n::kernel::physical_to_virtual_pointer<uint64_t>(destination_gdtr + 2)
+            = static_cast<uint64_t>(source_gdt_start);
+
         // get smp
-        return {};
+        // return {};
 
-        // temp
-        auto cpu_max = 16;
-
-        for (auto i = 1; i <= cpu_max; i++)
+        auto smp_info_result = create_smp_info();
+        if (!smp_info_result)
         {
-            logger::printh("starting core [%3d] ...\n", i);
-            auto result = ipi_init(i).and_then(
-                [=](void) -> hal_result
-                {
-                    // wait 20ms
-                    return acpi_pm_timer_core.wait(20000)
-                        .and_then(
-                            [=](void) -> hal_result
-                            {
-                                return ipi_startup(destination_trampoline_start, i);
-                            }
-                        )
-                        .and_then(
-                            [=](void) -> hal_result
-                            {
-                                return acpi_pm_timer_core.wait(4000);
-                            }
-                        );
-                }
-            );
+            return smp_info_result.unwrap_error();
+        }
+
+        auto cpu_max = (smp_info_result.unwrap()->enabled_ap_count <= 16) ?
+                           smp_info_result.unwrap()->enabled_ap_count :
+                           16;
+        if (cpu_max == 1)
+        {
+            // single core
+            return hal_error::NO_SUCH_DEVICE;
+        }
+
+        // skip bsp
+        for (auto i = 1; i < cpu_max; i++)
+        {
+            auto local_apic_id = smp_info_result.unwrap()->local_apic_ids[i];
+            logger::printh("starting core [%3d] (local apic : 0x%08lx) ...\n", i, local_apic_id);
+
+            auto result
+                = ipi_init(local_apic_id)
+                      .and_then(
+                          [=](void) -> hal_result
+                          {
+                              // wait 10ms
+                              return acpi_pm_timer_core.wait(10000)
+                                  .and_then(
+                                      [=](void) -> hal_result
+                                      {
+                                          // SIPI (1)
+                                          return ipi_startup(destination_trampoline_start, local_apic_id);
+                                      }
+                                  )
+                                  .and_then(
+                                      [=](void) -> hal_result
+                                      {
+                                          return acpi_pm_timer_core.wait(200);
+                                      }
+                                  )
+                                  .and_then(
+                                      [=](void) -> hal_result
+                                      {
+                                          // SIPI (2)
+                                          return ipi_startup(destination_trampoline_start, local_apic_id);
+                                      }
+                                  );
+                          }
+                      );
             if (!result)
             {
                 return result.unwrap_error();

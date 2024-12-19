@@ -30,7 +30,7 @@ namespace a9n::hal::x86_64
         ALL_INCLUDING_SELF = 0x03,
     };
 
-    enum class ipi_delivery_mode : a9n::word
+    enum class ipi_delivery_mode : uint8_t
     {
         FIXED                       = 0x00,
         LOWEST_PRIORITY             = 0x01,
@@ -41,9 +41,27 @@ namespace a9n::hal::x86_64
         EXTERNAL_INTERRUPT          = 0x07,
     };
 
-    hal_result
-        ipi(uint8_t vector, ipi_delivery_mode mode, ipi_destination_shorthand shorthand, uint8_t receiver_cpu
-        );
+    enum class ipi_trigger_mode : uint8_t
+    {
+        EDGE  = 0,
+        LEVEL = 1,
+    };
+
+    enum class ipi_level_state : uint8_t
+    {
+        DEASSERT = 0,
+        ASSERT   = 1,
+    };
+
+    hal_result ipi(
+        uint8_t                   vector,
+        ipi_delivery_mode         mode,
+        ipi_destination_shorthand shorthand,
+        uint8_t                   receiver_cpu,
+        ipi_trigger_mode          trigger_mode,
+        ipi_level_state           level_state = ipi_level_state::ASSERT
+    );
+    hal_result ipi_wait(void);
     hal_result ipi_init(uint8_t receiver_cpu);
     hal_result ipi_startup(a9n::physical_address trampoline_address, uint8_t receiver_cpu);
 
