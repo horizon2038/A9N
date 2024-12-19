@@ -39,7 +39,7 @@ function run_qemu() {
         -drive if=pflash,format=raw,file=./OVMF_VARS.fd \
         -drive format=raw,file=fat:rw:./ \
         -m 2G \
-        -smp 4 \
+        -smp 8 \
         -M hpet=on \
         -nographic \
         -cpu Skylake-Client,+fsgsbase \

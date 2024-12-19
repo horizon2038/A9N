@@ -278,25 +278,6 @@ namespace a9n::hal::x86_64
         // enable "level" bits (1<<14 => 0<<11)
         uint32_t icr_low = 0;
 
-        /*
-        icr_low |= (static_cast<uint32_t>(shorthand) & 0x03) << 18; // Destination Shorthand
-        icr_low |= (static_cast<uint32_t>(mode) & 0x07) << 8;       // Delivery Mode
-        icr_low |= (static_cast<uint32_t>(vector) & 0xFF);          // Vector
-
-        if (mode == ipi_delivery_mode::INIT)
-        {
-            // For INIT, Trigger Mode must be Level and Level State must be set
-            icr_low |= (1 << 15);                                         // Trigger Mode = Level
-            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 14; // Level State
-        }
-        else
-        {
-            // For other modes, set Trigger Mode and Level based on parameters
-            icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 15; // Trigger Mode
-            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 14;  // Level
-        }
-        */
-
         // Destination Shorthand
         icr_low |= (static_cast<uint32_t>(shorthand) & 0x03) << 18;
 
@@ -327,7 +308,7 @@ namespace a9n::hal::x86_64
             icr_low |= (vector & 0xFF);                                    // Vector
         }
 
-        a9n::kernel::utility::logger::printk("ICR low : 0x%08x\n", icr_low);
+        // a9n::kernel::utility::logger::printk("ICR low : 0x%08x\n", icr_low);
 
         return local_apic_core.write(local_apic_offset::ICR_HIGH, icr_high)
             .and_then(
@@ -368,7 +349,7 @@ namespace a9n::hal::x86_64
     hal_result ipi_init(uint8_t receiver_cpu)
     {
         using kernel::utility::logger;
-        logger::printh("IPI init (APIC id : 0x%02x)\n", receiver_cpu);
+        // logger::printh("IPI init (APIC id : 0x%02x)\n", receiver_cpu);
 
         return ipi(0,
                    ipi_delivery_mode::INIT,
@@ -405,7 +386,7 @@ namespace a9n::hal::x86_64
 
         using kernel::utility::logger;
 
-        logger::printh("IPI startup (APIC id : 0x%02x)\n", receiver_cpu);
+        // logger::printh("IPI startup (APIC id : 0x%02x)\n", receiver_cpu);
 
         if ((trampoline_address % a9n::PAGE_SIZE) != 0)
         {
@@ -420,7 +401,8 @@ namespace a9n::hal::x86_64
 
         uint8_t page_number = trampoline_address >> 12;
 
-        logger::printh("IPI startup : 0x%016llx -> (APIC id : 0x%02x)\n", page_number, receiver_cpu);
+        // logger::printh("IPI startup : 0x%016llx -> (APIC id : 0x%02x)\n", page_number,
+        // receiver_cpu);
 
         return ipi(
             page_number,

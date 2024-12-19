@@ -1,4 +1,6 @@
+#include "hal/hal_result.hpp"
 #include "hal/interface/memory_manager.hpp"
+#include "kernel/process/cpu.hpp"
 #include "kernel/types.hpp"
 #include <hal/x86_64/arch/arch_initializer.hpp>
 
@@ -28,10 +30,14 @@
 // temp
 #include <hal/x86_64/arch/smp.hpp>
 #include <hal/x86_64/memory/memory_manager.hpp>
+#include <hal/x86_64/process/idle.hpp>
+#include <kernel/process/cpu.hpp>
+#include <kernel/process/lock.hpp>
 
 namespace a9n::hal::x86_64
 {
-    hal_result init_sub_cores();
+    hal_result init_sub_cores(void);
+    hal_result init_sub_core(void);
 
     hal_result arch_initializer::init_architecture(a9n::word arch_info[])
     {
@@ -42,12 +48,21 @@ namespace a9n::hal::x86_64
 
         a9n::kernel::utility::logger::split();
 
-        return init_main_core(arch_info[0]).and_then(init_sub_cores).and_then(unmap_lower_memory_mapping);
+        return init_main_core(arch_info[0])
+            .and_then(
+                [&]() -> hal_result
+                {
+                    return init_sub_cores();
+                }
+            )
+            .and_then(unmap_lower_memory_mapping);
     }
 
     hal_result init_main_core(a9n::physical_address rsdp_address)
     {
         using a9n::kernel::utility::logger;
+
+        a9n::hal::configure_local_variable(&a9n::kernel::cpu_local_variables[0]);
 
         // init *main* core (i.e., BSP)
         // enable cpu features
@@ -186,8 +201,6 @@ namespace a9n::hal::x86_64
             .and_then(enable_vmx);
     }
 
-    // for smp
-
     // source
     extern "C" uint8_t __boot_ap_trampoline_original_start[];
     extern "C" uint8_t __boot_ap_trampoline_original_end[];
@@ -264,7 +277,10 @@ namespace a9n::hal::x86_64
         for (auto i = 1; i < cpu_max; i++)
         {
             auto local_apic_id = smp_info_result.unwrap()->local_apic_ids[i];
+
+            auto lock_result   = a9n::kernel::giant_lock.lock();
             logger::printh("starting core [%3d] (local apic : 0x%08lx) ...\n", i, local_apic_id);
+            lock_result = a9n::kernel::giant_lock.unlock();
 
             auto result
                 = ipi_init(local_apic_id)
@@ -272,27 +288,34 @@ namespace a9n::hal::x86_64
                           [=](void) -> hal_result
                           {
                               // wait 10ms
-                              return acpi_pm_timer_core.wait(10000)
-                                  .and_then(
-                                      [=](void) -> hal_result
-                                      {
-                                          // SIPI (1)
-                                          return ipi_startup(destination_trampoline_start, local_apic_id);
-                                      }
-                                  )
-                                  .and_then(
-                                      [=](void) -> hal_result
-                                      {
-                                          return acpi_pm_timer_core.wait(200);
-                                      }
-                                  )
-                                  .and_then(
-                                      [=](void) -> hal_result
-                                      {
-                                          // SIPI (2)
-                                          return ipi_startup(destination_trampoline_start, local_apic_id);
-                                      }
-                                  );
+                              return acpi_pm_timer_core.wait(10000);
+                          }
+                      )
+                      .and_then(
+                          [=](void) -> hal_result
+                          {
+                              // SIPI (1)
+                              return ipi_startup(destination_trampoline_start, local_apic_id);
+                          }
+                      )
+                      .and_then(
+                          [=](void) -> hal_result
+                          {
+                              return acpi_pm_timer_core.wait(200);
+                          }
+                      )
+                      .and_then(
+                          [=](void) -> hal_result
+                          {
+                              // SIPI (2)
+                              return ipi_startup(destination_trampoline_start, local_apic_id);
+                          }
+                      )
+                      .and_then(
+                          [=](void) -> hal_result
+                          {
+                              // wait 1ms
+                              return acpi_pm_timer_core.wait(5000);
                           }
                       );
             if (!result)
@@ -304,7 +327,42 @@ namespace a9n::hal::x86_64
         return {};
     }
 
-    hal_result init_sub_core()
+    // for smp
+    extern "C" void x86_64_ap_entry(void)
+    {
+        auto result
+            = try_allocate_core_number()
+                  .and_then(
+                      [](a9n::word core_number) -> hal_result
+                      {
+                          return a9n::hal::configure_local_variable(
+                              &a9n::kernel::cpu_local_variables[core_number]
+                          );
+                      }
+                  )
+                  .and_then(
+                      [](void) -> hal_result
+                      {
+                          return init_sub_core();
+                      }
+                  );
+        if (!result)
+        {
+            a9n::kernel::utility::logger::error("can't configure AP\n");
+            return;
+        }
+
+        auto lock_result = a9n::kernel::giant_lock.lock();
+        kernel::utility::logger::printk("ap entry!\n");
+        lock_result = a9n::kernel::giant_lock.unlock();
+
+        for (;;)
+        {
+            _idle();
+        }
+    }
+
+    hal_result init_sub_core(void)
     {
         using a9n::kernel::utility::logger;
 

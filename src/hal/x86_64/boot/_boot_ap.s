@@ -100,19 +100,20 @@ boot_ap_64:
     add rdi, 0x1000
     mov rsp, rdi
 
-    ; update lower_half -> higher_half
-    extern __kernel_pml4
-    lea eax, [__kernel_pml4]
-    mov cr3, eax
+    jmp boot_ap_lower_half
 
-    jmp boot_ap_loop
+; update lower_half -> higher_half
+boot_ap_lower_half:
+    ; reload to account for higher-half addresses
+    lea rax, [__kernel_pml4] 
+    mov cr3, rax
 
-boot_ap_loop:
-    ; usually this code is not called.
-    cli
-    hlt
-    jmp boot_ap_loop
+    ; convert stack_address to virtual_address.
+    mov rax, qword 0xFFFF800000000000
+    or rsp, qword rax
 
+    mov rax, qword boot_ap_higher_half
+    jmp rax
 
 align 16
 global __boot_ap_gdt_start, __boot_ap_gdt_end
@@ -126,4 +127,17 @@ __boot_ap_gdt_end:
 
 __boot_ap_trampoline_original_end:
 
+bits 64
+section .text
+boot_ap_higher_half:
+    ; setup entry point
+    extern x86_64_ap_entry
 
+    mov rax, x86_64_ap_entry
+    jmp rax
+
+boot_ap_loop:
+    ; usually this code is not called.
+    cli
+    hlt
+    jmp boot_ap_loop

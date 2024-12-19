@@ -1,3 +1,4 @@
+#include "kernel/process/cpu.hpp"
 #include <hal/x86_64/arch/cpu.hpp>
 
 #include <hal/x86_64/arch/control_register.hpp>
@@ -52,17 +53,22 @@ namespace a9n::hal::x86_64
             }
         );
     }
+
+    inline a9n::word current_cpu_number { 0 };
+
+    liba9n::result<a9n::word, hal_error> try_allocate_core_number(void)
+    {
+        if (current_cpu_number++ >= a9n::kernel::CPU_COUNT_MAX)
+        {
+            return hal_error::NO_SUCH_DEVICE;
+        }
+
+        return current_cpu_number;
+    }
 }
 
 namespace a9n::hal
 {
-    liba9n::result<a9n::word, hal_error> current_core_number(void)
-    {
-        // stub
-        // TODO: return local apic address -> core id
-        return 0;
-    }
-
     hal_result configure_local_variable(a9n::kernel::cpu_local_variable *target_local_variable)
     {
         using a9n::kernel::utility::logger;
@@ -108,4 +114,15 @@ namespace a9n::hal
 
         return local_variable;
     }
+
+    liba9n::result<a9n::word, hal_error> current_core_number(void)
+    {
+        return current_local_variable().and_then(
+            [](a9n::kernel::cpu_local_variable *local_variable) -> liba9n::result<a9n::word, hal_error>
+            {
+                return local_variable->core_number;
+            }
+        );
+    }
+
 }

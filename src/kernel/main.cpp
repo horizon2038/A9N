@@ -79,8 +79,6 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     // init cpu local variables
     a9n::kernel::init_cpu_local_variable();
 
-    // init cpu local variables
-    a9n::hal::configure_local_variable(&a9n::kernel::cpu_local_variables[0]);
     logger::printk("init architecture\n");
     logger::printk(
         "arch_initializer\e[52G:\e[60G0x%016llx\n",
@@ -122,13 +120,14 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
 
     logger::printk("all initialization completed successfully\n");
 
-    // a9n::kernel::interrupt_manager_core.ack_interrupt();
-    // a9n::kernel::interrupt_manager_core.enable_interrupt_all();
-
     a9n::kernel::process_manager_core.switch_to_user();
 
     for (;;)
         ;
 
     return 2038;
+}
+
+extern "C" void ap_main(void)
+{
 }

@@ -1,6 +1,7 @@
 #ifndef X86_64_ARCH_INITIALIZER_HPP
 #define X86_64_ARCH_INITIALIZER_HPP
 
+#include "kernel/process/cpu.hpp"
 #include "kernel/types.hpp"
 #include <hal/interface/arch_initializer.hpp>
 

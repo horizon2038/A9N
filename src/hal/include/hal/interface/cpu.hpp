@@ -14,6 +14,8 @@ namespace a9n::hal
 
     liba9n::result<a9n::kernel::cpu_local_variable *, hal_error> current_local_variable();
 
+    void lock(void);
+    void unlock(void);
 }
 
 #endif

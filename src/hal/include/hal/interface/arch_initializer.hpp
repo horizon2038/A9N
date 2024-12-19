@@ -2,6 +2,7 @@
 #define HAL_ARCH_INITIALIZER_HPP
 
 #include <hal/hal_result.hpp>
+#include <kernel/process/cpu.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::hal

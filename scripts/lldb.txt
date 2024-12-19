@@ -1,5 +1,6 @@
 file ./build/x86_64/kernel/kernel.elf
 gdb-remote localhost:1234
-br s -a 0x200022
 br s -a 0x5000
+br s -a 0x200022
+br s -a 0x200068
 c
