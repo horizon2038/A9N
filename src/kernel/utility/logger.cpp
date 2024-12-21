@@ -5,6 +5,8 @@ namespace a9n::kernel::utility
     uint32_t logger::log_id      = 0;
     logger  *logger::this_logger = nullptr;
 
+    using guard                  = lock_guard<spin_lock_no_owner>;
+
     logger::logger(a9n::hal::serial &target_serial) : _print(target_serial)
     {
         this_logger = this;
@@ -13,6 +15,7 @@ namespace a9n::kernel::utility
 
     void logger::log(const char *sender, const char *message)
     {
+        guard g { this_logger->lock };
         this_logger->print_log_id();
         this_logger->print_sender(sender);
         this_logger->print_splitter();
@@ -21,6 +24,7 @@ namespace a9n::kernel::utility
 
     void logger::debug(const char *message, ...)
     {
+        guard             g { this_logger->lock };
         __builtin_va_list args;
         __builtin_va_start(args, message);
         this_logger->print_log_id(terminal_color::CYAN);
@@ -33,6 +37,7 @@ namespace a9n::kernel::utility
 
     void logger::error(const char *message)
     {
+        guard g { this_logger->lock };
         this_logger->print_log_id();
         this_logger->print_sender("ERROR", terminal_color::RED);
         // this_logger->print_splitter();
@@ -41,6 +46,7 @@ namespace a9n::kernel::utility
 
     void logger::printk(const char *format, ...)
     {
+        guard             g { this_logger->lock };
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::GREEN);
@@ -52,6 +58,7 @@ namespace a9n::kernel::utility
 
     void logger::printh(const char *format, ...)
     {
+        guard             g { this_logger->lock };
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::YELLOW);
