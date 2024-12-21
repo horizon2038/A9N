@@ -52,9 +52,13 @@ namespace a9n::kernel
 
         kernel_result lock(void)
         {
-            while (auto result = try_lock())
+            for (;;)
             {
-                continue;
+                auto result = try_lock();
+                if (result)
+                {
+                    break;
+                }
             }
 
             return {};
@@ -78,6 +82,52 @@ namespace a9n::kernel
                     }
                 )
                 .transform_error(convert_hal_to_kernel_error);
+        }
+    };
+
+    class spin_lock_no_owner
+    {
+      private:
+        alignas(64) volatile uint8_t locked { 0 };
+
+      public:
+        spin_lock_no_owner(void)                                       = default;
+        spin_lock_no_owner(const spin_lock_no_owner &other)            = delete;
+        spin_lock_no_owner(spin_lock_no_owner &&other)                 = delete;
+
+        spin_lock_no_owner &operator=(const spin_lock_no_owner &other) = delete;
+        spin_lock_no_owner &operator=(spin_lock_no_owner &&other)      = delete;
+
+        kernel_result try_lock(void)
+        {
+            uint8_t old = a9n::hal::atomic_exchange(&locked, 1);
+            if (old != 0)
+            {
+                return kernel_error::TRY_AGAIN;
+            }
+
+            return {};
+        }
+
+        kernel_result lock(void)
+        {
+            for (;;)
+            {
+                auto result = try_lock();
+                if (result)
+                {
+                    break;
+                }
+            }
+
+            return {};
+        }
+
+        kernel_result unlock(void)
+        {
+            uint8_t old = a9n::hal::atomic_exchange(&locked, 0);
+
+            return {};
         }
     };
 
