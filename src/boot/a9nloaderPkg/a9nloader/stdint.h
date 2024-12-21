@@ -4,13 +4,15 @@
 #include <Uefi.h>
 
 // signed
-typedef short         int16_t;
-typedef int           int32_t;
-typedef long long int int64_t;
+typedef INT16 int16_t;
+typedef INT32 int32_t;
+typedef INT64 int64_t;
+typedef INTN  intmax_t;
 
 // unsigned
-typedef unsigned short         uint16_t;
-typedef unsigned int           uint32_t;
-typedef unsigned long long int uint64_t;
-typedef UINTN                  uintmax_t;
+typedef UINT16 uint16_t;
+typedef UINT32 uint32_t;
+typedef UINT64 uint64_t;
+typedef UINTN  uintmax_t;
+
 #endif
