@@ -14,6 +14,7 @@ namespace a9n::hal
         ILLEGAL_DEVICE,
         NO_SUCH_DEVICE,
         NO_SUCH_ADDRESS,
+        UNSUPPORTED,
         TRY_AGAIN,
         UNEXPECTED,
         INIT_FIRST,
@@ -40,6 +41,9 @@ namespace a9n::hal
 
             case hal_error::NO_SUCH_ADDRESS :
                 return "NO SUCH ADDRESS";
+
+            case hal_error::UNSUPPORTED :
+                return "UNSUPPORTED";
 
             case hal_error::TRY_AGAIN :
                 return "TRY AGAIN";

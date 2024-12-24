@@ -55,6 +55,11 @@ namespace a9n::hal::x86_64
                     return init_sub_cores().or_else(
                         [](hal_error e) -> hal_result
                         {
+                            if (e != hal_error::UNSUPPORTED)
+                            {
+                                return e;
+                            }
+
                             a9n::kernel::utility::logger::printh("SMP is unsupported\n");
                             return {};
                         }
@@ -204,7 +209,26 @@ namespace a9n::hal::x86_64
                     );
                 }
             )
-            .and_then(enable_vmx);
+            .and_then(
+                [](void) -> hal_result
+                {
+                    return enable_vmx().or_else(
+                        [](hal_error e) -> hal_result
+                        {
+                            if (e != hal_error::UNSUPPORTED)
+                            {
+                                return e;
+                            }
+
+                            a9n::kernel::utility::logger::printh(
+                                "%s : virtualization is "
+                                "unsupported\n"
+                            );
+                            return {};
+                        }
+                    );
+                }
+            );
     }
 
     // source
@@ -276,7 +300,7 @@ namespace a9n::hal::x86_64
         if (cpu_max == 1)
         {
             // single core
-            return hal_error::NO_SUCH_DEVICE;
+            return hal_error::UNSUPPORTED;
         }
 
         // skip bsp

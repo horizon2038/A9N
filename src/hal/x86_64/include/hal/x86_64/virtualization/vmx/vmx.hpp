@@ -26,7 +26,7 @@ namespace a9n::hal::x86_64
                         != 0)
                     {
                         logger::printh("VMX : unsupported vendor id [%s]\n", id.data());
-                        return hal_error::NO_SUCH_DEVICE;
+                        return hal_error::UNSUPPORTED;
                     }
 
                     return {};
@@ -39,7 +39,7 @@ namespace a9n::hal::x86_64
                     if ((info.rcx & liba9n::enum_cast(cpuid_feature_information::VMX)) == 0)
                     {
                         logger::printh("VMX : VMX bit is invalid\n");
-                        return hal_error::NO_SUCH_DEVICE;
+                        return hal_error::UNSUPPORTED;
                     }
 
                     return {};
@@ -54,7 +54,7 @@ namespace a9n::hal::x86_64
                         if ((value & liba9n::enum_cast(msr_feature_control::LOCK_BIT)) == 0)
                         {
                             logger::printh("VMX : MSR is locked\n");
-                            return hal_error::NO_SUCH_DEVICE;
+                            return hal_error::UNSUPPORTED;
                         }
 
                         // enable VMXON outside SMX
@@ -63,19 +63,6 @@ namespace a9n::hal::x86_64
                             value | liba9n::enum_cast(msr_feature_control::ENABLE_VMX_OUTSIDE_SMX)
                         );
                     }
-
-                    return {};
-                }
-            )
-            .or_else(
-                [](hal_error e) -> hal_result
-                {
-                    // virtualization is an optional feature;
-                    // not a panic
-                    a9n::kernel::utility::logger::printh(
-                        "%s : virtualization is unsupported\n",
-                        hal_error_to_string(e)
-                    );
 
                     return {};
                 }

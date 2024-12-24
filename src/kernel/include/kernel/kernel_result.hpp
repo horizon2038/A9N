@@ -15,6 +15,7 @@ namespace a9n::kernel
         ILLEGAL_DEVICE,
         NO_SUCH_DEVICE,
         NO_SUCH_ADDRESS,
+        UNSUPPORTED,
         TRY_AGAIN,
         UNEXPECTED,
         INIT_FIRST,
@@ -41,6 +42,9 @@ namespace a9n::kernel
 
             case kernel_error::NO_SUCH_ADDRESS :
                 return "NO SUCH ADDRESS";
+
+            case kernel_error::UNSUPPORTED :
+                return "UNSUPPORTED";
 
             case kernel_error::TRY_AGAIN :
                 return "TRY AGAIN";
