@@ -90,14 +90,14 @@ namespace a9n::hal::x86_64
         bool is_shadow_stack      = error_code >> 6 & 1;
         bool is_sgx               = error_code >> 7 & 1;
 
-        logger::printh("is_present \e[52G : %s\n", is_present ? "Y" : "N");
-        logger::printh("is_write \e[52G : %s\n", is_write ? "Y" : "N");
-        logger::printh("is_user \e[52G : %s\n", is_user ? "Y" : "N");
-        logger::printh("is_reserved_write \e[52G : %s\n", is_reserved_write ? "Y" : "N");
-        logger::printh("is_instruction_fetch \e[52G : %s\n", is_instruction_fetch ? "Y" : "N");
-        logger::printh("is_protection_key \e[52G : %s\n", is_protection_key ? "Y" : "N");
-        logger::printh("is_shadow_stack \e[52G : %s\n", is_shadow_stack ? "Y" : "N");
-        logger::printh("is_sgx \e[52G : %s\n", is_sgx ? "Y" : "N");
+        logger::printh("is_present           : %s\n", is_present ? "Y" : "N");
+        logger::printh("is_write             : %s\n", is_write ? "Y" : "N");
+        logger::printh("is_user              : %s\n", is_user ? "Y" : "N");
+        logger::printh("is_reserved_write    : %s\n", is_reserved_write ? "Y" : "N");
+        logger::printh("is_instruction_fetch : %s\n", is_instruction_fetch ? "Y" : "N");
+        logger::printh("is_protection_key    : %s\n", is_protection_key ? "Y" : "N");
+        logger::printh("is_shadow_stack      : %s\n", is_shadow_stack ? "Y" : "N");
+        logger::printh("is_sgx               : %s\n", is_sgx ? "Y" : "N");
     }
 
     inline constexpr const char *register_names[]
@@ -111,13 +111,13 @@ namespace a9n::hal::x86_64
         for (a9n::word i = 0; i < 22; i++)
         {
             a9n::word value = (*context)[i];
-            a9n::kernel::utility::logger::printh("%s \e[38G : 0x%016llx\n", register_names[i], value);
+            a9n::kernel::utility::logger::printh("%s : 0x%016llx\n", register_names[i], value);
         }
 
-        a9n::kernel::utility::logger::printh("CR0 \e[38G : 0x%016llx\n", read_cr0());
-        a9n::kernel::utility::logger::printh("CR2 \e[38G : 0x%016llx\n", read_cr2());
-        a9n::kernel::utility::logger::printh("CR3 \e[38G : 0x%016llx\n", read_cr3());
-        a9n::kernel::utility::logger::printh("CR4 \e[38G : 0x%016llx\n", read_cr4());
+        a9n::kernel::utility::logger::printh("CR0 : 0x%016llx\n", read_cr0());
+        a9n::kernel::utility::logger::printh("CR2 : 0x%016llx\n", read_cr2());
+        a9n::kernel::utility::logger::printh("CR3 : 0x%016llx\n", read_cr3());
+        a9n::kernel::utility::logger::printh("CR4 : 0x%016llx\n", read_cr4());
 
         a9n::kernel::utility::logger::printh("kernel_gs_base : 0x%016llx\n", read_kernel_gs_base());
 
@@ -349,7 +349,7 @@ namespace a9n::hal::x86_64
     hal_result ipi_init(uint8_t receiver_cpu)
     {
         using kernel::utility::logger;
-        // logger::printh("IPI init (APIC id : 0x%02x)\n", receiver_cpu);
+        logger::printh("IPI init (APIC id : 0x%02x)\n", receiver_cpu);
 
         return ipi(0,
                    ipi_delivery_mode::INIT,
@@ -386,8 +386,6 @@ namespace a9n::hal::x86_64
 
         using kernel::utility::logger;
 
-        // logger::printh("IPI startup (APIC id : 0x%02x)\n", receiver_cpu);
-
         if ((trampoline_address % a9n::PAGE_SIZE) != 0)
         {
             return hal_error::ILLEGAL_ARGUMENT;
@@ -401,8 +399,7 @@ namespace a9n::hal::x86_64
 
         uint8_t page_number = trampoline_address >> 12;
 
-        // logger::printh("IPI startup : 0x%016llx -> (APIC id : 0x%02x)\n", page_number,
-        // receiver_cpu);
+        logger::printh("IPI startup : 0x%016llx -> (APIC id : 0x%02x)\n", page_number, receiver_cpu);
 
         return ipi(
             page_number,

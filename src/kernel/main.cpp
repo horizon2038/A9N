@@ -1,6 +1,3 @@
-#include "hal/hal_result.hpp"
-#include "kernel/capability/capability_types.hpp"
-#include "kernel/memory/memory_type.hpp"
 #include <liba9n/libcxx/new>
 #include <stdint.h>
 

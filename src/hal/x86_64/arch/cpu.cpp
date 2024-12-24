@@ -54,15 +54,19 @@ namespace a9n::hal::x86_64
         );
     }
 
-    inline a9n::word current_cpu_number { 0 };
+    inline a9n::word                       current_cpu_number { 0 };
+    inline a9n::kernel::spin_lock_no_owner lock;
 
     liba9n::result<a9n::word, hal_error> try_allocate_core_number(void)
     {
+        lock.lock();
+        a9n::kernel::utility::logger::printk("try allocate core number ...\n");
         if (current_cpu_number++ >= a9n::kernel::CPU_COUNT_MAX)
         {
+            a9n::kernel::utility::logger::error("no such cpu number!\n");
             return hal_error::NO_SUCH_DEVICE;
         }
-
+        lock.unlock();
         return current_cpu_number;
     }
 }
@@ -104,6 +108,20 @@ namespace a9n::hal
     liba9n::result<a9n::kernel::cpu_local_variable *, hal_error> current_local_variable(void)
     {
         using a9n::kernel::utility::logger;
+
+        auto is_fsgsbase_supported = [](void) -> bool
+        {
+            unsigned long cr4;
+
+            __asm__ __volatile__("mov %%cr4, %0" : "=r"(cr4) : :);
+
+            return (cr4 & (1 << 16)) != 0;
+        };
+
+        if (!is_fsgsbase_supported())
+        {
+            return hal_error::INIT_FIRST;
+        }
 
         auto local_variable = reinterpret_cast<a9n::kernel::cpu_local_variable *>(_read_gs_base());
         if (!local_variable)

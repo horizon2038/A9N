@@ -1,4 +1,8 @@
+#include "hal/hal_result.hpp"
+#include "kernel/kernel_result.hpp"
 #include <kernel/utility/logger.hpp>
+
+#include <hal/interface/cpu.hpp>
 
 namespace a9n::kernel::utility
 {
@@ -18,6 +22,7 @@ namespace a9n::kernel::utility
         guard g { this_logger->lock };
         this_logger->print_log_id();
         this_logger->print_sender(sender);
+        this_logger->print_core();
         this_logger->print_splitter();
         this_logger->_print.printf("%s\n", message);
     }
@@ -29,6 +34,7 @@ namespace a9n::kernel::utility
         __builtin_va_start(args, message);
         this_logger->print_log_id(terminal_color::CYAN);
         this_logger->print_sender("DEBUG", terminal_color::CYAN);
+        this_logger->print_core();
         this_logger->print_splitter();
         this_logger->_print.vprintf(message, args);
         this_logger->_print.printf("\n");
@@ -40,6 +46,7 @@ namespace a9n::kernel::utility
         guard g { this_logger->lock };
         this_logger->print_log_id();
         this_logger->print_sender("ERROR", terminal_color::RED);
+        this_logger->print_core();
         // this_logger->print_splitter();
         this_logger->_print.printf("%s\n", message);
     }
@@ -51,6 +58,7 @@ namespace a9n::kernel::utility
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::GREEN);
         this_logger->print_sender("KERNEL");
+        this_logger->print_core();
         this_logger->print_splitter();
         this_logger->_print.vprintf(format, args);
         __builtin_va_end(args);
@@ -63,6 +71,7 @@ namespace a9n::kernel::utility
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::YELLOW);
         this_logger->print_sender("HAL");
+        this_logger->print_core();
         this_logger->print_splitter();
         this_logger->_print.vprintf(format, args);
         __builtin_va_end(args);
@@ -141,7 +150,7 @@ namespace a9n::kernel::utility
             "\e[11F"
             "\e[36G"
             "\e[32m"
-            "kernel: \e[52G\e[37mA9N v0.0.1\n"
+            "kernel: \e[52G\e[37mA9N v0.2.1\n"
             "\e[36G"
             "\e[32m"
             "architecture: \e[52G\e[37m%s\n"
@@ -168,14 +177,37 @@ namespace a9n::kernel::utility
     void logger::print_log_id(const char *color_id)
     {
         this_logger->_print
-            .printf("[ %s%s%010d%s ] ", terminal_color::RESET, color_id, log_id, terminal_color::RESET);
+            .printf("[ %s%s%010d%s ]", terminal_color::RESET, color_id, log_id, terminal_color::RESET);
         log_id++;
     }
 
     void logger::print_sender(const char *sender, const char *color_id)
     {
         this_logger->_print
-            .printf("[ %s%s%8s%s ] ", terminal_color::RESET, color_id, sender, terminal_color::RESET);
+            .printf("[ %s%s%8s%s ]", terminal_color::RESET, color_id, sender, terminal_color::RESET);
+    }
+
+    void logger::print_core(void)
+    {
+        auto result
+            = a9n::hal::current_core_number()
+                  .and_then(
+                      [](a9n::word core_number) -> a9n::hal::hal_result
+                      {
+                          this_logger->_print.printf("[ %03d ] ", core_number);
+
+                          return {};
+                      }
+                  )
+                  .transform_error(convert_hal_to_kernel_error)
+                  .or_else(
+                      [](kernel_error e) -> kernel_result
+                      {
+                          this_logger->_print.printf("[ %03s ] ", "-");
+
+                          return {};
+                      }
+                  );
     }
 
     void logger::print_splitter()

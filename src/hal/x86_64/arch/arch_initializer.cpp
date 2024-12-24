@@ -52,7 +52,13 @@ namespace a9n::hal::x86_64
             .and_then(
                 [&]() -> hal_result
                 {
-                    return init_sub_cores();
+                    return init_sub_cores().or_else(
+                        [](hal_error e) -> hal_result
+                        {
+                            a9n::kernel::utility::logger::printh("SMP is unsupported\n");
+                            return {};
+                        }
+                    );
                 }
             )
             .and_then(unmap_lower_memory_mapping);
@@ -264,9 +270,9 @@ namespace a9n::hal::x86_64
             return smp_info_result.unwrap_error();
         }
 
-        auto cpu_max = (smp_info_result.unwrap()->enabled_ap_count <= 16) ?
+        auto cpu_max = (smp_info_result.unwrap()->enabled_ap_count <= a9n::kernel::CPU_COUNT_MAX) ?
                            smp_info_result.unwrap()->enabled_ap_count :
-                           16;
+                           a9n::kernel::CPU_COUNT_MAX;
         if (cpu_max == 1)
         {
             // single core
@@ -278,9 +284,7 @@ namespace a9n::hal::x86_64
         {
             auto local_apic_id = smp_info_result.unwrap()->local_apic_ids[i];
 
-            auto lock_result   = a9n::kernel::giant_lock.lock();
-            logger::printh("starting core [%3d] (local apic : 0x%08lx) ...\n", i, local_apic_id);
-            lock_result = a9n::kernel::giant_lock.unlock();
+            logger::printh("starting core [%4d] (local apic : 0x%08lx) ...\n", i, local_apic_id);
 
             auto result
                 = ipi_init(local_apic_id)
@@ -315,7 +319,7 @@ namespace a9n::hal::x86_64
                           [=](void) -> hal_result
                           {
                               // wait 1ms
-                              return acpi_pm_timer_core.wait(5000);
+                              return acpi_pm_timer_core.wait(100);
                           }
                       );
             if (!result)
@@ -324,17 +328,25 @@ namespace a9n::hal::x86_64
             }
         }
 
+        logger::printh("AP successfully activated\n");
+
         return {};
     }
 
     // for smp
     extern "C" void x86_64_ap_entry(void)
     {
+        kernel::utility::logger::printk("ap entry!\n");
+
         auto result
             = try_allocate_core_number()
                   .and_then(
                       [](a9n::word core_number) -> hal_result
                       {
+                          kernel::utility::logger::printk(
+                              "configure local variable [%04llx]\n",
+                              core_number
+                          );
                           return a9n::hal::configure_local_variable(
                               &a9n::kernel::cpu_local_variables[core_number]
                           );
@@ -343,6 +355,7 @@ namespace a9n::hal::x86_64
                   .and_then(
                       [](void) -> hal_result
                       {
+                          kernel::utility::logger::printk("init sub cores ...\n");
                           return init_sub_core();
                       }
                   );
@@ -351,10 +364,6 @@ namespace a9n::hal::x86_64
             a9n::kernel::utility::logger::error("can't configure AP\n");
             return;
         }
-
-        auto lock_result = a9n::kernel::giant_lock.lock();
-        kernel::utility::logger::printk("ap entry!\n");
-        lock_result = a9n::kernel::giant_lock.unlock();
 
         for (;;)
         {

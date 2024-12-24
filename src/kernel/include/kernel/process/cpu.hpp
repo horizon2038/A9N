@@ -8,7 +8,7 @@
 
 namespace a9n::kernel
 {
-    inline constexpr a9n::word CPU_COUNT_MAX         = 8;
+    inline constexpr a9n::word CPU_COUNT_MAX         = 64;
     inline constexpr a9n::word KERNEL_STACK_SIZE_MAX = a9n::PAGE_SIZE;
 
     namespace cpu_local_variable_offset

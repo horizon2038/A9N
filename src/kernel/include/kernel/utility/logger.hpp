@@ -69,7 +69,8 @@ namespace a9n::kernel::utility
 
         void print_log_id(const char *color_id = terminal_color::GREEN);
         void print_sender(const char *sender, const char *color_id = terminal_color::RESET);
-        void print_splitter();
+        void print_core(void);
+        void print_splitter(void);
     };
 
 }

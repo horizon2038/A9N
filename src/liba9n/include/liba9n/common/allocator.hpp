@@ -39,7 +39,7 @@ namespace liba9n
         {
             using a9n::kernel::utility::logger;
 
-            logger::printk("linear_allocator::allocate\n");
+            // logger::printk("linear_allocator::allocate\n");
 
             auto      aligned_current = align_to(current, sizeof(T));
             a9n::word total_size      = sizeof(T) * count;
@@ -48,17 +48,20 @@ namespace liba9n
                 return allocator_error::OUT_OF_MEMORY;
             }
 
-            logger::printk("aligned_current : 0x%llx, total_size : 0x%llx\n", aligned_current, total_size);
+            // logger::printk("aligned_current : 0x%llx, total_size : 0x%llx\n", aligned_current,
+            // total_size);
 
             auto start = aligned_current;
 
             for (a9n::word i = 0; i < count; i++)
             {
+                /*
                 logger::printk(
                     "[%4llu] allocate to 0x%16llx\n",
                     i,
                     reinterpret_cast<void *>(pool + aligned_current)
                 );
+                */
 
                 new (reinterpret_cast<void *>(pool + aligned_current))
                     T(liba9n::std::forward<Args>(args)...);

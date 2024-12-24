@@ -3,6 +3,7 @@ ENTRY(_boot_kernel_gateway)
 KERNEL_VMA_BASE = 0xFFFF800000000000;
 KERNEL_LMA_BASE = 0x200000;
 BOOT_SIZE = 0x2000;
+CPU_COUNT_MAX = 64;
 
 MEMORY
 {
@@ -10,8 +11,8 @@ MEMORY
     boot       (rwx) : ORIGIN = KERNEL_LMA_BASE, LENGTH = 1M
 
     /* kernel section */
-    kernel_lma (rwx) : ORIGIN = KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 1M
-    kernel_vma (rwx) : ORIGIN = KERNEL_VMA_BASE + KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 1M
+    kernel_lma (rwx) : ORIGIN = KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 8M
+    kernel_vma (rwx) : ORIGIN = KERNEL_VMA_BASE + KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 8M
 }
 
 SECTIONS
@@ -83,7 +84,7 @@ SECTIONS
 
         . = ALIGN(0x1000);
         __boot_stack_start = . - KERNEL_VMA_BASE;
-        . += 0x1000 * 16;
+        . += 0x1000 * CPU_COUNT_MAX;
         __boot_stack_end = . - KERNEL_VMA_BASE; 
 
         . = ALIGN(0x1000);
