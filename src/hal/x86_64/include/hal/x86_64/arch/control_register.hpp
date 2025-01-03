@@ -34,28 +34,28 @@ namespace a9n::hal::x86_64
 
     namespace cr4_flag
     {
-        inline constexpr uint64_t VIRTUAL_8086_MODE_EXTENSION         = 1 << 0;
-        inline constexpr uint64_t PROTECTED_MODE_VIRTUAL_INTERRUPT    = 1 << 1;
-        inline constexpr uint64_t TIME_STAMP                          = 1 << 2;
-        inline constexpr uint64_t DEBUGGING_EXTENSION                 = 1 << 3;
-        inline constexpr uint64_t PAGE_SIZE_EXTENSION                 = 1 << 4;
-        inline constexpr uint64_t PHYSICAL_ADDRESS_EXTENSION          = 1 << 5;
-        inline constexpr uint64_t MACHINE_CHECK_EXCEPTION             = 1 << 6;
-        inline constexpr uint64_t PAGE_GLOBAL                         = 1 << 7;
-        inline constexpr uint64_t PERFORMANCE_COUNTER                 = 1 << 8;
-        inline constexpr uint64_t OS_FX_SAVE_RESTORE                  = 1 << 9;
-        inline constexpr uint64_t OS_XMM_EXCEPTION                    = 1 << 10;
-        inline constexpr uint64_t USER_MODE_INSTRUCTION_PREVENTION    = 1 << 11;
-        inline constexpr uint64_t VIRTUAL_MACHINE_EXTENSION           = 1 << 13;
-        inline constexpr uint64_t SAFER_MODE_EXTENSION                = 1 << 14;
-        inline constexpr uint64_t FS_GS_BASE                          = 1 << 16;
-        inline constexpr uint64_t PCID                                = 1 << 17;
-        inline constexpr uint64_t OS_X_SAVE                           = 1 << 18;
-        inline constexpr uint64_t SV_MODE_EXECUTION_PROTECTION        = 1 << 20;
-        inline constexpr uint64_t SV_MODE_ACCESS_PROTECTION           = 1 << 21;
-        inline constexpr uint64_t PROTECTION_KEY_USER                 = 1 << 22;
-        inline constexpr uint64_t CONTROL_FLOW_ENFORCEMENT_TECHNOLOGY = 1 << 23;
-        inline constexpr uint64_t PROTECTION_KEYS_SV                  = 1 << 24;
+        inline constexpr uint64_t VIRTUAL_8086_MODE_EXTENSION      = static_cast<uint64_t>(1) << 0;
+        inline constexpr uint64_t PROTECTED_MODE_VIRTUAL_INTERRUPT = static_cast<uint64_t>(1) << 1;
+        inline constexpr uint64_t TIME_STAMP                       = static_cast<uint64_t>(1) << 2;
+        inline constexpr uint64_t DEBUGGING_EXTENSION              = static_cast<uint64_t>(1) << 3;
+        inline constexpr uint64_t PAGE_SIZE_EXTENSION              = static_cast<uint64_t>(1) << 4;
+        inline constexpr uint64_t PHYSICAL_ADDRESS_EXTENSION       = static_cast<uint64_t>(1) << 5;
+        inline constexpr uint64_t MACHINE_CHECK_EXCEPTION          = static_cast<uint64_t>(1) << 6;
+        inline constexpr uint64_t PAGE_GLOBAL                      = static_cast<uint64_t>(1) << 7;
+        inline constexpr uint64_t PERFORMANCE_COUNTER              = static_cast<uint64_t>(1) << 8;
+        inline constexpr uint64_t OS_FX_SAVE_RESTORE               = static_cast<uint64_t>(1) << 9;
+        inline constexpr uint64_t OS_XMM_EXCEPTION                 = static_cast<uint64_t>(1) << 10;
+        inline constexpr uint64_t USER_MODE_INSTRUCTION_PREVENTION = static_cast<uint64_t>(1) << 11;
+        inline constexpr uint64_t VIRTUAL_MACHINE_EXTENSION        = static_cast<uint64_t>(1) << 13;
+        inline constexpr uint64_t SAFER_MODE_EXTENSION             = static_cast<uint64_t>(1) << 14;
+        inline constexpr uint64_t FS_GS_BASE                       = static_cast<uint64_t>(1) << 16;
+        inline constexpr uint64_t PCID                             = static_cast<uint64_t>(1) << 17;
+        inline constexpr uint64_t OS_X_SAVE                        = static_cast<uint64_t>(1) << 18;
+        inline constexpr uint64_t SV_MODE_EXECUTION_PROTECTION     = static_cast<uint64_t>(1) << 20;
+        inline constexpr uint64_t SV_MODE_ACCESS_PROTECTION        = static_cast<uint64_t>(1) << 21;
+        inline constexpr uint64_t PROTECTION_KEY_USER              = static_cast<uint64_t>(1) << 22;
+        inline constexpr uint64_t CONTROL_FLOW_ENFORCEMENT_TECHNOLOGY = static_cast<uint64_t>(1) << 23;
+        inline constexpr uint64_t PROTECTION_KEYS_SV = static_cast<uint64_t>(1) << 24;
     }
 }
 

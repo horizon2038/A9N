@@ -1,6 +1,9 @@
 #ifndef A9N_HAL_X86_64_VMCS_REGION_HPP
 #define A9N_HAL_X86_64_VMCS_REGION_HPP
 
+#include "kernel/memory/memory.hpp"
+#include <hal/hal_result.hpp>
+#include <hal/x86_64/virtualization/vmx/vmx_result.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
@@ -34,6 +37,39 @@ namespace a9n::hal::x86_64
         }
 
     } __attribute__((packed));
+
+    extern "C" void _vmclear(a9n::physical_address region);
+    extern "C" void _vmptrld(a9n::physical_address region);
+
+    inline vmx_result<> vm_clear(const vmcs_region &region)
+    {
+        auto address = a9n::kernel::virtual_to_physical_address(
+            reinterpret_cast<a9n::virtual_address>(&region)
+        );
+        _vmclear(address);
+
+        return check_vmx_result();
+    }
+
+    inline vmx_result<> vm_pointer_load(const vmcs_region &region)
+    {
+        auto address = a9n::kernel::virtual_to_physical_address(
+            reinterpret_cast<a9n::virtual_address>(&region)
+        );
+        _vmptrld(address);
+
+        return check_vmx_result();
+    }
+
+    inline vmx_result<> init_vmcs(vmcs_region &region)
+    {
+        return vm_clear(region).and_then(
+            [&](void) -> vmx_result<>
+            {
+                return vm_pointer_load(region);
+            }
+        );
+    }
 
 }
 

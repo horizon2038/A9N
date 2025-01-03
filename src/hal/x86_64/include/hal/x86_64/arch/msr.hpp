@@ -14,6 +14,7 @@ namespace a9n::hal::x86_64
         inline constexpr uint32_t APIC_BASE       = 0x1b;
         inline constexpr uint32_t FEATURE_CONTROL = 0x3a; // NOTE: intel specific !
         inline constexpr uint32_t APIC_BASE_BSP   = 0x100;
+        inline constexpr uint32_t VMX_BASIC       = 0x480;
 
         inline constexpr uint32_t EFER            = 0xC0000080;
         inline constexpr uint32_t STAR            = 0xc0000081;

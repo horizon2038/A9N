@@ -26,6 +26,8 @@ namespace a9n::hal::x86_64
         inline constexpr uint64_t VIRTUAL_INTERRUPT_PENDING = 1 << 20;
         inline constexpr uint64_t ID                        = 1 << 21;
     }
+
+    extern "C" uint64_t _read_rflags(void);
 }
 
 #endif
