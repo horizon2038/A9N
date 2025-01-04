@@ -4,21 +4,21 @@ global _vmxon
 global _vmclear
 global _vmptrld
 
-; void _vmxon(a9n::physical_address vmxon_region)
+; void _vmxon(a9n::physical_address *vmxon_region)
 _vmxon:
-    vmxon rdi
+    vmxon [rdi]
 
     ret
 
-; void _vmclear(a9n::physical_address vmcs_region)
+; void _vmclear(a9n::physical_address *vmcs_region)
 _vmclear:
-    vmclear rdi
+    vmclear [rdi]
 
     ret
 
-; void _vmptrld(a9n::physical_address vmcs_region)
+; void _vmptrld(a9n::physical_address *vmcs_region)
 _vmptrld:
-    vmptrld rdi
+    vmptrld [rdi]
 
     ret
 

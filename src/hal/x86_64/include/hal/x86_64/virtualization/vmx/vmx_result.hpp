@@ -30,6 +30,23 @@ namespace a9n::hal::x86_64
         return {};
     }
 
+    inline constexpr const char *vmx_error_to_string(vmx_error error)
+    {
+        switch (error)
+        {
+            using enum vmx_error;
+
+            case vmx_error::VM_FAIL_VALID :
+                return "VM FAIL VALID";
+
+            case VM_FAIL_INVALID :
+                return "VM FAIL INVALID";
+
+            default :
+                return "ERROR NOT FOUND";
+        }
+    }
+
 }
 
 #endif
