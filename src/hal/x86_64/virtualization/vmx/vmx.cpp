@@ -1,10 +1,19 @@
-#include "hal/x86_64/arch/control_register.hpp"
-#include "hal/x86_64/arch/msr.hpp"
+#include "hal/hal_result.hpp"
+#include "hal/x86_64/virtualization/vmx/vmcs_field.hpp"
+#include "hal/x86_64/virtualization/vmx/vmcs_region.hpp"
+#include "hal/x86_64/virtualization/vmx/vmx_result.hpp"
+#include "kernel/utility/logger.hpp"
 #include <hal/x86_64/virtualization/vmx/vmx.hpp>
+
+#include <hal/x86_64/arch/control_register.hpp>
+#include <hal/x86_64/arch/msr.hpp>
+#include <hal/x86_64/virtualization/vmx/vmcs.hpp>
+#include <hal/x86_64/virtualization/vmx/vmx_msr.hpp>
 
 namespace a9n::hal::x86_64
 {
     extern "C" void _vmxon(a9n::physical_address *vmxon_region);
+    extern "C" void _vmlaunch(void);
 
     struct vmx_control_registers
     {
@@ -21,12 +30,68 @@ namespace a9n::hal::x86_64
     static vmx_control_registers get_vmx_control_registers(void);
     static hal_result            configure_vmx_control_registers(const vmx_control_registers &crs);
     static hal_result            configure_vmxon_region(vmxon_region &region);
-    static liba9n::result<uint32_t, hal_error> try_get_revision_id(void);
-    static vmx_result<>                        vmxon(vmxon_region &region);
+    static vmx_result<>          vmxon(vmxon_region &region);
+
+    inline static vmx_result<> log_vm_instruction_error(vmx_error error)
+    {
+        return vm_read(vmcs_fields::VM_INSTRUCTION_ERROR)
+            .and_then(
+                [&](uint64_t raw) -> vmx_result<>
+                {
+                    a9n::kernel::utility::logger::printh(
+                        "VM instruction error : "
+                        "%s\n",
+                        vm_instruction_error_to_string(static_cast<vm_instruction_error>(raw))
+                    );
+
+                    return error;
+                }
+            );
+    }
+
+    hal_result run_test_vm(void)
+    {
+        a9n::kernel::utility::logger::printh("init VMCS Region ...\n");
+        return try_get_vmcs_revision_id()
+            .transform_error(
+                [](hal_error e) -> vmx_error
+                {
+                    return vmx_error::VM_FAIL_INVALID;
+                }
+            )
+            .and_then(
+                [](uint32_t revision_id) -> vmx_result<>
+                {
+                    return init_vmcs(vmcs_region_core, revision_id);
+                }
+            )
+            .and_then(
+                // configure VM
+                [](void) -> vmx_result<>
+                {
+                    _vmlaunch();
+                    return check_vmx_result().or_else(log_vm_instruction_error);
+                }
+            )
+            .and_then(
+                // start VM
+                [](void) -> vmx_result<>
+                {
+                    _vmlaunch();
+                    return check_vmx_result().or_else(log_vm_instruction_error);
+                }
+            )
+            .or_else(
+                []([[maybe_unused]] vmx_error e) -> hal_result
+                {
+                    return hal_error::UNEXPECTED;
+                }
+            );
+    }
 
     hal_result enable_vmx(void)
     {
-        a9n::kernel::utility::logger::printh("enable vmx ...\n");
+        a9n::kernel::utility::logger::printh("enable VMX ...\n");
         return check_support_vmx()
             .and_then(enable_vmx_control_registers)
             .and_then(
@@ -44,6 +109,25 @@ namespace a9n::hal::x86_64
                             {
                                 return hal_error::UNEXPECTED;
                             }
+                        )
+                        .and_then(
+                            [](void) -> hal_result
+                            {
+                                a9n::kernel::utility::logger::printn(
+                                    R"(
+__      _________          
+\ \    / /__   __|         
+ \ \  / /   | |________  __
+  \ \/ /    | |______\ \/ /
+   \  /     | |       >  < 
+    \/      |_|      /_/\_\
+                       
+                                        )"
+                                );
+                                a9n::kernel::utility::logger::split();
+
+                                return {};
+                            }
                         );
                 }
             );
@@ -53,7 +137,7 @@ namespace a9n::hal::x86_64
     {
         using a9n::kernel::utility::logger;
 
-        logger::printh("check support vmx ...\n");
+        logger::printh("check support VMX ...\n");
 
         return try_get_vendor_id()
             .and_then(
@@ -155,9 +239,9 @@ namespace a9n::hal::x86_64
 
     static hal_result configure_vmxon_region(vmxon_region &region)
     {
-        a9n::kernel::utility::logger::printh("configure VMXON Region ...\n", region);
+        a9n::kernel::utility::logger::printh("configure VMXON region ...\n", region);
 
-        return try_get_revision_id().and_then(
+        return try_get_vmcs_revision_id().and_then(
             [&](uint32_t revision_id) -> hal_result
             {
                 a9n::kernel::utility::logger::printh("VMCS revision : 0x%08llx \n", revision_id);
@@ -165,17 +249,6 @@ namespace a9n::hal::x86_64
                 return {};
             }
         );
-    }
-
-    static liba9n::result<uint32_t, hal_error> try_get_revision_id(void)
-    {
-        auto revision_id = static_cast<uint32_t>(_read_msr(msr::VMX_BASIC));
-        if (!revision_id)
-        {
-            return hal_error::UNEXPECTED;
-        }
-
-        return revision_id;
     }
 
     // `vmxon` : call `_vmxon` described by NASM source codes

@@ -26,19 +26,11 @@ namespace a9n::hal::x86_64
     // vmxon_region must have page size (4KiB)
     static_assert(sizeof(vmxon_region) == a9n::PAGE_SIZE);
 
-    namespace msr
-    {
-        inline constexpr uint32_t VMX_BASIC       = 0x480;
-
-        inline constexpr uint32_t VMX_CR0_FIXED_0 = 0x486;
-        inline constexpr uint32_t VMX_CR0_FIXED_1 = 0x487;
-        inline constexpr uint32_t VMX_CR4_FIXED_0 = 0x488;
-        inline constexpr uint32_t VMX_CR4_FIXED_1 = 0x489;
-    }
-
     alignas(a9n::PAGE_SIZE) inline vmxon_region vmxon_region_core;
 
     hal_result enable_vmx(void);
+
+    hal_result run_test_vm(void);
 
 }
 

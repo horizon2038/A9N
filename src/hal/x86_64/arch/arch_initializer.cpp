@@ -212,21 +212,23 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    return enable_vmx().or_else(
-                        [](hal_error e) -> hal_result
-                        {
-                            if (e != hal_error::UNSUPPORTED)
+                    return enable_vmx()
+                        .and_then(run_test_vm)
+                        .or_else(
+                            [](hal_error e) -> hal_result
                             {
-                                return e;
-                            }
+                                if (e != hal_error::UNSUPPORTED)
+                                {
+                                    return e;
+                                }
 
-                            a9n::kernel::utility::logger::printh(
-                                "%s : virtualization is "
-                                "unsupported\n"
-                            );
-                            return {};
-                        }
-                    );
+                                a9n::kernel::utility::logger::printh(
+                                    "%s : virtualization is "
+                                    "unsupported\n"
+                                );
+                                return {};
+                            }
+                        );
                 }
             );
     }
