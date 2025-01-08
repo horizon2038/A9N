@@ -1,15 +1,16 @@
-#include "kernel/process/process.hpp"
-#include "liba9n/result/__result/result_impl.hpp"
 #include <kernel/process/scheduler.hpp>
 
+#include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
+
+#include <liba9n/result/__result/result_impl.hpp>
 
 namespace a9n::kernel
 {
     // simple benno scheduler (round-robin with priority)
     // the preview pointer may seem unnecessary, but it is necessary for direct-switch
-    liba9n::result<process *, scheduler_error> scheduler::schedule()
+    liba9n::result<process *, scheduler_error> scheduler::schedule(void)
     {
         using a9n::kernel::utility::logger;
         process *next_process {};
