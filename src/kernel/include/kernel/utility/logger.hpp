@@ -75,4 +75,17 @@ namespace a9n::kernel::utility
 
 }
 
+// #define DEBUG_BUILD
+
+#ifdef DEBUG_BUILD
+#define DEBUG_LOG(fmt, ...) \
+    do \
+    { \
+        a9n::kernel::utility::logger::debug("%s@%s:%d: " fmt, __func__, __FILE__, __LINE__, ##__VA_ARGS__); \
+    } while (0)
+
+#else
+#define DEBUG_LOG(fmt, ...) ;
+#endif
+
 #endif
