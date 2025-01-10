@@ -20,7 +20,7 @@ void __attribute__((section(".boot"))) init_page_table(void)
 
     // Set up the PDPT table
     uint64_t *pdpt_table = (uint64_t *)&__kernel_pdpt;
-    for (uint64_t i = 0; i < 4; i++)
+    for (uint64_t i = 0; i < 8; i++)
     {
         pdpt_table[i] = (uint64_t)(&__kernel_pd + i * 512) | 0x3 | 0x04;
     }
@@ -28,7 +28,7 @@ void __attribute__((section(".boot"))) init_page_table(void)
     // Set up the PD table for 2MiB pages
     // TODO: reconsider virtual-address-map-policy
     uint64_t *pd_table = (uint64_t *)&__kernel_pd;
-    for (uint64_t i = 0; i < 4 * 512; i++)
+    for (uint64_t i = 0; i < 8 * 512; i++)
     {
         // 512 entries for 2MiB pages cover 1GiB
         uint64_t physical_addr = i * 0x200000; // 2MiB per page
