@@ -30,10 +30,10 @@ set(
     -fno-threadsafe-statics \
     -ffreestanding \
     -nostdlib \
-    -O2 \
+    -fdata-sections \
+    -ffunction-sections \
     "
 )
-# -flto
 
 # C++ configuration
 # set(CMAKE_CXX_COMPILER clang++-${CLANG_VERSION})
@@ -56,9 +56,19 @@ set(
     -fno-rtti \
     -ffreestanding \
     -nostdlib \
-    -O2 \
+    -fdata-sections \
+    -ffunction-sections \
     "
 )
+
+add_compile_options(
+    $<$<CONFIG:DEBUG>:-g>
+    $<$<CONFIG:DEBUG>:-O0>
+    $<$<CONFIG:RELEASE>:-O3>
+    $<$<CONFIG:RELEASE>:-funroll-loops>
+    $<$<CONFIG:RELEASE>:-ftree-vectorize>
+)
+
 message(STATUS "CXX Compiler Flags : ${CMAKE_CXX_FLAGS}")
 # -flto -fwhole-program-vtables -fforce-emit-vtables -fvirtual-function-elimination
 
@@ -110,6 +120,7 @@ add_link_options(
     --static
     -nostdlib
     -Map "${MAP_FILE}"
+    --gc-sections
 )
 
 # !

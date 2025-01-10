@@ -31,4 +31,12 @@ target_link_libraries(
     liba9n
 )
 
-set_target_properties(kernel.elf PROPERTIES POSITION_INDEPENDENT_CODE OFF)
+set_target_properties(${KERNEL_BINARY} PROPERTIES POSITION_INDEPENDENT_CODE OFF)
+
+# add_compile_options(
+#     $<$<CONFIG:Debug>:-g -O0>
+#     $<$<CONFIG:Release>:-O3>
+# )
+add_compile_definitions(
+    $<$<CONFIG:Debug>:DEBUG_BUILD>
+)
