@@ -1,17 +1,17 @@
 #ifndef A9N_KERNEL_INIT_HPP
 #define A9N_KERNEL_INIT_HPP
 
-#include "kernel/types.hpp"
 #include <kernel/boot/boot_info.hpp>
 #include <kernel/kernel_result.hpp>
+#include <kernel/types.hpp>
 
 namespace a9n::kernel
 {
-    inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX          = 256;
-    inline constexpr a9n::word INITIAL_PAGE_TABLE_COUNT_MAX     = 256;
+    inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX          = 128;
+    inline constexpr a9n::word INITIAL_PAGE_TABLE_COUNT_MAX     = 128;
 
-    inline constexpr a9n::word INITIAL_GENERIC_COUNT_MAX        = 256;
-    inline constexpr a9n::word INITIAL_INTERRUPT_PORT_COUNT_MAX = 256;
+    inline constexpr a9n::word INITIAL_GENERIC_COUNT_MAX        = 128;
+    inline constexpr a9n::word INITIAL_INTERRUPT_PORT_COUNT_MAX = 128;
 
     struct generic_descriptor
     {
@@ -33,13 +33,18 @@ namespace a9n::kernel
         PROCESS_ROOT_NODE, // *recursive*
         PROCESS_PAGE_TABLE_NODE,
         PROCESS_FRAME_NODE,
+        PROCESS_IPC_BUFFER_FRAME,
         GENERIC_NODE, // initial generics
+        INTERRUPT_PORT_NODE,
     };
 
     struct init_info
     {
         // kernel description
         a9n::word kernel_version {};
+
+        // architectural information
+        a9n::word arch_info[ARCH_INFO_MAX];
 
         // initial ipc buffer
         a9n::virtual_address       ipc_buffer;
@@ -56,7 +61,10 @@ namespace a9n::kernel
         a9n::word                  interrupt_port_count;
     };
 
-    static_assert(sizeof(init_info) <= a9n::PAGE_SIZE * 2);
+    static_assert(
+        sizeof(init_info) <= a9n::PAGE_SIZE,
+        "init_info must be less than or equal to the page size"
+    );
 
     kernel_result create_init(const boot_info &info);
 }

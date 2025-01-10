@@ -1,11 +1,15 @@
 #ifndef CALCULATE_HPP
 #define CALCULATE_HPP
 
-#include <kernel/types.hpp>
+#include <stdint.h>
 
 namespace liba9n
 {
-    inline constexpr a9n::word round_up_power_of_2(a9n::word value)
+    inline constexpr uintmax_t BYTE_BITS = 8;
+    inline constexpr uintmax_t WORD_BITS = sizeof(uintmax_t) * BYTE_BITS;
+
+    // todo: rename to `round_up_power_of_two_ceil`
+    inline constexpr uintmax_t round_up_power_of_2(uintmax_t value)
     {
         [[unlikely]] if (!value)
         {
@@ -17,62 +21,61 @@ namespace liba9n
             return value;
         }
 
-        a9n::word leading_zero   = __builtin_clzll(value);
-        a9n::word highest_bit    = a9n::WORD_BITS - 1 - leading_zero;
+        uintmax_t leading_zero   = __builtin_clzll(value);
+        uintmax_t highest_bit    = WORD_BITS - 1 - leading_zero;
 
-        a9n::word power          = 1;
+        uintmax_t power          = 1;
         power                  <<= (highest_bit + 1);
 
         return power;
     }
 
-    inline constexpr a9n::word round_down_power_of_2(a9n::word value)
+    // todo: rename to `round_up_power_of_two_floor`
+    inline constexpr uintmax_t round_down_power_of_2(uintmax_t value)
     {
         [[unlikely]] if (!value)
         {
             return 0;
         }
 
-        a9n::word leading_zero   = __builtin_clzll(value);
-        a9n::word highest_bit    = a9n::WORD_BITS - 1 - leading_zero;
+        uintmax_t leading_zero   = __builtin_clzll(value);
+        uintmax_t highest_bit    = WORD_BITS - 1 - leading_zero;
 
-        a9n::word power          = 1;
+        uintmax_t power          = 1;
         power                  <<= highest_bit;
 
         return power;
     }
 
-    inline a9n::word align_value(a9n::word value, a9n::word base)
+    // TODO: rename to `align_value_ceil`
+    inline constexpr uintmax_t align_value(uintmax_t value, uintmax_t base)
     {
         if (base == 0)
         {
             return 0;
         }
 
-        a9n::word aligned_value = (value + base - 1) / base * base;
-        return aligned_value;
+        return (value + base - 1) / base * base;
     }
 
-    inline a9n::word align_down_power_of_2(a9n::word value, a9n::word base)
+    inline constexpr uintmax_t align_value_floor(uintmax_t value, uintmax_t base)
     {
-        value &= ~(base - 1);
-        return value;
+        if (base == 0)
+        {
+            return 0;
+        }
+
+        return (value / base) * base;
     }
 
-    inline a9n::word align_up_power_of_2(a9n::word value, a9n::word base)
-    {
-        value += (base - 1);
-        return align_down_power_of_2(value, base);
-    }
-
-    inline constexpr a9n::word calculate_radix(a9n::word power_of_2)
+    inline constexpr uintmax_t calculate_radix(uintmax_t power_of_2)
     {
         [[unlikely]] if (!power_of_2)
         {
             return 0;
         }
 
-        a9n::word radix = 0;
+        uintmax_t radix = 0;
         while (power_of_2 >>= 1)
         {
             radix++;
@@ -81,26 +84,26 @@ namespace liba9n
         return radix;
     }
 
-    inline constexpr a9n::word calculate_radix_ceil(a9n::word value)
+    inline constexpr uintmax_t calculate_radix_ceil(uintmax_t value)
     {
         [[unlikely]] if (!value)
         {
             return 0;
         }
 
-        a9n::word rounded_value = round_up_power_of_2(value);
+        uintmax_t rounded_value = round_up_power_of_2(value);
 
         return calculate_radix(rounded_value);
     }
 
-    inline constexpr a9n::word calculate_radix_floor(a9n::word value)
+    inline constexpr uintmax_t calculate_radix_floor(uintmax_t value)
     {
         [[unlikely]] if (!value)
         {
             return 0;
         }
 
-        a9n::word rounded_value = round_down_power_of_2(value);
+        uintmax_t rounded_value = round_down_power_of_2(value);
 
         return calculate_radix(rounded_value);
     }

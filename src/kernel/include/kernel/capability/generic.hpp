@@ -6,6 +6,7 @@
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 
+#include <kernel/kernel_result.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::kernel
@@ -118,6 +119,16 @@ namespace a9n::kernel
     };
 
     inline generic generic_core {};
+
+    inline kernel_result try_configure_generic_slot(capability_slot &slot, const generic_info &info)
+    {
+        slot.component = &generic_core;
+        slot.type      = capability_type::GENERIC;
+        slot.data      = info.dump_slot_data();
+
+        return {};
+    }
+
 }
 
 #endif

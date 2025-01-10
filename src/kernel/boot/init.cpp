@@ -1,3 +1,4 @@
+#include "kernel/ipc/ipc_buffer.hpp"
 #include <kernel/boot/init.hpp>
 
 #include <kernel/capability/capability_component.hpp>
@@ -15,6 +16,7 @@
 #include <kernel/types.hpp>
 
 #include <kernel/process/scheduler.hpp>
+#include <kernel/utility/logger.hpp>
 
 #include <hal/interface/memory_manager.hpp>
 #include <hal/interface/process_manager.hpp>
@@ -31,33 +33,60 @@ namespace a9n::kernel
     // assign only once; no memory freed
     liba9n::linear_allocator<a9n::PAGE_SIZE * 32> init_allocator {};
 
+    static liba9n::result<liba9n::not_null<init_info>, kernel_error>
+                         try_make_init_info(const boot_info &info);
     static kernel_result try_make_init_nodes(capability_slot &slot, a9n::word count);
-
     static liba9n::result<liba9n::not_null<process_control_block>, kernel_error>
-        try_make_init_process_control_block(const boot_info &info);
-
+        try_make_init_process_control_block(const boot_info &info, init_info &init_info_page);
     static kernel_result try_make_init_process_root_address_space(process_control_block &pcb);
     static kernel_result
         try_make_init_process_pages(const init_image_info &info, process_control_block &pcb);
-    static kernel_result
-        try_make_init_process_frames(const init_image_info &info, process_control_block &pcb);
-
-    static kernel_result try_make_init_generics(const memory_info &info, capability_slot &node_slot);
-
+    static kernel_result try_make_init_process_frames(
+        const init_image_info &info,
+        process_control_block &pcb,
+        init_info             &init_info_page
+    );
+    static kernel_result try_make_init_generics(
+        const memory_info &info,
+        capability_slot   &node_slot,
+        init_info         &init_info_page
+    );
     static kernel_result create_init_interrupt_port();
+
+    static liba9n::result<memory_map_entry, kernel_error> try_make_generic_from_memory_map(
+        const memory_map_entry &entry,
+        capability_slot        &slot,
+        generic_descriptor     &descriptor
+    );
 
     kernel_result create_init(const boot_info &info)
     {
         using a9n::kernel::utility::logger;
 
+        // create init_info from raw address
+        logger::printk("create init info from raw address ...\n");
+        auto init_info_result = try_make_init_info(info);
+        if (!init_info_result)
+        {
+            return init_info_result.unwrap_error();
+        }
+        auto init_info_page = init_info_result.unwrap();
+
         // create init : process control block
         logger::printk("create init process control block ...\n");
-        auto init_process_control_block_result = try_make_init_process_control_block(info);
+        auto init_process_control_block_result
+            = try_make_init_process_control_block(info, init_info_page.get());
         if (!init_process_control_block_result)
         {
             return init_process_control_block_result.unwrap_error();
         }
         auto init_process_control_block = init_process_control_block_result.unwrap();
+
+        // create init : ipc buffer frame
+        auto init_ipc_buffer_slot_result
+            = init_process_control_block->process_core.root_slot.component->retrieve_slot(
+                liba9n::enum_cast(init_slot_offset::PROCESS_IPC_BUFFER_FRAME)
+            );
 
         // create init : node for storing generic
         auto generic_node_slot_result
@@ -82,9 +111,28 @@ namespace a9n::kernel
         logger::printk("create init generic entries ...\n");
 
         // TODO: configure generic node slots : func(meminfo, &generic_node_slot) -> kresult
-        return try_make_init_generics(info.boot_memory_info, generic_node_slot);
+        return try_make_init_generics(info.boot_memory_info, generic_node_slot, init_info_page.get());
 
         // return {};
+    }
+
+    static liba9n::result<liba9n::not_null<init_info>, kernel_error>
+        try_make_init_info(const boot_info &info)
+    {
+        a9n::physical_address init_info_address
+            = info.boot_init_image_info.loaded_address + info.boot_init_image_info.init_info_address;
+        if (!init_info_address)
+        {
+            return kernel_error::NO_SUCH_ADDRESS;
+        }
+
+        init_info &init_info_page
+            = *a9n::kernel::physical_to_virtual_pointer<init_info>(init_info_address);
+
+        // copy architectural information
+        liba9n::std::memcpy(init_info_page.arch_info, info.arch_info, sizeof(info.arch_info));
+
+        return liba9n::not_null<init_info> { init_info_page };
     }
 
     static kernel_result try_make_init_nodes(capability_slot &slot, a9n::word count)
@@ -116,7 +164,7 @@ namespace a9n::kernel
     }
 
     static liba9n::result<liba9n::not_null<process_control_block>, kernel_error>
-        try_make_init_process_control_block(const boot_info &info)
+        try_make_init_process_control_block(const boot_info &info, init_info &init_info_page)
     {
         using kernel::utility::logger;
 
@@ -196,7 +244,8 @@ namespace a9n::kernel
                 {
                     return try_make_init_process_frames(
                         info.boot_init_image_info,
-                        init_process_control_block.get()
+                        init_process_control_block.get(),
+                        init_info_page
                     );
                 }
             )
@@ -392,8 +441,11 @@ namespace a9n::kernel
             );
     }
 
-    static kernel_result
-        try_make_init_process_frames(const init_image_info &info, process_control_block &pcb)
+    static kernel_result try_make_init_process_frames(
+        const init_image_info &info,
+        process_control_block &pcb,
+        init_info             &init_info_page
+    )
     {
         using a9n::kernel::utility::logger;
         logger::printk("try to make the frames in init process ...\n");
@@ -423,6 +475,8 @@ namespace a9n::kernel
         capability_slot &frame_node_slot = *frame_node_slot_result.unwrap();
         auto root_table = convert_slot_data_to_page_table(pcb.process_core.root_address_space.data);
 
+        a9n::physical_address frame_ipc_buffer_base = info.loaded_address + info.init_ipc_buffer_address;
+
         // create frames
         for (auto i = 0; i <= info.init_image_size; i++)
         {
@@ -445,12 +499,51 @@ namespace a9n::kernel
                               auto target_slot_result = frame_node_slot.component->retrieve_slot(i);
                               if (!target_slot_result)
                               {
+                                  DEBUG_LOG(
+                                      "slot error code : 0x%016llx",
+                                      static_cast<a9n::word>(target_slot_result.unwrap_error())
+                                  );
                                   logger::error("slot does not exist in the node that stores the "
                                                 "frame");
                                   return kernel_error::NO_SUCH_ADDRESS;
                               }
 
-                              return try_configure_frame_slot(*target_slot_result.unwrap(), target_frame);
+                              return try_configure_frame_slot(*target_slot_result.unwrap(), target_frame)
+                                  .and_then(
+                                      [&](void) -> kernel_result
+                                      {
+                                          if (target_frame.address != frame_ipc_buffer_base)
+                                          {
+                                              return {};
+                                          }
+
+                                          logger::printk("try make ipc buffer frame ...\n");
+
+                                          init_info_page.ipc_buffer = info.init_ipc_buffer_address;
+
+                                          auto frame_ipc_buffer_slot_result
+                                              = pcb.process_core.root_slot.component->retrieve_slot(
+                                                  liba9n::enum_cast(init_slot_offset::PROCESS_IPC_BUFFER_FRAME)
+                                              );
+                                          if (!frame_ipc_buffer_slot_result)
+                                          {
+                                              return kernel_error::UNEXPECTED;
+                                          }
+                                          capability_slot &frame_ipc_buffer_slot
+                                              = *frame_ipc_buffer_slot_result.unwrap();
+
+                                          return try_configure_frame_slot(frame_ipc_buffer_slot, target_frame)
+                                              .and_then(
+                                                  [&](void) -> kernel_result
+                                                  {
+                                                      target_slot_result.unwrap()->insert_sibling(
+                                                          frame_ipc_buffer_slot
+                                                      );
+                                                      return {};
+                                                  }
+                                              );
+                                      }
+                                  );
                           }
                       );
 
@@ -460,10 +553,13 @@ namespace a9n::kernel
             }
         }
 
+        init_info_page.kernel_version = 0xdeadc0de;
+
         return {};
     }
 
-    static kernel_result try_make_init_generics(const memory_info &info, capability_slot &node_slot)
+    static kernel_result
+        try_make_init_generics(const memory_info &info, capability_slot &node_slot, init_info &init_info_page)
     {
         using enum memory_map_type;
 
@@ -497,63 +593,174 @@ namespace a9n::kernel
 
             a9n::kernel::utility::logger::printk("create generic info ...\n");
 
-            auto memory_size               = a9n::PAGE_SIZE * entry->page_count;
-            auto memory_size_aligned_radix = liba9n::calculate_radix_floor(memory_size);
-
-            auto current_generic_info      = a9n::kernel::generic_info(
-                entry->start_physical_address,
-                memory_size_aligned_radix,
-                (entry->type == DEVICE),
-                entry->start_physical_address
-            );
-            a9n::kernel::utility::logger::printk(
-                "radix is 2^{%4llu}\n",
-                liba9n::calculate_radix_floor(a9n::PAGE_SIZE * entry->page_count)
-            );
-
-            const char *memory_status;
-
-            switch (entry->type)
-            {
-                case FREE :
-                    memory_status = "FREE MEMORY";
-                    break;
-                case DEVICE :
-                    memory_status = "DEVICE MEMORY";
-                    break;
-                case RESERVED :
-                    [[fallthrough]];
-                default :
-                    memory_status = "RESERVED MEMORY";
-                    break;
-            }
-
-            a9n::kernel::utility::logger::printk(
-                "raw    : [0x%016llx - 0x%016llx) : %s\n",
-                current_generic_info.base(),
-                current_generic_info.base() + memory_size,
-                memory_status
-            );
-            a9n::kernel::utility::logger::printk(
-                "actual : [0x%016llx - 0x%016llx) : %s\n",
-                current_generic_info.base(),
-                current_generic_info.base() + (static_cast<a9n::word>(1) << memory_size_aligned_radix),
-                memory_status
-            );
-
             a9n::kernel::utility::logger::printk("configure generic slots data ...\n");
             auto target_slot_result = node_slot.component->retrieve_slot(slot_index);
             if (!target_slot_result)
             {
                 return kernel_error::NO_SUCH_ADDRESS;
             }
-            auto target_slot  = target_slot_result.unwrap();
-            target_slot->data = current_generic_info.dump_slot_data();
-            target_slot->type = capability_type::GENERIC;
+            auto target_slot = target_slot_result.unwrap();
+
+            auto base_result = try_make_generic_from_memory_map(
+                *entry,
+                *target_slot,
+                init_info_page.generic_list[slot_index]
+            );
+            if (!base_result)
+            {
+                return base_result.unwrap_error();
+            }
 
             slot_index++;
+            init_info_page.generic_list_count                   = slot_index;
+
+            constexpr a9n::word GENERIC_RECURSIVE_SPLITTING_MAX = 7;
+
+            memory_map_entry &remain                            = base_result.unwrap();
+
+            for (auto i = 0; i < GENERIC_RECURSIVE_SPLITTING_MAX; i++)
+            {
+                if (remain.page_count == 0)
+                {
+                    break;
+                }
+
+                a9n::kernel::utility::logger::printk("re-splitting [%2d] ...\n", i);
+
+                auto remain_slot_result = node_slot.component->retrieve_slot(slot_index);
+                if (!remain_slot_result)
+                {
+                    return kernel_error::NO_SUCH_ADDRESS;
+                }
+                auto remain_slot = remain_slot_result.unwrap();
+
+                auto res         = try_make_generic_from_memory_map(
+                    remain,
+                    *remain_slot,
+                    init_info_page.generic_list[slot_index]
+                );
+                if (!res)
+                {
+                    return res.unwrap_error();
+                }
+
+                remain = res.unwrap();
+
+                slot_index++;
+            }
         }
 
         return {};
     }
+
+    static liba9n::result<memory_map_entry, kernel_error> try_make_generic_from_memory_map(
+        const memory_map_entry &entry,
+        capability_slot        &slot,
+        generic_descriptor     &descriptor
+    )
+    {
+        if (entry.start_physical_address % a9n::PAGE_SIZE != 0)
+        {
+            a9n::kernel::utility::logger::error("memory map entry must be aligned to page size");
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        auto memory_size               = a9n::PAGE_SIZE * entry.page_count;
+        auto memory_size_aligned_radix = liba9n::calculate_radix_floor(memory_size);
+
+        auto current_generic_info      = a9n::kernel::generic_info(
+            entry.start_physical_address,
+            memory_size_aligned_radix,
+            (entry.type == memory_map_type::DEVICE),
+            entry.start_physical_address
+        );
+
+        // log
+        const char *memory_status;
+        switch (entry.type)
+        {
+            case memory_map_type::FREE :
+                memory_status = "FREE MEMORY";
+                break;
+            case memory_map_type::DEVICE :
+                memory_status = "DEVICE MEMORY";
+                break;
+            case memory_map_type::RESERVED :
+                [[fallthrough]];
+            default :
+                memory_status = "RESERVED MEMORY";
+                break;
+        }
+        a9n::kernel::utility::logger::printk(
+            "raw    : [0x%016llx - 0x%016llx) : %s\n",
+            current_generic_info.base(),
+            current_generic_info.base() + memory_size,
+            memory_status
+        );
+        a9n::kernel::utility::logger::printk(
+            "actual : [0x%016llx - 0x%016llx) : %s\n",
+            current_generic_info.base(),
+            current_generic_info.base() + (static_cast<a9n::word>(1) << memory_size_aligned_radix),
+            memory_status
+        );
+
+        return try_configure_generic_slot(slot, current_generic_info)
+            .and_then(
+                [&](void) -> kernel_result
+                {
+                    auto aligned_size     = static_cast<a9n::word>(1) << memory_size_aligned_radix;
+
+                    descriptor.address    = entry.start_physical_address;
+                    descriptor.is_device  = (entry.type == memory_map_type::DEVICE);
+                    descriptor.size_radix = memory_size_aligned_radix;
+
+                    return {};
+                }
+            )
+            .and_then(
+                [&](void) -> liba9n::result<memory_map_entry, kernel_error>
+                {
+                    // return remain
+                    auto remain_address_start_raw = liba9n::align_value(
+                        entry.start_physical_address
+                            + (static_cast<a9n::word>(1) << memory_size_aligned_radix),
+                        a9n::PAGE_SIZE
+                    );
+                    auto remain_address_end_raw
+                        = entry.start_physical_address + (a9n::PAGE_SIZE * entry.page_count);
+
+                    auto ceiled_remain_address_start
+                        = liba9n::align_value(remain_address_start_raw, a9n::PAGE_SIZE);
+                    auto floored_remain_address_end
+                        = liba9n::align_value_floor(remain_address_end_raw, a9n::PAGE_SIZE);
+
+                    auto remain_size = liba9n::align_value(
+                        (floored_remain_address_end - ceiled_remain_address_start),
+                        a9n::PAGE_SIZE
+                    );
+
+                    if (ceiled_remain_address_start
+                            < (entry.start_physical_address
+                               + (static_cast<a9n::word>(1) << memory_size_aligned_radix))
+                        || (entry.start_physical_address + (entry.page_count * a9n::PAGE_SIZE)
+                           ) < floored_remain_address_end)
+                    {
+                        return memory_map_entry {
+                            .start_physical_address = 0,
+                            .page_count             = 0,
+                            .type                   = entry.type,
+                        };
+                    }
+                    else
+                    {
+                        return memory_map_entry {
+                            .start_physical_address = ceiled_remain_address_start,
+                            .page_count             = remain_size / a9n::PAGE_SIZE,
+                            .type                   = entry.type
+                        };
+                    }
+                }
+            );
+    }
+
 }
