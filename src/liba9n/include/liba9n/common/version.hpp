@@ -1,7 +1,6 @@
 #ifndef LIBA9N_VERSION_HPP
 #define LIBA9N_VERSION_HPP
 
-#include <kernel/types.hpp>
 #include <liba9n/option/option.hpp>
 
 namespace liba9n

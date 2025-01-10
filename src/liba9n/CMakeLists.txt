@@ -14,7 +14,6 @@ target_include_directories(
     liba9n
     PUBLIC
     "${LIBA9N_INCLUDE_DIR}"
-    "${CMAKE_SOURCE_DIR}/src/kernel/include"
 )
 set_target_properties(liba9n PROPERTIES POSITION_INDEPENDENT_CODE OFF)
 

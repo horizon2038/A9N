@@ -1,7 +1,7 @@
 #ifndef LIBA9N_BIT_HPP
 #define LIBA9N_BIT_HPP
 
-#include <kernel/types.hpp>
+#include <stdint.h>
 
 namespace liba9n
 {
@@ -28,11 +28,11 @@ namespace liba9n
     inline constexpr auto bit_mask = calculate_bit_mask<Base, LowBit, HighBit>();
 
     // word specialization
-    template<a9n::word BitNumber>
-    inline constexpr auto word_bit_flag = calculate_bit_flag<a9n::word, BitNumber>();
+    template<uintmax_t BitNumber>
+    inline constexpr auto word_bit_flag = calculate_bit_flag<uintmax_t, BitNumber>();
 
-    template<a9n::word LowBit, a9n::word HighBit>
-    inline constexpr auto word_bit_mask = calculate_bit_mask<a9n::word, LowBit, HighBit>();
+    template<uintmax_t LowBit, uintmax_t HighBit>
+    inline constexpr auto word_bit_mask = calculate_bit_mask<uintmax_t, LowBit, HighBit>();
 }
 
 #endif

@@ -1,17 +1,16 @@
 #ifndef LIBA9N_ARRAY_HPP
 #define LIBA9N_ARRAY_HPP
 
-#include <kernel/types.hpp>
-
 #include <liba9n/option/option.hpp>
+#include <stdint.h>
 
 namespace liba9n::common
 {
-    template<typename T, a9n::word size>
+    template<typename T, uintmax_t size>
     class bounded_array
     {
       public:
-        const T get_element(a9n::word index) const
+        const T get_element(uintmax_t index) const
         {
             if (index >= size)
             {
@@ -20,7 +19,7 @@ namespace liba9n::common
             return elements[index];
         }
 
-        void set_element(a9n::word index, T data)
+        void set_element(uintmax_t index, T data)
         {
             if (index >= size)
             {
@@ -100,19 +99,6 @@ namespace liba9n::common
             return &(elements[Size - 1]);
         }
     };
-
-    inline void test_array()
-    {
-        safe_array<a9n::word, 16> sa {};
-
-        auto idx_0 = sa.get<0>();
-        auto idx_1 = sa.get<1>();
-        sa.set<15>(0xdeadbeaf);
-
-        for (auto &&x : sa)
-        {
-        };
-    }
 }
 
 #endif

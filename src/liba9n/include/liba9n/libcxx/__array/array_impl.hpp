@@ -47,12 +47,14 @@ namespace liba9n::std
 
         constexpr T *get_elements_end()
         {
-            return elements + (Size - 1);
+            return elements + Size;
+            // return elements + (Size - 1);
         }
 
         constexpr const T *get_elements_end() const
         {
-            return elements + (Size - 1);
+            return elements + Size;
+            // return elements + (Size - 1);
         }
 
         // element access
@@ -88,29 +90,29 @@ namespace liba9n::std
 
         constexpr T &back()
         {
-            return *get_elements_end();
+            return *(get_elements_end() - 1);
         }
 
         constexpr const T &back() const
         {
-            return *get_elements_end();
+            return *(get_elements_end() - 1);
         }
 
         constexpr T *data()
         {
-            return static_cast<T *>(elements);
+            return elements;
         }
 
         constexpr const T *data() const
         {
-            return static_cast<T *>(elements);
+            return elements;
         }
 
         // capacity
         constexpr size_type empty() const
         {
             // true only if array<T, 0>
-            return false;
+            return Size == 0;
         }
 
         constexpr size_type size() const
