@@ -1,14 +1,16 @@
-#include "hal/hal_result.hpp"
-#include "hal/x86_64/virtualization/vmx/vmcs_field.hpp"
-#include "hal/x86_64/virtualization/vmx/vmcs_region.hpp"
-#include "hal/x86_64/virtualization/vmx/vmx_result.hpp"
-#include "kernel/utility/logger.hpp"
 #include <hal/x86_64/virtualization/vmx/vmx.hpp>
+
+#include <hal/hal_result.hpp>
 
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/msr.hpp>
 #include <hal/x86_64/virtualization/vmx/vmcs.hpp>
+#include <hal/x86_64/virtualization/vmx/vmcs_field.hpp>
+#include <hal/x86_64/virtualization/vmx/vmcs_region.hpp>
 #include <hal/x86_64/virtualization/vmx/vmx_msr.hpp>
+#include <hal/x86_64/virtualization/vmx/vmx_result.hpp>
+
+#include <kernel/utility/logger.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -103,6 +105,7 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
+                    a9n::kernel::utility::logger::printh("vmxon ...\n");
                     return vmxon(vmxon_region_core)
                         .or_else(
                             []([[maybe_unused]] vmx_error e) -> hal_result
@@ -118,7 +121,7 @@ namespace a9n::hal::x86_64
 __      _________          
 \ \    / /__   __|         
  \ \  / /   | |________  __
-  \ \/ /    | |______\ \/ /
+  \ \/ /    | |______\ \/ /  Intel VT-x(R) Virtualization Technology
    \  /     | |       >  < 
     \/      |_|      /_/\_\
                        
@@ -143,6 +146,7 @@ __      _________
             .and_then(
                 [](vendor_id id) -> hal_result
                 {
+                    logger::printh("check vendor id ...\n");
                     if (liba9n::std::memcmp(vendor_identifier::INTEL, id.data(), sizeof(vendor_id))
                         != 0)
                     {
@@ -157,6 +161,7 @@ __      _________
             .and_then(
                 []([[maybe_unused]] cpuid_info info) -> hal_result
                 {
+                    logger::printh("check cpuid ...\n");
                     if ((info.rcx & liba9n::enum_cast(cpuid_feature_information::VMX)) == 0)
                     {
                         logger::printh("VMX : VMX bit is invalid\n");
@@ -169,6 +174,7 @@ __      _________
             .and_then(
                 [](void) -> hal_result
                 {
+                    logger::printh("check MSRs ...\n");
                     auto value = _read_msr(msr::FEATURE_CONTROL);
                     if ((value & liba9n::enum_cast(msr_feature_control::ENABLE_VMX_OUTSIDE_SMX)) == 0)
                     {
@@ -239,7 +245,7 @@ __      _________
 
     static hal_result configure_vmxon_region(vmxon_region &region)
     {
-        a9n::kernel::utility::logger::printh("configure VMXON region ...\n", region);
+        a9n::kernel::utility::logger::printh("configure VMXON region ...\n");
 
         return try_get_vmcs_revision_id().and_then(
             [&](uint32_t revision_id) -> hal_result
@@ -254,7 +260,7 @@ __      _________
     // `vmxon` : call `_vmxon` described by NASM source codes
     static vmx_result<> vmxon(vmxon_region &region)
     {
-        a9n::kernel::utility::logger::printh("vmxon [0x%016llx] ...\n", region);
+        a9n::kernel::utility::logger::printh("vmxon [0x%016llx] ...\n", &region);
 
         auto region_address = reinterpret_cast<a9n::virtual_address>(&region);
         if (region_address % a9n::PAGE_SIZE != 0)
