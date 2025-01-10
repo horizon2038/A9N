@@ -48,7 +48,7 @@ OPTIONS:
     -g, --gdb               enable GDB debugging (localhost:1234)
     -c, --smp {count}       configure the number of CPUs
     -m, --memory {size}     specify the memory size (default : 2G)
-    -i, --show-interrupt    displays interurpt information
+    -i, --show-interrupt    displays interrupt information
     -n, --no-reload         turn off automatic restart in case of problems
     -h, --help              show this help message
 EOF
