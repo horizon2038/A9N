@@ -38,7 +38,8 @@ EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *syst
     boot_info       target_boot_info;
 
     system_table->ConOut->ClearScreen(system_table->ConOut);
-    system_table->ConOut->SetAttribute(system_table->ConOut, EFI_WHITE);
+    system_table->ConOut
+        ->SetAttribute(system_table->ConOut, EFI_TEXT_ATTR(EFI_WHITE, EFI_BACKGROUND_BLACK));
     Print(L"[ INFO ] a9nloader v0.2.1\r\n");
     Print(L"[ RUN ] efi_main\r\n");
     Print(L"\r\n");
@@ -64,6 +65,7 @@ EFI_STATUS EFIAPI efi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *syst
         Print(L"[ ERROR ] failed to print_file_info (kernel)\r\n");
         return efi_status;
     }
+    Print(L"start load kernel ...\r\n");
 
     efi_status = load_kernel(kernel, &kernel_entry_point);
     if (EFI_ERROR(efi_status))
