@@ -38,9 +38,12 @@ namespace a9n::hal::x86_64
 {
     hal_result init_sub_cores(void);
     hal_result init_sub_core(void);
+    void       init_global_constructors(void);
 
     hal_result arch_initializer::init_architecture(a9n::word arch_info[])
     {
+        init_global_constructors();
+
         for (auto i = 0; i < 8; i++)
         {
             a9n::kernel::utility::logger::printh("arch_info [%d] : 0x%016llx\n", i, arch_info[i]);
@@ -67,6 +70,24 @@ namespace a9n::hal::x86_64
                 }
             )
             .and_then(unmap_lower_memory_mapping);
+    }
+
+    void init_global_constructors(void)
+    {
+        a9n::kernel::utility::logger::printh("call global ctors ...\n");
+
+        using constructor = void (*)(void);
+        extern uint8_t __init_constructors_start[];
+        extern uint8_t __init_constructors_end[];
+        a9n::word      constructor_count
+            = (reinterpret_cast<a9n::word>(&__init_constructors_end)
+               - reinterpret_cast<a9n::word>(&__init_constructors_end))
+            / sizeof(constructor);
+        constructor *constructors = reinterpret_cast<constructor *>(&__init_constructors_start);
+        for (auto i = 0; i < constructor_count; i++)
+        {
+            constructors[i]();
+        }
     }
 
     hal_result init_main_core(a9n::physical_address rsdp_address)
@@ -213,7 +234,7 @@ namespace a9n::hal::x86_64
                 [](void) -> hal_result
                 {
                     return enable_vmx()
-                        .and_then(run_test_vm)
+                        // .and_then(run_test_vm)
                         .or_else(
                             [](hal_error e) -> hal_result
                             {
@@ -344,8 +365,8 @@ namespace a9n::hal::x86_64
                       .and_then(
                           [=](void) -> hal_result
                           {
-                              // wait 1ms
-                              return acpi_pm_timer_core.wait(100);
+                              // wait 10ms
+                              return acpi_pm_timer_core.wait(100000);
                           }
                       );
             if (!result)
@@ -385,6 +406,7 @@ namespace a9n::hal::x86_64
                           return init_sub_core();
                       }
                   );
+        // .and_then(enable_vmx);
         if (!result)
         {
             a9n::kernel::utility::logger::error("can't configure AP\n");
@@ -442,6 +464,28 @@ namespace a9n::hal::x86_64
                 {
                     logger::printh("syscall initialization failed : 0x%llx\n", static_cast<a9n::word>(e));
                     return e;
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    return enable_vmx()
+                        // .and_then(run_test_vm)
+                        .or_else(
+                            [](hal_error e) -> hal_result
+                            {
+                                if (e != hal_error::UNSUPPORTED)
+                                {
+                                    return e;
+                                }
+
+                                a9n::kernel::utility::logger::printh(
+                                    "%s : virtualization is "
+                                    "unsupported\n"
+                                );
+                                return {};
+                            }
+                        );
                 }
             );
     };
