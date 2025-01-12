@@ -26,6 +26,12 @@ namespace a9n
     static constexpr word PAGE_SIZE = 4096;
 
     using capability_descriptor     = word;
+
+    inline constexpr word extract_depth(capability_descriptor descriptor)
+    {
+        constexpr word BYTE_MASK = (static_cast<a9n::word>(1) << a9n::BYTE_BITS) - 1;
+        return ((descriptor >> (a9n::WORD_BITS - a9n::BYTE_BITS)) & BYTE_MASK) + a9n::BYTE_BITS;
+    }
 }
 
 #else
