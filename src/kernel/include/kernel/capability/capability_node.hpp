@@ -3,7 +3,11 @@
 
 #include <kernel/capability/capability_component.hpp>
 
+#include <kernel/kernel_result.hpp>
 #include <kernel/types.hpp>
+
+#include <liba9n/common/calculate.hpp>
+#include <liba9n/common/not_null.hpp>
 
 namespace a9n::kernel
 {
@@ -42,20 +46,15 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        capability_result
-            decode_operation(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
+        capability_result decode_operation(process &this_process, capability_slot &this_slot);
 
-        capability_result
-            operation_copy(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
+        capability_result operation_copy(process &this_process, capability_slot &this_slot);
 
-        capability_result
-            operation_move(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
+        capability_result operation_move(process &this_proecess, capability_slot &this_slot);
 
-        capability_result
-            operation_revoke(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
+        capability_result operation_revoke(process &this_process, capability_slot &this_slot);
 
-        capability_result
-            operation_remove(ipc_buffer *buffer, capability_slot *this_slot, capability_slot *root_slot);
+        capability_result operation_remove(process &this_process, capability_slot &this_slot);
 
         capability_lookup_result
             lookup_slot(a9n::capability_descriptor target_descriptor, a9n::word descriptor_used_bits);
@@ -94,6 +93,53 @@ namespace a9n::kernel
             return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }
     };
-}
 
+    // unsafe : no check boundary
+    inline liba9n::result<liba9n::not_null<capability_node>, kernel_error>
+        try_make_capability_node(a9n::virtual_pointer base, a9n::word radix)
+    {
+        if (!base || radix == 0 || radix >= a9n::WORD_BITS)
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        constexpr auto node_unit_radix = liba9n::calculate_radix_ceil(sizeof(capability_node));
+        constexpr auto node_unit_size  = static_cast<a9n::word>(1) << node_unit_radix;
+
+        if (static_cast<a9n::word>(base) % node_unit_size != 0)
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        constexpr auto slot_unit_radix = liba9n::calculate_radix_ceil(sizeof(capability_slot));
+        constexpr auto slot_unit_size  = static_cast<a9n::word>(1) << slot_unit_radix;
+
+        // create slot
+        auto slot_start_address
+            = reinterpret_cast<void *>(liba9n::align_value((base + node_unit_radix), node_unit_size));
+        auto created_slots = new (slot_start_address)
+            capability_slot[static_cast<a9n::word>(1) << radix] {};
+
+        // create node
+        auto created_node = new (reinterpret_cast<void *>(base))
+            capability_node(0, radix, created_slots);
+
+        return liba9n::not_null<capability_node>(*created_node);
+    }
+
+    inline kernel_result
+        try_configure_capability_node_slot(capability_slot &slot, capability_node &node)
+    {
+        if (slot.type != capability_type::NONE)
+        {
+            return kernel_error::INIT_FIRST;
+        }
+
+        slot.component = &node;
+        slot.type      = capability_type::NODE;
+        slot.data.fill(0);
+
+        return {};
+    }
+}
 #endif

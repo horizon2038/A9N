@@ -1,5 +1,7 @@
 #include "hal/hal_result.hpp"
 #include "kernel/capability/capability_component.hpp"
+#include "kernel/capability/capability_result.hpp"
+#include "kernel/memory/memory.hpp"
 #include <kernel/capability/generic.hpp>
 
 #include <kernel/capability/capability_factory.hpp>
@@ -46,7 +48,7 @@ namespace a9n::kernel
         auto aligned_watermark  = liba9n::align_value(watermark, request_unit_size);
         auto target_end_address = aligned_watermark + (request_unit_size * count);
 
-        return (target_end_address < end_address);
+        return (target_end_address <= end_address);
     }
 
     a9n::error generic_info::apply_allocate(a9n::word memory_size_bits)
@@ -56,6 +58,25 @@ namespace a9n::kernel
         watermark              = aligned_watermark + request_unit_size;
 
         return 0;
+    }
+
+    memory_result<allocate_info>
+        generic_info::try_apply_allocate(a9n::word memory_size_bits, a9n::word count)
+    {
+        auto original_watermark = current_watermark();
+        auto unit_size          = (static_cast<a9n::word>(1) << memory_size_bits);
+        auto aligned_watermark  = liba9n::align_value(watermark, unit_size);
+        auto boundary_address   = aligned_watermark + (unit_size * count);
+
+        if (boundary_address < (base_address + size()))
+        {
+            return memory_error::OUT_OF_MEMORY;
+        }
+
+        // auto apply_allocate(memory_size_bits);
+
+        return allocate_info { .aligned_base  = original_watermark,
+                               .new_watermark = current_watermark() };
     }
 
     capability_slot_data generic_info::dump_slot_data() const
@@ -133,9 +154,9 @@ namespace a9n::kernel
                     auto self_info = create_generic_info(self.data);
 
                     // get index
-                    auto      type      = capability_type::NONE;
-                    a9n::word size_bits = 0;
-                    a9n::word count     = 0;
+                    auto      type          = capability_type::NONE;
+                    a9n::word specific_bits = 0;
+                    a9n::word count         = 0;
 
                     auto make_configure_mr_lambda =
                         [](process &owner, a9n::word &target_value, a9n::word index) -> decltype(auto)
@@ -157,8 +178,11 @@ namespace a9n::kernel
                     a9n::word type_raw = 0;
                     auto      configure_capability_type
                         = make_configure_mr_lambda(owner, type_raw, argument::CAPABILITY_TYPE);
-                    auto configure_capability_size_bits
-                        = make_configure_mr_lambda(owner, size_bits, argument::CAPABILITY_SIZE_BITS);
+                    auto configure_capability_size_bits = make_configure_mr_lambda(
+                        owner,
+                        specific_bits,
+                        argument::CAPABILITY_SPECIFIC_BITS
+                    );
                     auto configure_capability_count
                         = make_configure_mr_lambda(owner, count, argument::CAPABILITY_COUNT);
 
@@ -182,13 +206,20 @@ namespace a9n::kernel
                                 type = static_cast<capability_type>(type_raw);
                                 [[unlikely]] if (self_info.is_device() && type != capability_type::FRAME)
                                 {
+                                    a9n::kernel::utility::logger::error(
+                                        "device generic cannot be "
+                                        "converted to anything "
+                                        "other than frame"
+                                    );
                                     return capability_error::INVALID_ARGUMENT;
                                 }
 
                                 auto memory_size_bits
-                                    = calculate_capability_memory_size_bits(type, size_bits).unwrap_or(0);
+                                    = calculate_capability_memory_size_bits(type, specific_bits)
+                                          .unwrap_or(0);
                                 if (!self_info.is_allocatable(memory_size_bits, count))
                                 {
+                                    a9n::kernel::utility::logger::error("out of memory");
                                     return capability_error::ILLEGAL_OPERATION;
                                 }
 
@@ -201,9 +232,18 @@ namespace a9n::kernel
                                               .and_then(
                                                   [&](capability_slot *slot) -> capability_result
                                                   {
+                                                      if (slot->type != capability_type::NONE)
+                                                      {
+                                                          // clang-format off
+                                                          a9n::kernel::utility::logger::error("slot is already used");
+                                                          // clang-format on
+                                                          return capability_error::INVALID_ARGUMENT;
+                                                      }
+
                                                       return try_make_capability(
                                                           type,
-                                                          size_bits,
+                                                          memory_size_bits,
+                                                          specific_bits,
                                                           self_info,
                                                           self,
                                                           *slot
@@ -247,12 +287,11 @@ namespace a9n::kernel
             .and_then(
                 [&](a9n::word descriptor) -> a9n::hal::hal_result
                 {
-                    a9n::kernel::utility::logger::printk("generic::configure_registers\n");
                     target_descriptor = descriptor;
                     target_depth      = extract_depth(descriptor);
                     DEBUG_LOG(
                         "descriptor : 0x%016llx   target_depth : "
-                        "0x%016llx\n",
+                        "0x%016llx",
                         target_descriptor,
                         target_depth
                     );
@@ -276,9 +315,9 @@ namespace a9n::kernel
     }
 
     constexpr liba9n::option<a9n::word>
-        generic::calculate_capability_memory_size_bits(capability_type type, a9n::word size_bits)
+        generic::calculate_capability_memory_size_bits(capability_type type, a9n::word specific_bits)
     {
-        DEBUG_LOG("calculate_capability_memory_size_bits : 0x%llx, 0x%llx", type, size_bits);
+        DEBUG_LOG("calculate_capability_memory_size_bits : 0x%llx, 0x%llx", type, specific_bits);
         switch (type)
         {
             using enum capability_type;
@@ -287,16 +326,16 @@ namespace a9n::kernel
                 return liba9n::option_none;
 
             case DEBUG :
-                return 0;
+                return liba9n::option_none;
 
             case NODE :
                 return liba9n::calculate_radix_ceil(
                     liba9n::calculate_radix_ceil(sizeof(capability_node))
-                    + liba9n::calculate_radix_ceil(sizeof(capability_slot) * size_bits)
+                    + liba9n::calculate_radix_ceil(sizeof(capability_slot) * specific_bits)
                 );
 
             case GENERIC :
-                return size_bits;
+                return specific_bits;
 
             case PAGE_TABLE :
                 return liba9n::calculate_radix(a9n::PAGE_SIZE);
@@ -314,21 +353,24 @@ namespace a9n::kernel
             case VIRTUAL_CPU :
             case VIRTUAL_PAGE_TABLE :
             default :
-                return 0;
+                return liba9n::option_none;
         }
+    }
+
+    capability_result generic::revoke()
+    {
+        return {};
     }
 
     capability_result generic::try_make_capability(
         capability_type  type,
-        a9n::word        size_bits,
+        a9n::word        memory_size_bits,
+        a9n::word        specific_bits,
         generic_info    &info,
         capability_slot &self,
         capability_slot &target_slot
     )
     {
-        // capability unit size (2^memory_size_bits = real size)
-        auto memory_size_bits = calculate_capability_memory_size_bits(type, size_bits).unwrap_or(0);
-
         switch (type)
         {
             using enum capability_type;
@@ -338,10 +380,30 @@ namespace a9n::kernel
                 return capability_error::ILLEGAL_OPERATION;
 
             case DEBUG :
-                return {};
+                return capability_error::DEBUG_UNIMPLEMENTED;
 
             case NODE :
-                return {};
+                // specific_bits is radix
+                return try_make_capability_node(info.current_watermark(), specific_bits)
+                    .and_then(
+                        [&](liba9n::not_null<capability_node> node) -> kernel_result
+                        {
+                            return try_configure_capability_node_slot(target_slot, node.get());
+                        }
+                    )
+                    .transform_error(
+                        [](kernel_error e) -> capability_error
+                        {
+                            return capability_error::FATAL;
+                        }
+                    )
+                    .and_then(
+                        [&](void) -> capability_result
+                        {
+                            info.apply_allocate(memory_size_bits);
+                            return {};
+                        }
+                    );
 
             case GENERIC :
                 {
@@ -374,8 +436,54 @@ namespace a9n::kernel
                 }
 
             case PAGE_TABLE :
+                {
+                    // TODO: specific-bits aware implementation
+                    auto target_table = page_table { .address = info.current_watermark() };
+                    return try_configure_page_table_slot(target_slot, target_table)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                info.apply_allocate(memory_size_bits);
+                                return {};
+                            }
+                        )
+                        .transform_error(
+                            [](kernel_error e) -> capability_error
+                            {
+                                return capability_error::FATAL;
+                            }
+                        );
+                }
+
             case FRAME :
+                {
+                    auto target_frame = frame { .address = info.current_watermark() };
+                    return try_configure_frame_slot(target_slot, target_frame)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                info.apply_allocate(memory_size_bits);
+                                return {};
+                            }
+                        )
+                        .transform_error(
+                            [](kernel_error e) -> capability_error
+                            {
+                                return capability_error::FATAL;
+                            }
+                        );
+                }
+
             case PROCESS_CONTROL_BLOCK :
+                {
+                    // size_bits is ignored
+                    auto pcb = new (a9n::kernel::physical_to_virtual_pointer<void *>(
+                        liba9n::calculate_radix_ceil(info.current_watermark())
+                    )) process_control_block {};
+                    info.apply_allocate(memory_size_bits);
+                    return {};
+                }
+
             case IPC_PORT :
             case NOTIFICATION_PORT :
             case INTERRUPT :
@@ -383,15 +491,8 @@ namespace a9n::kernel
             case VIRTUAL_CPU :
             case VIRTUAL_PAGE_TABLE :
             default :
-                break;
+                return capability_error::DEBUG_UNIMPLEMENTED;
         }
-
-        return {};
-    }
-
-    capability_result generic::revoke()
-    {
-        return {};
     }
 
 }

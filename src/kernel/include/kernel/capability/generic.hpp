@@ -5,9 +5,14 @@
 #include <kernel/capability/capability_factory.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
+#include <kernel/memory/memory_type.hpp>
+
+#include <kernel/utility/logger.hpp>
 
 #include <kernel/kernel_result.hpp>
 #include <kernel/types.hpp>
+
+#include <liba9n/option/option.hpp>
 
 namespace a9n::kernel
 {
@@ -15,6 +20,12 @@ namespace a9n::kernel
     {
         a9n::physical_address base_address;
         a9n::physical_address end_address;
+    };
+
+    struct allocate_info
+    {
+        a9n::physical_address aligned_base;
+        a9n::physical_address new_watermark;
     };
 
     inline a9n::word serialize_generic_flags(bool is_device, a9n::word size_bits)
@@ -65,6 +76,13 @@ namespace a9n::kernel
 
         a9n::error apply_allocate(a9n::word memory_size_bits);
 
+        memory_result<allocate_info> try_apply_allocate(a9n::word memory_size_bits, a9n::word count);
+
+        inline a9n::word size() const
+        {
+            return static_cast<a9n::word>(1) << size_bits;
+        }
+
         capability_slot_data dump_slot_data() const;
 
       private:
@@ -72,11 +90,6 @@ namespace a9n::kernel
         const a9n::word             size_bits;
         a9n::physical_address       watermark;
         const bool                  device;
-
-        inline a9n::word size() const
-        {
-            return static_cast<a9n::word>(1) << size_bits;
-        }
     };
 
     class generic final : public capability_component
@@ -103,19 +116,25 @@ namespace a9n::kernel
 
       private:
         capability_factory factory {};
-        capability_result  decode_operation(
-             const ipc_buffer &buffer,
-             capability_slot  &this_slot,
-             capability_slot  &root_slot
-         );
+        capability_result  decode_operation(process &owner, capability_slot &self);
 
-        capability_result
-            convert(const ipc_buffer &buffer, capability_slot &this_slot, capability_slot &root_slot);
+        capability_result convert(process &owner, capability_slot &self);
 
         generic_info create_generic_info(const capability_slot_data &data);
 
-        capability_slot *
-            retrieve_target_root_slot(const ipc_buffer &buffer, const capability_slot &root_slot) const;
+        capability_lookup_result retrieve_target_root_slot(process &owner) const;
+
+        constexpr liba9n::option<a9n::word>
+            calculate_capability_memory_size_bits(capability_type type, a9n::word specific_bits);
+
+        capability_result try_make_capability(
+            capability_type  type,
+            a9n::word        memory_size_bits,
+            a9n::word        specific_bits,
+            generic_info    &info,
+            capability_slot &self,
+            capability_slot &target_slot
+        );
     };
 
     inline generic generic_core {};
