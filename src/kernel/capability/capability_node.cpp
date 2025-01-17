@@ -7,6 +7,8 @@
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
+#include <hal/interface/process_manager.hpp>
+
 namespace a9n::kernel
 {
     capability_node::capability_node(
@@ -24,44 +26,45 @@ namespace a9n::kernel
     {
         a9n::kernel::utility::logger::printk("execute : node\n");
 
-        auto result = decode_operation(this_process.buffer, &this_slot, &this_process.root_slot);
+        auto result = decode_operation(this_process, this_slot);
 
         return result;
     }
 
-    capability_result capability_node::decode_operation(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result
+        capability_node::decode_operation(process &this_process, capability_slot &this_slot)
     {
-        a9n::kernel::utility::logger::printk("operation type : %llu\n", buffer->message_tag);
+        a9n::kernel::utility::logger::printk(
+            "operation type : 0x%16llx\n",
+            a9n::hal::get_message_register(this_process, 1).unwrap_or(static_cast<a9n::word>(0))
+        );
 
-        switch (auto operation_type
-                = static_cast<a9n::kernel::capability_node_operation>(buffer->message_tag))
+        switch (auto operation_type = static_cast<a9n::kernel::capability_node_operation>(
+                    a9n::hal::get_message_register(this_process, 2).unwrap_or(static_cast<a9n::word>(0))
+                ))
         {
             case capability_node_operation::COPY :
                 {
                     a9n::kernel::utility::logger::printk("node : copy\n");
-                    return operation_copy(buffer, this_slot, root_slot);
+                    return operation_copy(this_process, this_slot);
                 }
 
             case capability_node_operation::MOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : move\n");
-                    return operation_move(buffer, this_slot, root_slot);
+                    return operation_move(this_process, this_slot);
                 }
 
             case capability_node_operation::REVOKE :
                 {
                     a9n::kernel::utility::logger::printk("node : revoke\n");
-                    return operation_revoke(buffer, this_slot, root_slot);
+                    return operation_revoke(this_process, this_slot);
                 }
 
             case capability_node_operation::REMOVE :
                 {
                     a9n::kernel::utility::logger::printk("node : remove\n");
-                    return operation_remove(buffer, this_slot, root_slot);
+                    return operation_remove(this_process, this_slot);
                 }
 
             default :
@@ -76,12 +79,9 @@ namespace a9n::kernel
         return {};
     }
 
-    capability_result capability_node::operation_copy(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result capability_node::operation_copy(process &this_process, capability_slot &this_slot)
     {
+        /*
         if (!root_slot)
         {
             return capability_error::INVALID_ARGUMENT;
@@ -120,32 +120,29 @@ namespace a9n::kernel
 
         source_slot_result.unwrap()->next_slot = destination_slot_result.unwrap();
         destination_slot_result.unwrap()->preview_slot = source_slot_result.unwrap();
+        */
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
 
-    capability_result capability_node::operation_move(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result capability_node::operation_move(process &this_process, capability_slot &this_slot)
     {
+        /*
         namespace argument     = capability_node_move_argument;
 
         auto destination_index = buffer->get_message<argument::DESTINATION_INDEX>();
         auto source_descriptor = buffer->get_message<argument::SOURCE_DESCRIPTOR>();
         auto source_depth      = buffer->get_message<argument::SOURCE_DEPTH>();
         auto source_index      = buffer->get_message<argument::SOURCE_INDEX>();
+        */
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
 
-    capability_result capability_node::operation_revoke(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result
+        capability_node::operation_revoke(process &this_process, capability_slot &this_slot)
     {
+        /*
         auto this_depth = this_slot->depth;
 
         for (auto start_slot = this_slot->next_slot; start_slot->depth < this_depth;
@@ -158,16 +155,15 @@ namespace a9n::kernel
 
             start_slot->component->revoke();
         }
+        */
 
         return {};
     }
 
-    capability_result capability_node::operation_remove(
-        ipc_buffer      *buffer,
-        capability_slot *this_slot,
-        capability_slot *root_slot
-    )
+    capability_result
+        capability_node::operation_remove(process &this_process, capability_slot &this_slot)
     {
+        /*
         auto destination_index  = buffer->get_message<0>();
 
         auto target_slot_result = this_slot->component->retrieve_slot(destination_index);
@@ -208,6 +204,7 @@ namespace a9n::kernel
 
         // remove
         target_slot_result.unwrap()->data.fill(0);
+        */
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
@@ -237,6 +234,7 @@ namespace a9n::kernel
         a9n::word                  descriptor_used_bits
     )
     {
+        DEBUG_LOG("0x%016llx <> 0x%016llx <> 0x%016llx", descriptor, descriptor_max_bits, descriptor_used_bits);
         return lookup_slot(descriptor, descriptor_used_bits)
             .and_then(
                 [=, this](capability_slot *slot) -> capability_lookup_result
@@ -249,7 +247,9 @@ namespace a9n::kernel
                     */
 
                     auto new_used_bits = calculate_used_bits(descriptor_used_bits);
+                    DEBUG_LOG("used bits : 0x%016llx -> 0x%016llx", descriptor_used_bits, new_used_bits);
 
+                    DEBUG_LOG("used : 0x%016llx  max : 0x%016llx", new_used_bits, descriptor_max_bits);
                     if (new_used_bits == descriptor_max_bits)
                     {
                         return slot;
@@ -288,9 +288,13 @@ namespace a9n::kernel
     capability_lookup_result
         capability_node::lookup_slot(a9n::capability_descriptor descriptor, a9n::word descriptor_used_bits)
     {
-        a9n::kernel::utility::logger::printk("lookup_capability\n");
+        DEBUG_LOG("lookup_capability");
+        DEBUG_LOG("radix : %8llu", this->radix_bits);
+        DEBUG_LOG("descriptor : 0x%016llx", descriptor);
+        DEBUG_LOG("used bits : %8llu", descriptor_used_bits);
 
         auto index = calculate_capability_index(descriptor, descriptor_used_bits);
+        DEBUG_LOG("index : %8llu", index);
 
         return retrieve_slot(index);
     }
