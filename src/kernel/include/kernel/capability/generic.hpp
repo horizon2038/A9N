@@ -2,7 +2,6 @@
 #define GENERIC_HPP
 
 #include <kernel/capability/capability_component.hpp>
-#include <kernel/capability/capability_factory.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/memory/memory_type.hpp>
@@ -115,8 +114,7 @@ namespace a9n::kernel
         };
 
       private:
-        capability_factory factory {};
-        capability_result  decode_operation(process &owner, capability_slot &self);
+        capability_result decode_operation(process &owner, capability_slot &self);
 
         capability_result convert(process &owner, capability_slot &self);
 

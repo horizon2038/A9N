@@ -4,7 +4,6 @@
 #include "kernel/memory/memory.hpp"
 #include <kernel/capability/generic.hpp>
 
-#include <kernel/capability/capability_factory.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_types.hpp>
 #include <kernel/capability/operation/generic_operation.hpp>
