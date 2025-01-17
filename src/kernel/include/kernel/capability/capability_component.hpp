@@ -141,6 +141,7 @@ namespace a9n::kernel
         INDEX_OUT_OF_RANGE,
         UNAVAILABLE,
         EMPTY,
+        UNEXPECTED,
     };
 
     using capability_lookup_result = liba9n::result<capability_slot *, capability_lookup_error>;
