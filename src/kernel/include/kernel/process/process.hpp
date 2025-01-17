@@ -40,8 +40,9 @@ namespace a9n::kernel
         a9n::sword     quantum;
 
         // for priority-scheduling
-        process *preview;
-        process *next;
+        a9n::word core_affinity;
+        process  *preview;
+        process  *next;
 
         a9n::physical_address page_table;
 
@@ -63,6 +64,15 @@ namespace a9n::kernel
         ipc_buffer *buffer;
         process    *next_ipc_queue;
         process    *preview_ipc_queue;
+
+        // when destroy process, it should be removed from the queue
+        enum class reply_state_object : a9n::word
+        {
+            NONE,
+            WAIT,          // set when a reply is not found at `call` time
+            READY_TO_REPLY // available for immediate `reply`
+        } reply_state { reply_state_object::NONE };
+        process *reply_target;
 
         // tag for debugging
         char name[PROCESS_NAME_MAX];
