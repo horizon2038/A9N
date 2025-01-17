@@ -1,26 +1,24 @@
-#include "hal/hal_result.hpp"
-#include "kernel/capability/capability_component.hpp"
-#include "kernel/capability/capability_result.hpp"
-#include "kernel/memory/memory.hpp"
 #include <kernel/capability/generic.hpp>
 
+#include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_local_state.hpp>
-#include <kernel/capability/capability_types.hpp>
-#include <kernel/capability/operation/generic_operation.hpp>
-#include <kernel/ipc/ipc_buffer.hpp>
-#include <kernel/process/process.hpp>
-#include <kernel/types.hpp>
-#include <kernel/utility/logger.hpp>
-
-#include <hal/interface/process_manager.hpp>
-
-#include <liba9n/common/calculate.hpp>
-
 #include <kernel/capability/capability_node.hpp>
+#include <kernel/capability/capability_result.hpp>
+#include <kernel/capability/capability_types.hpp>
 #include <kernel/capability/frame_capability.hpp>
 #include <kernel/capability/ipc_port.hpp>
 #include <kernel/capability/page_table_capability.hpp>
 #include <kernel/capability/process_control_block.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
+#include <kernel/memory/memory.hpp>
+#include <kernel/process/process.hpp>
+#include <kernel/types.hpp>
+#include <kernel/utility/logger.hpp>
+
+#include <hal/hal_result.hpp>
+#include <hal/interface/process_manager.hpp>
+
+#include <liba9n/common/calculate.hpp>
 
 namespace a9n::kernel
 {
@@ -97,13 +95,15 @@ namespace a9n::kernel
 
     capability_result generic::decode_operation(process &owner, capability_slot &self)
     {
-        switch (auto operation_type = static_cast<generic_operation>(
-                    a9n::hal::get_message_register(owner, generic_convert_argument::OPERATION_TYPE)
-                        .unwrap_or(static_cast<a9n::word>(0))
-                ))
+        auto operation_type = [&](void) -> generic::operation_type
         {
-            using enum generic_operation;
+            return static_cast<generic::operation_type>(
+                a9n::hal::get_message_register(owner, OPERATION_TYPE).unwrap_or(static_cast<a9n::word>(0))
+            );
+        };
 
+        switch (operation_type())
+        {
             case CONVERT :
                 {
                     a9n::kernel::utility::logger::printk("generic::convert\n");
@@ -122,7 +122,6 @@ namespace a9n::kernel
 
     capability_result generic::convert(process &owner, capability_slot &self)
     {
-        namespace argument            = generic_convert_argument;
         auto convert_capability_error = [](capability_lookup_error e) -> capability_error
         {
             switch (e)
@@ -156,6 +155,7 @@ namespace a9n::kernel
                     auto      type          = capability_type::NONE;
                     a9n::word specific_bits = 0;
                     a9n::word count         = 0;
+                    a9n::word index         = 0;
 
                     auto make_configure_mr_lambda =
                         [](process &owner, a9n::word &target_value, a9n::word index) -> decltype(auto)
@@ -176,18 +176,18 @@ namespace a9n::kernel
 
                     a9n::word type_raw = 0;
                     auto      configure_capability_type
-                        = make_configure_mr_lambda(owner, type_raw, argument::CAPABILITY_TYPE);
-                    auto configure_capability_size_bits = make_configure_mr_lambda(
-                        owner,
-                        specific_bits,
-                        argument::CAPABILITY_SPECIFIC_BITS
-                    );
+                        = make_configure_mr_lambda(owner, type_raw, CAPABILITY_TYPE);
+                    auto configure_capability_size_bits
+                        = make_configure_mr_lambda(owner, specific_bits, CAPABILITY_SPECIFIC_BITS);
                     auto configure_capability_count
-                        = make_configure_mr_lambda(owner, count, argument::CAPABILITY_COUNT);
+                        = make_configure_mr_lambda(owner, count, CAPABILITY_COUNT);
+                    auto configure_capability_index
+                        = make_configure_mr_lambda(owner, index, SLOT_INDEX);
 
                     return configure_capability_type()
                         .and_then(configure_capability_size_bits)
                         .and_then(configure_capability_count)
+                        .and_then(configure_capability_index)
                         .transform_error(
                             [&]([[maybe_unused]] a9n::hal::hal_error e) -> capability_error
                             {
@@ -225,8 +225,9 @@ namespace a9n::kernel
                                 // make
                                 for (auto i = 0; i < count; i++)
                                 {
+                                    DEBUG_LOG("index : %llu", index + i);
                                     auto result
-                                        = slot->component->retrieve_slot(i)
+                                        = slot->component->retrieve_slot(index + i)
                                               .transform_error(convert_capability_error)
                                               .and_then(
                                                   [&](capability_slot *slot) -> capability_result
@@ -234,6 +235,7 @@ namespace a9n::kernel
                                                       if (slot->type != capability_type::NONE)
                                                       {
                                                           // clang-format off
+                                                          a9n::kernel::utility::logger::printk("slot type : 0x%llx\n", slot->type);
                                                           a9n::kernel::utility::logger::error("slot is already used");
                                                           // clang-format on
                                                           return capability_error::INVALID_ARGUMENT;
@@ -256,6 +258,7 @@ namespace a9n::kernel
 
                                     // insert to dependency node
                                     self.insert_child(*slot);
+                                    a9n::kernel::utility::logger::printk("convert is successful\n");
                                 }
 
                                 return {};
@@ -277,12 +280,10 @@ namespace a9n::kernel
 
     capability_lookup_result generic::retrieve_target_root_slot(process &owner) const
     {
-        namespace argument          = generic_convert_argument;
-
         a9n::word target_descriptor = 0;
         a9n::word target_depth      = 0;
 
-        return a9n::hal::get_message_register(owner, argument::ROOT_DESCRIPTOR)
+        return a9n::hal::get_message_register(owner, ROOT_DESCRIPTOR)
             .and_then(
                 [&](a9n::word descriptor) -> a9n::hal::hal_result
                 {

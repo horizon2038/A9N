@@ -51,6 +51,12 @@ namespace a9n::kernel
 
     class generic_info
     {
+      private:
+        const a9n::physical_address base_address;
+        const a9n::word             size_bits;
+        a9n::physical_address       watermark;
+        const bool                  device;
+
       public:
         generic_info(
             const a9n::physical_address initial_base_address,
@@ -83,37 +89,27 @@ namespace a9n::kernel
         }
 
         capability_slot_data dump_slot_data() const;
-
-      private:
-        const a9n::physical_address base_address;
-        const a9n::word             size_bits;
-        a9n::physical_address       watermark;
-        const bool                  device;
     };
 
     class generic final : public capability_component
     {
-      public:
-        capability_result execute(process &this_process, capability_slot &this_slot) override;
-
-        capability_result revoke() override;
-
-        // empty implements (for composite-pattern)
-        capability_lookup_result retrieve_slot(a9n::word index) override
+      private:
+        enum operation_type : a9n::word
         {
-            return capability_lookup_error::TERMINAL;
-        }
-
-        capability_lookup_result traverse_slot(
-            a9n::capability_descriptor descriptor,
-            a9n::word                  max_bits,
-            a9n::word                  used_bits
-        ) override
-        {
-            return capability_lookup_error::TERMINAL;
+            CONVERT = 0,
         };
 
-      private:
+        enum operation_index : a9n::word
+        {
+            RESERVED = 0,   // descriptor
+            OPERATION_TYPE, // tag
+            CAPABILITY_TYPE,
+            CAPABILITY_SPECIFIC_BITS,
+            CAPABILITY_COUNT,
+            ROOT_DESCRIPTOR,
+            SLOT_INDEX,
+        };
+
         capability_result decode_operation(process &owner, capability_slot &self);
 
         capability_result convert(process &owner, capability_slot &self);
@@ -133,6 +129,26 @@ namespace a9n::kernel
             capability_slot &self,
             capability_slot &target_slot
         );
+
+      public:
+        capability_result execute(process &this_process, capability_slot &this_slot) override;
+
+        capability_result revoke() override;
+
+        // empty implements (for composite-pattern)
+        capability_lookup_result retrieve_slot(a9n::word index) override
+        {
+            return capability_lookup_error::TERMINAL;
+        }
+
+        capability_lookup_result traverse_slot(
+            a9n::capability_descriptor descriptor,
+            a9n::word                  max_bits,
+            a9n::word                  used_bits
+        ) override
+        {
+            return capability_lookup_error::TERMINAL;
+        };
     };
 
     inline generic generic_core {};
