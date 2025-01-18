@@ -357,7 +357,7 @@ namespace a9n::kernel
         }
     }
 
-    capability_result generic::revoke()
+    capability_result generic::revoke(capability_slot &self)
     {
         return {};
     }

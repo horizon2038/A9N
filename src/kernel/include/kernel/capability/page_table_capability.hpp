@@ -36,7 +36,7 @@ namespace a9n::kernel
             return capability_error::DEBUG_UNIMPLEMENTED;
         };
 
-        capability_result revoke() override
+        capability_result revoke(capability_slot &self) override
         {
             return capability_error::DEBUG_UNIMPLEMENTED;
         }
@@ -62,7 +62,7 @@ namespace a9n::kernel
     // uniqueness is determined by capability_slot_data.
     inline page_table_capability page_table_capability_core;
 
-    inline kernel_result try_configure_pagetable_slot(capability_slot &slot, const page_table &table)
+    inline kernel_result try_configure_page_table_slot(capability_slot &slot, const page_table &table)
     {
         if (!table.address)
         {

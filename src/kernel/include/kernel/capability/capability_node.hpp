@@ -15,29 +15,25 @@ namespace a9n::kernel
     // capability_descriptors are only used for indirect adressing.
     class capability_node final : public capability_component
     {
-      public:
-        capability_node(
-            a9n::word        initial_ignore_bits,
-            a9n::word        initial_radix_bits,
-            capability_slot *initial_capability_slots
-        );
-
-        capability_result execute(process &this_process, capability_slot &this_slot) override;
-
-        capability_result revoke() override
+      private:
+        enum operation_type : a9n::word
         {
-            return {};
+            COPY,
+            MOVE,
+            MINT,
+            REVOKE,
+            REMOVE,
         };
 
-        capability_lookup_result retrieve_slot(a9n::word index) override;
+        enum operation_index : a9n::word
+        {
+            RESERVED = 0,
+            OPERATION_TYPE,
+            DESTINATION_INDEX,
+            SOURCE_DESCRIPTOR,
+            SOURCE_INDEX,
+        };
 
-        capability_lookup_result traverse_slot(
-            a9n::capability_descriptor descriptor,
-            a9n::word                  descriptor_max_bits,
-            a9n::word                  descriptor_used_bits
-        ) override;
-
-      private:
         a9n::word ignore_bits;
         a9n::word radix_bits;
 
@@ -51,6 +47,8 @@ namespace a9n::kernel
         capability_result operation_copy(process &this_process, capability_slot &this_slot);
 
         capability_result operation_move(process &this_proecess, capability_slot &this_slot);
+
+        capability_result operation_mint(process &this_process, capability_slot &this_slot);
 
         capability_result operation_revoke(process &this_process, capability_slot &this_slot);
 
@@ -92,6 +90,25 @@ namespace a9n::kernel
         {
             return (ignore_bits + radix_bits + old_descriptor_used_bits);
         }
+
+      public:
+        capability_node(
+            a9n::word        initial_ignore_bits,
+            a9n::word        initial_radix_bits,
+            capability_slot *initial_capability_slots
+        );
+
+        capability_result execute(process &this_process, capability_slot &this_slot) override;
+
+        capability_result revoke(capability_slot &self) override;
+
+        capability_lookup_result retrieve_slot(a9n::word index) override;
+
+        capability_lookup_result traverse_slot(
+            a9n::capability_descriptor descriptor,
+            a9n::word                  descriptor_max_bits,
+            a9n::word                  descriptor_used_bits
+        ) override;
     };
 
     // unsafe : no check boundary
@@ -137,6 +154,7 @@ namespace a9n::kernel
 
         slot.component = &node;
         slot.type      = capability_type::NODE;
+        slot.rights    = capability_slot::object_rights::ALL;
         slot.data.fill(0);
 
         return {};

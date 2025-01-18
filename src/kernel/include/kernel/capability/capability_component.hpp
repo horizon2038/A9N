@@ -20,13 +20,28 @@ namespace a9n::kernel
 
     struct alignas(a9n::WORD_BITS) capability_slot
     {
+        enum object_rights : uint8_t
+        {
+            NONE  = 0,
+            READ  = 1 << 0,
+            WRITE = 1 << 1,
+            COPY  = 1 << 2,
+            // MOVE is always allowed
+            ALL = READ | WRITE | COPY,
+        };
+
         capability_component *component;
 
         // padding to a9n::word width
         union
         {
-            a9n::word       reserved;
-            capability_type type { capability_type::NONE };
+            a9n::word reserved;
+
+            struct
+            {
+                capability_type type { capability_type::NONE };
+                uint8_t         rights { object_rights::NONE };
+            };
         };
 
         capability_slot_data data;
@@ -36,6 +51,30 @@ namespace a9n::kernel
         // child capability_entry
         // capability_entry *child_capability_entry;
         a9n::word depth;
+
+        void init(void)
+        {
+            component = nullptr;
+            type      = capability_type::NONE;
+            rights    = object_rights::NONE;
+            data.fill(0);
+            next_slot    = nullptr;
+            preview_slot = nullptr;
+            depth        = 0;
+        }
+
+        void remove_from_dependency_node(void)
+        {
+            if (preview_slot)
+            {
+                preview_slot->next_slot = next_slot;
+            }
+
+            if (next_slot)
+            {
+                next_slot->preview_slot = preview_slot;
+            }
+        }
 
         bool has_child(void) const
         {
@@ -88,7 +127,7 @@ namespace a9n::kernel
             // has already been set
             slot.preview_slot = this;
             slot.next_slot    = temp_next_slot;
-            slot.depth        = depth + 1;
+            // slot.depth        = depth + 1;
 
             // configure old next slot
             if (!temp_next_slot)
@@ -177,7 +216,7 @@ namespace a9n::kernel
         virtual capability_result execute(process &this_process, capability_slot &this_slot) = 0;
 
         // called from node
-        virtual capability_result revoke() = 0;
+        virtual capability_result revoke(capability_slot &self) = 0;
 
         virtual bool
             is_same_slot(const capability_slot &this_slot, const capability_slot &target_slot) const

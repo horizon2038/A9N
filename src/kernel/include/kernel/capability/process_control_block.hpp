@@ -20,7 +20,7 @@ namespace a9n::kernel
             return capability_error::DEBUG_UNIMPLEMENTED;
         };
 
-        capability_result revoke() override
+        capability_result revoke(capability_slot &self) override
         {
             return capability_error::DEBUG_UNIMPLEMENTED;
         }

@@ -131,9 +131,9 @@ namespace a9n::kernel
         );
 
       public:
-        capability_result execute(process &this_process, capability_slot &this_slot) override;
+        capability_result execute(process &this_process, capability_slot &self) override;
 
-        capability_result revoke() override;
+        capability_result revoke(capability_slot &self) override;
 
         // empty implements (for composite-pattern)
         capability_lookup_result retrieve_slot(a9n::word index) override
@@ -157,7 +157,9 @@ namespace a9n::kernel
     {
         slot.component = &generic_core;
         slot.type      = capability_type::GENERIC;
-        slot.data      = info.dump_slot_data();
+        // copy is not allowed
+        slot.rights = capability_slot::object_rights::READ | capability_slot::object_rights::WRITE;
+        slot.data   = info.dump_slot_data();
 
         return {};
     }
