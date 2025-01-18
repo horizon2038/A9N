@@ -42,6 +42,11 @@ namespace a9n::kernel
 
     capability_result ipc_port::operation_send(process &owner, capability_slot &self, message_info info)
     {
+        if (!(self.rights & capability_slot::WRITE))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
         // send message
         switch (state)
         {
@@ -54,6 +59,7 @@ namespace a9n::kernel
                         // receiver is not ready
                         return {};
                     }
+
                     owner.status = process_status::BLOCKED;
 
                     return push_ipc_queue(owner).transform_error(
@@ -85,6 +91,11 @@ namespace a9n::kernel
         ipc_port::operation_receive(process &owner, capability_slot &self, message_info info)
 
     {
+        if (!(self.rights & capability_slot::READ))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
         switch (state)
         {
             case WAIT :
@@ -96,6 +107,7 @@ namespace a9n::kernel
                         // receiver is not ready
                         return {};
                     }
+
                     owner.status = process_status::BLOCKED;
 
                     return push_ipc_queue(owner).transform_error(
@@ -128,6 +140,11 @@ namespace a9n::kernel
 
     capability_result ipc_port::operation_call(process &owner, capability_slot &self, message_info info)
     {
+        if (!(self.rights & capability_slot::WRITE))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
         // send message
         switch (state)
         {
@@ -141,9 +158,10 @@ namespace a9n::kernel
                         // receiver is not ready
                         return {};
                     }
-                    owner.status      = process_status::BLOCKED;
 
+                    owner.status      = process_status::BLOCKED;
                     owner.reply_state = process::reply_state_object::WAIT;
+
                     return push_ipc_queue(owner).transform_error(
                         [](kernel_error e) -> capability_error
                         {
@@ -198,6 +216,7 @@ namespace a9n::kernel
     capability_result
         ipc_port::operation_reply(process &owner, capability_slot &self, message_info info)
     {
+        // reply does not require any rights !
         switch (owner.reply_state)
         {
             case process::reply_state_object::READY_TO_REPLY :

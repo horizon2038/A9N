@@ -18,7 +18,7 @@ namespace a9n::kernel
         return capability_error::FATAL;
     }
 
-    class ipc_port : capability_component
+    class ipc_port : public capability_component
     {
       private:
         // head / end makes the search O(1)
@@ -150,6 +150,15 @@ namespace a9n::kernel
             return capability_lookup_error::TERMINAL;
         };
     };
+
+    inline kernel_result try_configure_ipc_port_slot(capability_slot &slot, ipc_port &port)
+    {
+        slot.component = &port;
+        slot.type      = capability_type::IPC_PORT;
+        slot.rights    = capability_slot::ALL;
+
+        return {};
+    }
 }
 
 #endif
