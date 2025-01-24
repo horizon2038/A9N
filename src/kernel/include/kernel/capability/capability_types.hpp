@@ -5,7 +5,7 @@
 
 namespace a9n::kernel
 {
-    enum class capability_type : uint16_t
+    enum class capability_type : uint8_t
     {
         // reserved
         NONE,
@@ -16,20 +16,25 @@ namespace a9n::kernel
 
         // memory
         GENERIC,
+        ADDRESS_SPACE, // alias of root page table
         PAGE_TABLE,
         FRAME,
 
         // process
-        DOMAIN,
         PROCESS_CONTROL_BLOCK,
 
         // communication
         IPC_PORT,
         NOTIFICATION_PORT,
+
+        // driver
         INTERRUPT,
+        IO_PORT,
 
         // virtualization
         VIRTUAL_CPU,
+        VIRTUAL_ADDRESS_SPACE, // alias of root virtual page table
+        VIRTUAL_PAGE_TABLE,
     };
 }
 

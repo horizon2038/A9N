@@ -13,11 +13,6 @@
 
 namespace a9n::kernel
 {
-    inline capability_error convert_kernel_to_capability_error(kernel_error e)
-    {
-        return capability_error::FATAL;
-    }
-
     class ipc_port : public capability_component
     {
       private:
@@ -136,6 +131,11 @@ namespace a9n::kernel
         kernel_result push_ipc_queue(process &target_process);
         liba9n::result<liba9n::not_null<process>, kernel_error> pop_ipc_queue(void);
 
+        capability_result revoke(capability_slot &self) override
+        {
+            return {};
+        }
+
         capability_lookup_result retrieve_slot(a9n::word index) override
         {
             return capability_lookup_error::TERMINAL;
@@ -153,9 +153,11 @@ namespace a9n::kernel
 
     inline kernel_result try_configure_ipc_port_slot(capability_slot &slot, ipc_port &port)
     {
+        slot.init();
         slot.component = &port;
         slot.type      = capability_type::IPC_PORT;
         slot.rights    = capability_slot::ALL;
+        slot.data.fill(0);
 
         return {};
     }
