@@ -13,6 +13,7 @@ namespace a9n::hal
 
     // context
     inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 22;
+    inline constexpr a9n::word FLOATING_CONTEXT_SIZE = 128;
 
     // WIP
     inline constexpr a9n::word FPU_CONTEXT_SIZE            = 0;

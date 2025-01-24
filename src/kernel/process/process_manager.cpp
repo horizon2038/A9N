@@ -1,3 +1,4 @@
+#include "kernel/kernel_result.hpp"
 #include <kernel/process/process_manager.hpp>
 
 #include <hal/hal_result.hpp>
@@ -28,10 +29,52 @@ namespace a9n::kernel
         return {};
     }
 
+    kernel_result process_manager::handle_timer(void)
+    {
+        auto schedule_and_switch = [&]() -> kernel_result
+        {
+            return try_schedule_and_switch();
+        };
+
+        auto run_idle_if_failed = [](kernel_error e) -> kernel_result
+        {
+            DEBUG_LOG("start IDLE ...\n");
+            a9n::hal::idle();
+
+            // unreachable
+            return {};
+        };
+
+        auto log_kernel_error = [](kernel_error e) -> kernel_result
+        {
+            a9n::kernel::utility::logger::printk("kernel error : %llu\n", static_cast<a9n::word>(e));
+            return e;
+        };
+
+        return retrieve_current_process()
+            .and_then(
+                [&](process *current) -> kernel_result
+                {
+                    current->quantum--;
+                    // the timing when quantum becomes 0 is limited and `[[unlikely]]` is allowed
+                    [[unlikely]] if (current->quantum <= 0)
+                    {
+                        current->quantum = QUANTUM_MAX;
+                        return mark_scheduled(*current)
+                            .and_then(schedule_and_switch)
+                            .or_else(run_idle_if_failed);
+                    }
+
+                    return {};
+                }
+            )
+            .or_else(log_kernel_error);
+    }
+
     // called by timer handler
+    // TODO: clean this
     kernel_result process_manager::switch_context(void)
     {
-        // a9n::kernel::utility::logger::printk("switch context!\n");
         auto result
             = a9n::hal::current_local_variable()
                   .and_then(
@@ -49,8 +92,14 @@ namespace a9n::kernel
                                       [=, this](process *target_process
                                       ) -> liba9n::result<process *, scheduler_error>
                                       {
+                                          process &preview_process = *local_variable->current_process;
                                           local_variable->current_process = target_process;
-                                          auto res = a9n::hal::switch_context(*target_process);
+
+                                          auto res = a9n::hal::switch_context(
+                                              preview_process,
+                                              *target_process
+                                          );
+
                                           return target_process;
                                       }
                                   )
@@ -104,6 +153,13 @@ namespace a9n::kernel
         auto hal_res = a9n::hal::current_local_variable().and_then(
             [=, this](cpu_local_variable *local_variable) -> a9n::hal::hal_result
             {
+                a9n::kernel::utility::logger::printk("start schedule ...\n");
+                if (!local_variable)
+                {
+                    a9n::kernel::utility::logger::error("failed to get local variable");
+                    a9n::hal::idle();
+                }
+
                 if (auto result = scheduler_core.schedule())
                 {
                     auto next_process = result.unwrap();
@@ -111,11 +167,14 @@ namespace a9n::kernel
                     {
                         a9n::hal::idle();
                     }
+                    a9n::kernel::utility::logger::printk("local variable : 0x%016llx\n", local_variable);
+                    a9n::kernel::utility::logger::printk("next process : 0x%016llx\n", next_process);
 
                     local_variable->current_process = next_process;
 
                     utility::logger::printk("switch to user ...\n");
-                    a9n::hal::switch_context(*next_process);
+                    a9n::hal::switch_context(*next_process, *next_process); // *preview_process* is
+                                                                            // not used (stub)
                     a9n::hal::restore_context(a9n::hal::cpu_mode::USER);
 
                     return {};
@@ -133,18 +192,145 @@ namespace a9n::kernel
         }
 
         return {};
+    }
 
-        /*
-        return switch_context().and_then(
-            [this](void) -> kernel_result
-            {
-                auto result = a9n::hal::restore_context(a9n::hal::cpu_mode::USER);
+    kernel_result process_manager::try_schedule_and_switch(void)
+    {
+        return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [&](cpu_local_variable *local_variable) -> kernel_result
+                {
+                    return scheduler_core.schedule()
+                        .transform_error(
+                            [&](scheduler_error e) -> kernel_error
+                            {
+                                a9n::kernel::utility::logger::printk(
+                                    "failed schedule : %llu\n",
+                                    static_cast<a9n::word>(e)
+                                );
 
-                // if this path is executed, it means that context restoration has failed
-                return kernel_error::UNEXPECTED;
-            }
-        );
-        */
+                                return kernel_error::NO_SUCH_ADDRESS;
+                            }
+                        )
+                        .and_then(
+                            [&](process *next_process) -> kernel_result
+                            {
+                                bool is_switch = local_variable->current_process != next_process;
+                                if (!is_switch)
+                                {
+                                    return {};
+                                }
+
+                                process &preview_process        = *local_variable->current_process;
+                                local_variable->current_process = next_process;
+
+                                return a9n::hal::switch_context(preview_process, *next_process)
+                                    .transform_error(convert_hal_to_kernel_error);
+                            }
+                        );
+                }
+            );
+    }
+
+    kernel_result process_manager::try_direct_schedule_and_switch(process &target_process)
+    {
+        return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [&](cpu_local_variable *local_variable) -> kernel_result
+                {
+                    return scheduler_core.try_direct_schedule(&target_process)
+                        .transform_error(
+                            [&](scheduler_error e) -> kernel_error
+                            {
+                                return kernel_error::NO_SUCH_ADDRESS;
+                            }
+                        )
+                        .and_then(
+                            [&](process *next_process) -> kernel_result
+                            {
+                                // yield quantum to next process
+
+                                bool is_switch = local_variable->current_process != next_process;
+
+                                next_process->quantum += local_variable->current_process->quantum;
+
+                                process &preview_process        = *local_variable->current_process;
+                                local_variable->current_process = next_process;
+
+                                if (!is_switch)
+                                {
+                                    return {};
+                                }
+
+                                return a9n::hal::switch_context(preview_process, *next_process)
+                                    .transform_error(convert_hal_to_kernel_error);
+                            }
+                        );
+                }
+            );
+    }
+
+    kernel_result process_manager::yield(void)
+    {
+        auto schedule_and_switch = [&]() -> kernel_result
+        {
+            return try_schedule_and_switch();
+        };
+
+        return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [&](cpu_local_variable *local_variable) -> kernel_result
+                {
+                    local_variable->current_process->quantum = QUANTUM_MAX;
+
+                    return mark_scheduled(*local_variable->current_process).and_then(schedule_and_switch);
+                }
+            );
+    }
+
+    liba9n::result<process *, kernel_error> process_manager::retrieve_current_process()
+    {
+        auto result = a9n::hal::current_local_variable();
+        if (!result)
+        {
+            utility::logger::printk(
+                "failed to retrieve process : HAL error : %s\n",
+                a9n::hal::hal_error_to_string(result.unwrap_error())
+            );
+            return kernel_error::HAL_ERROR;
+        }
+
+        auto current_process = result.unwrap()->current_process;
+        if (!current_process)
+        {
+            utility::logger::printk(
+                "failed to retrieve process : process is empty\n",
+                a9n::hal::hal_error_to_string(result.unwrap_error())
+            );
+
+            return kernel_error::NO_SUCH_ADDRESS;
+        }
+
+        return current_process;
+    }
+
+    kernel_result process_manager::mark_scheduled(process &process)
+    {
+        process.status  = process_status::READY;
+        process.quantum = QUANTUM_MAX;
+
+        // DEBUG_LOG("mark scheduled 0x%016llx\n", &process);
+        auto result = scheduler_core.add_process(&process);
+        if (!result)
+        {
+            utility::logger::printk("failed to add process to scheduler\n");
+            return kernel_error::UNEXPECTED;
+        }
+
+        return {};
     }
 
     // TODO: remove this
@@ -235,44 +421,5 @@ namespace a9n::kernel
         }
 
         return &process_list[target_process_id];
-    }
-
-    liba9n::result<process *, kernel_error> process_manager::retrieve_current_process()
-    {
-        auto result = a9n::hal::current_local_variable();
-        if (!result)
-        {
-            utility::logger::printk(
-                "failed to retrieve process : HAL error : %s\n",
-                a9n::hal::hal_error_to_string(result.unwrap_error())
-            );
-            return kernel_error::HAL_ERROR;
-        }
-
-        auto current_process = result.unwrap()->current_process;
-        if (!current_process)
-        {
-            utility::logger::printk(
-                "failed to retrieve process : process is empty\n",
-                a9n::hal::hal_error_to_string(result.unwrap_error())
-            );
-
-            return kernel_error::NO_SUCH_ADDRESS;
-        }
-
-        return current_process;
-    }
-
-    kernel_result process_manager::mark_scheduled(process &process)
-    {
-        process.status  = process_status::READY;
-        process.quantum = QUANTUM_MAX;
-
-        if (auto result = scheduler_core.add_process(&process))
-        {
-            return {};
-        }
-
-        return kernel_error::ILLEGAL_ARGUMENT;
     }
 }

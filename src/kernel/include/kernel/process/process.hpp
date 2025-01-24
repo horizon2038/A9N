@@ -6,7 +6,6 @@
 
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
-// #include <kernel/memory/address_space_object.hpp>
 
 #include <stdint.h>
 
@@ -17,6 +16,7 @@ namespace a9n::kernel
     inline constexpr a9n::word PROCESS_NAME_MAX = 128;
 
     using hardware_context = liba9n::std::array<a9n::word, a9n::hal::HARDWARE_CONTEXT_SIZE>;
+    using floating_context = liba9n::std::array<a9n::word, a9n::hal::FLOATING_CONTEXT_SIZE>;
 
     enum class process_status : uint16_t
     {
@@ -33,6 +33,7 @@ namespace a9n::kernel
       public:
         // hardware_context is always top
         hardware_context registers;
+        alignas(a9n::WORD_BITS) floating_context floating_registers;
 
         // for context-switch
         process_status status;
@@ -47,18 +48,16 @@ namespace a9n::kernel
         a9n::physical_address page_table;
 
         // to root capability node
-        capability_slot root_slot { .type = capability_type::NODE };
+        capability_slot root_slot { /* .type = capability_type::NODE */ };
 
         // root address space
-        capability_slot root_address_space {
-            .type = capability_type::PAGE_TABLE,
-        };
+        capability_slot root_address_space { /* .type = capability_type::ADDRESS_SPACE, */ };
 
         // to ipc buffer
-        capability_slot buffer_frame { .type = capability_type::FRAME };
+        capability_slot buffer_frame { /* .type = capability_type::FRAME */ };
 
         // to resolver port
-        capability_slot resolver_port { .type = capability_type::IPC_PORT };
+        capability_slot resolver_port { /* .type = capability_type::IPC_PORT */ };
 
         // buffer is *kernel* address (physical -> kernel (id))
         ipc_buffer *buffer;
@@ -81,7 +80,6 @@ namespace a9n::kernel
         process_id id;
         /*=====remove_end=====*/
     };
-
 }
 
 #endif

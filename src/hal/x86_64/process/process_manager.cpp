@@ -1,22 +1,21 @@
-#include "kernel/capability/page_table_capability.hpp"
 #include <hal/interface/process_manager.hpp>
-#include <hal/x86_64/process/process_manager.hpp>
 
 #include <hal/arch/arch_types.hpp>
 #include <hal/x86_64/arch/arch_context.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
+#include <hal/x86_64/arch/floating_point.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
 #include <hal/x86_64/memory/paging.hpp>
 #include <hal/x86_64/process/idle.hpp>
-#include <kernel/ipc/ipc_buffer.hpp>
+#include <hal/x86_64/process/process_manager.hpp>
 
+#include <kernel/capability/page_table_capability.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/utility/logger.hpp>
 
 #include <liba9n/libc/string.hpp>
-
-inline uint8_t test_stack[2048];
 
 namespace a9n::hal::x86_64
 {
@@ -25,18 +24,24 @@ namespace a9n::hal::x86_64
 // interface implementation
 namespace a9n::hal
 {
-
-    hal_result switch_context(a9n::kernel::process &next_process)
+    namespace
     {
-        // TODO: move page_table to hardware_context
+
+    }
+
+    hal_result switch_context(a9n::kernel::process &preview_process, a9n::kernel::process &next_process)
+    {
         auto pml4 = kernel::convert_slot_data_to_page_table(next_process.root_address_space.data);
-        if (!pml4.address)
+        [[unlikely]] if (!pml4.address)
         {
             a9n::kernel::utility::logger::error("no such root page table!");
             return hal_error::NO_SUCH_ADDRESS;
         }
 
-        // a9n::kernel::utility::logger::printh("next CR3 : 0x%016llx\n", pml4);
+        x86_64::switch_floating_context(
+            preview_process.floating_registers,
+            next_process.floating_registers
+        );
         x86_64::_load_cr3(pml4.address);
 
         return {};
@@ -73,20 +78,11 @@ namespace a9n::hal
 
         context[x86_64::register_index::RFLAGS] = 0x202;
         context[x86_64::register_index::CS]     = x86_64::segment_selector::USER_CS | 0x03;
-        context[x86_64::register_index::RSP] = 0; // reinterpret_cast<uint64_t>(&test_stack[2048]);
-        context[x86_64::register_index::SS]  = x86_64::segment_selector::USER_DS | 0x03;
+        context[x86_64::register_index::RSP]    = 0;
+        context[x86_64::register_index::SS]     = x86_64::segment_selector::USER_DS | 0x03;
 
         // magic number
         context[x86_64::register_index::FS_BASE] = 0xfeedface;
-
-        // TODO: replace this
-        auto result = a9n::hal::current_local_variable().and_then(
-            [&](a9n::kernel::cpu_local_variable *local_variable) -> hal_result
-            {
-                local_variable->current_context = &context;
-                return {};
-            }
-        );
 
         return {};
     }
@@ -96,11 +92,15 @@ namespace a9n::hal
     liba9n::result<a9n::word, hal_error>
         get_message_register(const a9n::kernel::process &target_process, a9n::word index)
     {
-        // RDI : kernel call type
-        // RSI : message_register_0
-        // RDX : message_register_1
-        // R8  : message_register_2
-        // R9  : message_register_3
+        // RSI : message_register[0]
+        // RDX : message_register[1]
+        // R8  : message_register[2]
+        // R9  : message_register[3]
+        // R10 : message_register[4]
+        // R12 : message_register[5]
+        // R13 : message_register[6]
+        // R14 : message_register[7]
+        // R15 : message_register[8]
 
         a9n::word result {};
 
@@ -108,24 +108,52 @@ namespace a9n::hal
         {
             case 0 :
                 result = target_process.registers[x86_64::register_index::RSI];
-                return result;
+                break;
 
             case 1 :
                 result = target_process.registers[x86_64::register_index::RDX];
-                return result;
+                break;
 
             case 2 :
                 result = target_process.registers[x86_64::register_index::R8];
-                return result;
+                break;
 
             case 3 :
                 result = target_process.registers[x86_64::register_index::R9];
-                return result;
+                break;
+
+            case 4 :
+                result = target_process.registers[x86_64::register_index::R10];
+                break;
+
+            case 5 :
+                result = target_process.registers[x86_64::register_index::R12];
+                break;
+
+            case 6 :
+                result = target_process.registers[x86_64::register_index::R13];
+                break;
+
+            case 7 :
+                result = target_process.registers[x86_64::register_index::R14];
+                break;
+
+            case 8 :
+                result = target_process.registers[x86_64::register_index::R15];
+                break;
 
             default :
+                if (!target_process.buffer)
+                {
+                    DEBUG_LOG("no such IPC buffer");
+                    return hal_error::NO_SUCH_ADDRESS;
+                }
+
                 result = target_process.buffer->get_message(index);
-                return result;
+                break;
         }
+
+        return result;
     }
 
     liba9n::result<a9n::word, hal_error>
@@ -157,34 +185,66 @@ namespace a9n::hal
     hal_result
         configure_message_register(a9n::kernel::process &target_process, a9n::word index, a9n::word value)
     {
-        // RDI : kernel call type
-        // RSI : message_register_0
-        // RDX : message_register_1
-        // R8  : message_register_2
-        // R9  : message_register_3
+        // RSI : message_register[0]
+        // RDX : message_register[1]
+        // R8  : message_register[2]
+        // R9  : message_register[3]
+        // R10 : message_register[4]
+        // R12 : message_register[5]
+        // R13 : message_register[6]
+        // R14 : message_register[7]
+        // R15 : message_register[8]
 
         switch (index)
         {
             case 0 :
                 target_process.registers[x86_64::register_index::RSI] = value;
-                return {};
+                break;
 
             case 1 :
                 target_process.registers[x86_64::register_index::RDX] = value;
-                return {};
+                break;
 
             case 2 :
                 target_process.registers[x86_64::register_index::R8] = value;
-                return {};
+                break;
 
             case 3 :
                 target_process.registers[x86_64::register_index::R9] = value;
-                return {};
+                break;
+
+            case 4 :
+                target_process.registers[x86_64::register_index::R10] = value;
+                break;
+
+            case 5 :
+                target_process.registers[x86_64::register_index::R12] = value;
+                break;
+
+            case 6 :
+                target_process.registers[x86_64::register_index::R13] = value;
+                break;
+
+            case 7 :
+                target_process.registers[x86_64::register_index::R14] = value;
+                break;
+
+            case 8 :
+                target_process.registers[x86_64::register_index::R15] = value;
+                break;
 
             default :
+                if (!target_process.buffer)
+                {
+                    DEBUG_LOG("no such IPC buffer");
+                    return hal_error::NO_SUCH_ADDRESS;
+                }
+
                 target_process.buffer->set_message(index, value);
-                return {};
+                break;
         }
+
+        return {};
     }
 
     hal_result
@@ -211,5 +271,11 @@ namespace a9n::hal
         }
 
         return {};
+    }
+
+    bool is_valid_user_address(a9n::virtual_address address)
+    {
+        // is lower-half address?
+        return (0 <= address && address < 0x0000'7fff'ffff'ffff);
     }
 }

@@ -1,9 +1,11 @@
-#include "kernel/process/cpu.hpp"
 #include <hal/x86_64/arch/cpu.hpp>
 
-#include <hal/x86_64/arch/control_register.hpp>
-#include <hal/x86_64/arch/segment_configurator.hpp>
+#include <kernel/process/cpu.hpp>
 #include <kernel/utility/logger.hpp>
+
+#include <hal/x86_64/arch/control_register.hpp>
+#include <hal/x86_64/arch/floating_point.hpp>
+#include <hal/x86_64/arch/segment_configurator.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -14,9 +16,15 @@ namespace a9n::hal::x86_64
 
     hal_result init_cpu_core_features(void)
     {
-        a9n::kernel::utility::logger::printk("configure cpu features ...\n");
-        // enable wrfsbase
-        _write_cr4(_read_cr4() | cr4_flag::FS_GS_BASE);
+        a9n::kernel::utility::logger::printh("configure cpu features ...\n");
+        _write_cr4(
+            _read_cr4()                    // :)
+            | cr4_flag::FS_GS_BASE         // rdgsbase, wrgsbase, rdfsbase, wrfsbase
+            | cr4_flag::OS_X_SAVE          // xsave, xrstor, xsetbv, xgetbv
+            | cr4_flag::OS_FX_SAVE_RESTORE // fxsave, fxrstor
+            | cr4_flag::OS_XMM_EXCEPTION   // unmasked SIMD floating-point exceptions
+        );
+        configure_floating_mode();
         // _write_cr0(_read_cr0() | cr0_flag::WRITE_PROTECT);
 
         return {};
@@ -27,7 +35,7 @@ namespace a9n::hal::x86_64
         return current_arch_local_variable().and_then(
             [](arch_cpu_local_variable *local_variable) -> hal_result
             {
-                a9n::kernel::utility::logger::printk("configure cpu core ...\n");
+                a9n::kernel::utility::logger::printh("configure cpu core ...\n");
                 segment::configure_gdt(local_variable->gdt);
                 segment::configure_idt(local_variable->idt);
                 segment::configure_tss(local_variable->gdt, local_variable->tss);
@@ -60,7 +68,7 @@ namespace a9n::hal::x86_64
     liba9n::result<a9n::word, hal_error> try_allocate_core_number(void)
     {
         lock.lock();
-        a9n::kernel::utility::logger::printk("try allocate core number ...\n");
+        a9n::kernel::utility::logger::printh("try allocate core number ...\n");
         if (current_cpu_number++ >= a9n::kernel::CPU_COUNT_MAX)
         {
             a9n::kernel::utility::logger::error("no such cpu number!\n");
@@ -79,13 +87,13 @@ namespace a9n::hal
 
         if (!target_local_variable)
         {
-            logger::printk("local variable is null!\n");
+            logger::printh("local variable is null!\n");
             return hal_error::ILLEGAL_ARGUMENT;
         }
 
         if (!target_local_variable->kernel_stack_pointer)
         {
-            logger::printk("kernel stack pointer is null!\n");
+            logger::printh("kernel stack pointer is null!\n");
             return hal_error::INIT_FIRST;
         }
 
@@ -126,7 +134,7 @@ namespace a9n::hal
         auto local_variable = reinterpret_cast<a9n::kernel::cpu_local_variable *>(_read_gs_base());
         if (!local_variable)
         {
-            kernel::utility::logger::printk("cpu_local_variable not found\n");
+            kernel::utility::logger::printh("cpu_local_variable not found\n");
             return hal_error::NO_SUCH_ADDRESS;
         }
 
