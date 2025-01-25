@@ -214,15 +214,18 @@ _restore_user_context:
     pop r14
     pop r15
 
-    mov rsp, [gs:0x00]
-    mov rax, [gs:0x08]
+    mov rsp, [gs:0x08]
+    add rsp, 0x08 * 15
+
+
+    ; mov rax, [gs:0x08]
 
     ; restore IRET Frame
-    push qword [rax + 0x08 * 19] ; SS
-    push qword [rax + 0x08 * 18] ; RSP
-    push qword [rax + 0x08 * 17] ; RFLAGS
-    push qword [rax + 0x08 * 16] ; CS
-    push qword [rax + 0x08 * 15] ; RIP
+    ; push qword [rax + 0x08 * 19] ; SS
+    ; push qword [rax + 0x08 * 18] ; RSP
+    ; push qword [rax + 0x08 * 17] ; RFLAGS
+    ; push qword [rax + 0x08 * 16] ; CS
+    ; push qword [rax + 0x08 * 15] ; RIP
 
     ; since we are going back to user from kernel, it is necessary to re-swap the swapped GS back.  
     swapgs
