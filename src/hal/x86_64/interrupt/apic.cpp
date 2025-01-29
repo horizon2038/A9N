@@ -30,15 +30,15 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::configure_from_madt(madt *madt_base)
     {
-        a9n::kernel::utility::logger::printk("configure from MADT\n");
+        a9n::kernel::utility::logger::printh("configure from MADT\n");
         if (!madt_base)
         {
-            a9n::kernel::utility::logger::printk("MADT is empty\n");
+            a9n::kernel::utility::logger::printh("MADT is empty\n");
             return hal_error::ILLEGAL_ARGUMENT;
         }
 
-        uint8_t *madt_entry_pointer = reinterpret_cast<uint8_t *>(madt_base + sizeof(madt));
-        uint8_t *end                = reinterpret_cast<uint8_t *>(madt_base->header.length);
+        uint8_t *madt_entry_pointer = reinterpret_cast<uint8_t *>(madt_base) + sizeof(madt);
+        uint8_t *end = reinterpret_cast<uint8_t *>(madt_base) + madt_base->header.length;
 
         while (madt_entry_pointer < end)
         {
@@ -87,7 +87,6 @@ namespace a9n::hal::x86_64
             .and_then(
                 [this](uint32_t version) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("IO APIC : configure redirect\n");
                     uint8_t max_redirection_entries = ((version >> 16) & 0xFF) + 1;
 
                     hal_result result {};
@@ -223,7 +222,7 @@ namespace a9n::hal::x86_64
             return hal_error::NO_SUCH_ADDRESS;
         }
 
-        logger::printk("APIC base address : 0x%016llx\n", apic_base_address);
+        logger::printh("APIC base address : 0x%016llx\n", apic_base_address);
 
         // enable APIC
         apic_base_address |= local_apic_flag::APIC_ENABLE;
