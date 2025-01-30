@@ -1,3 +1,4 @@
+#include "kernel/types.hpp"
 #include <hal/x86_64/interrupt/apic.hpp>
 
 #include <hal/hal_result.hpp>
@@ -23,7 +24,14 @@ namespace a9n::hal::x86_64
             .and_then(
                 [this](void) -> hal_result
                 {
-                    return disable_interrupt_all();
+                    return disable_interrupt_all().and_then(
+                        [this](void) -> hal_result
+                        {
+                            return local_apic_core.end_of_interrupt();
+                        }
+                    );
+
+                    return {};
                 }
             );
     }
@@ -62,10 +70,17 @@ namespace a9n::hal::x86_64
             madt_entry_pointer += entry->length;
         }
 
+        a9n::kernel::utility::logger::printh("IO APIC : id %4llx\n", id);
+        a9n::kernel::utility::logger::printh("IO APIC : base address 0x%016llx\n", base_address);
+        a9n::kernel::utility::logger::printh(
+            "IO APIC : global interrupt base 0x%016llx\n",
+            global_interrupt_base
+        );
+
         return {};
     }
 
-    hal_result io_apic::configure_registers()
+    hal_result io_apic::configure_registers(void)
     {
         uint8_t *io_apic_base = a9n::kernel::physical_to_virtual_pointer<uint8_t>(base_address);
         if (!io_apic_base)
@@ -80,7 +95,7 @@ namespace a9n::hal::x86_64
         return {};
     }
 
-    hal_result io_apic::disable_interrupt_all()
+    hal_result io_apic::disable_interrupt_all(void)
     {
         a9n::kernel::utility::logger::printh("IO APIC : disable_interrupt\n");
         return read(io_apic_register_index::VERSION)
@@ -109,14 +124,13 @@ namespace a9n::hal::x86_64
             );
     }
 
-    hal_result io_apic::enable_interrupt_all()
+    hal_result io_apic::enable_interrupt_all(void)
     {
         a9n::kernel::utility::logger::printh("IO APIC : enable_interrupt\n");
         return read(io_apic_register_index::VERSION)
             .and_then(
                 [this](uint32_t version) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("IO APIC : configure redirect\n");
                     uint8_t max_redirection_entries = ((version >> 16) & 0xFF) + 1;
 
                     hal_result result {};
@@ -171,7 +185,9 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::enable_interrupt(uint8_t irq_number)
     {
-        uint32_t io_apic_register = io_apic_register_index::REDIRECTION_TABLE + irq_number * 2;
+        const uint8_t  real_irq_number = global_interrupt_base + irq_number;
+        const uint32_t io_apic_register
+            = io_apic_register_index::REDIRECTION_TABLE + real_irq_number * 2;
 
         // low
         return write(io_apic_register, 0x20 + irq_number)
@@ -209,12 +225,12 @@ namespace a9n::hal::x86_64
     }
 
     // Local APIC
-    hal_result local_apic::init()
+    hal_result local_apic::init(void)
     {
         using a9n::kernel::utility::logger;
 
-        uint64_t apic_base_msr     = _read_msr(msr::APIC_BASE);
-        uint64_t apic_base_address = apic_base_msr & 0xFFFFF1000;
+        uint64_t              apic_base_msr     = _read_msr(msr::APIC_BASE);
+        a9n::physical_address apic_base_address = apic_base_msr & 0xF'FFFF'1000;
 
         base = a9n::kernel::physical_to_virtual_pointer<uint32_t>(apic_base_address);
         if (!base)
@@ -228,43 +244,22 @@ namespace a9n::hal::x86_64
         apic_base_address |= local_apic_flag::APIC_ENABLE;
         _write_msr(msr::APIC_BASE, apic_base_address);
 
+        auto write_register = [this](uint32_t offset, uint64_t value) -> decltype(auto)
+        {
+            return [this, offset, value](void) -> hal_result
+            {
+                return write(offset, value);
+            };
+        };
+
         // configure spurious
-        return write(local_apic_offset::SPURIOUS_INTERRUPT, (1 << 8))
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // enable all interrupts
-                    return write(local_apic_offset::TASK_PRIORITY, 0);
-                }
-            )
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // configure logical id to 1
-                    return write(local_apic_offset::LOGICAL_DESITINATION, 0x1000000);
-                }
-            )
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // *flat* mode
-                    return write(local_apic_offset::DESTINATION_FORMAT, 0xFFFFFFFF);
-                }
-            )
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // mask all
-                    return write(local_apic_offset::LVT_TIMER, 1 << 16);
-                }
-            )
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // mask all
-                    return write(local_apic_offset::LVT_ERROR, 1 << 16);
-                }
-            );
+        return write(local_apic_offset::SPURIOUS_INTERRUPT, (1 << 8) | ((1 << 8) - 1))
+            .and_then(write_register(local_apic_offset::TASK_PRIORITY, 0x0))
+            .and_then(write_register(local_apic_offset::LOGICAL_DESITINATION, 0x100'0000))
+            .and_then(write_register(local_apic_offset::DESTINATION_FORMAT, 0xFFFF'FFFF))
+            .and_then(write_register(local_apic_offset::LVT_TIMER, 1 << 16))
+            .and_then(write_register(local_apic_offset::LVT_ERROR, 1 << 16))
+            .and_then(write_register(local_apic_offset::END_OF_INTERRUPT, 0));
     }
 
     liba9n::result<uint32_t, hal_error> local_apic::read(uint32_t offset)
@@ -289,7 +284,7 @@ namespace a9n::hal::x86_64
         return {};
     }
 
-    hal_result local_apic::end_of_interrupt()
+    hal_result local_apic::end_of_interrupt(void)
     {
         return write(local_apic_offset::END_OF_INTERRUPT, 0);
     }
