@@ -80,6 +80,65 @@ namespace a9n::hal::x86_64
         hal_result configure_from_madt(madt *madt_base);
         hal_result configure_registers();
         hal_result configure_entry(uint8_t irq_number, uint64_t entry);
+
+        enum DELIVERY_MODE : uint8_t
+        {
+            FIXED                       = 0b000,
+            LOWEST_PRIORITY             = 0b001,
+            SYSTEM_MANAGEMENT_INTERRUPT = 0b010,
+            NON_MASKABLE_INTERRUPT      = 0b100,
+            INIT                        = 0b101,
+            EXTERNAL_INTERRUPT          = 0b111,
+        };
+
+        enum DESTINATION_MODE : bool
+        {
+            PHYSICAL = false,
+            LOGICAL  = true,
+        };
+
+        enum DELIVERY_STATUS : bool
+        {
+            IDLE = false,
+            PENDING,
+        };
+
+        enum PIN_POLARITY : bool
+        {
+            ACTIVE_HIGH = false,
+            ACTIVE_LOW,
+        };
+
+        enum TRIGGER_MODE : bool
+        {
+            EDGE = false,
+            LEVEL,
+        };
+
+        enum MASK : bool
+        {
+            UNMASKED = false,
+            MASKED   = true,
+        };
+
+        inline constexpr uint64_t make_redirect_entry(
+            uint8_t          vector,
+            DELIVERY_MODE    delivery_mode,
+            DESTINATION_MODE destination_mode,
+            DELIVERY_STATUS  delivery_status,
+            PIN_POLARITY     pin_polarity,
+            TRIGGER_MODE     trigger_mode,
+            MASK             mask,
+            uint8_t          destination
+        )
+        {
+            return (static_cast<uint64_t>(vector) << 0) | (static_cast<uint64_t>(delivery_mode) << 8)
+                 | (static_cast<uint64_t>(destination_mode) << 11)
+                 | (static_cast<uint64_t>(delivery_status) << 12)
+                 | (static_cast<uint64_t>(pin_polarity) << 13)
+                 | (static_cast<uint64_t>(trigger_mode) << 15) | (static_cast<uint64_t>(mask) << 16)
+                 | (static_cast<uint64_t>(destination) << 56);
+        }
     };
 
     class local_apic
