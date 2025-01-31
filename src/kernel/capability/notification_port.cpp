@@ -39,7 +39,7 @@ namespace a9n::kernel
             case operation_type::OPERATION_IDENTIFY :
                 return operation_identify(this_process, this_slot);
 
-            default :
+            [[unlikely]] default :
                 return capability_error::ILLEGAL_OPERATION;
         }
     }
@@ -48,12 +48,6 @@ namespace a9n::kernel
     capability_result
         notification_port::operation_notify([[maybe_unused]] process &owner, capability_slot &self)
     {
-        auto convert_hal_to_capability_error =
-            []([[maybe_unused]] a9n::hal::hal_error e) -> capability_error
-        {
-            return capability_error::FATAL;
-        };
-
         // identifier is slot-local
         auto identifier = convert_slot_data_to_identifier(self.data);
         core.notify(identifier);
@@ -104,14 +98,7 @@ namespace a9n::kernel
     }
 
     capability_result notification_port::operation_wait(process &owner, capability_slot &self)
-
     {
-        auto convert_hal_to_capability_error =
-            []([[maybe_unused]] a9n::hal::hal_error e) -> capability_error
-        {
-            return capability_error::FATAL;
-        };
-
         switch (state)
         {
             case notification_port_state::WAIT :
@@ -146,12 +133,6 @@ namespace a9n::kernel
     // non-blocking !
     capability_result notification_port::operation_poll(process &owner, capability_slot &self)
     {
-        auto convert_hal_to_capability_error =
-            []([[maybe_unused]] a9n::hal::hal_error e) -> capability_error
-        {
-            return capability_error::FATAL;
-        };
-
         switch (state)
         {
             case notification_port_state::WAIT :
