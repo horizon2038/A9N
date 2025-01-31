@@ -25,6 +25,7 @@ namespace a9n::hal::x86_64
         uint32_t           strlen(const char *s);
     };
 
+    void reconfigure_serial(void);
 }
 
 #endif
