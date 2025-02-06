@@ -12,9 +12,11 @@ namespace a9n::kernel
 {
     capability_error convert_lookup_to_capability_error(capability_lookup_error e)
     {
+        DEBUG_LOG("capability_lookup_error : %s\n", capability_lookup_error_to_string(e));
         switch (e)
         {
             case capability_lookup_error::INDEX_OUT_OF_RANGE :
+                [[fallthrough]];
             case capability_lookup_error::TERMINAL :
                 return capability_error::INVALID_ARGUMENT;
             default :
@@ -35,8 +37,6 @@ namespace a9n::kernel
 
     capability_result capability_node::execute(process &owner, capability_slot &self)
     {
-        a9n::kernel::utility::logger::printk("execute : node\n");
-
         auto result = decode_operation(owner, self);
 
         return result;
@@ -44,11 +44,6 @@ namespace a9n::kernel
 
     capability_result capability_node::decode_operation(process &owner, capability_slot &self)
     {
-        a9n::kernel::utility::logger::printk(
-            "operation type : 0x%16llx\n",
-            a9n::hal::get_message_register(owner, 1).unwrap_or(static_cast<a9n::word>(0))
-        );
-
         auto target_operation = [&]() -> operation_type
         {
             return static_cast<operation_type>(
@@ -60,39 +55,37 @@ namespace a9n::kernel
         {
             case COPY :
                 {
-                    a9n::kernel::utility::logger::printk("node : copy\n");
+                    DEBUG_LOG("node::copy");
                     return operation_copy(owner, self);
                 }
 
             case MOVE :
                 {
-                    a9n::kernel::utility::logger::printk("node : move\n");
+                    DEBUG_LOG("node::move");
                     return operation_move(owner, self);
                 }
 
             case REVOKE :
                 {
-                    a9n::kernel::utility::logger::printk("node : revoke\n");
+                    DEBUG_LOG("node::revoke");
                     return operation_revoke(owner, self);
                 }
 
             case MINT :
                 {
-                    a9n::kernel::utility::logger::printk("node : mint\n");
+                    DEBUG_LOG("node::mint");
                     return operation_mint(owner, self);
                 }
 
             case REMOVE :
                 {
-                    a9n::kernel::utility::logger::printk("node : remove\n");
+                    DEBUG_LOG("node::remove");
                     return operation_remove(owner, self);
                 }
 
             default :
                 {
-                    a9n::kernel::utility::logger::error("node : illegal "
-                                                        "operation!");
-
+                    DEBUG_LOG("node : illegal operation");
                     return capability_error::ILLEGAL_OPERATION;
                 }
         };
@@ -119,13 +112,8 @@ namespace a9n::kernel
         const auto source_descriptor = get_message(SOURCE_DESCRIPTOR);
         const auto source_index      = get_message(SOURCE_INDEX);
 
+        DEBUG_LOG("retrieve destination");
         return retrieve_slot(destination_index)
-            .and_then(
-                [=, this](capability_slot *slot) -> capability_lookup_result
-                {
-                    return slot->component->retrieve_slot(destination_index);
-                }
-            )
             .transform_error(convert_lookup_to_capability_error)
             .and_then(
                 [&, this](capability_slot *destination_slot) -> capability_result
@@ -135,6 +123,7 @@ namespace a9n::kernel
                         .and_then(
                             [=, this](capability_slot *source_root_slot) -> capability_lookup_result
                             {
+                                DEBUG_LOG("retrieve source");
                                 return source_root_slot->component->retrieve_slot(source_index);
                             }
                         )
@@ -142,19 +131,28 @@ namespace a9n::kernel
                         .and_then(
                             [=, this](capability_slot *source_slot) -> capability_result
                             {
-                                if (!(source_slot->rights & capability_slot::object_rights::COPY)
-                                    || (source_slot->type != capability_type::NONE))
+                                if (!(source_slot->rights & capability_slot::object_rights::COPY))
                                 {
-                                    return capability_error::ILLEGAL_OPERATION;
+                                    return capability_error::PERMISSION_DENIED;
                                 }
 
-                                destination_slot->type      = source_slot->type;
-                                destination_slot->data      = source_slot->data;
-                                destination_slot->component = source_slot->component;
-                                destination_slot->rights    = source_slot->rights;
-                                source_slot->insert_sibling(*destination_slot);
-
-                                return {};
+                                DEBUG_LOG("remote and init");
+                                return destination_slot->try_remove_and_init()
+                                    .and_then(
+                                        [&](void) -> kernel_result
+                                        {
+                                            DEBUG_LOG(
+                                                "copy slot : 0x%llx -> 0x%llx",
+                                                source_slot,
+                                                destination_slot
+                                            );
+                                            return try_copy_capability_slot(
+                                                *destination_slot,
+                                                *source_slot
+                                            );
+                                        }
+                                    )
+                                    .transform_error(convert_kernel_to_capability_error);
                             }
                         );
                 }
@@ -164,7 +162,7 @@ namespace a9n::kernel
     capability_result capability_node::operation_move(process &owner, capability_slot &self)
     {
         if (!(self.rights & capability_slot::object_rights::READ)
-            && !(self.rights & capability_slot::object_rights::WRITE))
+            || !(self.rights & capability_slot::object_rights::WRITE))
         {
             return capability_error::ILLEGAL_OPERATION;
         }
@@ -181,12 +179,6 @@ namespace a9n::kernel
         const auto source_index      = get_message(SOURCE_INDEX);
 
         return retrieve_slot(destination_index)
-            .and_then(
-                [=, this](capability_slot *slot) -> capability_lookup_result
-                {
-                    return slot->component->retrieve_slot(destination_index);
-                }
-            )
             .transform_error(convert_lookup_to_capability_error)
             .and_then(
                 [&](capability_slot *destination_slot) -> capability_result
@@ -203,33 +195,8 @@ namespace a9n::kernel
                         .and_then(
                             [=, this](capability_slot *source_slot) -> capability_result
                             {
-                                if (source_slot->type != capability_type::NONE)
-                                {
-                                    a9n::kernel::utility::logger::error("slot is already used !\n");
-                                    return capability_error::ILLEGAL_OPERATION;
-                                }
-
-                                // copy slot data
-                                destination_slot->type         = source_slot->type;
-                                destination_slot->data         = source_slot->data;
-                                destination_slot->component    = source_slot->component;
-                                destination_slot->rights       = source_slot->rights;
-
-                                destination_slot->depth        = source_slot->depth;
-                                destination_slot->preview_slot = source_slot->preview_slot;
-                                destination_slot->next_slot    = source_slot->next_slot;
-
-                                if (destination_slot->preview_slot)
-                                {
-                                    destination_slot->preview_slot->next_slot = destination_slot;
-                                }
-
-                                if (destination_slot->next_slot)
-                                {
-                                    destination_slot->next_slot->preview_slot = destination_slot;
-                                }
-
-                                source_slot->init();
+                                return try_move_capability_slot(*destination_slot, *source_slot)
+                                    .transform_error(convert_kernel_to_capability_error);
 
                                 return {};
                             }
@@ -240,17 +207,94 @@ namespace a9n::kernel
 
     capability_result capability_node::operation_mint(process &owner, capability_slot &self)
     {
-        if (!(self.rights & capability_slot::object_rights::READ)
-            && !(self.rights & capability_slot::object_rights::WRITE))
+        if ((!(self.rights & capability_slot::object_rights::READ)
+             || !(self.rights & capability_slot::object_rights::WRITE)))
         {
             return capability_error::ILLEGAL_OPERATION;
         }
+
+        auto get_message = [&](a9n::word index) -> a9n::word
+        {
+            return a9n::hal::get_message_register(owner, index).unwrap_or(static_cast<a9n::word>(0));
+        };
+
+        // it is not just about copying data.
+        // after copying, we need to configure the Dependency Node.
+        const auto destination_index = get_message(DESTINATION_INDEX);
+        const auto source_descriptor = get_message(SOURCE_DESCRIPTOR);
+        const auto source_index      = get_message(SOURCE_INDEX);
+        const auto new_rights        = get_message(NEW_RIGHTS);
+
+        return retrieve_slot(destination_index)
+            .transform_error(convert_lookup_to_capability_error)
+            .and_then(
+                [&, this](capability_slot *destination_slot) -> capability_result
+                {
+                    return owner.root_slot.component
+                        ->traverse_slot(source_descriptor, extract_depth(source_descriptor), a9n::BYTE_BITS)
+                        .and_then(
+                            [=, this](capability_slot *source_root_slot) -> capability_lookup_result
+                            {
+                                return source_root_slot->component->retrieve_slot(source_index);
+                            }
+                        )
+                        .transform_error(convert_lookup_to_capability_error)
+                        .and_then(
+                            [=, this](capability_slot *source_slot) -> capability_result
+                            {
+                                if (!(source_slot->rights & capability_slot::object_rights::COPY))
+                                {
+                                    return capability_error::PERMISSION_DENIED;
+                                }
+
+                                // new_rights must be a subset of source_slot->rights
+                                if ((source_slot->rights & new_rights) != new_rights)
+                                {
+                                    return capability_error::PERMISSION_DENIED;
+                                }
+
+                                return try_copy_capability_slot(*destination_slot, *source_slot)
+                                    .transform_error(convert_kernel_to_capability_error)
+                                    .and_then(
+                                        [&](void) -> capability_result
+                                        {
+                                            destination_slot->rights = new_rights;
+                                            return {};
+                                        }
+                                    );
+                            }
+                        );
+                }
+            );
 
         return {};
     }
 
     capability_result capability_node::operation_revoke(process &owner, capability_slot &self)
     {
+        auto get_message = [&](a9n::word index) -> a9n::word
+        {
+            return a9n::hal::get_message_register(owner, index).unwrap_or(static_cast<a9n::word>(0));
+        };
+
+        const auto destination_index = get_message(DESTINATION_INDEX);
+
+        return retrieve_slot(destination_index)
+            .transform_error(convert_lookup_to_capability_error)
+            .and_then(
+                [&](capability_slot *slot) -> capability_result
+                {
+                    // slot->remove_from_dependency_node();
+                    if (!(slot->rights & capability_slot::object_rights::READ)
+                        || !(slot->rights & capability_slot::object_rights::WRITE))
+                    {
+                        return capability_error::ILLEGAL_OPERATION;
+                    }
+
+                    return slot->component->revoke(*slot);
+                }
+            );
+
         return {};
     }
 
@@ -259,67 +303,49 @@ namespace a9n::kernel
         if (!(self.rights & capability_slot::object_rights::READ)
             && !(self.rights & capability_slot::object_rights::WRITE))
         {
-            return capability_error::ILLEGAL_OPERATION;
+            return capability_error::PERMISSION_DENIED;
         }
 
-        /*
-        auto destination_index  = buffer->get_message<0>();
-
-        auto target_slot_result = self->component->retrieve_slot(destination_index);
-
-        if (!target_slot_result)
+        auto get_message = [&](a9n::word index) -> a9n::word
         {
-            return capability_error::INVALID_ARGUMENT;
-        }
+            return a9n::hal::get_message_register(owner, index).unwrap_or(static_cast<a9n::word>(0));
+        };
 
-        // if the target capability is the last,
-        // revoke the capability and then delete it.
-        target_slot_result.unwrap()->component->revoke();
+        const auto destination_index = get_message(DESTINATION_INDEX);
 
-        auto target_depth  = target_slot_result.unwrap()->depth;
-        auto next_depth    = (*target_slot_result)->next_slot->depth;
+        return retrieve_slot(destination_index)
+            .transform_error(convert_lookup_to_capability_error)
+            .and_then(
+                [=, this](capability_slot *slot) -> capability_result
+                {
+                    // revoke!
+                    if (!(slot->rights & capability_slot::object_rights::READ)
+                        || !(slot->rights & capability_slot::object_rights::WRITE))
+                    {
+                        return capability_error::PERMISSION_DENIED;
+                    }
 
-        auto preview_depth = (*target_slot_result)->next_slot->depth;
+                    if (!slot->has_sibling())
+                    {
+                        // if it is last slot, revoke is also executed.
+                        return slot->component->revoke(*slot);
+                    }
 
-        auto target_slot   = (*target_slot_result);
-        auto next_slot     = (*target_slot_result)->next_slot;
-        auto preview_slot  = (*target_slot_result)->preview_slot;
+                    slot->remove_from_dependency_node();
+                    slot->init();
 
-        if (target_slot->is_same_slot(*next_slot) || target_slot->is_same_slot(*preview_slot))
-        {
-            target_slot->component->revoke();
-        }
-
-        // compare target depth
-        // | A | A_a |
-        // A : target_depth > next_depth = have child
-        // A_a : target_depth < preview_depth = have child
-        // 削除要件 :  dependency nodeにIdentityが等しいnodeが登録されているか?
-        // is_same_slotを使えばできそう
-        if (target_depth > next_depth || target_depth < preview_depth)
-        {
-            (*target_slot_result)->component->revoke();
-        }
-
-        // remove
-        target_slot_result.unwrap()->data.fill(0);
-        */
+                    return {};
+                }
+            );
 
         return capability_error::DEBUG_UNIMPLEMENTED;
     }
 
     capability_lookup_result capability_node::retrieve_slot(a9n::word index)
     {
-        [[unlikely]] if (!capability_slots)
+        if (!capability_slots) [[unlikely]]
         {
             return capability_lookup_error::UNAVAILABLE;
-        }
-
-        auto index_max = 1 << radix_bits;
-        if (index >= index_max)
-        {
-            a9n::kernel::utility::logger::debug("index out of range !\n");
-            return capability_lookup_error::INDEX_OUT_OF_RANGE;
         }
 
         return &(capability_slots[index]);
@@ -336,7 +362,8 @@ namespace a9n::kernel
         DEBUG_LOG("0x%016llx <> 0x%016llx <> 0x%016llx", descriptor, descriptor_max_bits, descriptor_used_bits);
         return lookup_slot(descriptor, descriptor_used_bits)
             .and_then(
-                [=, this](capability_slot *slot) -> capability_lookup_result
+                [this, descriptor, descriptor_max_bits, descriptor_used_bits](capability_slot *slot
+                ) -> capability_lookup_result
                 {
                     /*
                     if (descriptor_used_bits == a9n::WORD_BITS)
@@ -386,29 +413,11 @@ namespace a9n::kernel
 
     capability_result capability_node::revoke(capability_slot &self)
     {
-        /*
         if (!(self.rights & capability_slot::object_rights::READ)
             && !(self.rights & capability_slot::object_rights::WRITE))
         {
             return capability_error::ILLEGAL_OPERATION;
         }
-
-        // recursively revoke all the capabilities
-        for (auto start_slot = self.next_slot; start_slot->depth < self.depth;
-             start_slot      = start_slot->next_slot)
-        {
-            if (!start_slot->component)
-            {
-                return {};
-            }
-
-            auto result = start_slot->component->revoke();
-            if (!result)
-            {
-                return result;
-            }
-        }
-        */
 
         return {};
     }

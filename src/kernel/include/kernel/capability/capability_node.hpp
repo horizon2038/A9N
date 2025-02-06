@@ -4,10 +4,14 @@
 #include <kernel/capability/capability_component.hpp>
 
 #include <kernel/kernel_result.hpp>
+#include <kernel/memory/memory.hpp>
 #include <kernel/types.hpp>
 
 #include <liba9n/common/calculate.hpp>
 #include <liba9n/common/not_null.hpp>
+
+// temp
+#include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
 {
@@ -18,6 +22,7 @@ namespace a9n::kernel
       private:
         enum operation_type : a9n::word
         {
+            NONE,
             COPY,
             MOVE,
             MINT,
@@ -32,6 +37,7 @@ namespace a9n::kernel
             DESTINATION_INDEX,
             SOURCE_DESCRIPTOR,
             SOURCE_INDEX,
+            NEW_RIGHTS,
         };
 
         a9n::word ignore_bits;
@@ -82,8 +88,7 @@ namespace a9n::kernel
         {
             auto mask_bits  = static_cast<a9n::word>((1 << radix_bits) - 1);
             auto shift_bits = (a9n::WORD_BITS - (ignore_bits + radix_bits + descriptor_used_bits));
-            auto index      = (descriptor >> shift_bits) & mask_bits;
-            return index;
+            return (descriptor >> shift_bits) & mask_bits;
         }
 
         inline const a9n::word calculate_used_bits(a9n::word old_descriptor_used_bits)
@@ -113,31 +118,40 @@ namespace a9n::kernel
 
     // unsafe : no check boundary
     inline liba9n::result<liba9n::not_null<capability_node>, kernel_error>
-        try_make_capability_node(a9n::virtual_pointer base, a9n::word radix)
+        try_make_capability_node(a9n::virtual_address base, a9n::word radix)
     {
         if (!base || radix == 0 || radix >= a9n::WORD_BITS)
         {
+            DEBUG_LOG("illegal argument");
             return kernel_error::ILLEGAL_ARGUMENT;
         }
 
         constexpr auto node_unit_radix = liba9n::calculate_radix_ceil(sizeof(capability_node));
         constexpr auto node_unit_size  = static_cast<a9n::word>(1) << node_unit_radix;
+        DEBUG_LOG("node_unit_radix : 0x%llx", node_unit_radix);
+        DEBUG_LOG("node_unit_size : 0x%llx", node_unit_size);
 
         if (static_cast<a9n::word>(base) % node_unit_size != 0)
         {
+            DEBUG_LOG("illegal argument");
             return kernel_error::ILLEGAL_ARGUMENT;
         }
 
         constexpr auto slot_unit_radix = liba9n::calculate_radix_ceil(sizeof(capability_slot));
         constexpr auto slot_unit_size  = static_cast<a9n::word>(1) << slot_unit_radix;
+        DEBUG_LOG("slot_unit_radix : 0x%llx", slot_unit_radix);
+        DEBUG_LOG("slot_unit_size : 0x%llx", slot_unit_size);
 
         // create slot
-        auto slot_start_address
-            = reinterpret_cast<void *>(liba9n::align_value((base + node_unit_radix), node_unit_size));
-        auto created_slots = new (slot_start_address)
+        auto slot_start_address = reinterpret_cast<a9n::physical_address>(
+            liba9n::align_value((base + node_unit_radix), node_unit_size)
+        );
+        DEBUG_LOG("slot_start_address : 0x%llx", slot_start_address);
+        auto created_slots = new (reinterpret_cast<void *>(slot_start_address))
             capability_slot[static_cast<a9n::word>(1) << radix] {};
 
         // create node
+        DEBUG_LOG("create node");
         auto created_node = new (reinterpret_cast<void *>(base))
             capability_node(0, radix, created_slots);
 
