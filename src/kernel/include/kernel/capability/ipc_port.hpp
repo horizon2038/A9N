@@ -18,7 +18,7 @@ namespace a9n::kernel
       private:
         // head / end makes the search O(1)
         process *queue_head;
-        process *queue_end;
+        process *queue_end; // TODO: rename to queue_tail
 
         enum ipc_port_state : a9n::word
         {
@@ -34,7 +34,8 @@ namespace a9n::kernel
             RECEIVE,
             CALL, // use reply object
             REPLY,
-            REPLY_RECEIVE // use reply object
+            REPLY_RECEIVE, // use reply object
+            IDENTIFY,
         };
 
         enum operation_index : a9n::word
@@ -42,24 +43,25 @@ namespace a9n::kernel
             RESERVED = 0, // descriptor
             OPERATION_TYPE,
             MESSAGE_INFO,
-            TAG,
+            IDENTIFIER,
         };
 
+        // TODO: add "kernel message" flag
         struct message_info
         {
-            a9n::word data;
+            a9n::word data; // 16 bits
 
             constexpr message_info(
                 bool    block,
                 uint8_t message_length,
-                bool    transfer_capability,
-                uint8_t transfer_count
+                uint8_t transfer_count,
+                bool    kernel // if the user sets the kernel bit, the value is ignored
             )
             {
                 configure_block(block);
                 configure_message_length(message_length);
-                configure_transfer_capability(transfer_capability);
                 configure_transfer_count(transfer_count);
+                configure_kernel(kernel);
             }
 
             constexpr message_info(a9n::word data) : data(data)
@@ -78,17 +80,17 @@ namespace a9n::kernel
 
             constexpr void configure_message_length(uint8_t message_length)
             {
-                data = data & ~(((1 << 8) - 1) << 1) | (message_length << 1);
-            }
-
-            constexpr void configure_transfer_capability(bool transfer_capability)
-            {
-                data = data & ~(1 << 9) | (transfer_capability << 9);
+                data = data & ~(((1 << 8) - 1) << 1) | ((message_length << 1) & ((1 << 8) - 1));
             }
 
             constexpr void configure_transfer_count(uint8_t transfer_count)
             {
-                data = data & ~(((1 << 6) - 1) << 10) | (transfer_count << 10);
+                data = data & ~(((1 << 5) - 1) << 9) | ((transfer_count << 9) & (1 << 6) - 1);
+            }
+
+            constexpr void configure_kernel(bool kernel)
+            {
+                data = data & ~(1 << 15) | (kernel << 15);
             }
 
             constexpr bool is_block(void) const
@@ -101,14 +103,14 @@ namespace a9n::kernel
                 return (data >> 1) & ((1 << 8) - 1);
             }
 
-            constexpr bool is_transfer_capability(void) const
-            {
-                return data & (1 << 9);
-            }
-
             constexpr uint8_t transfer_count(void) const
             {
-                return (data >> 10) & ((1 << 6) - 1);
+                return (data >> 9) & ((1 << 6) - 1);
+            }
+
+            constexpr bool is_kernel(void) const
+            {
+                return data & (1 << 15);
             }
         };
 
@@ -120,13 +122,28 @@ namespace a9n::kernel
         capability_result operation_call(process &owner, capability_slot &self, message_info info);
         capability_result operation_reply(process &owner, capability_slot &self, message_info info);
         capability_result
-            operation_reply_receive(process &owner, capability_slot &self, message_info &info);
+            operation_reply_receive(process &owner, capability_slot &self, message_info info);
+        capability_result operation_identify(process &owner, capability_slot &self);
+
+        // fastpath
+        capability_result
+            operation_call_fastpath(process &owner, capability_slot &self, message_info info);
+        capability_result
+            operation_reply_receive_fastpath(process &owner, capability_slot &self, message_info info);
+
+        // for kernel
+        capability_result operation_fault_call(process &owner, capability_slot &self);
 
         liba9n::result<message_info, kernel_error> get_message_info(process &owner);
         capability_result transfer_message(process &receiver, process &sender, message_info info);
         bool              is_synchronized(void);
         kernel_result
             copy_messages(process &destination_process, process &source_process, a9n::word message_length);
+        capability_result move_capabilities(
+            process  &destination_process,
+            process  &source_process,
+            a9n::word transfer_count
+        );
 
         kernel_result push_ipc_queue(process &target_process);
         liba9n::result<liba9n::not_null<process>, kernel_error> pop_ipc_queue(void);
@@ -151,16 +168,32 @@ namespace a9n::kernel
         };
     };
 
-    inline kernel_result try_configure_ipc_port_slot(capability_slot &slot, ipc_port &port)
+    inline constexpr a9n::word convert_slot_data_to_identifier(const capability_slot_data &data)
+    {
+        return data[0];
+    }
+
+    inline constexpr capability_slot_data convert_identifier_to_slot_data(a9n::word identifier)
+    {
+        capability_slot_data data;
+        data[0] = identifier;
+
+        return data;
+    }
+
+    inline kernel_result
+        try_configure_ipc_port_slot(capability_slot &slot, ipc_port &port, a9n::word identifier)
     {
         slot.init();
         slot.component = &port;
         slot.type      = capability_type::IPC_PORT;
         slot.rights    = capability_slot::ALL;
         slot.data.fill(0);
+        slot.data = convert_identifier_to_slot_data(identifier);
 
         return {};
     }
+
 }
 
 #endif
