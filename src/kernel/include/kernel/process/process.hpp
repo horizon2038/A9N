@@ -2,6 +2,7 @@
 #define PROCESS_HPP
 
 #include <hal/arch/arch_types.hpp>
+#include <kernel/interrupt/fault.hpp>
 #include <kernel/types.hpp>
 
 #include <kernel/capability/capability_component.hpp>
@@ -45,7 +46,12 @@ namespace a9n::kernel
         process  *preview;
         process  *next;
 
-        a9n::physical_address page_table;
+        // for fault handling
+        fault_type           fault_reason { fault_type::NONE };
+        a9n::sword           fault_code;
+        a9n::virtual_address fault_address;
+
+        a9n::physical_address page_table; // TODO: remove
 
         // to root capability node
         capability_slot root_slot { /* .type = capability_type::NODE */ };
@@ -61,8 +67,11 @@ namespace a9n::kernel
 
         // buffer is *kernel* address (physical -> kernel (id))
         ipc_buffer *buffer;
-        process    *next_ipc_queue;
-        process    *preview_ipc_queue;
+
+        // for IPC / notification
+        // TODO: rename to `*communication_queue_*`
+        process *next_ipc_queue;
+        process *preview_ipc_queue;
 
         // when destroy process, it should be removed from the queue
         enum class reply_state_object : a9n::word
@@ -80,6 +89,8 @@ namespace a9n::kernel
         process_id id;
         /*=====remove_end=====*/
     };
+
+    static_assert(sizeof(process) <= 2048);
 }
 
 #endif
