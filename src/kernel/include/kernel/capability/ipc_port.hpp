@@ -125,12 +125,6 @@ namespace a9n::kernel
             operation_reply_receive(process &owner, capability_slot &self, message_info info);
         capability_result operation_identify(process &owner, capability_slot &self);
 
-        // fastpath
-        capability_result
-            operation_call_fastpath(process &owner, capability_slot &self, message_info info);
-        capability_result
-            operation_reply_receive_fastpath(process &owner, capability_slot &self, message_info info);
-
         // for kernel
         capability_result operation_fault_call(process &owner, capability_slot &self);
 

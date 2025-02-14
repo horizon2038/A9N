@@ -79,8 +79,27 @@ namespace a9n::kernel
             NONE,
             WAIT,          // set when a reply is not found at `call` time
             READY_TO_REPLY // available for immediate `reply`
-        } reply_state { reply_state_object::NONE };
-        process *reply_target;
+        };
+
+        enum class source_reply_state_object : a9n::word
+        {
+            NONE,
+            WAIT,
+        } source_reply_state { source_reply_state_object::NONE };
+
+        enum class destination_reply_state_object : a9n::word
+        {
+            NONE,
+            READY_TO_REPLY,
+        } destination_reply_state { destination_reply_state_object::NONE };
+
+        // NOTE: *Why do we need source_reply_target?*
+        // Suppose that process A is in the middle of a call to process B and A is destroyed (e.g.,
+        // via Revoke/Remove). Although process B has A as the reply target, it will hold a pointer
+        // to an invalid process (A in this case) that has already been destroyed.
+        // Therefore, it is necessary to allow the caller to refer to the callee.
+        process *source_reply_target;
+        process *destination_reply_target;
 
         // tag for debugging
         char name[PROCESS_NAME_MAX];

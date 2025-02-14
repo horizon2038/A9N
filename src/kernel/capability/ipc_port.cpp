@@ -174,10 +174,30 @@ namespace a9n::kernel
                             [&](liba9n::not_null<process> target) -> capability_result
                             {
                                 auto target_message_info = get_message_info(target.get()).unwrap();
+
+                                if (owner.destination_reply_state
+                                    != process::destination_reply_state_object::NONE)
+                                {
+                                    if (!info.is_block())
+                                    {
+                                        return {};
+                                    }
+
+                                    owner.status = process_status::BLOCKED;
+                                    owner.source_reply_state = process::source_reply_state_object::WAIT;
+                                    return push_ipc_queue(owner)
+                                        .and_then(try_schedule_and_switch)
+                                        .transform_error(convert_kernel_to_capability_error);
+                                }
+
                                 return transfer_message(owner, target.get(), target_message_info)
                                     .and_then(
                                         [&](void) -> capability_result
                                         {
+                                            owner.destination_reply_state
+                                                = process::destination_reply_state_object::READY_TO_REPLY;
+                                            owner.destination_reply_target = &target.get();
+
                                             // re-queueing
                                             return process_manager_core.mark_scheduled(target.get())
                                                 .transform_error(convert_kernel_to_capability_error);
@@ -190,33 +210,6 @@ namespace a9n::kernel
             [[unlikely]] default :
                 return capability_error::ILLEGAL_OPERATION;
         }
-    }
-
-    // seL4-derived IPC fastpath implementation
-    // TODO: implement fastpath
-    capability_result
-        ipc_port::operation_call_fastpath(process &owner, capability_slot &self, message_info info)
-    {
-        // 1. get receiver tcb                  +-----------------+
-        // 2. mark sender blocked and enqueue   | no state change |
-        // 3. switch to receiver                +-----------------+
-
-        bool slow
-            = (!(self.rights & capability_slot::WRITE)) || (state != READY_TO_RECEIVE)
-           || !((
-               queue_head && (queue_head->reply_state == process::reply_state_object::READY_TO_REPLY)
-               || !(owner.priority <= queue_head->priority)
-           ));
-        if (slow) [[unlikely]]
-        {
-            return operation_call(owner, self, info);
-        }
-
-        // commit state
-
-        // send
-
-        return {};
     }
 
     capability_result ipc_port::operation_call(process &owner, capability_slot &self, message_info info)
@@ -240,8 +233,8 @@ namespace a9n::kernel
                         return {};
                     }
 
-                    owner.status      = process_status::BLOCKED;
-                    owner.reply_state = process::reply_state_object::WAIT;
+                    owner.status             = process_status::BLOCKED;
+                    owner.source_reply_state = process::source_reply_state_object::WAIT;
 
                     return push_ipc_queue(owner)
                         .and_then(try_schedule_and_switch)
@@ -255,57 +248,35 @@ namespace a9n::kernel
                         .and_then(
                             [&](liba9n::not_null<process> target) -> capability_result
                             {
-                                switch (target->reply_state)
+                                [[unlikely]] if (target->destination_reply_state
+                                                 != process::destination_reply_state_object::NONE)
                                 {
-                                        /*
-                                case process::reply_state_object::NONE :
+                                    if (!info.is_block())
                                     {
-                                        target->reply_state
-                                            = process::reply_state_object::READY_TO_REPLY;
-                                        [[fallthrough]];
+                                        return {};
                                     }
-                                case process::reply_state_object::READY_TO_REPLY :
-                                    {
-                                        // overwrite
-                                        target->reply_target = &owner;
 
-                                        if (!info.is_block()) [[unlikely]]
-                                        {
-                                            // receiver is not ready
-                                            return {};
-                                        }
-
-                                        return process_manager_core.try_schedule_and_switch()
-                                            .transform_error(convert_kernel_to_capability_error);
-                                        [[fallthrough]];
-                                    }
-                                        */
-
-                                    case process::reply_state_object::NONE :
-                                        [[fallthrough]];
-                                    case process::reply_state_object::READY_TO_REPLY :
-                                        target->reply_state = process::reply_state_object::WAIT;
-                                        [[fallthrough]];
-                                    [[likely]] case process::reply_state_object::WAIT :
-                                        return transfer_message(target.get(), owner, info)
-                                            .and_then(
-                                                [&, this](void) -> capability_result
-                                                {
-                                                    target->status = process_status::READY;
-                                                    target->reply_state
-                                                        = process::reply_state_object::READY_TO_REPLY;
-                                                    target->reply_target = &owner;
-
-                                                    return process_manager_core
-                                                        .try_direct_schedule_and_switch(target.get())
-                                                        .transform_error(convert_kernel_to_capability_error
-                                                        );
-                                                }
-                                            );
-
-                                    [[unlikely]] default :
-                                        return capability_error::ILLEGAL_OPERATION;
+                                    owner.status = process_status::BLOCKED;
+                                    owner.source_reply_state = process::source_reply_state_object::WAIT;
+                                    return push_ipc_queue(owner)
+                                        .and_then(try_schedule_and_switch)
+                                        .transform_error(convert_kernel_to_capability_error);
                                 }
+
+                                target->destination_reply_state
+                                    = process::destination_reply_state_object::READY_TO_REPLY;
+                                target->destination_reply_target = &owner;
+
+                                return transfer_message(target.get(), owner, info)
+                                    .and_then(
+                                        [&, this](void) -> capability_result
+                                        {
+                                            target->status = process_status::READY;
+                                            return process_manager_core
+                                                .try_direct_schedule_and_switch(target.get())
+                                                .transform_error(convert_kernel_to_capability_error);
+                                        }
+                                    );
                             }
                         );
                 }
@@ -320,32 +291,35 @@ namespace a9n::kernel
         ipc_port::operation_reply(process &owner, capability_slot &self, message_info info)
     {
         // reply does not require any rights !
-        switch (owner.reply_state)
+        switch (owner.destination_reply_state)
         {
-            [[likely]] case process::reply_state_object::READY_TO_REPLY :
+            [[likely]] case process::destination_reply_state_object::READY_TO_REPLY :
                 {
                     DEBUG_LOG("ready to reply");
                     // available for immediate `reply`
-                    if (!owner.reply_target) [[unlikely]]
+                    if (!owner.destination_reply_target) [[unlikely]]
                     {
                         return capability_error::FATAL;
                     }
 
-                    DEBUG_LOG("reply_target : 0x%016llx", owner.reply_target);
-                    auto client = owner.reply_target;
+                    DEBUG_LOG("destination_reply_target : 0x%016llx", owner.destination_reply_target);
+                    auto client = owner.destination_reply_target;
 
                     return transfer_message(*client, owner, info)
                         .and_then(
                             [&](void) -> capability_result
                             {
                                 DEBUG_LOG("initialize reply_target");
-                                // initialize
-                                client->status       = process_status::READY;
-                                client->reply_state  = process::reply_state_object::NONE;
-                                client->reply_target = nullptr;
 
-                                owner.reply_state    = process::reply_state_object::NONE;
-                                owner.reply_target   = nullptr;
+                                // init client
+                                client->status = process_status::READY;
+                                client->source_reply_state = process::source_reply_state_object::NONE;
+                                client->source_reply_target = nullptr;
+
+                                // init server (this)
+                                owner.destination_reply_state
+                                    = process::destination_reply_state_object::NONE;
+                                owner.destination_reply_target = nullptr;
 
                                 return process_manager_core.mark_scheduled(*client)
                                     .transform_error(convert_kernel_to_capability_error)
@@ -363,19 +337,12 @@ namespace a9n::kernel
                         );
                 }
 
-            case process::reply_state_object::NONE :
-            case process::reply_state_object::WAIT :
+            case process::destination_reply_state_object::NONE :
                 return {};
 
             [[unlikely]] default :
                 return capability_error::ILLEGAL_OPERATION;
         }
-    }
-
-    capability_result
-        ipc_port::operation_reply_receive_fastpath(process &owner, capability_slot &self, message_info info)
-    {
-        return {};
     }
 
     capability_result
