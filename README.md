@@ -131,10 +131,20 @@ sudo apt update && sudo apt install -y \
 make -j8
 ```
 
+## Build (CMake; Experimental)
+
+```bash
+mkdir build
+cmake -B build -DARCH={target_arch} -DCMAKE_TOOLCHAIN_FILE=./src/hal/{target_arch}/toolchain.cmake -DCMAKE_BUILD_TYPE={Debug|Release}
+cmake --build build
+```
+> [!NOTE]
+> Currently, the CMake build supports only the kernel binary. 
+
 ## Usage
 
 ```bash
-./scripts/run.sh
+./scripts/run_qemu.sh
 ```
 
 ## Author
