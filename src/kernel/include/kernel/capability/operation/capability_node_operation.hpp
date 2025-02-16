@@ -19,18 +19,16 @@ namespace a9n::kernel
     // they are defined separately.
     namespace capability_node_copy_argument
     {
-        inline constexpr a9n::word DESTINATION_INDEX = 0;
-        inline constexpr a9n::word SOURCE_DESCRIPTOR = 1;
-        inline constexpr a9n::word SOURCE_DEPTH      = 2;
-        inline constexpr a9n::word SOURCE_INDEX      = 3;
+        inline constexpr a9n::word DESTINATION_INDEX = 2;
+        inline constexpr a9n::word SOURCE_DESCRIPTOR = 3;
+        inline constexpr a9n::word SOURCE_INDEX      = 4;
     };
 
     namespace capability_node_move_argument
     {
-        inline constexpr a9n::word DESTINATION_INDEX = 0;
-        inline constexpr a9n::word SOURCE_DESCRIPTOR = 1;
-        inline constexpr a9n::word SOURCE_DEPTH      = 2;
-        inline constexpr a9n::word SOURCE_INDEX      = 3;
+        inline constexpr a9n::word DESTINATION_INDEX = 2;
+        inline constexpr a9n::word SOURCE_DESCRIPTOR = 3;
+        inline constexpr a9n::word SOURCE_INDEX      = 4;
     };
 
     namespace capability_node_revoke_argument

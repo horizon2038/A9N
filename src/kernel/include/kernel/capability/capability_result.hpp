@@ -1,6 +1,7 @@
 #ifndef A9N_KERNEL_CAPABILITY_RESULT_HPP
 #define A9N_KERNEL_CAPABILITY_RESULT_HPP
 
+#include <kernel/kernel_result.hpp>
 #include <kernel/types.hpp>
 #include <liba9n/result/result.hpp>
 
@@ -9,6 +10,7 @@ namespace a9n::kernel
     enum class capability_error : a9n::word
     {
         ILLEGAL_OPERATION,
+        PERMISSION_DENIED,
         INVALID_DESCRIPTOR,
         INVALID_DEPTH,
         INVALID_ARGUMENT,
@@ -25,6 +27,9 @@ namespace a9n::kernel
         {
             case capability_error::ILLEGAL_OPERATION :
                 return "ILLEGAL OPERATION";
+
+            case capability_error::PERMISSION_DENIED :
+                return "PERMISSION DENIED";
 
             case capability_error::INVALID_DESCRIPTOR :
                 return "INVALID DESCRIPTOR";
@@ -45,6 +50,11 @@ namespace a9n::kernel
                 return "ERROR NOT FOUND";
         }
     };
+
+    inline capability_error convert_kernel_to_capability_error([[maybe_unused]] kernel_error e)
+    {
+        return capability_error::FATAL;
+    }
 
 }
 

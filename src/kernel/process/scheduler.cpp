@@ -4,7 +4,7 @@
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
-#include <liba9n/result/__result/result_impl.hpp>
+#include <liba9n/result/result.hpp>
 
 namespace a9n::kernel
 {
@@ -56,18 +56,21 @@ namespace a9n::kernel
     {
         if (!target_process)
         {
+            DEBUG_LOG("invalid process");
             return scheduler_error::INVALID_PROCESS;
         }
 
         auto target_priority = target_process->priority;
         if (target_priority < 0 || target_priority >= PRIORITY_MAX)
         {
+            DEBUG_LOG("invalid priority");
             return scheduler_error::INVALID_PRIORITY;
         }
         if (target_priority < highest_priority)
         {
             if (target_process->status != process_status::READY)
             {
+                DEBUG_LOG("invalid process status");
                 return scheduler_error::INVALID_PROCESS;
             }
 
@@ -110,25 +113,29 @@ namespace a9n::kernel
 
     scheduler_result scheduler::add_process(process *target_process)
     {
-        if (!target_process)
+        if (!target_process) [[unlikely]]
         {
+            DEBUG_LOG("invalid process");
             return scheduler_error::INVALID_PROCESS;
         }
 
-        if (target_process->status != process_status::READY)
+        if (target_process->status != process_status::READY) [[unlikely]]
         {
             // in benno scheduling, only executable processes exist in the ready-queue
+            DEBUG_LOG("invalid process status");
             return scheduler_error::INVALID_PROCESS;
         }
 
         auto target_priority = target_process->priority;
-        if (target_priority < 0 || target_priority >= PRIORITY_MAX)
+        if (target_priority < 0 || target_priority >= PRIORITY_MAX) [[unlikely]]
         {
+            DEBUG_LOG("invalid priority");
             return scheduler_error::INVALID_PRIORITY;
         }
 
-        if (target_process->next || target_process->preview)
+        if (target_process->next || target_process->preview) [[unlikely]]
         {
+            DEBUG_LOG("process already exists in queue");
             return scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE;
         }
 

@@ -1,14 +1,21 @@
+#include "hal/interface/memory_manager.hpp"
+#include "kernel/memory/memory_type.hpp"
 #include <kernel/capability/generic.hpp>
 
+#include <kernel/capability/address_space.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/capability_result.hpp>
 #include <kernel/capability/capability_types.hpp>
 #include <kernel/capability/frame_capability.hpp>
+#include <kernel/capability/io_port_capability.hpp>
 #include <kernel/capability/ipc_port.hpp>
+#include <kernel/capability/notification_port.hpp>
 #include <kernel/capability/page_table_capability.hpp>
 #include <kernel/capability/process_control_block.hpp>
+#include <kernel/capability/virtual_cpu_capability.hpp>
+
 #include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/memory/memory.hpp>
 #include <kernel/process/process.hpp>
@@ -22,6 +29,31 @@
 
 namespace a9n::kernel
 {
+    // helper
+    namespace
+    {
+        capability_error convert_memory_error_to_capability_error(memory_error e)
+        {
+            switch (e)
+            {
+                using enum memory_error;
+
+                case OUT_OF_MEMORY :
+                    DEBUG_LOG("OUT_OF_MEMORY");
+                    return capability_error::INVALID_ARGUMENT;
+
+                case INVALID_ALIGNMENT :
+                    DEBUG_LOG("INVALID_ALIGNMENT");
+                    [[fallthrough]];
+                case INVALID_ADDRESS :
+                    DEBUG_LOG("INVALID_ADDRESS");
+                    [[fallthrough]];
+                default :
+                    return capability_error::FATAL;
+            }
+        }
+    }
+
     a9n::physical_address generic_info::base(void) const
     {
         return base_address;
@@ -57,23 +89,21 @@ namespace a9n::kernel
         return 0;
     }
 
-    memory_result<allocate_info>
-        generic_info::try_apply_allocate(a9n::word memory_size_bits, a9n::word count)
+    memory_result<a9n::physical_address> generic_info::try_apply_allocate(a9n::word memory_size_bits)
     {
         auto original_watermark = current_watermark();
         auto unit_size          = (static_cast<a9n::word>(1) << memory_size_bits);
         auto aligned_watermark  = liba9n::align_value(watermark, unit_size);
-        auto boundary_address   = aligned_watermark + (unit_size * count);
+        auto boundary_address   = aligned_watermark + (unit_size);
 
-        if (boundary_address < (base_address + size()))
+        if (boundary_address >= (base_address + size()))
         {
             return memory_error::OUT_OF_MEMORY;
         }
 
-        // auto apply_allocate(memory_size_bits);
+        apply_allocate(memory_size_bits);
 
-        return allocate_info { .aligned_base  = original_watermark,
-                               .new_watermark = current_watermark() };
+        return aligned_watermark;
     }
 
     capability_slot_data generic_info::dump_slot_data() const
@@ -106,7 +136,7 @@ namespace a9n::kernel
         {
             case CONVERT :
                 {
-                    a9n::kernel::utility::logger::printk("generic::convert\n");
+                    DEBUG_LOG("generic::convert");
                     return convert(owner, self);
                 }
 
@@ -147,7 +177,7 @@ namespace a9n::kernel
         return retrieve_target_root_slot(owner)
             .transform_error(convert_capability_error)
             .and_then(
-                [&](capability_slot *slot) -> capability_result
+                [&](capability_slot *root_slot) -> capability_result
                 {
                     auto self_info = create_generic_info(self.data);
 
@@ -227,28 +257,65 @@ namespace a9n::kernel
                                 {
                                     DEBUG_LOG("index : %llu", index + i);
                                     auto result
-                                        = slot->component->retrieve_slot(index + i)
+                                        = root_slot->component->retrieve_slot(index + i)
                                               .transform_error(convert_capability_error)
                                               .and_then(
-                                                  [&](capability_slot *slot) -> capability_result
+                                                  [&](capability_slot *destination_slot) -> capability_result
                                                   {
-                                                      if (slot->type != capability_type::NONE)
+                                                      if (destination_slot->type
+                                                          != capability_type::NONE)
                                                       {
                                                           // clang-format off
-                                                          a9n::kernel::utility::logger::printk("slot type : 0x%llx\n", slot->type);
+                                                          a9n::kernel::utility::logger::printk("slot type : 0x%llx\n", destination_slot->type);
                                                           a9n::kernel::utility::logger::error("slot is already used");
                                                           // clang-format on
                                                           return capability_error::INVALID_ARGUMENT;
                                                       }
 
-                                                      return try_make_capability(
-                                                          type,
-                                                          memory_size_bits,
-                                                          specific_bits,
-                                                          self_info,
-                                                          self,
-                                                          *slot
+                                                      DEBUG_LOG(
+                                                          "convert to 0x%llx (destination)",
+                                                          destination_slot
                                                       );
+
+                                                      return destination_slot->try_remove_and_init()
+                                                          .transform_error(
+                                                              [](kernel_error e) -> capability_error
+                                                              {
+                                                                  return capability_error::FATAL;
+                                                              }
+                                                          )
+                                                          .and_then(
+                                                              [&](void) -> capability_result
+                                                              {
+                                                                  return try_make_capability(
+                                                                      type,
+                                                                      memory_size_bits,
+                                                                      specific_bits,
+                                                                      self_info,
+                                                                      self,
+                                                                      *destination_slot
+                                                                  );
+                                                              }
+                                                          )
+                                                          .and_then(
+                                                              [&](void) -> capability_result
+                                                              {
+                                                                  DEBUG_LOG(
+                                                                      "convert [slot : "
+                                                                      "0x%llx][type : "
+                                                                      "0x%4x][component : 0x%llx]",
+                                                                      destination_slot,
+                                                                      type,
+                                                                      destination_slot->component
+                                                                  );
+                                                                  // update status
+                                                                  self.data
+                                                                      = self_info.dump_slot_data();
+                                                                  self.insert_child(*destination_slot);
+
+                                                                  return {};
+                                                              }
+                                                          );
                                                   }
                                               );
                                     if (!result)
@@ -256,9 +323,11 @@ namespace a9n::kernel
                                         return result.unwrap_error();
                                     }
 
-                                    // insert to dependency node
-                                    self.insert_child(*slot);
-                                    a9n::kernel::utility::logger::printk("convert is successful\n");
+                                    DEBUG_LOG(
+                                        "[base : 0x%llx][watermark : 0x%llx]",
+                                        self_info.base(),
+                                        self_info.current_watermark()
+                                    );
                                 }
 
                                 return {};
@@ -347,10 +416,21 @@ namespace a9n::kernel
                 return liba9n::calculate_radix_ceil(sizeof(process_control_block));
 
             case IPC_PORT :
+                return liba9n::calculate_radix_ceil(sizeof(ipc_port));
+
             case NOTIFICATION_PORT :
-            case INTERRUPT :
+                return liba9n::calculate_radix_ceil(sizeof(notification_port));
+
+            case INTERRUPT_REGION :
+            case INTERRUPT_PORT :
+                return liba9n::option_none;
+
             case IO_PORT :
+                return liba9n::calculate_radix_ceil(sizeof(io_port_capability));
+
             case VIRTUAL_CPU :
+                return liba9n::calculate_radix_ceil(sizeof(virtual_cpu_capability));
+
             case VIRTUAL_PAGE_TABLE :
             default :
                 return liba9n::option_none;
@@ -359,6 +439,29 @@ namespace a9n::kernel
 
     capability_result generic::revoke(capability_slot &self)
     {
+        // generic cannot be copied; so it is basically read/write and 1-set
+        [[unlikely]] if (!(self.rights & capability_slot::object_rights::READ)
+                         && !(self.rights & capability_slot::object_rights::WRITE))
+        {
+            return capability_error::ILLEGAL_OPERATION;
+        }
+
+        // revoke recursively
+        for (auto start_slot = self.next_slot; start_slot->depth < self.depth;
+             start_slot      = start_slot->next_slot)
+        {
+            if (!start_slot->component)
+            {
+                return {};
+            }
+
+            auto result = start_slot->component->revoke(*start_slot);
+            if (!result)
+            {
+                return result;
+            }
+        }
+
         return {};
     }
 
@@ -384,112 +487,241 @@ namespace a9n::kernel
 
             case NODE :
                 // specific_bits is radix
-                return try_make_capability_node(info.current_watermark(), specific_bits)
+                DEBUG_LOG("convert to node");
+                return info.try_apply_allocate(memory_size_bits)
+                    .transform_error(convert_memory_error_to_capability_error)
                     .and_then(
-                        [&](liba9n::not_null<capability_node> node) -> kernel_result
+                        [&](a9n::physical_address new_watermark) -> capability_result
                         {
-                            return try_configure_capability_node_slot(target_slot, node.get());
-                        }
-                    )
-                    .transform_error(
-                        [](kernel_error e) -> capability_error
-                        {
-                            return capability_error::FATAL;
-                        }
-                    )
-                    .and_then(
-                        [&](void) -> capability_result
-                        {
-                            info.apply_allocate(memory_size_bits);
-                            return {};
+                            return try_make_capability_node(
+                                       physical_to_virtual_address(new_watermark),
+                                       specific_bits
+                            )
+                                .and_then(
+                                    [&](liba9n::not_null<capability_node> node) -> kernel_result
+                                    {
+                                        return try_configure_capability_node_slot(
+                                            target_slot,
+                                            node.get()
+                                        );
+                                    }
+                                )
+                                .transform_error(
+                                    [](kernel_error e) -> capability_error
+                                    {
+                                        return capability_error::FATAL;
+                                    }
+                                );
                         }
                     );
 
             case GENERIC :
                 {
-                    auto request_unit_size = (static_cast<a9n::word>(1) << memory_size_bits);
-                    auto aligned_watermark
-                        = liba9n::align_value(info.current_watermark(), request_unit_size);
-                    auto child_info = generic_info(
-                        aligned_watermark,
-                        memory_size_bits,
-                        info.is_device(),
-                        aligned_watermark
-                    );
-                    info.apply_allocate(memory_size_bits);
-
-                    // update self
-                    return try_configure_generic_slot(self, info)
+                    DEBUG_LOG("convert to generic");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
                         .and_then(
-                            [&](void) -> kernel_result
+                            [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                // update child
-                                return try_configure_generic_slot(target_slot, child_info);
+                                auto child_info = generic_info {
+                                    new_watermark,
+                                    memory_size_bits,
+                                    info.is_device(),
+                                    new_watermark
+                                };
+
+                                return try_configure_generic_slot(self, info)
+                                    .and_then(
+                                        [&](void) -> kernel_result
+                                        {
+                                            return try_configure_generic_slot(target_slot, child_info);
+                                        }
+                                    )
+                                    .transform_error(
+                                        [](kernel_error e) -> capability_error
+                                        {
+                                            return capability_error::FATAL;
+                                        }
+                                    );
                             }
-                        )
-                        .transform_error(
-                            [](kernel_error e) -> capability_error
+                        );
+                }
+
+            case ADDRESS_SPACE :
+                {
+                    DEBUG_LOG("convert to address_space");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
+                        .and_then(
+                            [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                return capability_error::FATAL;
+                                return a9n::hal::make_address_space(new_watermark)
+                                    .transform_error(
+                                        [](a9n::hal::hal_error e) -> capability_error
+                                        {
+                                            return capability_error::FATAL;
+                                        }
+                                    )
+                                    .and_then(
+                                        [&](a9n::kernel::page_table table) -> capability_result
+                                        {
+                                            return try_configure_address_space_slot(target_slot, table)
+                                                .transform_error(
+                                                    [](kernel_error e) -> capability_error
+                                                    {
+                                                        return capability_error::FATAL;
+                                                    }
+                                                );
+                                        }
+                                    );
                             }
                         );
                 }
 
             case PAGE_TABLE :
                 {
-                    // TODO: specific-bits aware implementation
-                    auto target_table = page_table { .address = info.current_watermark() };
-                    return try_configure_page_table_slot(target_slot, target_table)
+                    DEBUG_LOG("convert to page_table");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
                         .and_then(
-                            [&](void) -> kernel_result
+                            [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                info.apply_allocate(memory_size_bits);
-                                return {};
-                            }
-                        )
-                        .transform_error(
-                            [](kernel_error e) -> capability_error
-                            {
-                                return capability_error::FATAL;
+                                auto target_table
+                                    = page_table { .address = new_watermark, .depth = specific_bits };
+
+                                return try_configure_page_table_slot(target_slot, target_table)
+                                    .transform_error(
+                                        [](kernel_error e) -> capability_error
+                                        {
+                                            return capability_error::FATAL;
+                                        }
+                                    );
                             }
                         );
                 }
 
             case FRAME :
                 {
-                    auto target_frame = frame { .address = info.current_watermark() };
-                    return try_configure_frame_slot(target_slot, target_frame)
+                    DEBUG_LOG("convert to frame");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
                         .and_then(
-                            [&](void) -> kernel_result
+                            [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                info.apply_allocate(memory_size_bits);
-                                return {};
-                            }
-                        )
-                        .transform_error(
-                            [](kernel_error e) -> capability_error
-                            {
-                                return capability_error::FATAL;
+                                auto target_frame = frame { .address = new_watermark };
+
+                                return try_configure_frame_slot(target_slot, target_frame)
+                                    .transform_error(
+                                        [](kernel_error e) -> capability_error
+                                        {
+                                            return capability_error::FATAL;
+                                        }
+                                    );
                             }
                         );
                 }
 
             case PROCESS_CONTROL_BLOCK :
                 {
-                    // size_bits is ignored
-                    auto pcb = new (a9n::kernel::physical_to_virtual_pointer<void *>(
-                        liba9n::calculate_radix_ceil(info.current_watermark())
-                    )) process_control_block {};
-                    info.apply_allocate(memory_size_bits);
-                    return {};
+                    DEBUG_LOG("convert to process_control_block");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
+                        .and_then(
+                            [&](a9n::physical_address new_watermark) -> capability_result
+                            {
+                                auto pcb = new (
+                                    a9n::kernel::physical_to_virtual_pointer<void *>(new_watermark)
+                                ) process_control_block {};
+
+                                return try_configure_process_control_block_slot(target_slot, *pcb)
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
                 }
 
             case IPC_PORT :
+                {
+                    DEBUG_LOG("convert to ipc_port");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
+                        .and_then(
+                            [&](a9n::physical_address new_watermark) -> capability_result
+                            {
+                                auto port = new (
+                                    a9n::kernel::physical_to_virtual_pointer<void *>(new_watermark)
+                                ) ipc_port {};
+
+                                return try_configure_ipc_port_slot(target_slot, *port, 0)
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
+                }
+
             case NOTIFICATION_PORT :
-            case INTERRUPT :
+                {
+                    DEBUG_LOG("convert to notification_port");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
+                        .and_then(
+                            [&](a9n::physical_address new_watermark) -> capability_result
+                            {
+                                auto port = new (
+                                    a9n::kernel::physical_to_virtual_pointer<void *>(new_watermark)
+                                ) notification_port {};
+
+                                return try_configure_notification_port_slot(target_slot, *port, 0)
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
+                }
+            case INTERRUPT_REGION :
+                DEBUG_LOG("convert to interrupt_region");
+                return capability_error::DEBUG_UNIMPLEMENTED;
+
+            case INTERRUPT_PORT :
+                DEBUG_LOG("convert to interrupt_port");
+                return capability_error::DEBUG_UNIMPLEMENTED;
+
             case IO_PORT :
+                DEBUG_LOG("convert to io_port");
+                return info.try_apply_allocate(memory_size_bits)
+                    .transform_error(convert_memory_error_to_capability_error)
+                    .and_then(
+                        [&](a9n::physical_address new_watermark) -> capability_result
+                        {
+                            auto port = new (
+                                a9n::kernel::physical_to_virtual_pointer<void *>(new_watermark)
+                            ) io_port_capability {};
+                            auto caution_test_address_range
+                                = io_port_address_range { .min = 0, .max = ~static_cast<a9n::word>(0) };
+
+                            return try_configure_io_port_slot(target_slot, *port, caution_test_address_range)
+                                .transform_error(convert_kernel_to_capability_error);
+                        }
+                    );
+
             case VIRTUAL_CPU :
+                {
+                    DEBUG_LOG("convert to virtual_cpu");
+                    return info.try_apply_allocate(memory_size_bits)
+                        .transform_error(convert_memory_error_to_capability_error)
+                        .and_then(
+                            [&](a9n::physical_address new_watermark) -> capability_result
+                            {
+                                auto virtual_cpu = new (
+                                    a9n::kernel::physical_to_virtual_pointer<void *>(new_watermark)
+                                ) virtual_cpu_capability {};
+
+                                return try_configure_virtual_cpu_slot(target_slot, *virtual_cpu)
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
+                }
+
             case VIRTUAL_PAGE_TABLE :
+                DEBUG_LOG("convert to virtual_page_table");
+                return capability_error::DEBUG_UNIMPLEMENTED;
+
             default :
                 return capability_error::DEBUG_UNIMPLEMENTED;
         }

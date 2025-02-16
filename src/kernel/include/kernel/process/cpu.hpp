@@ -3,6 +3,7 @@
 
 #include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
+#include <kernel/virtualization/virtual_cpu.hpp>
 #include <liba9n/libcxx/array>
 #include <liba9n/result/result.hpp>
 
@@ -10,13 +11,6 @@ namespace a9n::kernel
 {
     inline constexpr a9n::word CPU_COUNT_MAX         = 64;
     inline constexpr a9n::word KERNEL_STACK_SIZE_MAX = a9n::PAGE_SIZE;
-
-    namespace cpu_local_variable_offset
-    {
-        inline constexpr a9n::word KERNEL_STACK_POINTER = 0x00;
-        inline constexpr a9n::word CURRENT_CONTEXT      = 0x08;
-        inline constexpr a9n::word CORE_NUMBER          = 0x10;
-    }
 
     using kernel_stack = liba9n::std::array<uint8_t, KERNEL_STACK_SIZE_MAX>;
 
@@ -33,7 +27,10 @@ namespace a9n::kernel
             hardware_context *current_context;
         };
 
+        a9n::kernel::virtual_cpu *current_virtual_cpu;
+
         a9n::word core_number;
+        alignas(sizeof(a9n::word)) bool is_idle { false };
     } __attribute__((packed));
 
     inline cpu_local_variable cpu_local_variables[CPU_COUNT_MAX];

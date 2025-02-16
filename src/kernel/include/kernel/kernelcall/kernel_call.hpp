@@ -10,21 +10,16 @@
 
 namespace a9n::kernel
 {
-    enum class kernel_call_type : a9n::word
+    // kernel call type is set to a negative value to faciliate kernel call emulation
+    enum class kernel_call_type : a9n::sword
     {
         // all calls to kernel object are made via capability
-        CAPABILITY_CALL,
+        CAPABILITY_CALL = -1,
         // calls that do not require authorization
-        YIELD,
+        YIELD = -2,
         // DEPRECATED: do not use except for debugging purposes
-        DEBUG,
+        DEBUG = -3,
     };
-
-    // +--------------+-------------------+
-    // |     8bit     |  remaining bits   |
-    // +--------------+-------------------+
-    // | target depth | target descriptor |
-    // +--------------+-------------------+
 
     // called from hal's kernel call handler
     void handle_kernel_call(kernel_call_type type);

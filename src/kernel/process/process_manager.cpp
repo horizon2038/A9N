@@ -1,32 +1,85 @@
-#include "kernel/kernel_result.hpp"
 #include <kernel/process/process_manager.hpp>
 
-#include <hal/hal_result.hpp>
-#include <hal/interface/cpu.hpp>
-#include <hal/interface/process_manager.hpp>
-
+#include <kernel/capability/address_space.hpp>
+#include <kernel/kernel_result.hpp>
+#include <kernel/memory/memory.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/scheduler.hpp>
-
-// TODO: remove this
-#include <kernel/memory/memory_manager.hpp>
-
 #include <kernel/utility/logger.hpp>
+
+#include <hal/hal_result.hpp>
+#include <hal/interface/cpu.hpp>
+#include <hal/interface/memory_manager.hpp>
+#include <hal/interface/process_manager.hpp>
 
 #include <liba9n/libc/string.hpp>
 #include <stdint.h>
 
-// HACK: Test Capability
-#include <kernel/capability/capability_node.hpp>
-
 namespace a9n::kernel
 {
+    namespace
+    {
+        process idle_process {};
+
+        inline kernel_result configure_idle(process &target)
+        {
+            alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_address_space;
+            alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_stack;
+
+            return a9n::hal::init_hardware_context(hal::cpu_mode::KERNEL, target.registers)
+                .transform_error(convert_hal_to_kernel_error)
+                .and_then(
+                    [&](void) -> kernel_result
+                    {
+                        // address space
+                        auto idle_address_space_physical = virtual_to_physical_address(
+                            reinterpret_cast<a9n::virtual_address>(&idle_address_space)
+                        );
+                        return a9n::hal::make_address_space(idle_address_space_physical)
+                            .transform_error(convert_hal_to_kernel_error)
+                            .and_then(
+                                [&](page_table idle_page_table) -> kernel_result
+                                {
+                                    return try_configure_address_space_slot(
+                                        target.root_address_space,
+                                        idle_page_table
+                                    );
+                                }
+                            );
+                    }
+                )
+                .and_then(
+                    [&](void) -> kernel_result
+                    {
+                        target.quantum  = QUANTUM_MAX;
+                        target.priority = 0; // lowest priority
+
+                        return hal::configure_general_register(
+                                   target,
+                                   hal::register_type::INSTRUCTION_POINTER,
+                                   reinterpret_cast<a9n::word>(a9n::hal::idle)
+                        )
+                            .and_then(
+                                [&](void) -> hal::hal_result
+                                {
+                                    return hal::configure_general_register(
+                                        target,
+                                        hal::register_type::STACK_POINTER,
+                                        reinterpret_cast<a9n::word>(&idle_stack[sizeof(idle_stack)])
+                                    );
+                                }
+                            )
+                            .transform_error(convert_hal_to_kernel_error);
+                    }
+                );
+        }
+    }
+
     kernel_result process_manager::init(void)
     {
         highest_priority = 0;
-
-        return {};
+        return configure_idle(idle_process);
     }
 
     kernel_result process_manager::handle_timer(void)
@@ -36,10 +89,10 @@ namespace a9n::kernel
             return try_schedule_and_switch();
         };
 
-        auto run_idle_if_failed = [](kernel_error e) -> kernel_result
+        auto run_idle_if_failed = [&](kernel_error e) -> kernel_result
         {
             DEBUG_LOG("start IDLE ...\n");
-            a9n::hal::idle();
+            switch_to_idle();
 
             // unreachable
             return {};
@@ -51,28 +104,25 @@ namespace a9n::kernel
             return e;
         };
 
-        return retrieve_current_process()
-            .and_then(
-                [&](process *current) -> kernel_result
+        return retrieve_current_process().and_then(
+            [&](process *current) -> kernel_result
+            {
+                current->quantum--;
+                // the timing when quantum becomes 0 is limited and `[[unlikely]]` is allowed
+                if (current->quantum <= 0) [[unlikely]]
                 {
-                    current->quantum--;
-                    // the timing when quantum becomes 0 is limited and `[[unlikely]]` is allowed
-                    [[unlikely]] if (current->quantum <= 0)
-                    {
-                        current->quantum = QUANTUM_MAX;
-                        return mark_scheduled(*current)
-                            .and_then(schedule_and_switch)
-                            .or_else(run_idle_if_failed);
-                    }
-
-                    return {};
+                    current->quantum = QUANTUM_MAX;
+                    return mark_scheduled(*current).and_then(schedule_and_switch).or_else(run_idle_if_failed);
                 }
-            )
-            .or_else(log_kernel_error);
+
+                return {};
+            }
+        );
+        // .or_else(log_kernel_error);
     }
 
     // called by timer handler
-    // TODO: clean this
+    // TODO: remove this
     kernel_result process_manager::switch_context(void)
     {
         auto result
@@ -108,12 +158,9 @@ namespace a9n::kernel
                                       ) -> liba9n::result<process *, scheduler_error>
                                       {
                                           utility::logger::printk(
-                                              "failed schedule : %llu\n",
-                                              static_cast<a9n::word>(e)
+                                              "failed schedule : %s\n",
+                                              scheduler_error_to_string(e)
                                           );
-
-                                          a9n::kernel::utility::logger::printk("start IDLE\n");
-                                          a9n::hal::idle();
 
                                           return e;
                                       }
@@ -130,8 +177,6 @@ namespace a9n::kernel
                               a9n::hal::hal_error_to_string(e)
                           );
 
-                          a9n::kernel::utility::logger::printk("start IDLE\n");
-                          a9n::hal::idle();
                           return e;
                       }
                   );
@@ -157,7 +202,7 @@ namespace a9n::kernel
                 if (!local_variable)
                 {
                     a9n::kernel::utility::logger::error("failed to get local variable");
-                    a9n::hal::idle();
+                    return hal::hal_error::NO_SUCH_ADDRESS;
                 }
 
                 if (auto result = scheduler_core.schedule())
@@ -165,7 +210,7 @@ namespace a9n::kernel
                     auto next_process = result.unwrap();
                     if (!next_process)
                     {
-                        a9n::hal::idle();
+                        return hal::hal_error::NO_SUCH_ADDRESS;
                     }
                     a9n::kernel::utility::logger::printk("local variable : 0x%016llx\n", local_variable);
                     a9n::kernel::utility::logger::printk("next process : 0x%016llx\n", next_process);
@@ -185,7 +230,7 @@ namespace a9n::kernel
             }
         );
 
-        if (!hal_res)
+        if (!hal_res) [[unlikely]]
         {
             utility::logger::printk("no such local variable\n");
             return kernel_error::HAL_ERROR;
@@ -194,82 +239,87 @@ namespace a9n::kernel
         return {};
     }
 
-    kernel_result process_manager::try_schedule_and_switch(void)
+    kernel_result process_manager::switch_to_idle(void)
     {
         return a9n::hal::current_local_variable()
             .transform_error(convert_hal_to_kernel_error)
             .and_then(
                 [&](cpu_local_variable *local_variable) -> kernel_result
                 {
+                    local_variable->current_process = &idle_process;
+                    local_variable->is_idle         = true;
+
+                    return {};
+                }
+            );
+    }
+
+    kernel_result process_manager::try_schedule_and_switch(void)
+    {
+        return a9n::hal::current_local_variable()
+            .and_then(
+                [&](cpu_local_variable *local_variable) -> hal::hal_result
+                {
                     return scheduler_core.schedule()
                         .transform_error(
-                            [&](scheduler_error e) -> kernel_error
+                            [&](scheduler_error e) -> hal::hal_error
                             {
                                 a9n::kernel::utility::logger::printk(
-                                    "failed schedule : %llu\n",
-                                    static_cast<a9n::word>(e)
+                                    "failed schedule : %s\n",
+                                    scheduler_error_to_string(e)
                                 );
 
-                                return kernel_error::NO_SUCH_ADDRESS;
+                                switch_to_idle();
+
+                                return hal::hal_error::TRY_AGAIN;
                             }
                         )
                         .and_then(
-                            [&](process *next_process) -> kernel_result
+                            [&](process *next_process) -> hal::hal_result
                             {
-                                bool is_switch = local_variable->current_process != next_process;
-                                if (!is_switch)
-                                {
-                                    return {};
-                                }
-
                                 process &preview_process        = *local_variable->current_process;
                                 local_variable->current_process = next_process;
+                                local_variable->is_idle         = false;
 
-                                return a9n::hal::switch_context(preview_process, *next_process)
-                                    .transform_error(convert_hal_to_kernel_error);
+                                return a9n::hal::switch_context(preview_process, *next_process);
                             }
                         );
                 }
-            );
+            )
+            .transform_error(convert_hal_to_kernel_error);
     }
 
     kernel_result process_manager::try_direct_schedule_and_switch(process &target_process)
     {
         return a9n::hal::current_local_variable()
-            .transform_error(convert_hal_to_kernel_error)
             .and_then(
-                [&](cpu_local_variable *local_variable) -> kernel_result
+                [&](cpu_local_variable *local_variable) -> hal::hal_result
                 {
                     return scheduler_core.try_direct_schedule(&target_process)
                         .transform_error(
-                            [&](scheduler_error e) -> kernel_error
+                            [&](scheduler_error e) -> hal::hal_error
                             {
-                                return kernel_error::NO_SUCH_ADDRESS;
+                                return hal::hal_error::TRY_AGAIN;
+
+                                switch_to_idle();
                             }
                         )
                         .and_then(
-                            [&](process *next_process) -> kernel_result
+                            [&](process *next_process) -> hal::hal_result
                             {
                                 // yield quantum to next process
-
-                                bool is_switch = local_variable->current_process != next_process;
-
                                 next_process->quantum += local_variable->current_process->quantum;
 
                                 process &preview_process        = *local_variable->current_process;
                                 local_variable->current_process = next_process;
+                                local_variable->is_idle         = false;
 
-                                if (!is_switch)
-                                {
-                                    return {};
-                                }
-
-                                return a9n::hal::switch_context(preview_process, *next_process)
-                                    .transform_error(convert_hal_to_kernel_error);
+                                return a9n::hal::switch_context(preview_process, *next_process);
                             }
                         );
                 }
-            );
+            )
+            .transform_error(convert_hal_to_kernel_error);
     }
 
     kernel_result process_manager::yield(void)
@@ -294,7 +344,7 @@ namespace a9n::kernel
     liba9n::result<process *, kernel_error> process_manager::retrieve_current_process()
     {
         auto result = a9n::hal::current_local_variable();
-        if (!result)
+        if (!result) [[unlikely]]
         {
             utility::logger::printk(
                 "failed to retrieve process : HAL error : %s\n",
@@ -304,7 +354,7 @@ namespace a9n::kernel
         }
 
         auto current_process = result.unwrap()->current_process;
-        if (!current_process)
+        if (!current_process) [[unlikely]]
         {
             utility::logger::printk(
                 "failed to retrieve process : process is empty\n",
@@ -322,104 +372,18 @@ namespace a9n::kernel
         process.status  = process_status::READY;
         process.quantum = QUANTUM_MAX;
 
-        // DEBUG_LOG("mark scheduled 0x%016llx\n", &process);
+        if (&process == &idle_process)
+        {
+            return {};
+        }
+
         auto result = scheduler_core.add_process(&process);
-        if (!result)
+        [[unlikely]] if (!result)
         {
             utility::logger::printk("failed to add process to scheduler\n");
             return kernel_error::UNEXPECTED;
         }
 
         return {};
-    }
-
-    // TODO: remove this
-    // 1. merge to init_process
-    // 2. receive const reference without pointer
-    void process_manager::create_process(const char *process_name, a9n::virtual_address entry_point_address)
-    {
-        uint16_t process_id = determine_process_id();
-
-        if (process_id <= 0)
-        {
-            return; // impl error
-        }
-
-        process *current_process = &process_list[process_id];
-        init_process(current_process, process_id, process_name, entry_point_address);
-        a9n::hal::init_hardware_context(current_process->registers);
-        a9n::hal::configure_general_register(
-            *current_process,
-            a9n::hal::register_type::INSTRUCTION_POINTER,
-            entry_point_address
-        );
-
-        utility::logger::printk(
-            "create process (entry : 0x%016llx)\n",
-            a9n::hal::get_general_register(*current_process, a9n::hal::register_type::INSTRUCTION_POINTER)
-        );
-
-        current_process->status = process_status::READY;
-        scheduler_core.add_process(current_process);
-    }
-
-    void process_manager::init_process(
-        process             *process,
-        process_id           target_process_id,
-        const char          *process_name,
-        a9n::virtual_address entry_point_address
-    )
-    {
-        utility::logger::printk("configure process id\n");
-        process->id = target_process_id;
-        utility::logger::printk("configure process name\n");
-        liba9n::std::strcpy(process->name, process_name);
-
-        utility::logger::printk("configure quantum\n");
-        process->status = process_status::BLOCKED;
-        if (liba9n::std::strcmp(process_name, "idle") == 0)
-        {
-            // not working
-            process->priority = 10;
-        }
-        else
-        {
-            process->priority = 0;
-        }
-        process->quantum = QUANTUM_MAX;
-
-        // liba9n::std::memset(process->stack, 0, STACK_SIZE_MAX);
-        utility::logger::printk("init vm\n");
-        memory_manager_core.init_virtual_memory(process);
-    }
-
-    a9n::sword process_manager::determine_process_id()
-    {
-        // 0 == init_server id (reserved).
-
-        for (uint16_t i = 1; i < PROCESS_COUNT_MAX; i++)
-        {
-            if (process_list[i].status != process_status::UNUSED)
-            {
-                continue;
-            }
-            return i;
-        }
-
-        return -1;
-    }
-
-    void process_manager::delete_process(process_id target_process_id)
-    {
-    }
-
-    process *process_manager::search_process_from_id(process_id target_process_id)
-    {
-        if (target_process_id <= 0)
-        {
-            return nullptr;
-        }
-
-        return &process_list[target_process_id];
     }
 }

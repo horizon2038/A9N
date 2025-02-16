@@ -14,20 +14,17 @@ namespace a9n::kernel
 
     class capability_component;
 
-    struct capability_slot_state
-    {
-    };
-
     struct alignas(a9n::WORD_BITS) capability_slot
     {
         enum object_rights : uint8_t
         {
-            NONE  = 0,
-            READ  = 1 << 0,
-            WRITE = 1 << 1,
-            COPY  = 1 << 2,
+            NONE   = 0,
+            READ   = 1 << 0,
+            WRITE  = 1 << 1,
+            COPY   = 1 << 2,
+            MODIFY = 1 << 3,
             // MOVE is always allowed
-            ALL = READ | WRITE | COPY,
+            ALL = READ | WRITE | COPY | MODIFY,
         };
 
         capability_component *component;
@@ -63,6 +60,8 @@ namespace a9n::kernel
             depth        = 0;
         }
 
+        kernel_result try_remove_and_init(void);
+
         void remove_from_dependency_node(void)
         {
             if (preview_slot)
@@ -88,12 +87,12 @@ namespace a9n::kernel
 
         bool has_sibling(void) const
         {
-            if (!next_slot)
+            if (!next_slot || !preview_slot)
             {
                 return false;
             }
 
-            return (depth == next_slot->depth);
+            return (depth == next_slot->depth) || (depth == preview_slot->depth);
         }
 
         bool is_same_slot(const capability_slot &rhs) const;
@@ -121,10 +120,8 @@ namespace a9n::kernel
             auto temp_next_slot = next_slot;
 
             // configure this
-            next_slot = &slot;
+            next_slot         = &slot;
 
-            // TODO: consider the case where the dependency node of the target_slot
-            // has already been set
             slot.preview_slot = this;
             slot.next_slot    = temp_next_slot;
             // slot.depth        = depth + 1;
@@ -135,42 +132,6 @@ namespace a9n::kernel
                 return;
             }
             temp_next_slot->preview_slot = &slot;
-        }
-
-        template<a9n::word Index>
-            requires(Index < ENTRY_DATA_MAX)
-        constexpr a9n::word get_local_data()
-        {
-            return data[Index];
-        }
-
-        template<a9n::word Index>
-            requires(Index < ENTRY_DATA_MAX)
-        constexpr a9n::word get_local_data() const
-        {
-            return data[Index];
-        }
-
-        constexpr a9n::word get_local_data(a9n::word index)
-        {
-            return data[index];
-        }
-
-        constexpr a9n::word get_local_data(a9n::word index) const
-        {
-            return data[index];
-        }
-
-        template<a9n::word Index>
-            requires(Index < ENTRY_DATA_MAX)
-        constexpr void set_local_data(a9n::word value)
-        {
-            data[Index] = value;
-        }
-
-        constexpr void set_local_data(a9n::word index, a9n::word value)
-        {
-            data[index] = value;
         }
     };
 
@@ -242,6 +203,95 @@ namespace a9n::kernel
         }
 
         return rhs.component->is_same_slot(rhs, *this);
+    }
+
+    inline kernel_result capability_slot::try_remove_and_init(void)
+    {
+        if (type == capability_type::NONE)
+        {
+            // already initialized
+            return {};
+        }
+
+        if (!(rights & object_rights::READ) || !(rights & object_rights::WRITE))
+        {
+            return kernel_error::PERMISSION_DENIED;
+        }
+
+        if (has_sibling())
+        {
+            remove_from_dependency_node();
+            init();
+
+            return {};
+        }
+
+        if (component)
+        {
+            auto result = component->revoke(*this);
+            if (!result)
+            {
+                return kernel_error::UNEXPECTED;
+            }
+        }
+
+        remove_from_dependency_node();
+        init();
+
+        return {};
+    }
+
+    inline kernel_result try_move_capability_slot(capability_slot &destination, capability_slot &source)
+    {
+        if (destination.type != capability_type::NONE)
+        {
+            return kernel_error::INIT_FIRST;
+        }
+
+        destination.init();
+
+        destination.type      = source.type;
+        destination.data      = source.data;
+        destination.component = source.component;
+        destination.rights    = source.rights;
+
+        // dependency node re-configuration
+        destination.depth        = source.depth;
+        destination.next_slot    = source.next_slot;
+        destination.preview_slot = source.preview_slot;
+
+        if (destination.preview_slot)
+        {
+            destination.preview_slot->next_slot = &destination;
+        }
+
+        if (destination.next_slot)
+        {
+            destination.next_slot->preview_slot = &destination;
+        }
+
+        source.init();
+
+        return {};
+    }
+
+    inline kernel_result try_copy_capability_slot(capability_slot &destination, capability_slot &source)
+    {
+        if (destination.type != capability_type::NONE)
+        {
+            return kernel_error::INIT_FIRST;
+        }
+
+        destination.init();
+
+        destination.type      = source.type;
+        destination.data      = source.data;
+        destination.component = source.component;
+        destination.rights    = source.rights;
+
+        source.insert_sibling(destination);
+
+        return {};
     }
 }
 

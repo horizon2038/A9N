@@ -1,6 +1,7 @@
 #include "kernel/ipc/ipc_buffer.hpp"
 #include <kernel/boot/init.hpp>
 
+#include <kernel/capability/address_space.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/frame_capability.hpp>
@@ -25,6 +26,8 @@
 #include <liba9n/common/calculate.hpp>
 #include <liba9n/common/enum.hpp>
 #include <liba9n/common/not_null.hpp>
+
+// TODO: CLEAN IT BECAUSE IT IS TOO CONFUSING !!!!!
 
 namespace a9n::kernel
 {
@@ -111,9 +114,18 @@ namespace a9n::kernel
         logger::printk("create init generic entries ...\n");
 
         // TODO: configure generic node slots : func(meminfo, &generic_node_slot) -> kresult
-        return try_make_init_generics(info.boot_memory_info, generic_node_slot, init_info_page.get());
+        auto generic_make_result
+            = try_make_init_generics(info.boot_memory_info, generic_node_slot, init_info_page.get());
+        if (!generic_make_result)
+        {
+            return generic_make_result.unwrap_error();
+        }
 
-        // return {};
+        // create interrupt region
+
+        // create io port
+
+        return {};
     }
 
     static liba9n::result<liba9n::not_null<init_info>, kernel_error>
@@ -157,10 +169,11 @@ namespace a9n::kernel
         }
         auto init_node = init_node_result.unwrap();
 
-        slot.component = &(init_node.get());
-        slot.type      = capability_type::NODE;
-
-        return {};
+        // configure node
+        // slot.component = &(init_node.get());
+        // slot.type      = capability_type::NODE;
+        //
+        return try_configure_capability_node_slot(slot, init_node.get());
     }
 
     static liba9n::result<liba9n::not_null<process_control_block>, kernel_error>
@@ -176,7 +189,7 @@ namespace a9n::kernel
         auto init_process_control_block = init_process_control_block_result.unwrap();
 
         // configure process control block
-        hal::init_hardware_context(init_process_control_block->process_core.registers);
+        hal::init_hardware_context(hal::cpu_mode::USER, init_process_control_block->process_core.registers);
         hal::configure_general_register(
             init_process_control_block->process_core,
             hal::register_type::INSTRUCTION_POINTER,
@@ -185,8 +198,34 @@ namespace a9n::kernel
 
         // make  root node
         logger::printk("try to make the root node in init process ...\n");
+        init_process_control_block->process_core.root_slot.type = capability_type::NONE;
         auto root_node_result
-            = try_make_init_nodes(init_process_control_block->process_core.root_slot, 256);
+            = try_make_init_nodes(
+                  init_process_control_block->process_core.root_slot,
+                  INITIAL_PROCESS_ROOT_NODE_COUNT
+            )
+                  .and_then(
+                      [&](void) -> kernel_result
+                      {
+                          return init_process_control_block->process_core.root_slot.component
+                              ->retrieve_slot(liba9n::enum_cast(init_slot_offset::PROCESS_ROOT_NODE))
+                              .transform_error(
+                                  [&]([[maybe_unused]] capability_lookup_error e) -> kernel_error
+                                  {
+                                      return kernel_error::NO_SUCH_ADDRESS;
+                                  }
+                              )
+                              .and_then(
+                                  [&](capability_slot *slot) -> kernel_result
+                                  {
+                                      return try_copy_capability_slot(
+                                          *slot,
+                                          init_process_control_block->process_core.root_slot
+                                      );
+                                  }
+                              );
+                      }
+                  );
         if (!root_node_result)
         {
             return root_node_result.unwrap_error();
@@ -205,7 +244,7 @@ namespace a9n::kernel
         }
         capability_slot &page_node_slot = *page_node_slot_result.unwrap();
 
-        auto page_node_result           = try_make_init_nodes(page_node_slot, 32);
+        auto page_node_result = try_make_init_nodes(page_node_slot, INITIAL_PAGE_TABLE_COUNT_MAX);
         if (!page_node_result)
         {
             logger::error("failed to make the page node in init process");
@@ -222,7 +261,7 @@ namespace a9n::kernel
         }
         capability_slot &frame_slot = *frame_slot_result.unwrap();
 
-        auto frame_result           = try_make_init_nodes(frame_slot, 32);
+        auto frame_result           = try_make_init_nodes(frame_slot, INITIAL_FRAME_COUNT_MAX);
         if (!frame_result)
         {
             logger::error("failed to make the frame node in init process");
@@ -282,7 +321,7 @@ namespace a9n::kernel
                     auto root_table_physical_address = virtual_to_physical_address(
                         reinterpret_cast<a9n::virtual_address>(root_table_memory->data())
                     );
-                    return hal::make_root_page_table(root_table_physical_address)
+                    return hal::make_address_space(root_table_physical_address)
                         .transform_error(convert_hal_to_kernel_error);
                 }
             )
@@ -294,7 +333,7 @@ namespace a9n::kernel
                     capability_slot &target_slot = pcb.process_core.root_address_space;
 
                     auto target_init_slot_result = pcb.process_core.root_slot.component->retrieve_slot(
-                        liba9n::enum_cast(init_slot_offset::PROCESS_ROOT_PAGE_TABLE)
+                        liba9n::enum_cast(init_slot_offset::PROCESS_ADDRESS_SPACE)
                     );
                     if (!target_init_slot_result)
                     {
@@ -302,18 +341,22 @@ namespace a9n::kernel
                     }
                     capability_slot &target_init_slot = *target_init_slot_result.unwrap();
 
-                    return try_configure_pagetable_slot(target_slot, table)
+                    DEBUG_LOG("try to configure address space slot\n");
+                    return try_configure_address_space_slot(target_slot, table)
                         .and_then(
                             [&](void) -> kernel_result
                             {
-                                return try_configure_pagetable_slot(target_init_slot, table);
+                                // return try_configure_page_table_slot(target_init_slot, table);
+                                DEBUG_LOG("try to inti root address slot\n");
+                                return target_init_slot.try_remove_and_init();
                             }
                         )
                         .and_then(
                             [&](void) -> kernel_result
                             {
-                                target_slot.insert_sibling(target_init_slot);
-                                return {};
+                                // return try_configure_page_table_slot(target_init_slot, table);
+                                DEBUG_LOG("try to copy address space slot\n");
+                                return try_copy_capability_slot(target_init_slot, target_slot);
                             }
                         );
                 }
@@ -349,7 +392,7 @@ namespace a9n::kernel
                     for (a9n::word slot_index = 0, page_depth = depth; slot_index < depth;
                          slot_index++, page_depth--)
                     {
-                        logger::printk("slot_index : %llu | pade_depth : %llu\n", slot_index, page_depth);
+                        DEBUG_LOG("slot_index : %llu | pade_depth : %llu\n", slot_index, page_depth);
                         auto result
                             = init_allocator.allocate<page_size_memory>(1)
                                   .transform_error(
@@ -420,7 +463,7 @@ namespace a9n::kernel
                                                       {
                                                           return kernel_error::NO_SUCH_ADDRESS;
                                                       }
-                                                      return try_configure_pagetable_slot(
+                                                      return try_configure_page_table_slot(
                                                           *target_slot_result.unwrap(),
                                                           table
                                                       );
@@ -520,6 +563,10 @@ namespace a9n::kernel
                                           logger::printk("try make ipc buffer frame ...\n");
 
                                           init_info_page.ipc_buffer = info.init_ipc_buffer_address;
+                                          pcb.process_core.buffer
+                                              = a9n::kernel::physical_to_virtual_pointer<ipc_buffer>(
+                                                  frame_ipc_buffer_base
+                                              );
 
                                           auto frame_ipc_buffer_slot_result
                                               = pcb.process_core.root_slot.component->retrieve_slot(
@@ -536,8 +583,21 @@ namespace a9n::kernel
                                               .and_then(
                                                   [&](void) -> kernel_result
                                                   {
+                                                      return try_configure_frame_slot(
+                                                          pcb.process_core.buffer_frame,
+                                                          target_frame
+                                                      );
+                                                  }
+                                              )
+                                              .and_then(
+                                                  [&](void) -> kernel_result
+                                                  {
+                                                      // register sibling
                                                       target_slot_result.unwrap()->insert_sibling(
                                                           frame_ipc_buffer_slot
+                                                      );
+                                                      target_slot_result.unwrap()->insert_sibling(
+                                                          pcb.process_core.buffer_frame
                                                       );
                                                       return {};
                                                   }
@@ -649,6 +709,11 @@ namespace a9n::kernel
                 slot_index++;
             }
         }
+
+        init_info_page.generic_start
+            = liba9n::enum_cast(init_slot_offset::GENERIC_NODE)
+           << ((a9n::WORD_BITS - 1) - a9n::BYTE_BITS
+               - liba9n::calculate_radix_floor(INITIAL_GENERIC_COUNT_MAX));
 
         return {};
     }

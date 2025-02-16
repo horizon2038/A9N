@@ -28,7 +28,8 @@ namespace a9n::kernel
         NOTIFICATION_PORT,
 
         // driver
-        INTERRUPT,
+        INTERRUPT_REGION,
+        INTERRUPT_PORT,
         IO_PORT,
 
         // virtualization

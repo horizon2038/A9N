@@ -79,6 +79,7 @@ namespace a9n::kernel::utility
 
     void logger::printu(const char *format, ...)
     {
+        guard             g { this_logger->lock };
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::YELLOW);
@@ -90,6 +91,7 @@ namespace a9n::kernel::utility
 
     void logger::printn(const char *format, ...)
     {
+        guard             g { this_logger->lock };
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->_print.vprintf(format, args);
@@ -212,7 +214,7 @@ namespace a9n::kernel::utility
 
     void logger::print_splitter()
     {
-        this_logger->_print.printf(": ");
+        // this_logger->_print.printf(": ");
     }
 
     void logger::mitoujr()

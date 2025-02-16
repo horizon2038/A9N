@@ -1,3 +1,4 @@
+#include "hal/x86_64/io/port_io.hpp"
 #include <liba9n/libcxx/new>
 #include <stdint.h>
 
@@ -10,8 +11,6 @@
 
 #include <kernel/boot/boot_info.hpp>
 #include <kernel/interrupt/interrupt_manager.hpp>
-// #include <kernel/ipc/ipc_manager.hpp>
-#include <kernel/memory/memory_manager.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
@@ -60,27 +59,22 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
         a9n::kernel::utility::logger { *hal_instance->_serial };
 
     logger::a9nout();
-    logger::printk("start A9N kernel\n");
+    logger::printk("start A9N kernel ...\n");
     logger::split();
 
-    logger::printk(
-        "kernel_entry_address\e[52G:\e[60G0x%016llx\n",
-        reinterpret_cast<uint64_t>(kernel_entry)
-    );
-    logger::printk(
-        "boot_info_address\e[52G:\e[60G0x%016llx\n",
-        reinterpret_cast<uint64_t>(target_boot_info)
-    );
+    logger::printk("kernel entry : 0x%016llx\n", reinterpret_cast<uint64_t>(kernel_entry));
+    logger::printk("boot info address : 0x%016llx\n", reinterpret_cast<uint64_t>(target_boot_info));
     logger::split();
 
     // init cpu local variables
+    logger::printk("init local variables ...\n");
     a9n::kernel::init_cpu_local_variable();
 
-    logger::printk("init architecture\n");
-    logger::printk(
-        "arch_initializer\e[52G:\e[60G0x%016llx\n",
-        reinterpret_cast<uint64_t>(hal_instance->_arch_initializer)
-    );
+    logger::printk("init architecture ...\n");
+    logger::printk("- init HAL\n");
+    logger::printk("- init io\n");
+    logger::printk("- init serial\n");
+    logger::printk("- init logger\n");
 
     auto arch_res = hal_instance->_arch_initializer->init_architecture(target_boot_info->arch_info);
     if (!arch_res)
@@ -89,18 +83,12 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
         return 0;
     }
 
-    logger::printk("init hal\n");
-    logger::printk("init io\n");
-    logger::printk("init serial\n");
-    logger::printk("init logger\n");
-
-    logger::printk("init interrupt_manager\n");
+    logger::printk("init interrupt_manager ...\n");
     result = a9n::kernel::interrupt_manager_core.init();
 
-    logger::printk("disable_interrupt\n");
-    a9n::kernel::interrupt_manager_core.disable_interrupt_all();
+    a9n::kernel::interrupt_manager_core.ack_interrupt();
 
-    logger::printk("init process_manager\n");
+    logger::printk("init process_manager ...\n");
     result = a9n::kernel::process_manager_core.init();
     logger::split();
 

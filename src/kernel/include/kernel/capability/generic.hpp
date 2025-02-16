@@ -21,12 +21,6 @@ namespace a9n::kernel
         a9n::physical_address end_address;
     };
 
-    struct allocate_info
-    {
-        a9n::physical_address aligned_base;
-        a9n::physical_address new_watermark;
-    };
-
     inline a9n::word serialize_generic_flags(bool is_device, a9n::word size_bits)
     {
         a9n::word value {};
@@ -81,7 +75,7 @@ namespace a9n::kernel
 
         a9n::error apply_allocate(a9n::word memory_size_bits);
 
-        memory_result<allocate_info> try_apply_allocate(a9n::word memory_size_bits, a9n::word count);
+        memory_result<a9n::physical_address> try_apply_allocate(a9n::word memory_size_bits);
 
         inline a9n::word size() const
         {

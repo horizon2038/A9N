@@ -149,6 +149,11 @@ namespace a9n::kernel
 
     capability_result notification_port::operation_identify(process &owner, capability_slot &self)
     {
+        if (!(self.rights & capability_slot::object_rights::MODIFY))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
         return a9n::hal::get_message_register(owner, NEW_IDENTIFIER)
             .transform_error(convert_hal_to_capability_error)
             .and_then(

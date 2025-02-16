@@ -37,6 +37,7 @@ set_target_properties(${KERNEL_BINARY} PROPERTIES POSITION_INDEPENDENT_CODE OFF)
 #     $<$<CONFIG:Debug>:-g -O0>
 #     $<$<CONFIG:Release>:-O3>
 # )
+
 add_compile_definitions(
     $<$<CONFIG:Debug>:DEBUG_BUILD>
 )

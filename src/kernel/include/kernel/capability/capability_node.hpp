@@ -26,6 +26,7 @@ namespace a9n::kernel
             COPY,
             MOVE,
             MINT,
+            DEMOTE,
             REVOKE,
             REMOVE,
         };
@@ -36,7 +37,6 @@ namespace a9n::kernel
             OPERATION_TYPE,
             DESTINATION_INDEX,
             SOURCE_DESCRIPTOR,
-            SOURCE_INDEX,
             NEW_RIGHTS,
         };
 
@@ -48,17 +48,19 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        capability_result decode_operation(process &this_process, capability_slot &this_slot);
+        capability_result decode_operation(process &owner, capability_slot &self);
 
-        capability_result operation_copy(process &this_process, capability_slot &this_slot);
+        capability_result operation_copy(process &owner, capability_slot &self);
 
-        capability_result operation_move(process &this_proecess, capability_slot &this_slot);
+        capability_result operation_move(process &this_proecess, capability_slot &self);
 
-        capability_result operation_mint(process &this_process, capability_slot &this_slot);
+        capability_result operation_mint(process &owner, capability_slot &self);
 
-        capability_result operation_revoke(process &this_process, capability_slot &this_slot);
+        capability_result operation_demote(process &owner, capability_slot &self);
 
-        capability_result operation_remove(process &this_process, capability_slot &this_slot);
+        capability_result operation_revoke(process &owner, capability_slot &self);
+
+        capability_result operation_remove(process &owner, capability_slot &self);
 
         capability_lookup_result
             lookup_slot(a9n::capability_descriptor target_descriptor, a9n::word descriptor_used_bits);

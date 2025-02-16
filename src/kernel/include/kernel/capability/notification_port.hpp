@@ -17,18 +17,14 @@ namespace a9n::kernel
             RESERVED = 0, // descriptor
             OPERATION_TYPE,
 
-            RESERVED_MR_2,
-
             // for IDENTIFY
-            NEW_IDENTIFIER = RESERVED_MR_2,
+            NEW_IDENTIFIER,
         };
 
         enum result_index : a9n::word
         {
             IS_SUCCESS,
             ERROR_CODE,
-
-            // for NOTIFY
 
             // for WAIT/POLL
             FLAG_WORD,
@@ -50,6 +46,9 @@ namespace a9n::kernel
         process *queue_head;
         process *queue_tail;
 
+        // binded port
+        class interrupt_port *binded_interrupt_port;
+
         enum notification_port_state : a9n::word
         {
             WAIT = 0,
@@ -57,7 +56,7 @@ namespace a9n::kernel
         } state { notification_port_state::WAIT };
 
       public:
-        capability_result execute(process &this_process, capability_slot &this_slot) override;
+        capability_result execute(process &owner, capability_slot &self) override;
 
         capability_result operation_notify([[maybe_unused]] process &owner, capability_slot &self);
         capability_result operation_wait(process &owner, capability_slot &self);
@@ -87,6 +86,8 @@ namespace a9n::kernel
         {
             return capability_lookup_error::TERMINAL;
         }
+
+        friend class interrupt_port;
     };
 
     inline constexpr kernel_result try_configure_notification_port_slot(
@@ -97,7 +98,7 @@ namespace a9n::kernel
     {
         slot.init();
         slot.component = &port;
-        slot.type      = capability_type::IPC_PORT;
+        slot.type      = capability_type::NOTIFICATION_PORT;
         slot.rights    = capability_slot::ALL;
         slot.data.fill(0);
         slot.data = convert_identifier_to_slot_data(identifier);

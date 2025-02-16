@@ -7,6 +7,9 @@
 
 namespace a9n::kernel
 {
+    inline constexpr a9n::word INITIAL_PROCESS_ROOT_NODE_COUNT  = 256;
+    inline constexpr a9n::word INITIAL_PROCESS_ROOT_NODE_RADIX  = 8;
+
     inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX          = 128;
     inline constexpr a9n::word INITIAL_PAGE_TABLE_COUNT_MAX     = 128;
 
@@ -29,13 +32,14 @@ namespace a9n::kernel
     {
         RESERVED,
         PROCESS_CONTROL_BLOCK,
-        PROCESS_ROOT_PAGE_TABLE,
+        PROCESS_ADDRESS_SPACE,
         PROCESS_ROOT_NODE, // *recursive*
         PROCESS_PAGE_TABLE_NODE,
         PROCESS_FRAME_NODE,
         PROCESS_IPC_BUFFER_FRAME,
         GENERIC_NODE, // initial generics
-        INTERRUPT_PORT_NODE,
+        INTERRUPT_REGION,
+        IO_PORT,
     };
 
     struct init_info

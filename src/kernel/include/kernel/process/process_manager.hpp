@@ -18,38 +18,31 @@ namespace a9n::kernel
     class process_manager
     {
       public:
-        process   *current_process;
-        a9n::sword highest_priority;
-
         kernel_result init(void);
+
+        kernel_result handle_timer(void);
 
         kernel_result switch_context(void);
 
         kernel_result switch_to_user(void);
+        kernel_result switch_to_idle(void);
 
-        void create_process(const char *process_name, a9n::virtual_address entry_point_address);
+        kernel_result try_schedule_and_switch(void);
+        kernel_result try_direct_schedule_and_switch(process &target_process);
 
-        void init_process(
-            process             *process,
-            process_id           target_process_id,
-            const char          *process_name,
-            a9n::virtual_address entry_point_address
-        );
-        void delete_process(process_id target_process_id);
-
-        process *search_process_from_id(process_id target_process_id);
+        kernel_result yield(void);
 
         liba9n::result<process *, kernel_error> retrieve_current_process();
-
-        kernel_result mark_scheduled(process &target_process);
+        kernel_result                           mark_scheduled(process &target_process);
 
       private:
-        process    process_list[12];
-        scheduler  scheduler_core {};
-        a9n::sword determine_process_id();
+        process   *current_process;
+        a9n::sword highest_priority;
+
+        alignas(a9n::WORD_BITS) scheduler scheduler_core {};
     };
 
-    inline process_manager process_manager_core {};
+    alignas(a9n::WORD_BITS) inline process_manager process_manager_core {};
 }
 
 #endif

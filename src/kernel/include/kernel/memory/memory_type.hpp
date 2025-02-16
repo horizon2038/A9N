@@ -34,12 +34,22 @@ namespace a9n::kernel
     {
         a9n::physical_address address;
 
+        // architecture-independent attribute
+        enum flag_type : uint8_t
+        {
+            NONE    = 1 << 0,
+            READ    = 1 << 1,
+            WRITE   = 1 << 2,
+            EXECUTE = 1 << 3,
+        };
+
         union
         {
             a9n::word flags;
 
             struct
             {
+                uint8_t   flag;
                 a9n::word depth : 8;
             };
         };
@@ -81,6 +91,15 @@ namespace a9n::kernel
     static_assert(sizeof(page_table) <= (sizeof(a9n::word) * 3));
     static_assert(sizeof(frame) <= (sizeof(a9n::word) * 3));
 
+    enum class memory_error
+    {
+        OUT_OF_MEMORY,
+        INVALID_ADDRESS,
+        INVALID_ALIGNMENT,
+    };
+
+    template<typename T = void>
+    using memory_result = liba9n::result<T, memory_error>;
 }
 
 #endif
