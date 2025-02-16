@@ -1,13 +1,5 @@
 // Definition of chapter outline
 #let toc() = {
-  align(left)[
-    #text(size: 20pt, weight: "bold")[
-      #v(30pt)
-      Contents
-      #v(30pt)
-    ]
-  ]
-
   set text(size: 12pt)
   set par(leading: 1.24em, first-line-indent: 0pt)
   locate(loc => {
@@ -15,9 +7,10 @@
     for el in elements {
       let before_toc = query(heading.where(outlined: true).before(loc), loc).find((one) => {one.body == el.body}) != none
       let page_num = if before_toc {
-        numbering("i", counter(page).at(el.location()).first())
-      } else {
+        numbering("1", counter(page).at(el.location()).first())
+      } else if (el.level >= 1) and (el.level <= 3) {
         counter(page).at(el.location()).first()
+      } else {
       }
 
       link(el.location())[#{
@@ -34,12 +27,12 @@
           }
           el.body
         } else if el.level == 2 {
-          h(2em)
+          h(1em)
           chapt_num
           " "
           el.body
         } else {
-          h(5em)
+          h(2em)
           chapt_num
           " "
           el.body
@@ -51,12 +44,3 @@
     }
   })
 }
-
-#import "/components/layout.typ" : template
-
-#show: doc => template(
-    [contents],
-    doc,
-)
-
-#toc()

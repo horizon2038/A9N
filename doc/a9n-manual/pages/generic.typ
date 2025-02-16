@@ -1,42 +1,40 @@
-#import "/components/layout.typ" : template
-#import "/components/api_table.typ" : api_table
-
-#show: doc => template(
-    [generic],
-    doc,
-)
+#import "/components/api_table.typ" : *
 
 = Generic
 
 == Introduction
 
-Genericは, メモリを抽象化するCapabilityです.
+Genericはメモリを抽象化するCapabilityです.
 
-A9Nカーネルはヒープを持たないため, カーネルオブジェクトのようなシステム内で使用するメタデータのメモリは, ユーザーが明示的に割り当てる必要があります.
+A9N Microkernelはヒープを持ちません. 従って, 必要なKernel ObjectをUserが明示的に割り当てる必要があります.
 
-生の物理メモリをユーザーに直接使用させるのはセキュリティ上のリスクが発生するため, `convert()`メカニズムを用いて安全な割当ポリシーを実現します.
-`convert()`は対象Genericを切り出し, カーネルオブジェクトを作成します. 作成したオブジェクトは親GenericのDependency Nodeに登録され, 初期化処理などに使用されます.
+User-LevelのKernel Object割当ては, Genericによる`convert()`メカニズムを用いて安全に実現されます.
+`convert()`によって作成したオブジェクトは親となるGenericのDependency Nodeに登録され, 初期化処理などに使用されます.
 
 
 == Generic API
 
 === `convert`
-```cpp
-common::error convert(
-    a9n::capability_descriptor  generic_descriptor, 
-    a9n::kernel::capability_type               type,               
-    a9n::word                                  size,               
-    a9n::word                                 count,              
-    a9n::capability_descriptor      node_descriptor,    
-    a9n::word                            node_index,         
-)
-```
 
 #api_table(
-    "generic_descriptor", "対象GenericへのDescriptor",
-    "type", "作成するCapabilityのType",
-    "size", "作成するCapabilityのSize",
-    "count", "作成するCapabilityの個数",
-    "node_descriptor", "格納先NodeへのDescriptor",
-    "node_index", "格納先NodeのIndex",
+    "capability_descriptor", "generic_descriptor", "対象GenericへのDescriptor",
+    "capability_type", "type", "作成するCapabilityのType",
+    "word", "specific_bits", [Capability作成時に使用する固有Bits \ cf., @specific_bits],
+    "word", "count", "作成するCapabilityの個数",
+    "capability_descriptor", "node_descriptor", "格納先NodeへのDescriptor",
+    "word", "node_index", "格納先NodeのIndex",
+)
+
+==== `specific_bits` <specific_bits>
+
+#normal_table(
+    "Capability Node", [NodeのSlot数を表すRadix ($"count" = 2^"specific_bits"$)],
+    "Generic", [GenericのSizeを表すRadix ($"size" = 2^"specific_bits"$)],
+    "Process Control Block", "-",
+    "IPC Port", "-",
+    "Interrupt Port", "-",
+    "Page Table", "depth",
+    "Frame", "-",
+    "Virtual CPU", "-",
+    "Virtual Page Table", "-",
 )
