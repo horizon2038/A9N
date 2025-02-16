@@ -1,3 +1,4 @@
+#include "hal/x86_64/interrupt/interrupt.hpp"
 #include <hal/x86_64/systemcall/syscall.hpp>
 
 #include <hal/x86_64/arch/msr.hpp>
@@ -20,7 +21,7 @@ namespace a9n::hal::x86_64
         _write_msr(msr::SFMASK, rflags_flag::INTERRUPT);
         // setup syscall entry point
         _write_msr(msr::LSTAR, reinterpret_cast<uint64_t>(_syscall_handler));
-        a9n::kernel::utility::logger::printk(
+        a9n::kernel::utility::logger::printh(
             "_syscall_handler address : 0x%016llx\n",
             reinterpret_cast<uint64_t>(_syscall_handler)
         );
@@ -42,34 +43,16 @@ namespace a9n::hal::x86_64
         // then the User Code Segment.
         uint64_t star_value = (static_cast<uint64_t>(segment_selector::USER_CS_NULL) << 48)
                             | (static_cast<uint64_t>(segment_selector::KERNEL_CS) << 32);
-        a9n::kernel::utility::logger::printk("STAR value : 0x%016llx\n", star_value);
+        a9n::kernel::utility::logger::printh("STAR value : 0x%016llx\n", star_value);
         _write_msr(msr::STAR, star_value);
         _write_msr(msr::CSTAR, 0);
 
         return {};
     }
 
-    extern "C" void do_syscall(
-        a9n::kernel::kernel_call_type type,
-        a9n::word                     message_0,
-        a9n::word                     message_1,
-        a9n::word                     message_2,
-        a9n::word                     message_3
-    )
+    extern "C" void do_syscall(a9n::sword kernel_call_number)
     {
-        // test syscall handler
-        /*
-        a9n::kernel::utility::logger::printk("descriptor : 0x%016llx [ %08llx ]\n", descriptor,
-        depth); a9n::kernel::utility::logger::printk("tag : 0x%016llx\n", tag);
-        a9n::kernel::utility::logger::printk("message_length : 0x%016llx\n", message_length);
-        */
-
-        a9n::capability_descriptor descriptor     = 0;
-        a9n::word                  depth          = 0;
-        a9n::word                  tag            = 0;
-        a9n::word                  message_length = 0;
-
-        if (!kernel_call_handler)
+        [[unlikely]] if (!kernel_call_handler)
         {
             a9n::kernel::utility::logger::printh(
                 "kernel call handler "
@@ -79,8 +62,22 @@ namespace a9n::hal::x86_64
             return;
         }
 
-        // do kernel handler!
-        kernel_call_handler(type);
+        auto type = static_cast<a9n::kernel::kernel_call_type>(kernel_call_number);
+        switch (type)
+        {
+            using enum a9n::kernel::kernel_call_type;
+
+            case CAPABILITY_CALL :
+                [[fallthrough]];
+            case YIELD :
+                [[fallthrough]];
+            case DEBUG :
+                kernel_call_handler(type);
+                return;
+
+            [[unlikely]] default :
+                fault_dispatcher(a9n::kernel::fault_type::INVALID_KERNEL_CALL, kernel_call_number, 0);
+        }
     }
 
 }

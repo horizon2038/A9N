@@ -103,10 +103,6 @@ namespace a9n::hal::x86_64
         a9n::kernel::floating_context &next
     )
     {
-        // switch floating_context
-        // currently : only xsave/xrstor
-        // TODO: add more operationg (e.g., fxsave/fxrstor, xsaveopt)
-
         x_save_opt(&preview, x_save_mask);
         x_restore(&next, x_save_mask);
     }

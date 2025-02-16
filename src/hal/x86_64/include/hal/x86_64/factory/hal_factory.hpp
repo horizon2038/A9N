@@ -6,7 +6,6 @@
 
 // core services
 #include <hal/x86_64/interrupt/interrupt.hpp>
-#include <hal/x86_64/memory/memory_manager.hpp>
 #include <hal/x86_64/process/process_manager.hpp>
 
 // platform services
@@ -25,9 +24,6 @@ namespace a9n::hal::x86_64
         a9n::hal::hal            *make() override;
         static constexpr uint64_t hal_size = sizeof(a9n::hal::hal);
         alignas(a9n::hal::hal) static char hal_buffer[];
-
-        static constexpr uint64_t memory_manager_size = sizeof(a9n::hal::x86_64::memory_manager);
-        alignas(a9n::hal::x86_64::memory_manager) static char memory_manager_buffer[];
 
         static constexpr uint64_t port_io_size = sizeof(a9n::hal::x86_64::port_io);
         alignas(a9n::hal::x86_64::port_io) static char port_io_buffer[];

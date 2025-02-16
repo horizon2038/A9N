@@ -8,6 +8,8 @@
 #include <liba9n/libc/string.hpp>
 #include <liba9n/libcxx/array>
 
+#include <kernel/utility/logger.hpp>
+
 namespace a9n::hal::x86_64
 {
     // eax value list

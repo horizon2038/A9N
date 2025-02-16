@@ -1,13 +1,16 @@
-#include "kernel/types.hpp"
 #include <hal/x86_64/interrupt/apic.hpp>
 
 #include <hal/hal_result.hpp>
 #include <hal/x86_64/arch/msr.hpp>
+#include <hal/x86_64/interrupt/interrupt.hpp>
 #include <hal/x86_64/interrupt/pic.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 
 #include <kernel/memory/memory.hpp>
+#include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
+
+#include <liba9n/common/enum.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -170,14 +173,19 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::disable_interrupt(uint8_t irq_number)
     {
-        uint32_t io_apic_register = io_apic_register_index::REDIRECTION_TABLE + irq_number * 2;
+        const uint8_t real_irq_number  = global_interrupt_base + irq_number;
+        uint32_t      io_apic_register = io_apic_register_index::REDIRECTION_TABLE + irq_number * 2;
 
         // low
-        return write(io_apic_register, (1 << 16))
+        return write(
+                   io_apic_register,
+                   (liba9n::enum_cast(reserved_irq::IO_BASE) + real_irq_number) | (1 << 16)
+        )
             .and_then(
                 [=, this](void) -> hal_result
                 {
                     // high
+                    // redirect to BSP
                     return write(io_apic_register + 1, 0);
                 }
             );
@@ -185,16 +193,18 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::enable_interrupt(uint8_t irq_number)
     {
+        // FIXME: real_irq_number -> irq_number
         const uint8_t  real_irq_number = global_interrupt_base + irq_number;
         const uint32_t io_apic_register
             = io_apic_register_index::REDIRECTION_TABLE + real_irq_number * 2;
 
         // low
-        return write(io_apic_register, 0x20 + irq_number)
+        return write(io_apic_register, liba9n::enum_cast(reserved_irq::IO_BASE) + real_irq_number)
             .and_then(
                 [=, this](void) -> hal_result
                 {
                     // high
+                    // redirect to BSP
                     return write(io_apic_register + 1, 0);
                 }
             );
@@ -230,7 +240,7 @@ namespace a9n::hal::x86_64
         using a9n::kernel::utility::logger;
 
         uint64_t              apic_base_msr     = _read_msr(msr::APIC_BASE);
-        a9n::physical_address apic_base_address = apic_base_msr & 0xF'FFFF'1000;
+        a9n::physical_address apic_base_address = apic_base_msr & 0xFFFF'1000;
 
         base = a9n::kernel::physical_to_virtual_pointer<uint32_t>(apic_base_address);
         if (!base)
@@ -253,11 +263,14 @@ namespace a9n::hal::x86_64
         };
 
         // configure spurious
-        return write(local_apic_offset::SPURIOUS_INTERRUPT, (1 << 8) | ((1 << 8) - 1))
+        return write(local_apic_offset::SPURIOUS_INTERRUPT, (1 << 8) | ((1 << 4) - 1))
             .and_then(write_register(local_apic_offset::TASK_PRIORITY, 0x0))
             .and_then(write_register(local_apic_offset::LOGICAL_DESITINATION, 0x100'0000))
             .and_then(write_register(local_apic_offset::DESTINATION_FORMAT, 0xFFFF'FFFF))
             .and_then(write_register(local_apic_offset::LVT_TIMER, 1 << 16))
+            .and_then(write_register(local_apic_offset::LVT_PERFORMANCE_COUNTER, 1 << 16))
+            .and_then(write_register(local_apic_offset::LVT_LINT_0, 0x8700))
+            .and_then(write_register(local_apic_offset::LVT_LINT_1, 0x400))
             .and_then(write_register(local_apic_offset::LVT_ERROR, 1 << 16))
             .and_then(write_register(local_apic_offset::END_OF_INTERRUPT, 0));
     }

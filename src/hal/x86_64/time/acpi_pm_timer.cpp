@@ -35,15 +35,15 @@ namespace a9n::hal::x86_64
         // ACPI v1
         if (fadt_base->header.revision <= 2)
         {
-            logger::printk("ACPI PM Timer : v1\n");
+            logger::printh("ACPI PM Timer : v1\n");
             is_mmio = false;
             port    = fadt_base->pm_timer_block;
-            logger::printk("ACPI PM Timer : port : %016llx\n", port);
+            logger::printh("ACPI PM Timer : port : %016llx\n", port);
         }
         // ACPI v2+
         else
         {
-            logger::printk("ACPI PM Timer : v2\n");
+            logger::printh("ACPI PM Timer : v2\n");
             using enum generic_address_space_type;
             switch (fadt_base->x_pm_timer_block.address_space)
             {
@@ -52,13 +52,13 @@ namespace a9n::hal::x86_64
                     address = a9n::kernel::physical_to_virtual_pointer<volatile uint32_t>(
                         fadt_base->x_pm_timer_block.address
                     );
-                    logger::printk("ACPI PM Timer : address : %p\n", address);
+                    logger::printh("ACPI PM Timer : address : %p\n", address);
                     break;
 
                 case SYSTEM_IO :
                     is_mmio = false;
                     port    = fadt_base->x_pm_timer_block.address;
-                    logger::printk("ACPI PM Timer : port : %016llx\n", port);
+                    logger::printh("ACPI PM Timer : port : %016llx\n", port);
                     break;
 
                 default :
@@ -101,7 +101,7 @@ namespace a9n::hal::x86_64
     hal_result acpi_pm_timer::wait(uint32_t micro_seconds)
     {
         using a9n::kernel::utility::logger;
-        // logger::printk("ACPI PM Timer : wait %10d ms\n", micro_seconds / 1000);
+        // logger::printh("ACPI PM Timer : wait %10d ms\n", micro_seconds / 1000);
 
         const auto MASK_BITS = (bits < 32) ? ((1u << bits) - 1) : 0xFFFFFFFFu;
 
@@ -117,7 +117,7 @@ namespace a9n::hal::x86_64
                     result = read();
                     if (!result)
                     {
-                        a9n::kernel::utility::logger::printk(
+                        a9n::kernel::utility::logger::printh(
                             "ACPI PM Timer : read "
                             "failed\n"
                         );
@@ -141,12 +141,12 @@ namespace a9n::hal::x86_64
     {
         using a9n::kernel::utility::logger;
 
-        logger::printk("dump generic_address_structure :\n");
-        logger::printk("\e[48Gaddress_space : 0x%2x\n", generic.address_space);
-        logger::printk("\e[48Gbit_width : 0x%2x\n", generic.bit_width);
-        logger::printk("\e[48Gbit_offset : 0x%2x\n", generic.bit_offset);
-        logger::printk("\e[48Gaccess_size : 0x%2x\n", generic.access_size);
-        logger::printk("\e[48Gaddress : 0x%016x\n", generic.address);
+        logger::printh("dump generic_address_structure :\n");
+        logger::printh("\e[48Gaddress_space : 0x%2x\n", generic.address_space);
+        logger::printh("\e[48Gbit_width : 0x%2x\n", generic.bit_width);
+        logger::printh("\e[48Gbit_offset : 0x%2x\n", generic.bit_offset);
+        logger::printh("\e[48Gaccess_size : 0x%2x\n", generic.access_size);
+        logger::printh("\e[48Gaddress : 0x%016x\n", generic.address);
     }
 
 }

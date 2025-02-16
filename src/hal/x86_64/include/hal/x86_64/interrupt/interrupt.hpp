@@ -10,8 +10,12 @@ namespace a9n::hal::x86_64
     alignas(sizeof(a9n::hal::interrupt_handler)
     ) inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
 
+    inline static a9n::kernel::timer_handler        timer_handler;
+    inline static a9n::kernel::interrupt_dispatcher interrupt_dispatcher;
+    inline static a9n::kernel::fault_dispatcher     fault_dispatcher;
+
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code);
-    extern "C" void do_irq_from_user(uint64_t irq_number, uint64_t error_code);
+    extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code);
 
     extern "C" void _enable_interrupt_all(void);
     extern "C" void _disable_interrupt_all(void);
@@ -65,7 +69,7 @@ namespace a9n::hal::x86_64
     hal_result ipi_init(uint8_t receiver_cpu);
     hal_result ipi_startup(a9n::physical_address trampoline_address, uint8_t receiver_cpu);
 
-    enum class EXCEPTION_TYPE : uint16_t
+    enum class exception_type : uint16_t
     {
         DIVISION_ERROR              = 0,
         DEBUG                       = 1,
@@ -95,87 +99,100 @@ namespace a9n::hal::x86_64
         SECURITY_EXCEPTION             = 30,
     };
 
-    inline constexpr const char *get_exception_type_string(uint8_t type)
+    inline constexpr const char *get_exception_type_string(uint8_t raw_type)
     {
-        auto exception_type = static_cast<EXCEPTION_TYPE>(type);
-        switch (exception_type)
+        auto type = static_cast<exception_type>(raw_type);
+        switch (type)
         {
-            case EXCEPTION_TYPE::DIVISION_ERROR :
+            case exception_type::DIVISION_ERROR :
                 return "division_error";
 
-            case EXCEPTION_TYPE::DEBUG :
+            case exception_type::DEBUG :
                 return "debug";
 
-            case EXCEPTION_TYPE::NMI :
+            case exception_type::NMI :
                 return "non-maskable_interrupt";
 
-            case EXCEPTION_TYPE::BREAKPOINT :
+            case exception_type::BREAKPOINT :
                 return "breakpoint";
 
-            case EXCEPTION_TYPE::OVERFLOW :
+            case exception_type::OVERFLOW :
                 return "overflow";
 
-            case EXCEPTION_TYPE::BOUND_RANGE_EXCEEDED :
+            case exception_type::BOUND_RANGE_EXCEEDED :
                 return "bound_range_exceeded";
 
-            case EXCEPTION_TYPE::INVALID_OPCODE :
+            case exception_type::INVALID_OPCODE :
                 return "invalid opcode";
 
-            case EXCEPTION_TYPE::DEVICE_NOT_AVAILABLE :
+            case exception_type::DEVICE_NOT_AVAILABLE :
                 return "device_not_avilable";
 
-            case EXCEPTION_TYPE::DOUBLE_FAULT :
+            case exception_type::DOUBLE_FAULT :
                 return "double_fault";
 
-            case EXCEPTION_TYPE::COPROCESSOR_SEGMENT_OVERRUN :
+            case exception_type::COPROCESSOR_SEGMENT_OVERRUN :
                 return "coprocessor_segment_overrun";
 
-            case EXCEPTION_TYPE::INVALID_TSS :
+            case exception_type::INVALID_TSS :
                 return "invalid_tss";
 
-            case EXCEPTION_TYPE::SEGMENT_NOT_PRESENT :
+            case exception_type::SEGMENT_NOT_PRESENT :
                 return "segment_not_present";
 
-            case EXCEPTION_TYPE::STACK_SEGMENT_FAULT :
+            case exception_type::STACK_SEGMENT_FAULT :
                 return "stack_segment_fault";
 
-            case EXCEPTION_TYPE::GENERAL_PROTECTION_FAULT :
+            case exception_type::GENERAL_PROTECTION_FAULT :
                 return "general_protection_fault";
 
-            case EXCEPTION_TYPE::PAGE_FAULT :
+            case exception_type::PAGE_FAULT :
                 return "page_fault";
 
-            case EXCEPTION_TYPE::X87_FLOATING_POINT_EXCEPTION :
+            case exception_type::X87_FLOATING_POINT_EXCEPTION :
                 return "x87_floating_point_exception";
 
-            case EXCEPTION_TYPE::ALIGNMENT_CHECK :
+            case exception_type::ALIGNMENT_CHECK :
                 return "alignment_check";
 
-            case EXCEPTION_TYPE::MACHINE_CHECK :
+            case exception_type::MACHINE_CHECK :
                 return "machine_check";
 
-            case EXCEPTION_TYPE::SIMD_FLOATING_POINT_EXCEPTION :
+            case exception_type::SIMD_FLOATING_POINT_EXCEPTION :
                 return "simd_floating_point_exception";
 
-            case EXCEPTION_TYPE::VIRTUALIZATION_EXCEPTION :
+            case exception_type::VIRTUALIZATION_EXCEPTION :
                 return "virtualization_exception";
 
-            case EXCEPTION_TYPE::CONTROL_PROTECTION_EXCEPTION :
+            case exception_type::CONTROL_PROTECTION_EXCEPTION :
                 return "control_protection_exception";
 
-            case EXCEPTION_TYPE::HYPERVISOR_INJECTION_EXCEPTION :
+            case exception_type::HYPERVISOR_INJECTION_EXCEPTION :
                 return "hypervisor_injection_exception";
 
-            case EXCEPTION_TYPE::VMM_COMMUNICATION_EXCEPTION :
+            case exception_type::VMM_COMMUNICATION_EXCEPTION :
                 return "vmm_communication_exception";
 
-            case EXCEPTION_TYPE::SECURITY_EXCEPTION :
+            case exception_type::SECURITY_EXCEPTION :
                 return "security_exception";
 
             default :
                 return "reserved";
         }
     }
+
+    enum class reserved_irq : uint16_t
+    {
+        IO_BASE        = 0x20,
+        IPI_HALT       = 0x21,
+        IPI_RESCHEDULE = 0x22,
+
+        CONSOLE_1      = 0x23,
+        CONSOLE_0      = 0x24,
+
+        BASE           = 0x30,
+        TIMER          = BASE,
+    };
 
     // inline interrupt interrupt_core {};
 

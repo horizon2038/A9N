@@ -11,22 +11,26 @@ namespace a9n::hal::x86_64
     // Local APIC
     namespace local_apic_offset
     {
-        inline constexpr uint32_t ID_REGISTER          = 0x020;
-        inline constexpr uint32_t VERSION              = 0x030;
-        inline constexpr uint32_t TASK_PRIORITY        = 0x080;
-        inline constexpr uint32_t ARBITRATION_PRIORITY = 0x090;
-        inline constexpr uint32_t PROCESSOR_PRIORITY   = 0x0A0;
-        inline constexpr uint32_t END_OF_INTERRUPT     = 0x0B0;
-        inline constexpr uint32_t LOGICAL_DESITINATION = 0x0D0;
-        inline constexpr uint32_t DESTINATION_FORMAT   = 0x0E0;
-        inline constexpr uint32_t SPURIOUS_INTERRUPT   = 0x0F0;
-        inline constexpr uint32_t ICR_LOW              = 0x300;
-        inline constexpr uint32_t ICR_HIGH             = 0x310;
-        inline constexpr uint32_t LVT_TIMER            = 0x320;
-        inline constexpr uint32_t LVT_ERROR            = 0x370;
-        inline constexpr uint32_t TIMER_INIT_COUNT     = 0x380;
-        inline constexpr uint32_t TIMER_CURRENT_COUNT  = 0x390;
-        inline constexpr uint32_t TIMER_DIVIDE         = 0x3E0;
+        inline constexpr uint32_t ID_REGISTER             = 0x020;
+        inline constexpr uint32_t VERSION                 = 0x030;
+        inline constexpr uint32_t TASK_PRIORITY           = 0x080;
+        inline constexpr uint32_t ARBITRATION_PRIORITY    = 0x090;
+        inline constexpr uint32_t PROCESSOR_PRIORITY      = 0x0A0;
+        inline constexpr uint32_t END_OF_INTERRUPT        = 0x0B0;
+        inline constexpr uint32_t LOGICAL_DESITINATION    = 0x0D0;
+        inline constexpr uint32_t DESTINATION_FORMAT      = 0x0E0;
+        inline constexpr uint32_t SPURIOUS_INTERRUPT      = 0x0F0;
+        inline constexpr uint32_t ICR_LOW                 = 0x300;
+        inline constexpr uint32_t ICR_HIGH                = 0x310;
+        inline constexpr uint32_t LVT_TIMER               = 0x320;
+        inline constexpr uint32_t LVT_THERMAL_SENSOR      = 0x330;
+        inline constexpr uint32_t LVT_PERFORMANCE_COUNTER = 0x340;
+        inline constexpr uint32_t LVT_LINT_0              = 0x350;
+        inline constexpr uint32_t LVT_LINT_1              = 0x360;
+        inline constexpr uint32_t LVT_ERROR               = 0x370;
+        inline constexpr uint32_t TIMER_INIT_COUNT        = 0x380;
+        inline constexpr uint32_t TIMER_CURRENT_COUNT     = 0x390;
+        inline constexpr uint32_t TIMER_DIVIDE            = 0x3E0;
     }
 
     namespace local_apic_flag

@@ -53,3 +53,6 @@ target_link_libraries(
 
 add_subdirectory(${ARCH})
 
+add_compile_definitions(
+    $<$<CONFIG:Debug>:DEBUG_BUILD>
+)

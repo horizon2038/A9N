@@ -12,8 +12,10 @@ namespace a9n::hal
     inline constexpr a9n::word USER_VIRTUAL_BASE   = 0x0;
 
     // context
-    inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 22;
-    inline constexpr a9n::word FLOATING_CONTEXT_SIZE = 128;
+    inline constexpr a9n::word HARDWARE_CONTEXT_SIZE    = 22;
+    inline constexpr a9n::word FLOATING_CONTEXT_SIZE    = 128;
+    inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = a9n::PAGE_SIZE * 4;
+    inline constexpr a9n::word VIRTUAL_CPU_STATE_COUNT  = 64;
 
     // WIP
     inline constexpr a9n::word FPU_CONTEXT_SIZE            = 0;

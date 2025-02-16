@@ -35,11 +35,11 @@ namespace a9n::hal::x86_64
 
     void acpi_configurator::init(a9n::virtual_address initial_rsdp_address)
     {
-        a9n::kernel::utility::logger::printk("init ACPI\n");
+        a9n::kernel::utility::logger::printh("init ACPI\n");
 
         if (!validate_rsdp(initial_rsdp_address))
         {
-            a9n::kernel::utility::logger::printk("RSDP is invalid\n");
+            a9n::kernel::utility::logger::printh("RSDP is invalid\n");
             return;
         }
 
@@ -63,7 +63,7 @@ namespace a9n::hal::x86_64
             if (header->validate_sdt_signature("FACP"))
             {
                 fadt_address = reinterpret_cast<fadt *>(header);
-                a9n::kernel::utility::logger::printk("configure FADT address\n");
+                a9n::kernel::utility::logger::printh("configure FADT address\n");
                 a9n::kernel::utility::logger::split();
                 continue;
             }
@@ -71,7 +71,7 @@ namespace a9n::hal::x86_64
             if (header->validate_sdt_signature("APIC"))
             {
                 madt_address = reinterpret_cast<madt *>(header);
-                a9n::kernel::utility::logger::printk("configure MADT address\n");
+                a9n::kernel::utility::logger::printh("configure MADT address\n");
                 a9n::kernel::utility::logger::split();
                 continue;
             }
@@ -79,7 +79,7 @@ namespace a9n::hal::x86_64
             if (header->validate_sdt_signature("HPET"))
             {
                 hpet_address = header;
-                a9n::kernel::utility::logger::printk("configure HPET address\n");
+                a9n::kernel::utility::logger::printh("configure HPET address\n");
                 a9n::kernel::utility::logger::split();
                 continue;
             }
@@ -105,17 +105,17 @@ namespace a9n::hal::x86_64
         liba9n::std::memcpy(signature, rsdp_pointer->signature, 8);
         liba9n::std::memcpy(oem_id, rsdp_pointer->oem_id, 6);
 
-        a9n::kernel::utility::logger::printk("signature\e[55G : %s\n", signature);
-        a9n::kernel::utility::logger::printk("checksum\e[55G : %d\n", rsdp_pointer->checksum);
-        a9n::kernel::utility::logger::printk("oem_id\e[55G : %s\n", oem_id);
-        a9n::kernel::utility::logger::printk("revision\e[55G : %d\n", rsdp_pointer->revision);
-        a9n::kernel::utility::logger::printk("rsdt_address\e[55G : 0x%08lx\n", rsdp_pointer->rsdt_address);
-        a9n::kernel::utility::logger::printk("length\e[55G : 0x%08lx\n", rsdp_pointer->length);
-        a9n::kernel::utility::logger::printk(
+        a9n::kernel::utility::logger::printh("signature\e[55G : %s\n", signature);
+        a9n::kernel::utility::logger::printh("checksum\e[55G : %d\n", rsdp_pointer->checksum);
+        a9n::kernel::utility::logger::printh("oem_id\e[55G : %s\n", oem_id);
+        a9n::kernel::utility::logger::printh("revision\e[55G : %d\n", rsdp_pointer->revision);
+        a9n::kernel::utility::logger::printh("rsdt_address\e[55G : 0x%08lx\n", rsdp_pointer->rsdt_address);
+        a9n::kernel::utility::logger::printh("length\e[55G : 0x%08lx\n", rsdp_pointer->length);
+        a9n::kernel::utility::logger::printh(
             "xsdt_address\e[55G : 0x%016llx\n",
             rsdp_pointer->xsdt_address
         );
-        a9n::kernel::utility::logger::printk(
+        a9n::kernel::utility::logger::printh(
             "extended_checksum\e[55G : %d\n",
             rsdp_pointer->extended_checksum
         );
@@ -135,15 +135,15 @@ namespace a9n::hal::x86_64
         fixed_oem_table_id[8] = '\0';
         liba9n::std::memcpy(fixed_oem_table_id, header->oem_table_id, 8);
 
-        a9n::kernel::utility::logger::printk("signature\e[55G : %s\n", fixed_signature);
-        a9n::kernel::utility::logger::printk("length\e[55G : 0x%08lx\n", header->length);
-        a9n::kernel::utility::logger::printk("revision\e[55G : %d\n", header->revision);
-        a9n::kernel::utility::logger::printk("checksum\e[55G : %d\n", header->checksum);
-        a9n::kernel::utility::logger::printk("oem_id\e[55G : %s\n", fixed_oem_id);
-        a9n::kernel::utility::logger::printk("oem_table_id\e[55G : %s\n", fixed_oem_table_id);
-        a9n::kernel::utility::logger::printk("oem_revision\e[55G : 0x%08lx\n", header->oem_revision);
-        a9n::kernel::utility::logger::printk("creator_id\e[55G : 0x%08lx\n", header->creator_id);
-        a9n::kernel::utility::logger::printk(
+        a9n::kernel::utility::logger::printh("signature\e[55G : %s\n", fixed_signature);
+        a9n::kernel::utility::logger::printh("length\e[55G : 0x%08lx\n", header->length);
+        a9n::kernel::utility::logger::printh("revision\e[55G : %d\n", header->revision);
+        a9n::kernel::utility::logger::printh("checksum\e[55G : %d\n", header->checksum);
+        a9n::kernel::utility::logger::printh("oem_id\e[55G : %s\n", fixed_oem_id);
+        a9n::kernel::utility::logger::printh("oem_table_id\e[55G : %s\n", fixed_oem_table_id);
+        a9n::kernel::utility::logger::printh("oem_revision\e[55G : 0x%08lx\n", header->oem_revision);
+        a9n::kernel::utility::logger::printh("creator_id\e[55G : 0x%08lx\n", header->creator_id);
+        a9n::kernel::utility::logger::printh(
             "creator_revision\e[55G : 0x%08lx\n",
             header->creator_revision
         );

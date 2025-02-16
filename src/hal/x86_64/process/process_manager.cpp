@@ -2,6 +2,7 @@
 
 #include <hal/arch/arch_types.hpp>
 #include <hal/x86_64/arch/arch_context.hpp>
+#include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
 #include <hal/x86_64/arch/floating_point.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
@@ -31,18 +32,29 @@ namespace a9n::hal
 
     hal_result switch_context(a9n::kernel::process &preview_process, a9n::kernel::process &next_process)
     {
-        auto pml4 = kernel::convert_slot_data_to_page_table(next_process.root_address_space.data);
-        [[unlikely]] if (!pml4.address)
+        x86_64::switch_floating_context(
+            preview_process.floating_registers,
+            next_process.floating_registers
+        );
+
+        a9n::virtual_address current_cr3;
+
+        asm volatile("mov %%cr3, %0" : "=r"(current_cr3) : :);
+
+        auto next_pml4 = kernel::convert_slot_data_to_page_table(next_process.root_address_space.data);
+        if (!next_pml4.address) [[unlikely]]
         {
             a9n::kernel::utility::logger::error("no such root page table!");
             return hal_error::NO_SUCH_ADDRESS;
         }
 
-        x86_64::switch_floating_context(
-            preview_process.floating_registers,
-            next_process.floating_registers
-        );
-        x86_64::_load_cr3(pml4.address);
+        // if address space is the same, TLB flush is no necessary
+        if (current_cr3 == next_pml4.address)
+        {
+            return {};
+        }
+
+        x86_64::_load_cr3(next_pml4.address);
 
         return {};
     }
@@ -72,17 +84,41 @@ namespace a9n::hal
         x86_64::_idle();
     }
 
-    hal_result init_hardware_context(a9n::kernel::hardware_context &context)
+    hal_result init_hardware_context(cpu_mode mode, a9n::kernel::hardware_context &context)
     {
         liba9n::std::memset(&context, 0, a9n::hal::HARDWARE_CONTEXT_SIZE);
 
-        context[x86_64::register_index::RFLAGS] = 0x202;
-        context[x86_64::register_index::CS]     = x86_64::segment_selector::USER_CS | 0x03;
-        context[x86_64::register_index::RSP]    = 0;
-        context[x86_64::register_index::SS]     = x86_64::segment_selector::USER_DS | 0x03;
+        switch (mode)
+        {
+            case cpu_mode::KERNEL :
+                {
+                    context[x86_64::register_index::RFLAGS] = 0x202;
+                    context[x86_64::register_index::CS]     = x86_64::segment_selector::KERNEL_CS;
+                    context[x86_64::register_index::RSP]    = 0;
+                    context[x86_64::register_index::SS]     = x86_64::segment_selector::KERNEL_DS;
 
-        // magic number
-        context[x86_64::register_index::FS_BASE] = 0xfeedface;
+                    // magic number (for debugging)
+                    context[x86_64::register_index::FS_BASE] = 0xdeadc0de;
+
+                    break;
+                }
+
+            case cpu_mode::USER :
+                {
+                    context[x86_64::register_index::RFLAGS] = 0x202;
+                    context[x86_64::register_index::CS]  = x86_64::segment_selector::USER_CS | 0x03;
+                    context[x86_64::register_index::RSP] = 0;
+                    context[x86_64::register_index::SS]  = x86_64::segment_selector::USER_DS | 0x03;
+
+                    // magic number (for debugging)
+                    context[x86_64::register_index::FS_BASE] = 0xfeedface;
+
+                    break;
+                }
+
+            default :
+                return hal_error::ILLEGAL_ARGUMENT;
+        }
 
         return {};
     }
@@ -107,53 +143,43 @@ namespace a9n::hal
         switch (index)
         {
             case 0 :
-                result = target_process.registers[x86_64::register_index::RSI];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RSI]);
 
             case 1 :
-                result = target_process.registers[x86_64::register_index::RDX];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RDX]);
 
             case 2 :
-                result = target_process.registers[x86_64::register_index::R8];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R8]);
 
             case 3 :
-                result = target_process.registers[x86_64::register_index::R9];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R9]);
 
             case 4 :
-                result = target_process.registers[x86_64::register_index::R10];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R10]);
 
             case 5 :
-                result = target_process.registers[x86_64::register_index::R12];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R12]);
 
             case 6 :
-                result = target_process.registers[x86_64::register_index::R13];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R13]);
 
             case 7 :
-                result = target_process.registers[x86_64::register_index::R14];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R14]);
 
             case 8 :
-                result = target_process.registers[x86_64::register_index::R15];
-                break;
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R15]);
 
             default :
-                if (!target_process.buffer)
                 {
-                    DEBUG_LOG("no such IPC buffer");
-                    return hal_error::NO_SUCH_ADDRESS;
+                    if (!target_process.buffer) [[unlikely]]
+                    {
+                        DEBUG_LOG("no such IPC buffer");
+                        return hal_error::NO_SUCH_ADDRESS;
+                    }
+
+                    return target_process.buffer->get_message(index);
                 }
-
-                result = target_process.buffer->get_message(index);
-                break;
         }
-
-        return result;
     }
 
     liba9n::result<a9n::word, hal_error>
@@ -199,52 +225,50 @@ namespace a9n::hal
         {
             case 0 :
                 target_process.registers[x86_64::register_index::RSI] = value;
-                break;
+                return {};
 
             case 1 :
                 target_process.registers[x86_64::register_index::RDX] = value;
-                break;
+                return {};
 
             case 2 :
                 target_process.registers[x86_64::register_index::R8] = value;
-                break;
+                return {};
 
             case 3 :
                 target_process.registers[x86_64::register_index::R9] = value;
-                break;
+                return {};
 
             case 4 :
                 target_process.registers[x86_64::register_index::R10] = value;
-                break;
+                return {};
 
             case 5 :
                 target_process.registers[x86_64::register_index::R12] = value;
-                break;
+                return {};
 
             case 6 :
                 target_process.registers[x86_64::register_index::R13] = value;
-                break;
+                return {};
 
             case 7 :
                 target_process.registers[x86_64::register_index::R14] = value;
-                break;
+                return {};
 
             case 8 :
                 target_process.registers[x86_64::register_index::R15] = value;
-                break;
+                return {};
 
             default :
-                if (!target_process.buffer)
+                [[unlikely]] if (!target_process.buffer)
                 {
                     DEBUG_LOG("no such IPC buffer");
                     return hal_error::NO_SUCH_ADDRESS;
                 }
 
                 target_process.buffer->set_message(index, value);
-                break;
+                return {};
         }
-
-        return {};
     }
 
     hal_result

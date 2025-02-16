@@ -1,9 +1,9 @@
-#include "hal/hal_result.hpp"
-#include "hal/interface/memory_manager.hpp"
-#include "kernel/process/cpu.hpp"
-#include "kernel/types.hpp"
 #include <hal/x86_64/arch/arch_initializer.hpp>
 
+#include <kernel/process/cpu.hpp>
+#include <kernel/types.hpp>
+
+#include <hal/hal_result.hpp>
 #include <hal/x86_64/arch/arch_types.hpp>
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
@@ -13,6 +13,8 @@
 #include <hal/x86_64/interrupt/apic.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
 #include <hal/x86_64/interrupt/pic.hpp>
+#include <hal/x86_64/io/serial.hpp>
+#include <hal/x86_64/memory/paging.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 #include <hal/x86_64/systemcall/syscall.hpp>
 #include <hal/x86_64/time/acpi_pm_timer.hpp>
@@ -29,13 +31,30 @@
 
 // temp
 #include <hal/x86_64/arch/smp.hpp>
-#include <hal/x86_64/memory/memory_manager.hpp>
 #include <hal/x86_64/process/idle.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/lock.hpp>
 
 namespace a9n::hal::x86_64
 {
+    namespace
+    {
+        hal_result unmap_lower_memory_mapping(void)
+        {
+            a9n::physical_address *kernel_top_page_table
+                = reinterpret_cast<a9n::physical_address *>(&__kernel_pml4);
+            if (!kernel_top_page_table)
+            {
+                return hal_error::NO_SUCH_ADDRESS;
+            }
+
+            kernel_top_page_table[0] = 0; // reset id-map
+            _invalidate_page(0);
+
+            return {};
+        }
+    }
+
     hal_result init_sub_cores(void);
     hal_result init_sub_core(void);
     void       init_global_constructors(void);
@@ -72,14 +91,18 @@ namespace a9n::hal::x86_64
             .and_then(unmap_lower_memory_mapping);
     }
 
+    extern "C"
+    {
+        extern uint8_t __init_constructors_start[];
+        extern uint8_t __init_constructors_end[];
+    }
+
     void init_global_constructors(void)
     {
         a9n::kernel::utility::logger::printh("call global ctors ...\n");
 
         using constructor = void (*)(void);
-        extern uint8_t __init_constructors_start[];
-        extern uint8_t __init_constructors_end[];
-        a9n::word      constructor_count
+        a9n::word constructor_count
             = (reinterpret_cast<a9n::word>(&__init_constructors_end)
                - reinterpret_cast<a9n::word>(&__init_constructors_end))
             / sizeof(constructor);
@@ -107,6 +130,22 @@ namespace a9n::hal::x86_64
                 }
             )
             .and_then(
+                [](void) -> hal_result
+                {
+                    logger::printh("init Local APIC\n");
+                    return local_apic_core.init();
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    logger::printh("init 8259 PIC\n");
+                    init_pic(); // disable
+
+                    return {};
+                }
+            )
+            .and_then(
                 [=](void) -> liba9n::result<madt *, hal_error>
                 {
                     // init ACPI
@@ -130,11 +169,9 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("disable PIC\n");
-                    disable_pic();
-
-                    logger::printh("init Local APIC\n");
-                    return local_apic_core.init();
+                    a9n::kernel::utility::logger::printh("init IMCR\n");
+                    configure_imcr_to_apic(); // bsp
+                    return {};
                 }
             )
             .and_then(
@@ -202,6 +239,14 @@ namespace a9n::hal::x86_64
                 {
                     logger::printh("interrupt initialization failed : %s\n", hal_error_to_string(e));
                     return e;
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    logger::printh("re-configure serial (for debug) ...\n");
+                    reconfigure_serial();
+                    return {};
                 }
             )
             .and_then(
@@ -383,14 +428,14 @@ namespace a9n::hal::x86_64
     // for smp
     extern "C" void x86_64_ap_entry(void)
     {
-        kernel::utility::logger::printk("ap entry!\n");
+        kernel::utility::logger::printh("ap entry!\n");
 
         auto result
             = try_allocate_core_number()
                   .and_then(
                       [](a9n::word core_number) -> hal_result
                       {
-                          kernel::utility::logger::printk(
+                          kernel::utility::logger::printh(
                               "configure local variable [%04llx]\n",
                               core_number
                           );
@@ -402,7 +447,7 @@ namespace a9n::hal::x86_64
                   .and_then(
                       [](void) -> hal_result
                       {
-                          kernel::utility::logger::printk("init sub cores ...\n");
+                          kernel::utility::logger::printh("init sub cores ...\n");
                           return init_sub_core();
                       }
                   );
@@ -435,9 +480,6 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("disable PIC\n");
-                    disable_pic();
-
                     logger::printh("init Local APIC\n");
                     return local_apic_core.init();
                 }

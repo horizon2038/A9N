@@ -26,6 +26,10 @@ namespace a9n::hal::x86_64
     };
 
     void reconfigure_serial(void);
+
+    int     is_received(void);
+    uint8_t read_serial(void);
+
 }
 
 #endif

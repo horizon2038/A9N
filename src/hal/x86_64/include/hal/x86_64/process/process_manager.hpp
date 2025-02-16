@@ -10,7 +10,7 @@
 
 namespace a9n::hal::x86_64
 {
-    inline constexpr a9n::word MESSAGE_REGISTER_SIZE_MAX = 4;
+    inline constexpr a9n::word MESSAGE_REGISTER_SIZE_MAX = 9;
 
     // unused
     // TODO: remove this

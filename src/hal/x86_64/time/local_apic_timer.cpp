@@ -3,10 +3,13 @@
 #include <hal/hal_result.hpp>
 #include <hal/x86_64/arch/msr.hpp>
 #include <hal/x86_64/interrupt/apic.hpp>
+#include <hal/x86_64/interrupt/interrupt.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 #include <hal/x86_64/time/acpi_pm_timer.hpp>
 
 #include <kernel/utility/logger.hpp>
+
+#include <liba9n/common/enum.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -17,7 +20,7 @@ namespace a9n::hal::x86_64
 
     hal_result local_apic_timer::init()
     {
-        a9n::kernel::utility::logger::printk("init Local APIC Timer\n");
+        a9n::kernel::utility::logger::printh("init Local APIC Timer\n");
         divide_config = 0x03;
 
         return calibrate()
@@ -33,13 +36,16 @@ namespace a9n::hal::x86_64
                 [this](void) -> hal_result
                 {
                     // configure irq
-                    return local_apic_core.write(local_apic_offset::LVT_TIMER, 0x20 | (1 << 17));
+                    return local_apic_core.write(
+                        local_apic_offset::LVT_TIMER,
+                        liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17)
+                    );
                 }
             )
             .or_else(
                 [this](hal_error e) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printk(
+                    a9n::kernel::utility::logger::printh(
                         "failed to initialize "
                         "Local APIC Timer\n"
                     );
@@ -56,7 +62,7 @@ namespace a9n::hal::x86_64
                 [&, this](void) -> hal_result
                 {
                     // clear Local APIC Timer
-                    a9n::kernel::utility::logger::printk(
+                    a9n::kernel::utility::logger::printh(
                         "clear Local APIC "
                         "Timer\n"
                     );
@@ -67,7 +73,7 @@ namespace a9n::hal::x86_64
                 [&, this](void) -> hal_result
                 {
                     // configure divide
-                    a9n::kernel::utility::logger::printk("configure divide\n");
+                    a9n::kernel::utility::logger::printh("configure divide\n");
                     return local_apic_core.write(local_apic_offset::TIMER_DIVIDE, divide_config & 0x0F);
                 }
             )
@@ -75,7 +81,7 @@ namespace a9n::hal::x86_64
                 [&, this](void) -> hal_result
                 {
                     // start Local APIC Timer
-                    a9n::kernel::utility::logger::printk(
+                    a9n::kernel::utility::logger::printh(
                         "start Local APIC "
                         "Timer measurement ...\n"
                     );
@@ -99,16 +105,16 @@ namespace a9n::hal::x86_64
                 [&, this](uint32_t start_clock) -> hal_result
                 {
                     // calculate Local APIC Timer frequency
-                    a9n::kernel::utility::logger::printk(
+                    a9n::kernel::utility::logger::printh(
                         "calculate Local APIC "
                         "Timer frequency\n"
                     );
                     uint32_t elapsed_clock = 0xFFFFFFFF - start_clock;
                     frequency              = (elapsed_clock * 100);
 
-                    a9n::kernel::utility::logger::printk("elapsed_clock : %8llu times\n", elapsed_clock);
+                    a9n::kernel::utility::logger::printh("elapsed_clock : %8llu times\n", elapsed_clock);
 
-                    a9n::kernel::utility::logger::printk(
+                    a9n::kernel::utility::logger::printh(
                         "Local APIC Timer frequency : %10llu Hz ( %4llu MHz "
                         ")\n",
                         frequency,
@@ -124,7 +130,7 @@ namespace a9n::hal::x86_64
     {
         using a9n::kernel::utility::logger;
 
-        if (frequency == 0)
+        if (frequency == 0 || hz == 0)
         {
             return hal_error::ILLEGAL_ARGUMENT;
         }
@@ -142,7 +148,7 @@ namespace a9n::hal::x86_64
             .or_else(
                 [&, this](hal_error e) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printk(
+                    a9n::kernel::utility::logger::printh(
                         "configure_cycle "
                         "failed\n"
                     );

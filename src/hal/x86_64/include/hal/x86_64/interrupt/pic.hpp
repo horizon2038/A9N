@@ -17,6 +17,7 @@ namespace a9n::hal::x86_64
         PIC_SLAVE_DATA     = 0xa1
     };
 
+    // TODO: remove this
     class pic
     {
       public:
@@ -34,7 +35,13 @@ namespace a9n::hal::x86_64
         a9n::hal::x86_64::port_io _port_io;
     };
 
-    void disable_pic();
+    void init_pic(void);
+    void enable_pic(uint8_t irq_number);
+    void mask_pic(uint16_t mask);
+    void end_of_interrupt_pic(uint8_t irq_number);
+
+    void configure_imcr_to_apic(void);
+
 }
 
 #endif

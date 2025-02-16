@@ -11,9 +11,12 @@ namespace a9n::hal::x86_64
     namespace msr
     {
         // x86_64 machine specific registers
-        inline constexpr uint32_t APIC_BASE       = 0x1b;
-        inline constexpr uint32_t FEATURE_CONTROL = 0x3a; // NOTE: intel specific !
-        inline constexpr uint32_t APIC_BASE_BSP   = 0x100;
+        inline constexpr uint32_t APIC_BASE     = 0x1b;
+        inline constexpr uint32_t APIC_BASE_BSP = 0x100;
+
+        // intel-specific MSRs
+        inline constexpr uint32_t FEATURE_CONTROL = 0x3a;
+        inline constexpr uint32_t PAT             = 0x277;
 
         inline constexpr uint32_t EFER            = 0xC0000080;
         inline constexpr uint32_t STAR            = 0xc0000081;

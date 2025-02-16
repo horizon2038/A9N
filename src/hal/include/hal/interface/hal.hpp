@@ -19,10 +19,6 @@ namespace a9n::hal
 {
     struct hal
     {
-        memory_manager *_memory_manager;
-
-        // interrupt *_interrupt;
-
         // platform services
         arch_initializer *_arch_initializer;
 

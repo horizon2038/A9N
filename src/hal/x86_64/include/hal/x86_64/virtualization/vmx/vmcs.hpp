@@ -7,6 +7,7 @@
 #include <hal/x86_64/virtualization/vmx/vmcs_region.hpp>
 #include <hal/x86_64/virtualization/vmx/vmx_msr.hpp>
 #include <hal/x86_64/virtualization/vmx/vmx_result.hpp>
+#include <kernel/memory/memory.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
@@ -138,6 +139,7 @@ namespace a9n::hal::x86_64
     inline vmx_result<> vm_clear(const vmcs_region &region);
     inline vmx_result<> vm_pointer_load(const vmcs_region &region);
 
+    // speed-critical; inline
     inline vmx_result<uint64_t> vm_read(vmcs_field field)
     {
         auto value = _vmread(field);
@@ -168,18 +170,6 @@ namespace a9n::hal::x86_64
         return revision_id;
     }
 
-    inline vmx_result<> init_vmcs(vmcs_region &region, uint32_t revision_id)
-    {
-        region.configure_revision_id(revision_id);
-
-        return vm_clear(region).and_then(
-            [&](void) -> vmx_result<>
-            {
-                return vm_pointer_load(region);
-            }
-        );
-    }
-
     inline vmx_result<> vm_clear(const vmcs_region &region)
     {
         auto address = a9n::kernel::virtual_to_physical_address(
@@ -200,6 +190,8 @@ namespace a9n::hal::x86_64
         return check_vmx_result();
     }
 
+    vmx_result<> init_vmcs(vmcs_region &region, uint32_t revision_id);
+
     // Guest State
     // holds a state of guest processor;
     // load : VM Entry
@@ -210,10 +202,345 @@ namespace a9n::hal::x86_64
     // load : VM Exit
 
     // VM Execution Control
+    struct pin_based_vm_execution_contol
+    {
+        uint32_t all { 0 };
+
+        constexpr pin_based_vm_execution_contol(
+            bool external_interrupt,
+            bool nmi,
+            bool virtual_nmi,
+            bool activate_vmx_preemption_timer,
+            bool process_posted_interrupts
+        )
+        {
+            all |= (external_interrupt ? 1 : 0) << 0;
+            all |= (nmi ? 1 : 0) << 3;
+            all |= (virtual_nmi ? 1 : 0) << 5;
+            all |= (activate_vmx_preemption_timer ? 1 : 0) << 6;
+            all |= (process_posted_interrupts ? 1 : 0) << 7;
+        }
+
+        constexpr bool external_interrupt(void) const
+        {
+            return (all >> 0) & 1;
+        }
+
+        constexpr bool nmi(void) const
+        {
+            return (all >> 3) & 1;
+        }
+
+        constexpr bool virtual_nmi(void) const
+        {
+            return (all >> 5) & 1;
+        }
+
+        constexpr bool activate_vmx_preemption_timer(void) const
+        {
+            return (all >> 6) & 1;
+        }
+
+        constexpr bool process_posted_interrupts(void) const
+        {
+            return (all >> 7) & 1;
+        }
+
+        constexpr void configure_external_interrupt(bool value)
+        {
+            all |= (value ? 1 : 0) << 0;
+        }
+
+        constexpr void configure_nmi(bool value)
+        {
+            all |= (value ? 1 : 0) << 3;
+        }
+
+        constexpr void configure_virtual_nmi(bool value)
+        {
+            all |= (value ? 1 : 0) << 5;
+        }
+
+        constexpr void configure_activate_vmx_preemption_timer(bool value)
+        {
+            all |= (value ? 1 : 0) << 6;
+        }
+
+        constexpr void configure_process_posted_interrupts(bool value)
+        {
+            all |= (value ? 1 : 0) << 7;
+        }
+    };
+
+    struct processor_based_vm_execution_control
+    {
+        uint32_t all { 0 };
+
+        constexpr processor_based_vm_execution_control(
+            bool interrupt_window_exiting,
+            bool use_tsc_offsetting,
+            bool hlt_exiting,
+            bool invd_exiting,
+            bool mwait_exiting,
+            bool rdpmc_exiting,
+            bool rdtsc_exiting,
+            bool cr3_load_exiting,
+            bool cr3_store_exiting,
+            bool cr8_load_exiting,
+            bool cr8_store_exiting,
+            bool use_tpr_shadow,
+            bool nmi_window_exiting,
+            bool mov_dr_exiting,
+            bool unconditional_io_exiting,
+            bool use_io_bitmaps,
+            bool monitor_trap_flag,
+            bool use_msr_bitmaps,
+            bool monitor_exiting,
+            bool pause_exiting,
+            bool activate_secondary_controls
+        )
+        {
+            all |= (interrupt_window_exiting ? 1 : 0) << 2;
+            all |= (use_tsc_offsetting ? 1 : 0) << 3;
+            all |= (hlt_exiting ? 1 : 0) << 7;
+            all |= (invd_exiting ? 1 : 0) << 9;
+            all |= (mwait_exiting ? 1 : 0) << 10;
+            all |= (rdpmc_exiting ? 1 : 0) << 11;
+            all |= (rdtsc_exiting ? 1 : 0) << 12;
+            all |= (cr3_load_exiting ? 1 : 0) << 15;
+            all |= (cr3_store_exiting ? 1 : 0) << 16;
+            all |= (cr8_load_exiting ? 1 : 0) << 19;
+            all |= (cr8_store_exiting ? 1 : 0) << 20;
+            all |= (use_tpr_shadow ? 1 : 0) << 21;
+            all |= (nmi_window_exiting ? 1 : 0) << 22;
+            all |= (mov_dr_exiting ? 1 : 0) << 23;
+            all |= (unconditional_io_exiting ? 1 : 0) << 24;
+            all |= (use_io_bitmaps ? 1 : 0) << 25;
+            all |= (monitor_trap_flag ? 1 : 0) << 27;
+            all |= (use_msr_bitmaps ? 1 : 0) << 28;
+            all |= (monitor_exiting ? 1 : 0) << 29;
+            all |= (pause_exiting ? 1 : 0) << 30;
+            all |= (activate_secondary_controls ? 1 : 0) << 31;
+        }
+
+        constexpr bool interrupt_window_exiting(void) const
+        {
+            return (all >> 2) & 1;
+        }
+
+        constexpr bool use_tsc_offsetting(void) const
+        {
+            return (all >> 3) & 1;
+        }
+
+        constexpr bool hlt_exiting(void) const
+        {
+            return (all >> 7) & 1;
+        }
+
+        constexpr bool invd_exiting(void) const
+        {
+            return (all >> 9) & 1;
+        }
+
+        constexpr bool mwait_exiting(void) const
+        {
+            return (all >> 10) & 1;
+        }
+
+        constexpr bool rdpmc_exiting(void) const
+        {
+            return (all >> 11) & 1;
+        }
+
+        constexpr bool rdtsc_exiting(void) const
+        {
+            return (all >> 12) & 1;
+        }
+
+        constexpr bool cr3_load_exiting(void) const
+        {
+            return (all >> 15) & 1;
+        }
+
+        constexpr bool cr3_store_exiting(void) const
+        {
+            return (all >> 16) & 1;
+        }
+
+        constexpr bool cr8_load_exiting(void) const
+        {
+            return (all >> 19) & 1;
+        }
+
+        constexpr bool cr8_store_exiting(void) const
+        {
+            return (all >> 20) & 1;
+        }
+
+        constexpr bool use_tpr_shadow(void) const
+        {
+            return (all >> 21) & 1;
+        }
+
+        constexpr bool nmi_window_exiting(void) const
+        {
+            return (all >> 22) & 1;
+        }
+
+        constexpr bool mov_dr_exiting(void) const
+        {
+            return (all >> 23) & 1;
+        }
+
+        constexpr bool unconditional_io_exiting(void) const
+        {
+            return (all >> 24) & 1;
+        }
+
+        constexpr bool use_io_bitmaps(void) const
+        {
+            return (all >> 25) & 1;
+        }
+
+        constexpr bool monitor_trap_flag(void) const
+        {
+            return (all >> 27) & 1;
+        }
+
+        constexpr bool use_msr_bitmaps(void) const
+        {
+            return (all >> 28) & 1;
+        }
+
+        constexpr bool monitor_exiting(void) const
+        {
+            return (all >> 29) & 1;
+        }
+
+        constexpr bool pause_exiting(void) const
+        {
+            return (all >> 30) & 1;
+        }
+
+        constexpr bool activate_secondary_controls(void) const
+        {
+            return (all >> 31) & 1;
+        }
+
+        constexpr void configure_interrupt_window_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 2;
+        }
+
+        constexpr void configure_use_tsc_offsetting(bool value)
+        {
+            all |= (value ? 1 : 0) << 3;
+        }
+
+        constexpr void configure_hlt_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 7;
+        }
+
+        constexpr void configure_invd_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 9;
+        }
+
+        constexpr void configure_mwait_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 10;
+        }
+
+        constexpr void configure_rdpmc_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 11;
+        }
+
+        constexpr void configure_rdtsc_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 12;
+        }
+
+        constexpr void configure_cr3_load_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 15;
+        }
+
+        constexpr void configure_cr3_store_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 16;
+        }
+
+        constexpr void configure_cr8_load_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 19;
+        }
+
+        constexpr void configure_cr8_store_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 20;
+        }
+
+        constexpr void configure_use_tpr_shadow(bool value)
+        {
+            all |= (value ? 1 : 0) << 21;
+        }
+
+        constexpr void configure_nmi_window_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 22;
+        }
+
+        constexpr void configure_mov_dr_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 23;
+        }
+
+        constexpr void configure_unconditional_io_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 24;
+        }
+
+        constexpr void configure_use_io_bitmaps(bool value)
+        {
+            all |= (value ? 1 : 0) << 25;
+        }
+
+        constexpr void configure_monitor_trap_flag(bool value)
+        {
+            all |= (value ? 1 : 0) << 27;
+        }
+
+        constexpr void configure_use_msr_bitmaps(bool value)
+        {
+            all |= (value ? 1 : 0) << 28;
+        }
+
+        constexpr void configure_monitor_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 29;
+        }
+
+        constexpr void configure_pause_exiting(bool value)
+        {
+            all |= (value ? 1 : 0) << 30;
+        }
+
+        constexpr void configure_activate_secondary_controls(bool value)
+        {
+            all |= (value ? 1 : 0) << 31;
+        }
+    };
 
     // VM Exit Control
 
     // VM Entry Control
+    struct vm_entry_control
+    {
+        uint32_t all { 0 };
+    };
 
     // VM Exit Information
 

@@ -51,6 +51,10 @@ interrupt_handler_common:
     ; take the CS register out of the IRET Frame and check if it's 3 (0b11).
     test qword [rsp + 0x18], 3
     jnz .from_user 
+    
+    ; idle
+    test qword [gs:0x18], 1
+    jnz .from_context
 
 .from_kernel:
     ; cmp qword [rsp + 0x28], 0 
@@ -86,6 +90,7 @@ interrupt_handler_common:
 
     ; unreachable
 
+.from_context:
 .from_user:
     ; `swapgs` absolutely must be executed only when transitioning from user!
     swapgs

@@ -232,6 +232,8 @@ namespace a9n::hal::x86_64
         // guest-state fields
         inline constexpr vmcs_field VMCS_LINK_POINTER
             = vmcs_field(vmcs_access_type::FULL, 0b00000000, vmcs_type::GUEST_STATE, vmcs_width::BIT_64);
+        inline constexpr vmcs_field VMCS_LINK_POINTER_HIGH
+            = vmcs_field(vmcs_access_type::HIGH, 0b00000000, vmcs_type::GUEST_STATE, vmcs_width::BIT_64);
         inline constexpr vmcs_field GUEST_IA32_DEBUGCTL
             = vmcs_field(vmcs_access_type::FULL, 0b00000001, vmcs_type::GUEST_STATE, vmcs_width::BIT_64);
         inline constexpr vmcs_field GUEST_IA32_PAT

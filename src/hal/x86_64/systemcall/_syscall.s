@@ -73,11 +73,16 @@ _syscall_handler:
     ; setup do_syscall arguments
     ; the argument has already been set
     ; RDI : kernel call type
-    ; RSI : message_register_0
-    ; RDX : message_register_1
-    ; R8  : message_register_2
-    ; R9  : message_register_3
-    mov rcx, r8
+    ; RSI : message_register[0]
+    ; RDX : message_register[1]
+    ; R8  : message_register[2]
+    ; R9  : message_register[3]
+    ; R10 : message_register[4]
+    ; R12 : message_register[5]
+    ; R13 : message_register[6]
+    ; R14 : message_register[7]
+    ; R15 : message_register[8]
+    ; mov rcx, r8
 
     ; use kernel_stack since do_syscall
     mov rsp, [gs:0x00]
@@ -85,7 +90,7 @@ _syscall_handler:
     and rsp, qword -0x10
     sub rsp, 8 ; for call (return address)
 
-    ; signature : void do_syscall(uint64_t descriptor, uint64_t depth, uint64_t message_tag, uint64_t message_length)
+    ; signature : void do_syscall(kernel_call_type)
     call do_syscall
 
     add rsp, 0x08

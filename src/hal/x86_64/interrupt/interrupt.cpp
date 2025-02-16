@@ -3,11 +3,16 @@
 #include <hal/hal_result.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
 
+#include <hal/x86_64/arch/arch_context.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
 #include <hal/x86_64/interrupt/apic.hpp>
 #include <hal/x86_64/interrupt/interrupt_descriptor.hpp>
 #include <hal/x86_64/systemcall/syscall.hpp>
 #include <hal/x86_64/time/acpi_pm_timer.hpp>
+
+// HACK
+#include <hal/x86_64/io/port_io.hpp>
+#include <hal/x86_64/io/serial.hpp>
 
 #include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
@@ -90,14 +95,16 @@ namespace a9n::hal::x86_64
         bool is_shadow_stack      = error_code >> 6 & 1;
         bool is_sgx               = error_code >> 7 & 1;
 
-        logger::printh("is_present           : %s\n", is_present ? "Y" : "N");
-        logger::printh("is_write             : %s\n", is_write ? "Y" : "N");
-        logger::printh("is_user              : %s\n", is_user ? "Y" : "N");
-        logger::printh("is_reserved_write    : %s\n", is_reserved_write ? "Y" : "N");
-        logger::printh("is_instruction_fetch : %s\n", is_instruction_fetch ? "Y" : "N");
-        logger::printh("is_protection_key    : %s\n", is_protection_key ? "Y" : "N");
-        logger::printh("is_shadow_stack      : %s\n", is_shadow_stack ? "Y" : "N");
-        logger::printh("is_sgx               : %s\n", is_sgx ? "Y" : "N");
+        logger::printh("===== PAGE FAULT HAS OCCURED =====\n");
+        logger::printh("fault address : 0x%016llx\n", read_cr2());
+        logger::printh("- present           : %s\n", is_present ? "Y" : "N");
+        logger::printh("- write             : %s\n", is_write ? "Y" : "N");
+        logger::printh("- user              : %s\n", is_user ? "Y" : "N");
+        logger::printh("- reserved_write    : %s\n", is_reserved_write ? "Y" : "N");
+        logger::printh("- instruction_fetch : %s\n", is_instruction_fetch ? "Y" : "N");
+        logger::printh("- protection_key    : %s\n", is_protection_key ? "Y" : "N");
+        logger::printh("- shadow_stack      : %s\n", is_shadow_stack ? "Y" : "N");
+        logger::printh("- sgx               : %s\n", is_sgx ? "Y" : "N");
     }
 
     inline constexpr const char *register_names[]
@@ -118,9 +125,7 @@ namespace a9n::hal::x86_64
         a9n::kernel::utility::logger::printh("CR2 : 0x%016llx\n", read_cr2());
         a9n::kernel::utility::logger::printh("CR3 : 0x%016llx\n", read_cr3());
         a9n::kernel::utility::logger::printh("CR4 : 0x%016llx\n", read_cr4());
-
         a9n::kernel::utility::logger::printh("kernel_gs_base : 0x%016llx\n", read_kernel_gs_base());
-
         a9n::kernel::utility::logger::printh("user_gs_base : 0x%016llx\n", read_user_gs_base());
         a9n::kernel::utility::logger::split();
     }
@@ -132,19 +137,7 @@ namespace a9n::hal::x86_64
 
         switch (irq_number)
         {
-            // timer
-            case 0x20 :
-                a9n::kernel::utility::logger::printh(
-                    "[kernel -> kernel] exception [%2d] : %s : %llu\n",
-                    static_cast<int>(irq_number),
-                    exception_type,
-                    error_code
-                );
-                interrupt_handler_table[32]();
-                break;
-
             default :
-                print_registers();
                 a9n::kernel::utility::logger::printh(
                     "[kernel -> kernel] exception [%2d] : %s : %llu\n",
                     static_cast<int>(irq_number),
@@ -160,42 +153,102 @@ namespace a9n::hal::x86_64
     }
 
     // called from asm
-    extern "C" void do_irq_from_user(uint64_t irq_number, uint64_t error_code)
+    extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code)
     {
-        // a9n::kernel::utility::logger::printh("user irq!\n");
-        switch (irq_number)
+        // exception
+        if (irq_number < liba9n::enum_cast(reserved_irq::IO_BASE))
         {
-            case 0 :
-                a9n::kernel::utility::logger::printh("zero division fault! : 0x%llx\n", error_code);
-                print_registers();
+            auto                  fault         = a9n::kernel::fault_type::NONE;
+            a9n::word             fault_code    = 0; // reserved (currently unused)
+            a9n::physical_address fault_address = (*current_context())[x86_64::register_index::RIP];
 
-            // timer
-            case 0x20 :
-                // a9n::kernel::utility::logger::printh("timer\n");
-                interrupt_handler_table[32]();
-                break;
+            switch (auto type = static_cast<exception_type>(irq_number))
+            {
+                case exception_type::DIVISION_ERROR :
+                case exception_type::OVERFLOW :
+                case exception_type::X87_FLOATING_POINT_EXCEPTION :
+                    fault = a9n::kernel::fault_type::INVALID_ARITHMETIC;
+                    break;
 
-            case 13 :
-                a9n::kernel::utility::logger::printh("gp fault!\n");
-                print_registers();
+                [[likely]] case exception_type::PAGE_FAULT :
+                    fault         = a9n::kernel::fault_type::MEMORY;
+                    fault_address = read_cr2(); // overwrite
+                    print_page_fault_reason(error_code);
+                    break;
 
-            case 14 :
-                a9n::kernel::utility::logger::printh("page fault! : 0x%llx\n", error_code);
-                a9n::kernel::utility::logger::printh("fault address : 0x%016llx\n", read_cr2());
-                print_page_fault_reason(error_code);
-                print_registers();
-                break;
+                case exception_type::INVALID_OPCODE :
+                    fault = a9n::kernel::fault_type::INVALID_INSTRUCTION;
+                    break;
 
-            default :
-                const char *exception_type = get_exception_type_string(irq_number);
-                a9n::kernel::utility::logger::printh(
-                    "[user -> kernel] exception [%04llu] : %s : %llu\n",
-                    static_cast<int32_t>(irq_number),
-                    exception_type,
-                    error_code
-                );
-                // asm volatile("cli; hlt");
-                break;
+                case exception_type::NMI :
+                case exception_type::BOUND_RANGE_EXCEEDED :
+                case exception_type::DEVICE_NOT_AVAILABLE :
+                    // TODO: implement lazy-fpu context switch
+                case exception_type::DOUBLE_FAULT :
+                case exception_type::COPROCESSOR_SEGMENT_OVERRUN :
+                case exception_type::INVALID_TSS :
+                case exception_type::SEGMENT_NOT_PRESENT :
+                case exception_type::STACK_SEGMENT_FAULT :
+                case exception_type::GENERAL_PROTECTION_FAULT :
+                case exception_type::ALIGNMENT_CHECK :
+                case exception_type::MACHINE_CHECK :
+                case exception_type::SIMD_FLOATING_POINT_EXCEPTION :
+                    // TODO: implement lazy-fpu context switch
+                case exception_type::VIRTUALIZATION_EXCEPTION :
+                case exception_type::CONTROL_PROTECTION_EXCEPTION :
+                case exception_type::HYPERVISOR_INJECTION_EXCEPTION :
+                case exception_type::VMM_COMMUNICATION_EXCEPTION :
+                case exception_type::SECURITY_EXCEPTION :
+                case exception_type::BREAKPOINT :
+                case exception_type::DEBUG :
+                    a9n::kernel::utility::logger::printh("===== FATAL FAULT HAS OCCURED =====\n");
+                    a9n::kernel::utility::logger::printh(
+                        "exception [%2d] : %s : %llu\n",
+                        irq_number,
+                        get_exception_type_string(irq_number),
+                        error_code
+                    );
+                    print_registers();
+                    fault = a9n::kernel::fault_type::FATAL;
+                    break;
+
+                default :
+                    break;
+            }
+
+            fault_dispatcher(fault, 0, fault_address);
+        }
+        else
+        {
+            ack_interrupt();
+            switch (auto type = static_cast<reserved_irq>(irq_number))
+            {
+                case reserved_irq::TIMER :
+                    timer_handler();
+                    break;
+
+                case reserved_irq::IPI_HALT :
+                    DEBUG_LOG("IPI HALT");
+                    // TODO
+                    break;
+
+                case reserved_irq::IPI_RESCHEDULE :
+                    DEBUG_LOG("IPI RESCHEDULE");
+                    // TODO
+                    break;
+
+                case reserved_irq::CONSOLE_0 :
+                    {
+                        DEBUG_LOG("UART IRQ (CONSOLE_0) occurred\n");
+                        DEBUG_LOG("read : 0xc\n", read_serial());
+                        break;
+                    }
+
+                default :
+                    a9n::kernel::utility::logger::printh("unknown irq : [ 0x%4llu ]\n", irq_number);
+                    interrupt_dispatcher(irq_number);
+                    break;
+            }
         }
 
         _restore_user_context();
@@ -286,11 +339,7 @@ namespace a9n::hal::x86_64
 
         if (mode == ipi_delivery_mode::INIT)
         {
-            // INIT IPI: Trigger Mode = Level, Level State = Not used (0)
-            // ICR_LOW = 0x00004500
             icr_low |= (1 << 14); // Trigger Mode = Level
-            // Level State = 0 (未設定)
-            // Vector = 0x00
         }
         else if (mode == ipi_delivery_mode::STARTUP)
         {
@@ -302,13 +351,10 @@ namespace a9n::hal::x86_64
         }
         else
         {
-            // その他のDelivery Modeの場合
             icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 14; // Trigger Mode
             icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 15;  // Level State
             icr_low |= (vector & 0xFF);                                    // Vector
         }
-
-        // a9n::kernel::utility::logger::printk("ICR low : 0x%08x\n", icr_low);
 
         return local_apic_core.write(local_apic_offset::ICR_HIGH, icr_high)
             .and_then(
@@ -439,7 +485,8 @@ namespace a9n::hal
             return hal_error::ILLEGAL_ARGUMENT;
         }
 
-        x86_64::interrupt_handler_table[0x20] = handler;
+        // x86_64::interrupt_handler_table[0x20] = handler; // TODO: remove this
+        x86_64::timer_handler = handler;
 
         return {};
     }
@@ -456,22 +503,33 @@ namespace a9n::hal
         return {};
     }
 
+    hal_result register_interrupt_dispatcher(a9n::kernel::interrupt_dispatcher dispatcher)
+    {
+        if (!dispatcher)
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        x86_64::interrupt_dispatcher = dispatcher;
+
+        return {};
+    }
+
+    hal_result register_fault_dispatcher(a9n::kernel::fault_dispatcher dispatcher)
+    {
+        if (!dispatcher)
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        x86_64::fault_dispatcher = dispatcher;
+
+        return {};
+    }
+
     // enable/disable irq
     hal_result enable_interrupt(a9n::word irq_number)
     {
-        /*
-        return x86_64::current_arch_local_variable().and_then(
-            [=](x86_64::arch_cpu_local_variable *local_variable) -> hal_result
-            {
-                x86_64::interrupt_descriptor_table &idt       = local_variable->idt;
-                x86_64::interrupt_descriptor_64    &idt_entry = idt[irq_number];
-                idt_entry.type                                = x86_64::INTERRUPT_GATE;
-
-                return {};
-            }
-        );
-        */
-
         if (irq_number >= 256)
         {
             return hal_error::ILLEGAL_ARGUMENT;
@@ -482,19 +540,6 @@ namespace a9n::hal
 
     hal_result disable_interrupt(a9n::word irq_number)
     {
-        /*
-        return x86_64::current_arch_local_variable().and_then(
-            [=](x86_64::arch_cpu_local_variable *local_variable) -> hal_result
-            {
-                x86_64::interrupt_descriptor_table &idt       = local_variable->idt;
-                x86_64::interrupt_descriptor_64    &idt_entry = idt[irq_number];
-                idt_entry.type = x86_64::INTERRUPT_GATE | x86_64::PRESENT;
-
-                return {};
-            }
-        );
-        */
-
         if (irq_number >= 256)
         {
             return hal_error::ILLEGAL_ARGUMENT;

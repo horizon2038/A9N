@@ -21,6 +21,7 @@ set(
     -mcmodel=large \
     -mno-red-zone \
     -fno-pic \
+    -fno-pie \
     -fomit-frame-pointer \
     -mno-mmx \
     -mno-sse \
@@ -32,6 +33,8 @@ set(
     -nostdlib \
     -fdata-sections \
     -ffunction-sections \
+    -flto=full \
+    -fmacro-prefix-map=/Users/horizon/Documents/Program/A9N/= \
     "
 )
 
@@ -45,6 +48,7 @@ set(
     -mcmodel=large \
     -mno-red-zone \
     -fno-pic \
+    -fno-pie \
     -fomit-frame-pointer \
     -mno-mmx \
     -mno-sse \
@@ -58,6 +62,9 @@ set(
     -nostdlib \
     -fdata-sections \
     -ffunction-sections \
+    -flto=full \
+    -fforce-emit-vtables \
+    -fmacro-prefix-map=/Users/horizon/Documents/Program/A9N/= \
     "
 )
 
@@ -67,6 +74,7 @@ add_compile_options(
     $<$<CONFIG:RELEASE>:-O3>
     $<$<CONFIG:RELEASE>:-funroll-loops>
     $<$<CONFIG:RELEASE>:-ftree-vectorize>
+    $<$<CONFIG:RELEASE>:-ftree-vectorizer-verbose>
 )
 
 message(STATUS "CXX Compiler Flags : ${CMAKE_CXX_FLAGS}")
@@ -78,7 +86,7 @@ if (NOT NASM_EXECUTABLE)
     message(FATAL_ERROR "assembler error : NASM does not exist")
 endif()
 set(CMAKE_ASM_NASM_COMPILER ${NASM_EXECUTABLE})
-set(CMAKE_ASM_NASM_FLAGS "-f elf64")
+set(CMAKE_ASM_NASM_FLAGS "-f elf64 -O5")
 set(CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS s nasm asm)
 set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> ${CMAKE_ASM_NASM_FLAGS} -o <OBJECT> <SOURCE>")
 

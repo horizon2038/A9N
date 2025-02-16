@@ -17,6 +17,11 @@ namespace a9n::hal::x86_64
     uint32_t port_read_32(uint16_t address);
     void     port_write_32(uint16_t address, uint32_t data);
 
+    inline void port_wait(void)
+    {
+        asm volatile("outb %%al, $0x80" : : "a"(0));
+    }
+
     class port_io final : public a9n::hal::port_io
     {
       public:

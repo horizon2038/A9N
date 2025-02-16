@@ -17,6 +17,8 @@ namespace a9n::hal
     inline constexpr a9n::word USER_VIRTUAL_BASE   = 0x0000000000000000;
 
     inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 64;
+    inline constexpr a9n::word FLOATING_CONTEXT_SIZE = 512;
+    inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = 512;
 
     */
 }

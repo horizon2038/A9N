@@ -56,7 +56,7 @@ _load_segment_register:
     push rax
     retfq
 
-.reload_cs
+.reload_cs:
     mov ax, 0x0
     mov ds, ax
     mov es, ax

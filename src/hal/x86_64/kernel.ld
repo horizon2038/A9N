@@ -59,7 +59,7 @@ SECTIONS
         *(.*data.*);
     } > kernel_vma AT > kernel_lma
 
-    .bss :
+    .bss (NOLOAD) : 
     {
         . = ALIGN(0x1000);
         __bss_start = . - KERNEL_VMA_BASE;
@@ -94,14 +94,14 @@ SECTIONS
     .init_array :
     {
         . = ALIGN(0x1000);
-        __init_array_start = .;
+        __init_constructors_start = .;
         KEEP(*(
             .init_array
             .init_array.*
             .ctors
             .ctors.*
         ))
-        __init_array_end = .;
+        __init_constructors_end = .;
     } > kernel_vma AT > kernel_lma
 
     .got :

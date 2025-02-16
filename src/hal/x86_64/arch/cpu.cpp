@@ -126,13 +126,13 @@ namespace a9n::hal
             return (cr4 & (1 << 16)) != 0;
         };
 
-        if (!is_fsgsbase_supported())
+        if (!is_fsgsbase_supported()) [[unlikely]]
         {
             return hal_error::INIT_FIRST;
         }
 
         auto local_variable = reinterpret_cast<a9n::kernel::cpu_local_variable *>(_read_gs_base());
-        if (!local_variable)
+        if (!local_variable) [[unlikely]]
         {
             kernel::utility::logger::printh("cpu_local_variable not found\n");
             return hal_error::NO_SUCH_ADDRESS;
