@@ -136,19 +136,23 @@ namespace liba9n
 
     inline semantic_version::semantic_version(const char *version)
     {
+        auto captured_parse_pre_release =
+            [this](const char *pre_release) -> liba9n::option<const char *>
+        {
+            return parse_pre_release(pre_release);
+        };
+
+        auto captured_parse_build_meta_data =
+            [this](const char *build_meta_data) -> liba9n::option<const char *>
+        {
+            return parse_build_meta_data(build_meta_data);
+        };
+
+        // clang-format off
         parse_base(version)
-            .and_then(
-                [&, this](const char *remain) -> liba9n::option<const char *>
-                {
-                    return parse_pre_release(remain);
-                }
-            )
-            .and_then(
-                [&, this](const char *remain) -> liba9n::option<const char *>
-                {
-                    return parse_build_meta_data(remain);
-                }
-            );
+            .and_then(captured_parse_pre_release)
+            .and_then(captured_parse_build_meta_data);
+        // clang-format on
     }
 
     inline semantic_version::semantic_version(

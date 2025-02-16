@@ -1,6 +1,7 @@
 #ifndef LIBA9N_NOT_NULL_HPP
 #define LIBA9N_NOT_NULL_HPP
 
+#include "liba9n/libcxx/__type_traits/is_trivially.hpp"
 #include <liba9n/libcxx/type_traits>
 #include <liba9n/libcxx/utility>
 #include <liba9n/result/result.hpp>
