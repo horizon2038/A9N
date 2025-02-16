@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # C++ global configuration
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 message("LTO : ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 
 # arch configuration
@@ -32,3 +32,9 @@ if (NOT EXISTS "${HAL_ARCH_DIR}")
 endif()
 
 add_subdirectory(src)
+
+add_compile_options(
+    $<$<CONFIG:Debug>:-g -O0>
+    $<$<CONFIG:Release>:-O3>
+)
+

@@ -44,7 +44,8 @@ CFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding \
 # -flto
 
 CXXFLAGS = -g -O2 -Wall --target=$(ARCH)-elf -ffreestanding \
-	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -fno-threadsafe-statics
+	-mno-red-zone -fno-pic -nostdlib -mcmodel=large -fno-exceptions -fno-rtti -std=c++20 -fno-threadsafe-statics \
+	-mno-mmx -mno-sse -mno-sse2 -mno-avx -mno-avx2
 # -flto -fwhole-program-vtables -fforce-emit-vtables -fvirtual-function-elimination
 
 CPPFLAGS = $(INCFLAGS) -MMD -MP
@@ -150,7 +151,7 @@ $(BUILDDIR)/$(ARCH)/liba9n/%.o: $(SRCDIR)/liba9n/%.s
 $(BUILDDIR)/$(ARCH)/boot/$(BOOT):
 	ARCH=$(ARCH) LLVMDIR=$(LLVMDIR) $(SCRIPTSDIR)/build_a9nloader.sh
 	mkdir -p $(BUILDDIR)/$(ARCH)/boot
-	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_GCC5/X64/a9nloader.efi $@
+	cp $(CHAINDIR)/$(ARCH)/edk2/build/$(A9NLOADER)/x64/DEBUG_CLANGPDB/X64/a9nloader.efi $@
 
 server:
 	$(MAKE) -C $(SERVERDIR)

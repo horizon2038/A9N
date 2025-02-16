@@ -8,9 +8,9 @@ RUN apt-get update && \
     apt-get install -y \
         bash \
         llvm \
-        clang-16 \
-        lld-16 \
-        libc++-16-dev \
+        clang-19 \
+        lld-19 \
+        libc++-19-dev \
         libc++abi-16-dev \
         nasm \
         make \

@@ -25,7 +25,6 @@ It combines high portability, stability, and scalability.
 │   │    └── {ARCH}
 │   ├── boot
 │   ├── liba9n
-│   └── servers
 └── test
 
 </pre>
@@ -52,20 +51,14 @@ This bootloader is currently only implemented for the x86_64 by EDK2.
 The A9N base library.
 Used by the kernel, and HAL.
 
-### `src/servers`
-
-A test root server that is started by the A9N microkernel.  
-
-> [!IMPORTANT]
-> **Please keep in mind that the initial implementation is a simple one for testing purposes only,  
-> and you will need to implement most of the functionality yourself.  
-> This implementation will vary depending on the OS that uses the A9N kernel as its core.**
-
 ### `test`
 
 This directory contains the kernel test code, which uses the *Google Test* framework.  
 The tests are automatically built and run when you run `make`.  
 You can also build them explicitly by running `make test`.
+
+> [!IMPORTANT]
+> Currently, tests are failing due to a major kernel specification change and are unavailable.  
 
 ## Architecture Status
 

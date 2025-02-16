@@ -30,7 +30,7 @@ QEMUFLAGS=(
 GDB_OPTION=
 QEMUDIR=../run/$ARCH/QEMU
 BUILDDIR=../build/$ARCH
-SERVERBUILDDIR=$KOITO/target/x86_64-unknown-none/release
+SERVERBUILDDIR=$KOITO/target/x86_64-unknown-a9n/release
 
 # functions
 function init() {
