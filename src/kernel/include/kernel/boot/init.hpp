@@ -51,18 +51,11 @@ namespace a9n::kernel
         a9n::word arch_info[ARCH_INFO_MAX];
 
         // initial ipc buffer
-        a9n::virtual_address       ipc_buffer;
-        a9n::capability_descriptor frame_ipc_buffer;
+        a9n::virtual_address ipc_buffer;
 
         // initial generic
-        generic_descriptor         generic_list[INITIAL_GENERIC_COUNT_MAX];
-        a9n::capability_descriptor generic_start;
-        a9n::word                  generic_list_count;
-
-        // initial interrupt ports
-        interrupt_port_descriptor  interrupt_port_list[INITIAL_INTERRUPT_PORT_COUNT_MAX];
-        a9n::capability_descriptor interrupt_port_start;
-        a9n::word                  interrupt_port_count;
+        generic_descriptor generic_list[INITIAL_GENERIC_COUNT_MAX];
+        a9n::word          generic_list_count;
     };
 
     static_assert(

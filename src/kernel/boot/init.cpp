@@ -710,11 +710,6 @@ namespace a9n::kernel
             }
         }
 
-        init_info_page.generic_start
-            = liba9n::enum_cast(init_slot_offset::GENERIC_NODE)
-           << ((a9n::WORD_BITS - 1) - a9n::BYTE_BITS
-               - liba9n::calculate_radix_floor(INITIAL_GENERIC_COUNT_MAX));
-
         return {};
     }
 
