@@ -173,6 +173,7 @@ namespace a9n::kernel
         {
             IS_SUCCESS,
             ERROR_CODE,
+            RESERVED_FOR_REGISTER_COUNT,
             REGISTER,
         };
 
