@@ -17,6 +17,8 @@ namespace a9n::hal
     inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = a9n::PAGE_SIZE * 4;
     inline constexpr a9n::word VIRTUAL_CPU_STATE_COUNT  = 64;
 
+    inline constexpr a9n::word IRQ_NUMBER_MAX           = 256;
+
     // WIP
     inline constexpr a9n::word FPU_CONTEXT_SIZE            = 0;
     inline constexpr a9n::word VIRTUAL_MEMORY_CONTEXT_SIZE = 1;

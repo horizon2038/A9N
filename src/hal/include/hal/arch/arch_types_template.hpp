@@ -19,6 +19,9 @@ namespace a9n::hal
     inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 64;
     inline constexpr a9n::word FLOATING_CONTEXT_SIZE = 512;
     inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = 512;
+    inline constexpr a9n::word VIRTUAL_CPU_STATE_COUNT = 64;
+
+    inline constexpr a9n::word IRQ_NUMBER_MAX           = 256;
 
     */
 }
