@@ -8,7 +8,6 @@
 ![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
 ![LLVM](https://img.shields.io/badge/llvm-00599C?style=for-the-badge&logo=llvm&logoColor=white)
-![EDK2](https://img.shields.io/badge/%2Aedk2-00599C?style=for-the-badge&logoColor=white)
 
 A9N is a **Capability-Based Microkernel** that supports a variety of hardware platforms through appropriate **HAL**.  
 It is implemented with an object-oriented interface, making it easy to use and extend.  
@@ -23,7 +22,6 @@ It combines high portability, stability, and scalability.
 │   ├── hal
 │   │    └── include/hal/interface
 │   │    └── {ARCH}
-│   ├── boot
 │   ├── liba9n
 └── test
 
@@ -39,13 +37,6 @@ A Hardware Abstraction Layer (HAL) is implemented to provide a portable interfac
 to the underlying hardware.  
 The {ARCH} directory is referenced during the `make` process.  
 
-### `src/boot`
-
-A basic bootloader implementation is provided to load the kernel.  
-This bootloader is currently only implemented for the x86_64 by EDK2.
-> [!NOTE]
-> The bootloader binary is **separated** from the kernel binary.
-
 ### `src/liba9n`
 
 The A9N base library.
@@ -53,12 +44,12 @@ Used by the kernel, and HAL.
 
 ### `test`
 
+> [!IMPORTANT]
+> Currently, tests are failing due to a major kernel specification change and are unavailable.  
+
 This directory contains the kernel test code, which uses the *Google Test* framework.  
 The tests are automatically built and run when you run `make`.  
 You can also build them explicitly by running `make test`.
-
-> [!IMPORTANT]
-> Currently, tests are failing due to a major kernel specification change and are unavailable.  
 
 ## Architecture Status
 
@@ -70,8 +61,9 @@ Currently supported architectures:
 
 ### Kernel
 
-- Clang
-- Clang++
+- LLVM 18 or later
+  - Clang
+  - Clang++
 - lld
 
 ### HAL
@@ -79,18 +71,9 @@ Currently supported architectures:
 **x86_64**
 - NASM
 
-### Boot
-
-**x86_64**
-- [EDK2](https://github.com/tianocore/edk2)
-
 ### Test
 
 - [Google Test](https://github.com/google/googletest)
-
-### Run
-
-- QEMU
 
 ## Build (with Docker)
 
@@ -98,33 +81,10 @@ Currently supported architectures:
 docker build -t a9n-build .
 docker run --rm -v $(pwd):/A9N a9n-build bash -c "./scripts/setup.sh && make -j8"
 ```
+> [!WARNING]
+> Docker-based builds are currently under maintenance and unavailable.
 
-## Build (Local)
-
-Building with Docker is recommended; This method is **deprecated**.
-
-``` bash
-sudo apt update && sudo apt install -y \
-    bash \
-    llvm \
-    clang \
-    lld \
-    libc++-16-dev \
-    libc++abi-16-dev \
-    nasm \
-    make \
-    cmake \
-    build-essential \
-    uuid-dev \
-    iasl \
-    git \
-    python-is-python3 \
-    ovmf
-./scripts/setup.sh
-make -j8
-```
-
-## Build (CMake; Experimental)
+## Build (with CMake)
 
 ```bash
 mkdir build
@@ -134,17 +94,11 @@ cmake --build build
 > [!NOTE]
 > Currently, the CMake build supports only the kernel binary. 
 
-## Usage
-
-```bash
-./scripts/run_qemu.sh
-```
-
 ## Author
 
 horizon2k38 ( Rekka "horizon" IGUMI )
 
-Email : rekka728 "at" gmail.com  
+Email : horizon "at" sfc.wide.ad.jp  
 X : [@horizon2k38](https://x.com/horizon2k38)  
 Mastodon : [@horizon2k38@mstdn.jp](https://mstdn.jp/@horizon2k38)  
 Misskey : [@horizon](https://misskey.io/@horizon)  
