@@ -16,6 +16,11 @@ set(KERNEL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 add_executable(${KERNEL_BINARY} ${KERNEL_SOURCES})
 
+install(
+    TARGETS ${KERNEL_BINARY}
+    RUNTIME DESTINATION .
+)
+
 target_include_directories(
     ${KERNEL_BINARY}
     PRIVATE
@@ -41,3 +46,4 @@ set_target_properties(${KERNEL_BINARY} PROPERTIES POSITION_INDEPENDENT_CODE OFF)
 add_compile_definitions(
     $<$<CONFIG:Debug>:DEBUG_BUILD>
 )
+
