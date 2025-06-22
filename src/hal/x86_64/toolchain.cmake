@@ -8,12 +8,19 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 # set(CMAKE_C_COMPILER_TARGET x86_64-unknown-none-elf)
 
-# clang global
-set(CLANG_VERSION 19)
+find_program(LLVM_CONFIG_EXECUTABLE llvm-config)
+if(LLVM_CONFIG_EXECUTABLE)
+    execute_process(
+        COMMAND ${LLVM_CONFIG_EXECUTABLE} --bindir
+        OUTPUT_VARIABLE LLVM_BINDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(CLANG_BIN "${LLVM_BINDIR}")
+else()
+    message(FATAL_ERROR "llvm-config is not found. Please install it or create an alias as llvm-config if it has a version-specific name.")
+endif()
 
-# C configuration
-# set(CMAKE_C_COMPILER clang-${CLANG_VERSION})
-set(CMAKE_C_COMPILER clang CACHE STRING "" FORCE)
+set(CMAKE_C_COMPILER ${CLANG_BIN}/clang CACHE STRING "" FORCE)
 set(
     CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} \
@@ -38,9 +45,7 @@ set(
     "
 )
 
-# C++ configuration
-# set(CMAKE_CXX_COMPILER clang++-${CLANG_VERSION})
-set(CMAKE_CXX_COMPILER clang++ CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER ${CLANG_BIN}/clang++ CACHE STRING "" FORCE)
 set(
     CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} \
