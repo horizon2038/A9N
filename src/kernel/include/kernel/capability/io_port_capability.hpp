@@ -41,10 +41,12 @@ namespace a9n::kernel
 
             // for read
             SOURCE_PORT = RESERVED_MR_2,
+            READ_WIDTH  = RESERVED_MR_3,
 
             // for write
             DESTINATION_PORT = RESERVED_MR_2,
             WRITE_DATA       = RESERVED_MR_3,
+            WRITE_WIDTH      = RESERVED_MR_4,
 
             // for mint
             NEW_ADDRESS_MIN        = RESERVED_MR_2,

@@ -72,7 +72,18 @@ namespace a9n::kernel
         // TODO: check address range
 
         return a9n::hal::get_message_register(owner, SOURCE_PORT)
-            .and_then(a9n::hal::read_io_port)
+            .and_then(
+                [&](a9n::word port) -> liba9n::result<a9n::word, hal::hal_error>
+                {
+                    return a9n::hal::get_message_register(owner, READ_WIDTH)
+                        .and_then(
+                            [&](a9n::word byte_width) -> liba9n::result<a9n::word, hal::hal_error>
+                            {
+                                return a9n::hal::read_io_port(port, byte_width);
+                            }
+                        );
+                }
+            )
             .transform_error(convert_hal_to_capability_error)
             .and_then(
                 [&](a9n::word data) -> capability_result
@@ -110,7 +121,13 @@ namespace a9n::kernel
                             [&](a9n::word data) -> hal::hal_result
                             {
                                 DEBUG_LOG("write 0x%16llx -> 0x%016llx", data, port);
-                                return a9n::hal::write_io_port(port, data);
+                                return a9n::hal::get_message_register(owner, WRITE_WIDTH)
+                                    .and_then(
+                                        [&](a9n::word byte_width) -> hal::hal_result
+                                        {
+                                            return a9n::hal::write_io_port(port, byte_width, data);
+                                        }
+                                    );
                             }
                         )
                         .transform_error(convert_hal_to_capability_error);
