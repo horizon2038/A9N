@@ -6,7 +6,6 @@ cmake_minimum_required(VERSION 3.29)
 # system configuration
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
-# set(CMAKE_C_COMPILER_TARGET x86_64-unknown-none-elf)
 
 find_program(LLVM_CONFIG_EXECUTABLE llvm-config)
 if(LLVM_CONFIG_EXECUTABLE)
@@ -15,12 +14,12 @@ if(LLVM_CONFIG_EXECUTABLE)
         OUTPUT_VARIABLE LLVM_BINDIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    set(CLANG_BIN "${LLVM_BINDIR}")
+    set(LLVM_BIN "${LLVM_BINDIR}")
 else()
     message(FATAL_ERROR "llvm-config is not found. Please install it or create an alias as llvm-config if it has a version-specific name.")
 endif()
 
-set(CMAKE_C_COMPILER ${CLANG_BIN}/clang CACHE STRING "" FORCE)
+set(CMAKE_C_COMPILER ${LLVM_BIN}/clang CACHE STRING "" FORCE)
 set(
     CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} \
@@ -45,7 +44,7 @@ set(
     "
 )
 
-set(CMAKE_CXX_COMPILER ${CLANG_BIN}/clang++ CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER ${LLVM_BIN}/clang++ CACHE STRING "" FORCE)
 set(
     CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} \
@@ -96,13 +95,12 @@ set(CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS s nasm asm)
 set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> ${CMAKE_ASM_NASM_FLAGS} -o <OBJECT> <SOURCE>")
 
 message(STATUS "linker type : ${CMAKE_LINKER_TYPE}")
+
 # linker configuration
 set(CMAKE_LINKER_TYPE "lld_launcher")
+
 # lld configuration
-find_program(LLD_EXECUTABLE ld.lld)
-if (NOT LLD_EXECUTABLE)
-    message(FATAL_ERROR "linker error : LLD does not exist")
-endif()
+set(LLD_EXECUTABLE "${LLVM_BIN}/ld.lld")
 
 set(CMAKE_C_COMPILER_LINKER "${LLD_EXECUTABLE}")
 set(CMAKE_CXX_COMPILER_LINKER "${LLD_EXECUTABLE}")
@@ -123,9 +121,6 @@ set(CMAKE_CXX_USING_LINKER_MODE "${LINKER_MODE}")
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/src/hal/x86_64/kernel.ld")
 set(MAP_FILE "${CMAKE_BINARY_DIR}/kernel.map")
 
-message(STATUS "exe_linker_flags : ${LLD_EXECUTABLE}")
-message(STATUS "linker launcher : ${CMAKE_C_LINKER_LAUNCHER}")
-
 add_link_options(
     ${CMAKE_EXE_LINKER_FLAGS}
     -T "${LINKER_SCRIPT}"
@@ -136,11 +131,6 @@ add_link_options(
     --gc-sections
 )
 
-# !
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 message(STATUS "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
-
-# target_link_options()
-
-# TODO: using mold
