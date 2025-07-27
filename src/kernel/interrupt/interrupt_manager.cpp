@@ -1,6 +1,7 @@
 #include <kernel/interrupt/interrupt_manager.hpp>
 
 #include <kernel/capability/ipc_port.hpp>
+#include <kernel/interrupt/irq_notification_handlers.hpp>
 #include <kernel/kernelcall/kernel_call.hpp>
 #include <kernel/process/process_manager.hpp>
 #include <kernel/types.hpp>
@@ -72,6 +73,39 @@ namespace a9n::kernel
     {
         // TODO: implement notification
         a9n::kernel::utility::logger::printk("hello from handle_interrupt [ 0x%4llu ]\n", irq_number);
+
+        irq_number_to_handler(irq_number)
+            .and_then(has_irq_handler_notification)
+            .and_then(
+                [](liba9n::not_null<capability_slot> handler) -> kernel_result
+                {
+                    return process_manager_core.retrieve_current_process().and_then(
+                        [&handler](process *current_process) -> kernel_result
+                        {
+                            auto &port = static_cast<notification_port &>(*handler->component);
+
+                            return port.operation_notify(*current_process, *handler)
+                                .transform_error(
+                                    [&handler](capability_error e) -> kernel_error
+                                    {
+                                        return kernel_error::TRY_AGAIN;
+                                    }
+                                );
+                        }
+                    );
+                }
+            )
+            .or_else(
+                [irq_number](kernel_error e) -> kernel_result
+                {
+                    DEBUG_LOG(
+                        "handle_interrupt : no handler for irq_number %d, error : %s\n",
+                        irq_number,
+                        a9n::kernel::kernel_error_to_string(e)
+                    );
+                    return e;
+                }
+            );
     }
 
     extern "C" void handle_fault(
