@@ -24,14 +24,14 @@ SECTIONS
     __boot_ap_trampoline_gdtr = .;
     . += 0x1000;
 
-    .boot :
+    .boot : ALIGN(0x1000)
     {
         . = ALIGN(0x1000);
         /* . = ALIGN(8); */
         KEEP(*(.boot));
     } > boot
 
-    .text : 
+    .text : ALIGN(0x1000) 
     {
         . = ALIGN(0x1000);
         __kernel_start = . - KERNEL_VMA_BASE;
@@ -41,7 +41,7 @@ SECTIONS
         *(.*text.*);
     } > kernel_vma AT > kernel_lma
 
-    .rodata :
+    .rodata : ALIGN(0x1000)
     {
         . = ALIGN(0x1000);
         *(.rodata);
@@ -50,13 +50,43 @@ SECTIONS
         *(.*rodata.*);
     } > kernel_vma AT > kernel_lma
 
-    .data : 
+    .data : ALIGN(0x1000) 
     {
         . = ALIGN(0x1000);
         *(.data);
         *(.data.*);
         *(.*data);
         *(.*data.*);
+    } > kernel_vma AT > kernel_lma
+
+    .init_array : ALIGN(0x1000)
+    {
+        . = ALIGN(0x1000);
+        __init_constructors_start = .;
+        /*
+        KEEP(*(
+            .init_array
+            .init_array.*
+            .ctors
+            .ctors.*
+        ))
+        */
+        *(.init_array);
+        *(.init_array.*);
+        *(.ctors);
+        *(.ctors.*);
+        __init_constructors_end = .;
+    } > kernel_vma AT > kernel_lma
+
+    .got : ALIGN(0x1000)
+    {
+        *(*.got);
+        *(*.got.*);
+    } > kernel_vma AT > kernel_lma
+
+    /DISCARD/ :
+    {
+        *(*.eh_frame);
     } > kernel_vma AT > kernel_lma
 
     .bss (NOLOAD) : 
@@ -89,30 +119,6 @@ SECTIONS
 
         . = ALIGN(0x1000);
         __kernel_end = . - KERNEL_VMA_BASE;
-    } > kernel_vma AT > kernel_lma
-
-    .init_array :
-    {
-        . = ALIGN(0x1000);
-        __init_constructors_start = .;
-        KEEP(*(
-            .init_array
-            .init_array.*
-            .ctors
-            .ctors.*
-        ))
-        __init_constructors_end = .;
-    } > kernel_vma AT > kernel_lma
-
-    .got :
-    {
-        *(*.got);
-        *(*.got.*);
-    } > kernel_vma AT > kernel_lma
-
-    /DISCARD/ :
-    {
-        *(*.eh_frame);
-    } > kernel_vma AT > kernel_lma
+    } > kernel_vma
 }
 
