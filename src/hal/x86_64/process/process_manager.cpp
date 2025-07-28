@@ -32,10 +32,12 @@ namespace a9n::hal
 
     hal_result switch_context(a9n::kernel::process &preview_process, a9n::kernel::process &next_process)
     {
+        /*
         x86_64::switch_floating_context(
             preview_process.floating_registers,
             next_process.floating_registers
         );
+        */
 
         a9n::virtual_address current_cr3;
 
