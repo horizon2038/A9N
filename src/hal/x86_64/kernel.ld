@@ -59,37 +59,7 @@ SECTIONS
         *(.*data.*);
     } > kernel_vma AT > kernel_lma
 
-    .init_array : ALIGN(0x1000)
-    {
-        . = ALIGN(0x1000);
-        __init_constructors_start = .;
-        /*
-        KEEP(*(
-            .init_array
-            .init_array.*
-            .ctors
-            .ctors.*
-        ))
-        */
-        *(.init_array);
-        *(.init_array.*);
-        *(.ctors);
-        *(.ctors.*);
-        __init_constructors_end = .;
-    } > kernel_vma AT > kernel_lma
-
-    .got : ALIGN(0x1000)
-    {
-        *(*.got);
-        *(*.got.*);
-    } > kernel_vma AT > kernel_lma
-
-    /DISCARD/ :
-    {
-        *(*.eh_frame);
-    } > kernel_vma AT > kernel_lma
-
-    .bss (NOLOAD) : 
+    .bss (NOLOAD) : ALIGN(0x1000) 
     {
         . = ALIGN(0x1000);
         __bss_start = . - KERNEL_VMA_BASE;
@@ -119,6 +89,30 @@ SECTIONS
 
         . = ALIGN(0x1000);
         __kernel_end = . - KERNEL_VMA_BASE;
-    } > kernel_vma
+    } > kernel_vma AT > kernel_lma
+
+    .init_array : ALIGN(0x1000)
+    {
+        . = ALIGN(0x1000);
+        __init_constructors_start = .;
+        KEEP(*(
+            .init_array
+            .init_array.*
+            .ctors
+            .ctors.*
+        ))
+        __init_constructors_end = .;
+    } > kernel_vma AT > kernel_lma
+
+    .got : ALIGN(0x1000)
+    {
+        *(*.got);
+        *(*.got.*);
+    } > kernel_vma AT > kernel_lma
+
+    /DISCARD/ :
+    {
+        *(*.eh_frame);
+    } > kernel_vma AT > kernel_lma
 }
 
