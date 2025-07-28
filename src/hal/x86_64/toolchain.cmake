@@ -124,7 +124,7 @@ set(MAP_FILE "${CMAKE_BINARY_DIR}/kernel.map")
 add_link_options(
     ${CMAKE_EXE_LINKER_FLAGS}
     -T "${LINKER_SCRIPT}"
-    -z norelro
+    "SHELL:-z norelro -z separate-code"
     --static
     -nostdlib
     -Map "${MAP_FILE}"
