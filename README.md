@@ -2,6 +2,7 @@
 
 # A9N Microkernel
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/horizon2038/A9N/build.yml)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 ![LLVM](https://img.shields.io/badge/ASM-00599C?style=for-the-badge&logoColor=white)
