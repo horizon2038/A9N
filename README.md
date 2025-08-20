@@ -1,4 +1,4 @@
-![A9N_header](https://github.com/horizon2038/A9N/blob/develop/img/A9N_header.png)
+![A9N_header](./img/a9n-project.png)
 
 # A9N Microkernel
 
@@ -43,15 +43,6 @@ The {ARCH} directory is referenced during the `make` process.
 The A9N base library.
 Used by the kernel, and HAL.
 
-### `test`
-
-> [!IMPORTANT]
-> Currently, tests are failing due to a major kernel specification change and are unavailable.  
-
-This directory contains the kernel test code, which uses the *Google Test* framework.  
-The tests are automatically built and run when you run `make`.  
-You can also build them explicitly by running `make test`.
-
 ## Architecture Status
 
 Currently supported architectures:
@@ -65,16 +56,13 @@ Currently supported architectures:
 - LLVM 18 or later
   - Clang
   - Clang++
-- lld
+  - LLVM Config
+- LLD
 
 ### HAL
 
 **x86_64**
 - NASM
-
-### Test
-
-- [Google Test](https://github.com/google/googletest)
 
 ## Build (with Docker)
 
@@ -94,6 +82,12 @@ cmake --build build
 ```
 > [!NOTE]
 > Currently, the CMake build supports only the kernel binary. 
+
+## How to Use
+
+- [Nun OS Framework](https://github.com/horizon2038/Nun) is a framework for building Operating Systems based on A9N; Written in Rust.
+- [A9NLoader](https://github.com/horizon2038/A9NLoader) is a bootloader for A9N-based systems (compatible with *A9N Boot Protocol x86_64*); Written in C w/EDK2.
+- [A9NLoader-rs](https://github.com/horizon2038/a9nloader-rs) is a bootloader for A9N-based systems (compatible with *A9N Boot Protocol x86_64*); Written in Rust.
 
 ## Author
 
