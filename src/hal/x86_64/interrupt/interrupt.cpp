@@ -240,7 +240,28 @@ namespace a9n::hal::x86_64
                 case reserved_irq::CONSOLE_0 :
                     {
                         DEBUG_LOG("UART IRQ (CONSOLE_0) occurred\n");
-                        DEBUG_LOG("read : 0xc\n", read_serial());
+                        
+                        // Read IIR to identify interrupt type and clear it
+                        uint8_t iir = port_read_8(0x3f8 + 2); // COM1 + IIR
+                        
+                        // Check if receive data available (IIR & 0x04 == 0 and IIR & 0x02 != 0)
+                        if ((iir & 0x01) == 0) // Interrupt pending
+                        {
+                            if ((iir & 0x06) == 0x04) // Receive data available
+                            {
+                                uint8_t data = read_serial();
+                                DEBUG_LOG("read : 0x%02x\n", data);
+                            }
+                            else if ((iir & 0x06) == 0x0C) // Character timeout
+                            {
+                                // Read any available data
+                                while (port_read_8(0x3f8 + 5) & 0x01) // LSR & Data Ready
+                                {
+                                    uint8_t data = port_read_8(0x3f8); // Read data
+                                    DEBUG_LOG("timeout read : 0x%02x\n", data);
+                                }
+                            }
+                        }
                         break;
                     }
 

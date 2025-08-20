@@ -174,7 +174,7 @@ namespace a9n::hal::x86_64
     hal_result io_apic::disable_interrupt(uint8_t irq_number)
     {
         const uint8_t real_irq_number  = global_interrupt_base + irq_number;
-        uint32_t      io_apic_register = io_apic_register_index::REDIRECTION_TABLE + irq_number * 2;
+        uint32_t      io_apic_register = io_apic_register_index::REDIRECTION_TABLE + real_irq_number * 2;
 
         // low
         return write(

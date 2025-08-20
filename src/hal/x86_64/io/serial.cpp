@@ -20,6 +20,7 @@ namespace a9n::hal::x86_64
     inline constexpr uint16_t DLL   = 0;
     inline constexpr uint16_t DLH   = 1;
     inline constexpr uint16_t IER   = 1;
+    inline constexpr uint16_t IIR   = 2;
     inline constexpr uint16_t FCR   = 2;
     inline constexpr uint16_t LCR   = 3;
     inline constexpr uint16_t MCR   = 4;
