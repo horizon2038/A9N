@@ -1,0 +1,115 @@
+name: build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.arch }} • ${{ matrix.build_type }}
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x86_64 ] # Add more architectures as needed
+        build_type: [ Debug, Release ]
+        include:
+          - arch: x86_64
+            extra_pkgs: "nasm"
+
+    env:
+      BUILD_DIR: build
+      SRC_DIR: ${{ github.workspace }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install toolchain (LLVM 19 + deps)
+        shell: bash
+        run: |
+          set -eux
+          sudo apt-get update
+          sudo apt-get install -y curl gnupg lsb-release software-properties-common
+          curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh 19 all
+          sudo apt-get install -y llvm-19-dev clang-19 lld-19 lld-19 ${{ matrix.extra_pkgs }} ninja-build ccache
+          if ! command -v llvm-config >/dev/null 2>&1; then
+            sudo ln -sf /usr/bin/llvm-config-19 /usr/local/bin/llvm-config
+          fi
+
+      - name: Install latest CMake (via Kitware APT)
+        shell: bash
+        run: |
+          set -eux
+          sudo rm -f /etc/apt/sources.list.d/kitware.list
+          sudo apt remove --purge cmake || true
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates gpg wget
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc \
+              2>/dev/null | gpg --dearmor \
+              | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y cmake ${{ matrix.extra_pkgs }} ninja-build ccache
+
+
+      - name: Show versions
+        run: |
+          clang-19 --version || true
+          ld.lld-19 --version || true
+          nasm -v || true
+          cmake --version
+          ninja --version
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.build_type }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake', '**/*.[chsS]', '**/*.cpp', '**/*.hpp', '**/*.asm') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.build_type }}-
+
+      - name: Configure (CMake)
+        run: |
+          set -eux
+          cmake -S "${SRC_DIR}" -B "${BUILD_DIR}" \
+            -DARCH=${{ matrix.arch }} \
+            -DCMAKE_TOOLCHAIN_FILE=./src/hal/${{ matrix.arch }}/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -G Ninja
+
+      - name: Build
+        run: |
+          set -eux
+          cmake --build "${BUILD_DIR}" -- -k 0
+
+      - name: (Optional) Test with CTest if present
+        if: ${{ hashFiles(format('{0}/CTestTestfile.cmake', env.BUILD_DIR)) != '' }}
+        run: |
+          set -eux
+          ctest --test-dir "${BUILD_DIR}" --output-on-failure
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch }}-${{ matrix.build_type }}-artifacts
+          path: |
+            ${{ env.BUILD_DIR }}/compile_commands.json
+            ${{ env.BUILD_DIR }}/**/*.{bin,img,iso,elf,efi}
+          if-no-files-found: ignore
+
