@@ -82,7 +82,6 @@ add_compile_options(
 )
 
 message(STATUS "CXX Compiler Flags : ${CMAKE_CXX_FLAGS}")
-# -flto -fwhole-program-vtables -fforce-emit-vtables -fvirtual-function-elimination
 
 # Asm configuration
 find_program(NASM_EXECUTABLE nasm)
@@ -96,18 +95,8 @@ set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> ${CMAKE_ASM_NASM_FL
 
 message(STATUS "linker type : ${CMAKE_LINKER_TYPE}")
 
-# linker configuration
-set(CMAKE_LINKER_TYPE "lld_launcher")
-
 # lld configuration
 set(LLD_EXECUTABLE "${LLVM_BIN}/ld.lld")
-
-set(CMAKE_C_COMPILER_LINKER "${LLD_EXECUTABLE}")
-set(CMAKE_CXX_COMPILER_LINKER "${LLD_EXECUTABLE}")
-set(CMAKE_LINKER "${LLD_EXECUTABLE}")
-set(CMAKE_LINKER_lld_launcher "${LLD_EXECUTABLE}")
-set(CMAKE_C_USING_LINKER_lld_launcher "${LLD_EXECUTABLE}")
-set(CMAKE_CXX_USING_LINKER_lld_launcher "${LLD_EXECUTABLE}")
 
 set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> ${CMAKE_GNULD_IMAGE_VERSION} <LINK_LIBRARIES>")
 set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> ${CMAKE_GNULD_IMAGE_VERSION} <LINK_LIBRARIES>")
@@ -134,3 +123,4 @@ add_link_options(
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 message(STATUS "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
+
