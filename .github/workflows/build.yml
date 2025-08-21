@@ -50,7 +50,7 @@ jobs:
           curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh
           chmod +x /tmp/llvm.sh
           sudo /tmp/llvm.sh 19 all
-          sudo apt-get install -y llvm-19-dev clang-19 lld-19 lld-19 ${{ matrix.extra_pkgs }} ninja-build ccache
+          sudo apt-get install -y llvm-19-dev clang-19 lld-19 ${{ matrix.extra_pkgs }} ninja-build ccache
           if ! command -v llvm-config >/dev/null 2>&1; then
             sudo ln -sf /usr/bin/llvm-config-19 /usr/local/bin/llvm-config
           fi
