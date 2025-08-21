@@ -3,6 +3,10 @@ name: build
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/build.yml'
   pull_request:
   workflow_dispatch:
 
