@@ -1,5 +1,6 @@
 section .text
 global _port_read_8, _port_write_8
+global _port_read_16, _port_write_16
 global _port_read_32, _port_write_32
 
 _port_read_8:
@@ -12,6 +13,18 @@ _port_write_8:
     mov dx, di
     mov al, sil 
     out dx, al
+    ret
+
+_port_read_16:
+    mov dx, di
+    in ax, dx
+    movzx eax, ax
+    ret
+
+_port_write_16:
+    mov dx, di
+    mov ax, si
+    out dx, ax
     ret
 
 _port_read_32:

@@ -2,6 +2,8 @@
 
 extern "C" uint8_t  _port_read_8(uint16_t address);
 extern "C" void     _port_write_8(uint16_t address, uint8_t data);
+extern "C" uint16_t _port_read_16(uint16_t address);
+extern "C" void     _port_write_16(uint16_t address, uint16_t data);
 extern "C" uint32_t _port_read_32(uint16_t address);
 extern "C" void     _port_write_32(uint16_t address, uint32_t data);
 
@@ -14,8 +16,7 @@ namespace a9n::hal
             case 1 :
                 return static_cast<a9n::word>(_port_read_8(static_cast<uint16_t>(address)) & 0xFF);
             case 2 :
-                // For 16-bit reads, we can use the 32-bit read and mask the result.
-                return static_cast<a9n::word>(_port_read_32(static_cast<uint16_t>(address)) & 0xFFFF);
+                return static_cast<a9n::word>(_port_read_16(static_cast<uint16_t>(address)) & 0xFFFF);
             case 4 :
                 return static_cast<a9n::word>(
                     _port_read_32(static_cast<uint16_t>(address)) & 0xFFFF'FFFF
@@ -33,8 +34,7 @@ namespace a9n::hal
                 _port_write_8(static_cast<uint16_t>(address), static_cast<uint8_t>(data & 0xFF));
                 return {};
             case 2 :
-                // For 16-bit writes, we can use the 32-bit write.
-                _port_write_32(static_cast<uint16_t>(address), static_cast<uint32_t>(data & 0xFFFF));
+                _port_write_16(static_cast<uint16_t>(address), static_cast<uint16_t>(data & 0xFFFF));
                 return {};
             case 4 :
                 _port_write_32(static_cast<uint16_t>(address), static_cast<uint32_t>(data));
