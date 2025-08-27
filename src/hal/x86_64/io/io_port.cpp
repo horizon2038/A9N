@@ -37,7 +37,7 @@ namespace a9n::hal
                 _port_write_16(static_cast<uint16_t>(address), static_cast<uint16_t>(data & 0xFFFF));
                 return {};
             case 4 :
-                _port_write_32(static_cast<uint16_t>(address), static_cast<uint32_t>(data));
+                _port_write_32(static_cast<uint16_t>(address), static_cast<uint32_t>(data & 0xFFFF'FFFF));
                 return {};
             default :
                 return hal_error::ILLEGAL_ARGUMENT;
