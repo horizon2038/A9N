@@ -113,7 +113,6 @@ jobs:
         with:
           name: ${{ matrix.arch }}-${{ matrix.build_type }}-artifacts
           path: |
-            ${{ env.BUILD_DIR }}/compile_commands.json
             ${{ env.BUILD_DIR }}/**/*.{bin,img,iso,elf,efi}
           if-no-files-found: ignore
 
