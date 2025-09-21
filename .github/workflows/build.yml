@@ -113,7 +113,8 @@ jobs:
         with:
           name: ${{ matrix.arch }}-${{ matrix.build_type }}-artifacts
           path: |
-            ${{ env.BUILD_DIR }}/**/*.{bin,img,iso,elf,efi}
+            ${{ env.BUILD_DIR }}/**/*.elf
+            ${{ env.BUILD_DIR }}/**/*.ELF
           if-no-files-found: ignore
 
       - name: Notify Discord
