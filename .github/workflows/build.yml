@@ -117,3 +117,63 @@ jobs:
             ${{ env.BUILD_DIR }}/**/*.{bin,img,iso,elf,efi}
           if-no-files-found: ignore
 
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+          WORKFLOW: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          ARCH: ${{ matrix.arch }}
+          BUILD_TYPE: ${{ matrix.build_type }}
+          EVENT_NAME: ${{ github.event_name }}
+          SERVER_URL: ${{ github.server_url }}
+          COMMIT_MSG: ${{ github.event.head_commit.message || github.event.pull_request.title || '' }}
+        run: |
+          set -eu
+
+          case "$STATUS" in
+            success)   COLOR=3066993;  VERB="✅ Success"   ;;
+            cancelled) COLOR=15105570; VERB="⚠️ Cancelled" ;;
+            *)         COLOR=15158332; VERB="❌ Failure"   ;;
+          esac
+
+          RUN_URL="${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}"
+          SHORT_SHA="${SHA:0:7}"
+
+          DESC="$(printf '%s' "${COMMIT_MSG:-}" | head -c 300 | sed 's/"/\\"/g')"
+
+          JSON_PAYLOAD=$(cat <<EOF
+          {
+            "username": "GitHub Actions",
+            "embeds": [
+              {
+                "title": "${VERB}: ${WORKFLOW} • ${ARCH} • ${BUILD_TYPE}",
+                "url": "${RUN_URL}",
+                "color": ${COLOR},
+                "description": "${DESC}",
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "Branch",     "value": "${REF}",  "inline": true },
+                  { "name": "Event",      "value": "${EVENT_NAME}", "inline": true },
+                  { "name": "Commit",     "value": "\`${SHORT_SHA}\`", "inline": true },
+                  { "name": "Actor",      "value": "${ACTOR}", "inline": true },
+                  { "name": "Run",        "value": "#${RUN_NUMBER}", "inline": true }
+                ],
+                "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" \
+               -d "${JSON_PAYLOAD}" \
+               "${DISCORD_WEBHOOK_URL}" >/dev/null
+
+
