@@ -92,10 +92,7 @@ namespace liba9n
         }
 
         template<typename... Args>
-        constexpr result(
-            [[maybe_unused]] result_in_place_tag,
-            [[maybe_unused]] result_ok_tag
-        ) noexcept
+        constexpr result([[maybe_unused]] result_in_place_tag, [[maybe_unused]] result_ok_tag) noexcept
             : dummy {}
             , is_ok_flag { true }
         {
@@ -138,16 +135,13 @@ namespace liba9n
 
         template<typename F>
             requires(!is_result<F> && liba9n::std::is_convertible_v<liba9n::std::remove_cvref_t<F>, E>)
-        constexpr result(result_error_tag, F &&new_error_value) noexcept
-            : is_ok_flag { false }
+        constexpr result(result_error_tag, F &&new_error_value) noexcept : is_ok_flag { false }
         {
             new (&error_value) E(liba9n::std::forward<F>(new_error_value));
         }
 
         // result<T, E> -> result<T, E>
-        constexpr result(const result &other) noexcept
-            : dummy {}
-            , is_ok_flag { other.is_ok() }
+        constexpr result(const result &other) noexcept : dummy {}, is_ok_flag { other.is_ok() }
         {
             if (other.is_ok())
             {
@@ -157,9 +151,7 @@ namespace liba9n
             new (&error_value) E(other.unwrap_error());
         }
 
-        constexpr result(result &&other) noexcept
-            : dummy {}
-            , is_ok_flag { other.is_ok() }
+        constexpr result(result &&other) noexcept : dummy {}, is_ok_flag { other.is_ok() }
         {
             if (other.is_error())
             {
@@ -169,8 +161,7 @@ namespace liba9n
 
         // result<U, F> -> result<T, E>
         template<typename U>
-            requires is_result<U>
-                      && liba9n::std::is_convertible_v<typename U::ok_type, void>
+            requires is_result<U> && liba9n::std::is_convertible_v<typename U::ok_type, void>
                       && liba9n::std::is_convertible_v<typename U::error_type, E>
         constexpr result(const U &other) noexcept
             : dummy {}
@@ -185,8 +176,7 @@ namespace liba9n
         }
 
         template<typename U>
-            requires is_result<U>
-                      && liba9n::std::is_convertible_v<typename U::ok_type, void>
+            requires is_result<U> && liba9n::std::is_convertible_v<typename U::ok_type, void>
                       && liba9n::std::is_convertible_v<typename U::error_type, E>
         constexpr result(U &&other) noexcept
             : dummy {}
@@ -253,8 +243,7 @@ namespace liba9n
         }
 
         template<typename U, typename F>
-            requires liba9n::std::is_convertible_v<U, void>
-                  && liba9n::std::is_convertible_v<F, E>
+            requires liba9n::std::is_convertible_v<U, void> && liba9n::std::is_convertible_v<F, E>
         constexpr result &operator=(const result<U, F> &other) noexcept
         {
             if (this == &other)
@@ -272,8 +261,7 @@ namespace liba9n
         }
 
         template<typename U, typename F>
-            requires liba9n::std::is_convertible_v<U, void>
-                  && liba9n::std::is_convertible_v<F, E>
+            requires liba9n::std::is_convertible_v<U, void> && liba9n::std::is_convertible_v<F, E>
         constexpr result &operator=(result<U, F> &&other) noexcept
         {
             if (this == &other)
@@ -340,21 +328,18 @@ namespace liba9n
             return liba9n::std::move(error_value);
         }
 
-        [[nodiscard("result::is_ok() must be used.")]] constexpr bool
-            is_ok() const noexcept
+        [[nodiscard("result::is_ok() must be used.")]] constexpr bool is_ok() const noexcept
         {
             return is_ok_flag;
         }
 
-        [[nodiscard("result::is_error() must be used.")]] constexpr bool
-            is_error() const noexcept
+        [[nodiscard("result::is_error() must be used.")]] constexpr bool is_error() const noexcept
         {
             return !is_ok_flag;
         }
 
         template<typename F = E>
-            requires liba9n::std::is_copy_constructible_v<F>
-                  && liba9n::std::is_convertible_v<F, E>
+            requires liba9n::std::is_copy_constructible_v<F> && liba9n::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) &
         {
             if (is_ok())
@@ -366,8 +351,7 @@ namespace liba9n
         }
 
         template<typename F = E>
-            requires liba9n::std::is_copy_constructible_v<F>
-                  && liba9n::std::is_convertible_v<F, E>
+            requires liba9n::std::is_copy_constructible_v<F> && liba9n::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) const &
         {
             if (is_ok())
@@ -379,8 +363,7 @@ namespace liba9n
         }
 
         template<typename F = E>
-            requires liba9n::std::is_move_constructible_v<F>
-                  && liba9n::std::is_convertible_v<F, E>
+            requires liba9n::std::is_move_constructible_v<F> && liba9n::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) &&
         {
             if (is_ok())
@@ -392,8 +375,7 @@ namespace liba9n
         }
 
         template<typename F = E>
-            requires liba9n::std::is_move_constructible_v<F>
-                  && liba9n::std::is_convertible_v<F, E>
+            requires liba9n::std::is_move_constructible_v<F> && liba9n::std::is_convertible_v<F, E>
         constexpr auto unwrap_error_or(F &&instead_error_value) const &&
         {
             if (is_ok())
@@ -412,14 +394,12 @@ namespace liba9n
         // the result.
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::error_type, E>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::error_type, E>
                   && std::is_copy_constructible_v<E>
         constexpr auto and_then(Function &&function) &
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return U(result_error, unwrap_error());
             }
@@ -429,14 +409,12 @@ namespace liba9n
 
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::error_type, E>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::error_type, E>
                   && std::is_copy_constructible_v<E>
         constexpr auto and_then(Function &&function) const &
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return U(result_error, unwrap_error());
             }
@@ -446,14 +424,12 @@ namespace liba9n
 
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::error_type, E>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::error_type, E>
                   && std::is_move_constructible_v<E>
         constexpr auto and_then(Function &&function) &&
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return U(result_error, liba9n::std::move(unwrap_error()));
             }
@@ -463,14 +439,12 @@ namespace liba9n
 
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
-            requires is_result<U>
-                  && liba9n::std::is_same_v<typename U::error_type, E>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            requires is_result<U> && liba9n::std::is_same_v<typename U::error_type, E>
                   && std::is_move_constructible_v<E>
         constexpr auto and_then(Function &&function) const &&
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return U(result_error, liba9n::std::move(unwrap_error()));
             }
@@ -481,48 +455,39 @@ namespace liba9n
         template<
             typename Function,
             typename Ecvref = E &,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) &
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 // uniform initialization
                 return F {};
             }
 
-            return liba9n::std::invoke(
-                liba9n::std::forward<Function>(function),
-                unwrap_error()
-            );
+            return liba9n::std::invoke(liba9n::std::forward<Function>(function), unwrap_error());
         }
 
         template<
             typename Function,
             typename Ecvref = const E &,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) const &
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return F {};
             }
 
-            return liba9n::std::invoke(
-                liba9n::std::forward<Function>(function),
-                unwrap_error()
-            );
+            return liba9n::std::invoke(liba9n::std::forward<Function>(function), unwrap_error());
         }
 
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) &&
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return F {};
             }
@@ -536,11 +501,10 @@ namespace liba9n
         template<
             typename Function,
             typename Ecvref = const E &&,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
         constexpr auto or_else(Function &&function) const &&
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return F {};
             }
@@ -554,12 +518,11 @@ namespace liba9n
         // FIXME: result<void, E>::transform :
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
             requires liba9n::std::is_copy_constructible_v<E>
         constexpr auto transform(Function &&function) &
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return result<U, E>(result_error, unwrap_error());
             }
@@ -581,12 +544,11 @@ namespace liba9n
 
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
             requires liba9n::std::is_copy_constructible_v<E>
         constexpr auto transform(Function &&function) const &
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return result<U, E>(result_error, unwrap_error());
             }
@@ -608,12 +570,11 @@ namespace liba9n
 
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
             requires liba9n::std::is_move_constructible_v<E>
         constexpr auto transform(Function &&function) &&
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return result<U, E>(result_error, liba9n::std::move(unwrap_error()));
             }
@@ -635,12 +596,11 @@ namespace liba9n
 
         template<
             typename Function,
-            typename U
-            = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
+            typename U = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>>
             requires liba9n::std::is_move_constructible_v<E>
         constexpr auto transform(Function &&function) const &&
         {
-            if (is_error())
+            if (is_error()) [[unlikely]]
             {
                 return result<U, E>(result_error, liba9n::std::move(unwrap_error()));
             }
@@ -663,56 +623,47 @@ namespace liba9n
         template<
             typename Function,
             typename Ecvref = E &,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_copy_constructible_v<E>
         constexpr auto transform_error(Function &&function) &
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return result<void, F>(result_ok);
             }
 
             return result<void, F>(
                 result_error,
-                liba9n::std::invoke(
-                    liba9n::std::forward<Function>(function),
-                    unwrap_error()
-                )
+                liba9n::std::invoke(liba9n::std::forward<Function>(function), unwrap_error())
             );
         }
 
         template<
             typename Function,
             typename Ecvref = const E &,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_copy_constructible_v<E>
         constexpr auto transform_error(Function &&function) const &
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return result<void, F>(result_ok);
             }
 
             return result<void, F>(
                 result_error,
-                liba9n::std::invoke(
-                    liba9n::std::forward<Function>(function),
-                    unwrap_error()
-                )
+                liba9n::std::invoke(liba9n::std::forward<Function>(function), unwrap_error())
             );
         }
 
         template<
             typename Function,
             typename Ecvref = E &&,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_move_constructible_v<E>
         constexpr auto transform_error(Function &&function) &&
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return result<void, F>(result_ok);
             }
@@ -729,12 +680,11 @@ namespace liba9n
         template<
             typename Function,
             typename Ecvref = const E &&,
-            typename F      = liba9n::std::remove_cvref_t<
-                     liba9n::std::invoke_result_t<Function, Ecvref>>>
+            typename F = liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function, Ecvref>>>
             requires liba9n::std::is_move_constructible_v<E>
         constexpr auto transform_error(Function &&function) const &&
         {
-            if (is_ok())
+            if (is_ok()) [[likely]]
             {
                 return result<void, F>(result_ok);
             }
@@ -751,16 +701,14 @@ namespace liba9n
         // equality operators
         template<typename F>
             requires(!liba9n::std::is_same_v<void, F>)
-        friend constexpr bool
-            operator==(const result &lhs, const result<void, F> &rhs)
+        friend constexpr bool operator==(const result &lhs, const result<void, F> &rhs)
         {
             if (lhs.is_ok() != rhs.is_ok())
             {
                 return false;
             }
 
-            return lhs.is_ok()
-                || static_cast<bool>(lhs.unwrap_error() == rhs.unwrap_error());
+            return lhs.is_ok() || static_cast<bool>(lhs.unwrap_error() == rhs.unwrap_error());
         }
 
         template<typename F>
