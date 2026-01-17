@@ -1,3 +1,4 @@
+#include "kernel/types.hpp"
 #include <kernel/process/process_manager.hpp>
 
 #include <kernel/capability/address_space.hpp>
@@ -27,7 +28,7 @@ namespace a9n::kernel
             alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_address_space;
             alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_stack;
 
-            return a9n::hal::init_hardware_context(hal::cpu_mode::KERNEL, target.registers)
+            return a9n::hal::init_hardware_context(hal::cpu_mode::USER, target.registers)
                 .transform_error(convert_hal_to_kernel_error)
                 .and_then(
                     [&](void) -> kernel_result
@@ -139,8 +140,8 @@ namespace a9n::kernel
 
                               scheduler_core.schedule()
                                   .and_then(
-                                      [=, this](process *target_process
-                                      ) -> liba9n::result<process *, scheduler_error>
+                                      [=, this](process *target_process)
+                                          -> liba9n::result<process *, scheduler_error>
                                       {
                                           process &preview_process = *local_variable->current_process;
                                           local_variable->current_process = target_process;
@@ -154,9 +155,10 @@ namespace a9n::kernel
                                       }
                                   )
                                   .or_else(
-                                      [=, this](scheduler_error e
-                                      ) -> liba9n::result<process *, scheduler_error>
+                                      [=, this](scheduler_error e)
+                                          -> liba9n::result<process *, scheduler_error>
                                       {
+                                          DEBUG_LOG("scheduler error : %s", scheduler_error_to_string(e));
                                           utility::logger::printk(
                                               "failed schedule : %s\n",
                                               scheduler_error_to_string(e)
@@ -246,9 +248,16 @@ namespace a9n::kernel
             .and_then(
                 [&](cpu_local_variable *local_variable) -> kernel_result
                 {
+                    DEBUG_LOG("switch to IDLE ...\n");
                     local_variable->current_process = &idle_process;
                     local_variable->is_idle         = true;
 
+                    // IDLE is a kernel thread, but it appears as a User thread to enable
+                    // interrupts, hlt, etc.
+                    /*
+                    return a9n::hal::restore_context(a9n::hal::cpu_mode::USER)
+                        .transform_error(convert_hal_to_kernel_error);
+                    */
                     return {};
                 }
             );
@@ -264,13 +273,7 @@ namespace a9n::kernel
                         .transform_error(
                             [&](scheduler_error e) -> hal::hal_error
                             {
-                                a9n::kernel::utility::logger::printk(
-                                    "failed schedule : %s\n",
-                                    scheduler_error_to_string(e)
-                                );
-
-                                switch_to_idle();
-
+                                DEBUG_LOG("scheduler error : %s", scheduler_error_to_string(e));
                                 return hal::hal_error::TRY_AGAIN;
                             }
                         )
@@ -282,6 +285,19 @@ namespace a9n::kernel
                                 local_variable->is_idle         = false;
 
                                 return a9n::hal::switch_context(preview_process, *next_process);
+                            }
+                        )
+                        .or_else(
+                            [&](hal::hal_error e) -> hal::hal_result
+                            {
+                                DEBUG_LOG("Fallback to IDLE : %s", hal::hal_error_to_string(e));
+                                return switch_to_idle().transform_error(
+                                    [&](kernel_error) -> hal::hal_error
+                                    {
+                                        DEBUG_LOG("failed to switch to IDLE");
+                                        return hal::hal_error::TRY_AGAIN;
+                                    }
+                                );
                             }
                         );
                 }

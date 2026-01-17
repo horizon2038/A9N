@@ -117,8 +117,6 @@ namespace a9n::hal::x86_64
 
     uint8_t read_serial(void)
     {
-        while (is_received() == 0)
-            ;
         return port_read_8(COM_1);
     }
 
@@ -126,17 +124,13 @@ namespace a9n::hal::x86_64
     {
         // UART re-configuration
 
-        // !!! enable OUT2 in MCR !!!
+        // enable out2 in mcr
         port_write_8(COM_1 + MCR, 0x0B);
+
+        // test: fifo : 1-byte trigger, clear rx/tx fifo
+        port_write_8(COM_1 + FCR, 0x07);
 
         // enable receive interrupt
         port_write_8(COM_1 + IER, 0x01);
-
-        // ack interrupt
-        port_read_8(COM_1 + FCR);
-        port_read_8(COM_1);
-
-        io_apic_core.enable_interrupt(0x04);
-        local_apic_core.end_of_interrupt();
     }
 };

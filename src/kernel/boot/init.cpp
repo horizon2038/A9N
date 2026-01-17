@@ -1,4 +1,3 @@
-#include "kernel/ipc/ipc_buffer.hpp"
 #include <kernel/boot/init.hpp>
 
 #include <kernel/capability/address_space.hpp>
@@ -6,11 +5,13 @@
 #include <kernel/capability/capability_node.hpp>
 #include <kernel/capability/frame_capability.hpp>
 #include <kernel/capability/generic.hpp>
+#include <kernel/capability/interrupt_region.hpp>
 #include <kernel/capability/page_table_capability.hpp>
 #include <kernel/capability/process_control_block.hpp>
 #include <kernel/kernel_result.hpp>
 #include <kernel/memory/memory_type.hpp>
 
+#include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/memory/memory.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
@@ -61,6 +62,8 @@ namespace a9n::kernel
         capability_slot        &slot,
         generic_descriptor     &descriptor
     );
+
+    static kernel_result try_make_init_interrupt_region(process_control_block &pcb);
 
     kernel_result create_init(const boot_info &info)
     {
@@ -122,6 +125,12 @@ namespace a9n::kernel
         }
 
         // create interrupt region
+        logger::printk("create init interrupt region ...\n");
+        auto interrupt_port_result = try_make_init_interrupt_region(*init_process_control_block);
+        if (!interrupt_port_result)
+        {
+            return interrupt_port_result.unwrap_error();
+        }
 
         // create io port
 
@@ -315,8 +324,8 @@ namespace a9n::kernel
                 }
             )
             .and_then(
-                [&](liba9n::not_null<page_size_memory> root_table_memory
-                ) -> liba9n::result<page_table, kernel_error>
+                [&](liba9n::not_null<page_size_memory> root_table_memory)
+                    -> liba9n::result<page_table, kernel_error>
                 {
                     auto root_table_physical_address = virtual_to_physical_address(
                         reinterpret_cast<a9n::virtual_address>(root_table_memory->data())
@@ -402,8 +411,8 @@ namespace a9n::kernel
                                       }
                                   )
                                   .and_then(
-                                      [&](liba9n::not_null<page_size_memory> memory
-                                      ) -> liba9n::result<page_table, kernel_error>
+                                      [&](liba9n::not_null<page_size_memory> memory)
+                                          -> liba9n::result<page_table, kernel_error>
                                       {
                                           auto page_physical = virtual_to_physical_address(
                                               reinterpret_cast<a9n::virtual_address>(memory->data())
@@ -435,12 +444,11 @@ namespace a9n::kernel
                                       [&](page_table table) -> kernel_result
                                       {
                                           return pcb.process_core.root_slot.component
-                                              ->retrieve_slot(liba9n::enum_cast(
-                                                  init_slot_offset::PROCESS_PAGE_TABLE_NODE
-                                              ))
+                                              ->retrieve_slot(
+                                                  liba9n::enum_cast(init_slot_offset::PROCESS_PAGE_TABLE_NODE)
+                                              )
                                               .transform_error(
-                                                  [&]([[maybe_unused]] capability_lookup_error e
-                                                  ) -> kernel_error
+                                                  [&]([[maybe_unused]] capability_lookup_error e) -> kernel_error
                                                   {
                                                       logger::error("failed to lookup node");
                                                       return kernel_error::UNEXPECTED;
@@ -452,8 +460,10 @@ namespace a9n::kernel
                                                       if (!slot->component
                                                           || slot->type != capability_type::NODE)
                                                       {
-                                                          logger::error("the node that stores the "
-                                                                        "pages is imcomplete");
+                                                          logger::error(
+                                                              "the node that stores the "
+                                                              "pages is imcomplete"
+                                                          );
                                                           return kernel_error::INIT_FIRST;
                                                       }
 
@@ -546,8 +556,10 @@ namespace a9n::kernel
                                       "slot error code : 0x%016llx",
                                       static_cast<a9n::word>(target_slot_result.unwrap_error())
                                   );
-                                  logger::error("slot does not exist in the node that stores the "
-                                                "frame");
+                                  logger::error(
+                                      "slot does not exist in the node that stores the "
+                                      "frame"
+                                  );
                                   return kernel_error::NO_SUCH_ADDRESS;
                               }
 
@@ -802,8 +814,8 @@ namespace a9n::kernel
                     if (ceiled_remain_address_start
                             < (entry.start_physical_address
                                + (static_cast<a9n::word>(1) << memory_size_aligned_radix))
-                        || (entry.start_physical_address + (entry.page_count * a9n::PAGE_SIZE)
-                           ) < floored_remain_address_end)
+                        || (entry.start_physical_address + (entry.page_count * a9n::PAGE_SIZE))
+                               < floored_remain_address_end)
                     {
                         return memory_map_entry {
                             .start_physical_address = 0,
@@ -819,6 +831,28 @@ namespace a9n::kernel
                             .type                   = entry.type
                         };
                     }
+                }
+            );
+    }
+
+    static kernel_result try_make_init_interrupt_region(process_control_block &pcb)
+    {
+        using a9n::kernel::utility::logger;
+        logger::printk("try to make the interrupt region in init process ...\n");
+
+        return pcb.process_core.root_slot.component
+            ->retrieve_slot(liba9n::enum_cast(init_slot_offset::INTERRUPT_REGION))
+            .transform_error(
+                [&]([[maybe_unused]] capability_lookup_error e) -> kernel_error
+                {
+                    logger::error("no slot was found to store the interrupt region");
+                    return kernel_error::NO_SUCH_ADDRESS;
+                }
+            )
+            .and_then(
+                [&](capability_slot *slot) -> kernel_result
+                {
+                    return try_configure_interrupt_region_slot(*slot);
                 }
             );
     }

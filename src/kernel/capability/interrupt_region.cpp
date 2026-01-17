@@ -1,5 +1,11 @@
 #include <kernel/capability/interrupt_region.hpp>
 
+#include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/capability_invocation.hpp>
+#include <kernel/capability/interrupt_port.hpp>
+#include <kernel/interrupt/irq_notification_handlers.hpp>
+#include <kernel/utility/logger.hpp>
+
 #include <hal/interface/process_manager.hpp>
 
 namespace a9n::kernel
@@ -18,7 +24,6 @@ namespace a9n::kernel
         }
     }
 
-    /*
     capability_result interrupt_region::execute(process &owner, capability_slot &self)
     {
         auto operation = static_cast<operation_type>(
@@ -29,6 +34,7 @@ namespace a9n::kernel
         switch (operation)
         {
             case OPERATION_MAKE_PORT :
+                DEBUG_LOG("interrupt_region::make_port");
                 return operation_make_port(owner, self);
 
             default :
@@ -36,84 +42,101 @@ namespace a9n::kernel
         }
     }
 
-    capability_result interrupt_region::operation_make_port(process &owner, capability_slot &self)
+    capability_lookup_result get_capability_by_descriptor(process &owner, a9n::word descriptor)
     {
-        // 1) TARGET_NODE(Descriptor) を取得
-        return a9n::hal::get_message_register(owner, TARGET_NODE)
-            .transform_error(convert_hal_to_capability_error)
+        return owner.root_slot.component
+            ->traverse_slot(descriptor, extract_depth(descriptor), a9n::BYTE_BITS);
+    }
+
+    capability_lookup_result get_empty_capability_slot_by_descriptor_and_index(
+        process  &owner,
+        a9n::word descriptor,
+        a9n::word index
+    )
+    {
+        return get_capability_by_descriptor(owner, descriptor)
             .and_then(
-                [&](a9n::word node_descriptor) -> capability_result
+                [&](capability_slot *slot) -> capability_lookup_result
                 {
-                    // 2) traverse_slot して node_slot を取得
-                    return owner.root_slot.component
-                        ->traverse_slot(node_descriptor, extract_depth(node_descriptor),
-a9n::BYTE_BITS) .transform_error(convert_lookup_error) .and_then(
-                            [&](capability_slot *node_slot) -> capability_result
+                    if (slot->type != capability_type::NODE)
+                    {
+                        return capability_lookup_error::TERMINAL;
+                    }
+
+                    if (!slot->component)
+                    {
+                        // normally unreachable
+                        return capability_lookup_error::UNEXPECTED;
+                    }
+
+                    return slot->component->retrieve_slot(index).and_then(
+                        [&](capability_slot *target_slot) -> capability_lookup_result
+                        {
+                            if (target_slot->type != capability_type::NONE)
                             {
-                                if (node_slot->type != capability_type::NODE)
-                                {
-                                    return capability_error::INVALID_DESCRIPTOR;
-                                }
-
-                                // 3) TARGET_NODE_INDEX, IRQ_NUMBER を取得
-                                return a9n::hal::get_message_register(owner, TARGET_NODE_INDEX)
-                                    .transform_error(convert_hal_to_capability_error)
-                                    .and_then(
-                                        [&](a9n::word tindex) -> capability_result
-                                        {
-                                            return a9n::hal::get_message_register(owner, IRQ_NUMBER)
-                                                .transform_error(convert_hal_to_capability_error)
-                                                .and_then(
-                                                    [&](a9n::word irq) -> capability_result
-                                                    {
-                                                        // 4) InterruptPort インスタンスを作成
-                                                        auto *new_port = new (std::nothrow)
-                                                            interrupt_port(irq);
-                                                        if (!new_port)
-                                                        {
-                                                            return capability_error::OUT_OF_MEMORY;
-                                                        }
-
-                                                        // 5) node_ptr->slots[tindex]
-                                                        // が範囲内かチェック
-                                                        if (tindex >= node_ptr->max_slots)
-                                                        {
-                                                            delete new_port;
-                                                            return capability_error::INVALID_INDEX;
-                                                        }
-
-                                                        auto &target_slot = node_ptr->slots[tindex];
-
-                                                        // 6) 既に使用中かどうか
-                                                        if (target_slot.type !=
-capability_type::UNUSED)
-                                                        {
-                                                            delete new_port;
-                                                            return capability_error::SLOT_IN_USE;
-                                                        }
-
-                                                        // 7) slotをInterrupt Portとして初期化
-                                                        auto cfg_res =
-try_configure_interrupt_port_slot( target_slot, *new_port, irq
-                                                        );
-                                                        if (!cfg_res)
-                                                        {
-                                                            // kernel_error -> capability_error 変換
-                                                            return
-convert_kernel_to_capability_error( cfg_res.error()
-                                                            );
-                                                        }
-
-                                                        // 正常に生成完了
-                                                        return {};
-                                                    }
-                                                );
-                                        }
-                                    );
+                                return capability_lookup_error::UNAVAILABLE;
                             }
-                        );
+
+                            return target_slot;
+                        }
+                    );
                 }
             );
     }
-*/
+
+    capability_result interrupt_region::operation_make_port(process &owner, capability_slot &self)
+    {
+        return with_message_registers<TARGET_NODE, TARGET_NODE_INDEX, IRQ_NUMBER>(
+            owner,
+            [&](a9n::word node_descriptor, a9n::word index, a9n::word irq) -> capability_result
+            {
+                return get_empty_capability_slot_by_descriptor_and_index(owner, node_descriptor, index)
+                    .transform_error(convert_lookup_error)
+                    .and_then(
+                        [&](capability_slot *target_slot) -> capability_result
+                        {
+                            auto handler_result = irq_number_to_irq_notification_handler(irq);
+
+                            if (!handler_result)
+                            {
+                                return capability_error::INVALID_ARGUMENT;
+                            }
+
+                            auto &handler = handler_result.unwrap();
+                            if (handler->used)
+                            {
+                                return capability_error::ILLEGAL_OPERATION;
+                            }
+                            handler->used = true;
+
+                            DEBUG_LOG("Make Interrupt Port for IRQ: %04llu\n", irq);
+
+                            return try_configure_interrupt_port_slot(
+                                       *target_slot,
+                                       interrupt_port_core,
+                                       handler->irq_number,
+                                       0
+                            )
+                                .transform_error(convert_kernel_to_capability_error);
+                        }
+                    );
+            }
+        );
+    }
+
+    capability_result interrupt_region::revoke(capability_slot &self)
+    {
+        for (auto &handler : irq_notification_handlers)
+        {
+            DEBUG_LOG("Revoke IRQ Handler for IRQ: %04llu\n", handler.irq_number);
+            handler.used = false;
+            auto result  = handler.slot.try_remove_and_init();
+            if (!result)
+            {
+                return result.transform_error(convert_kernel_to_capability_error);
+            }
+        }
+
+        return {};
+    }
 }

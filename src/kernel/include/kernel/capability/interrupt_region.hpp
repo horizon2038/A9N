@@ -5,7 +5,6 @@
 
 namespace a9n::kernel
 {
-    /*
     class interrupt_region : public capability_component
     {
       private:
@@ -52,7 +51,20 @@ namespace a9n::kernel
             return capability_lookup_error::TERMINAL;
         };
     };
-    */
+
+    inline interrupt_region interrupt_region_core;
+
+    inline kernel_result try_configure_interrupt_region_slot(capability_slot &target_slot)
+    {
+        target_slot.init();
+        target_slot.component = &interrupt_region_core;
+        target_slot.type      = capability_type::INTERRUPT_REGION;
+        target_slot.rights    = capability_slot::ALL;
+        target_slot.data.fill(0);
+
+        return {};
+    }
+
 }
 
 #endif

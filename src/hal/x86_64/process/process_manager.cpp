@@ -68,9 +68,11 @@ namespace a9n::hal
         switch (current_mode)
         {
             case cpu_mode::KERNEL :
+                DEBUG_LOG("restore kernel context");
                 x86_64::_restore_kernel_context();
 
             case cpu_mode::USER :
+                DEBUG_LOG("restore user context");
                 x86_64::_restore_user_context();
 
             default :

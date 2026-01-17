@@ -7,7 +7,8 @@
 
 namespace a9n::hal::x86_64
 {
-    alignas(sizeof(a9n::hal::interrupt_handler)
+    alignas(
+        sizeof(a9n::hal::interrupt_handler)
     ) inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
 
     inline static a9n::kernel::timer_handler        timer_handler;

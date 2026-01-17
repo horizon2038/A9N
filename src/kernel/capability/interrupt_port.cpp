@@ -1,5 +1,8 @@
 #include <kernel/capability/interrupt_port.hpp>
 
+#include <hal/interface/interrupt.hpp>
+#include <kernel/capability/capability_result.hpp>
+#include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
@@ -74,44 +77,94 @@ namespace a9n::kernel
                                 }
 
                                 auto info = convert_slot_data_to_interrupt_port_info(self.data);
-                                auto notification_port = static_cast<class notification_port *>(
-                                    notification_port_slot->component
-                                );
 
-                                if (info.binded_notification_port)
-                                {
-                                    info.binded_notification_port->binded_interrupt_port = nullptr;
-                                }
-                                {
-                                    return capability_error::INVALID_DESCRIPTOR;
-                                }
+                                auto irq_handler_result
+                                    = irq_number_to_irq_notification_handler(info.irq_number);
 
-                                auto port_info = convert_slot_data_to_interrupt_port_info(self.data);
-                                if (port_info.binded_notification_port)
+                                if (!irq_handler_result)
                                 {
+                                    return convert_kernel_to_capability_error(
+                                        irq_handler_result.unwrap_error()
+                                    );
+                                }
+                                auto &irq_handler = irq_handler_result.unwrap();
+
+                                if (irq_handler->slot.type != capability_type::NONE)
+                                {
+                                    // already binded
                                     return capability_error::ILLEGAL_OPERATION;
                                 }
 
-                                port_info.binded_notification_port       = notification_port;
-                                notification_port->binded_interrupt_port = this;
-
-                                self.data = convert_interrupt_port_info_to_slot_data(port_info);
-
-                                return {};
+                                return try_copy_capability_slot(irq_handler->slot, *notification_port_slot)
+                                    .transform_error(convert_kernel_to_capability_error);
                             }
                         );
                 }
             );
     }
 
+    capability_result
+        interrupt_port::operation_unbind_notification_port(process &owner, capability_slot &self)
+    {
+        auto port_info      = convert_slot_data_to_interrupt_port_info(self.data);
+        auto handler_result = irq_number_to_irq_notification_handler(port_info.irq_number);
+
+        if (!handler_result)
+        {
+            return convert_kernel_to_capability_error(handler_result.unwrap_error());
+        }
+
+        auto &irq_handler = handler_result.unwrap();
+        if (irq_handler->slot.type == capability_type::NONE)
+        {
+            // already unbinded; do nothing
+            return {};
+        }
+
+        return irq_handler->slot.try_remove_and_init().transform_error(
+            convert_kernel_to_capability_error
+        );
+    }
+
+    capability_result interrupt_port::operation_ack(process &owner, capability_slot &self)
+    {
+        auto port_info = convert_slot_data_to_interrupt_port_info(self.data);
+        DEBUG_LOG("Ack IRQ: %04llu\n", port_info.irq_number);
+        auto handler_result = irq_number_to_irq_notification_handler(port_info.irq_number);
+        if (!handler_result)
+        {
+            return convert_kernel_to_capability_error(handler_result.unwrap_error());
+        }
+
+        auto &irq_handler = handler_result.unwrap();
+
+        return a9n::kernel::interrupt_manager_core.enable_interrupt(port_info.irq_number)
+            .transform_error(convert_kernel_to_capability_error);
+    }
+
+    capability_result interrupt_port::operation_get_irq_number(process &owner, capability_slot &self)
+    {
+        auto port_info = convert_slot_data_to_interrupt_port_info(self.data);
+
+        return a9n::hal::configure_message_register(owner, RESULT_IRQ_NUMBER, port_info.irq_number)
+            .transform_error(convert_hal_to_capability_error);
+    }
+
     capability_result interrupt_port::revoke(capability_slot &self)
     {
         auto port_info = convert_slot_data_to_interrupt_port_info(self.data);
-        if (port_info.binded_notification_port)
-        {
-            // unbind (remove) self
-            port_info.binded_notification_port->binded_interrupt_port = nullptr;
-        }
+
+        return irq_number_to_irq_notification_handler(port_info.irq_number)
+            .transform_error(convert_kernel_to_capability_error)
+            .and_then(
+                [&](liba9n::not_null<irq_notification_handler> handler) -> capability_result
+                {
+                    handler->used = false;
+                    return handler->slot.try_remove_and_init().transform_error(
+                        convert_kernel_to_capability_error
+                    );
+                }
+            );
 
         return {};
     }

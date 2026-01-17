@@ -61,12 +61,12 @@ namespace a9n::kernel
         }
 
         auto target_priority = target_process->priority;
-        if (target_priority < 0 || target_priority >= PRIORITY_MAX)
+        if (target_priority < 0 || target_priority >= PRIORITY_MAX) [[unlikely]]
         {
             DEBUG_LOG("invalid priority");
             return scheduler_error::INVALID_PRIORITY;
         }
-        if (target_priority < highest_priority)
+        if (target_priority < highest_priority) [[unlikely]]
         {
             if (target_process->status != process_status::READY)
             {

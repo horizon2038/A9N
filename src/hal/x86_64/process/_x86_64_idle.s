@@ -2,7 +2,6 @@ global _idle
 
 _idle:
     ; wait interrupt
-    sti
-    hlt
-    cli
+    ; sti
+    ; hlt
     jmp _idle

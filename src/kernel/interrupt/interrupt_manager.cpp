@@ -27,6 +27,7 @@ namespace a9n::kernel
     kernel_result interrupt_manager::init(void)
     {
         init_handler();
+        init_irq_notification_handlers();
 
         return {};
     }
@@ -40,21 +41,44 @@ namespace a9n::kernel
         a9n::hal::register_fault_dispatcher(handle_fault);
     }
 
-    void interrupt_manager::enable_interrupt_all(void)
+    void interrupt_manager::init_irq_notification_handlers(void)
+    {
+        a9n::kernel::utility::logger::printk("init irq notification handlers ...\n");
+
+        for (auto i = 0; i < a9n::hal::IRQ_NUMBER_MAX; i++)
+        {
+            irq_notification_handlers[i].irq_number = i;
+            irq_notification_handlers[i].slot.init();
+        }
+    }
+
+    kernel_result interrupt_manager::enable_interrupt(a9n::word irq_number)
+    {
+        DEBUG_LOG("enable interrupt [ %llu ] ...\n", irq_number);
+        return a9n::hal::enable_interrupt(irq_number).transform_error(convert_hal_to_kernel_error);
+    }
+
+    kernel_result interrupt_manager::disable_interrupt(a9n::word irq_number)
+    {
+        DEBUG_LOG("disable interrupt [ %llu ] ...\n", irq_number);
+        return a9n::hal::disable_interrupt(irq_number).transform_error(convert_hal_to_kernel_error);
+    }
+
+    kernel_result interrupt_manager::enable_interrupt_all(void)
     {
         a9n::kernel::utility::logger::printk("enable interrupt ...\n");
-        a9n::hal::enable_interrupt_all();
+        return a9n::hal::enable_interrupt_all().transform_error(convert_hal_to_kernel_error);
     }
 
-    void interrupt_manager::disable_interrupt_all(void)
+    kernel_result interrupt_manager::disable_interrupt_all(void)
     {
         a9n::kernel::utility::logger::printk("disable interrupt ...\n");
-        a9n::hal::disable_interrupt_all();
+        return a9n::hal::disable_interrupt_all().transform_error(convert_hal_to_kernel_error);
     }
 
-    void interrupt_manager::ack_interrupt(void)
+    kernel_result interrupt_manager::ack_interrupt(void)
     {
-        a9n::hal::ack_interrupt();
+        return a9n::hal::ack_interrupt().transform_error(convert_hal_to_kernel_error);
     }
 
     // this handler is required
@@ -71,24 +95,53 @@ namespace a9n::kernel
 
     extern "C" void handle_interrupt(a9n::word irq_number)
     {
-        // TODO: implement notification
-        a9n::kernel::utility::logger::printk("hello from handle_interrupt [ 0x%4llu ]\n", irq_number);
-
-        irq_number_to_handler(irq_number)
-            .and_then(has_irq_handler_notification)
+        irq_number_to_irq_notification_handler(irq_number)
             .and_then(
-                [](liba9n::not_null<capability_slot> handler) -> kernel_result
+                [](liba9n::not_null<irq_notification_handler> handler) -> kernel_result
                 {
+                    if (handler->slot.type == capability_type::NONE)
+                    {
+                        DEBUG_LOG(
+                            "handle_interrupt : no handler for irq_number %04llu",
+                            handler->irq_number
+                        );
+                        return kernel_error::TRY_AGAIN;
+                    }
+
+                    if ((handler->slot.type != capability_type::NOTIFICATION_PORT)
+                        || !(handler->slot.component)) [[unlikely]]
+                    {
+                        DEBUG_LOG(
+                            "handle_interrupt : invalid handler type for irq_number %llu",
+                            handler->irq_number
+                        );
+                        return kernel_error::TRY_AGAIN;
+                    }
+
                     return process_manager_core.retrieve_current_process().and_then(
                         [&handler](process *current_process) -> kernel_result
                         {
-                            auto &port = static_cast<notification_port &>(*handler->component);
-
-                            return port.operation_notify(*current_process, *handler)
+                            auto &port
+                                = reinterpret_cast<notification_port &>(*(handler->slot.component));
+                            return port.operation_notify(*current_process, handler->slot)
                                 .transform_error(
                                     [&handler](capability_error e) -> kernel_error
                                     {
                                         return kernel_error::TRY_AGAIN;
+                                    }
+                                )
+                                .and_then(
+                                    [&](void) -> kernel_result
+                                    {
+                                        return interrupt_manager_core.disable_interrupt(
+                                            handler->irq_number
+                                        );
+                                    }
+                                )
+                                .and_then(
+                                    [](void) -> kernel_result
+                                    {
+                                        return a9n::kernel::interrupt_manager_core.ack_interrupt();
                                     }
                                 );
                         }
@@ -98,11 +151,7 @@ namespace a9n::kernel
             .or_else(
                 [irq_number](kernel_error e) -> kernel_result
                 {
-                    DEBUG_LOG(
-                        "handle_interrupt : no handler for irq_number %d, error : %s\n",
-                        irq_number,
-                        a9n::kernel::kernel_error_to_string(e)
-                    );
+                    DEBUG_LOG("error : %s", a9n::kernel::kernel_error_to_string(e));
                     return e;
                 }
             );
@@ -134,8 +183,7 @@ namespace a9n::kernel
                         return capability_error::INVALID_DESCRIPTOR;
                     }
 
-                    ipc_port &port = static_cast<ipc_port &>(*current_process->resolver_port.component
-                    );
+                    ipc_port &port = static_cast<ipc_port &>(*current_process->resolver_port.component);
                     return port
                         .operation_fault_call(*current_process, current_process->resolver_port)
                         .or_else(

@@ -20,7 +20,8 @@ namespace a9n::hal
     {
         KERNEL,
         USER,
-        VM // TODO: remove this
+        IDLE, // specific
+        VM    // TODO: remove this
     };
 
     hal_result

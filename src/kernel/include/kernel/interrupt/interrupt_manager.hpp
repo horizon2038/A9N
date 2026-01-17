@@ -13,12 +13,17 @@ namespace a9n::kernel
       public:
         kernel_result init(void);
 
-        void enable_interrupt_all();
-        void disable_interrupt_all();
-        void ack_interrupt();
+        kernel_result enable_interrupt(a9n::word irq_number);
+        kernel_result disable_interrupt(a9n::word irq_number);
+
+        // TODO: return kernel_result
+        kernel_result enable_interrupt_all();
+        kernel_result disable_interrupt_all();
+        kernel_result ack_interrupt();
 
       private:
-        void init_handler();
+        void init_handler(void);
+        void init_irq_notification_handlers(void);
     };
 
     inline interrupt_manager interrupt_manager_core {};

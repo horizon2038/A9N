@@ -4,6 +4,8 @@
 
 #include <kernel/utility/logger.hpp>
 
+#define CONFIG_PIC
+
 namespace a9n::hal::x86_64
 {
     inline constexpr uint8_t PIC_MASTER         = 0x20;

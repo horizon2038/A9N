@@ -3,9 +3,16 @@
 
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/notification_port.hpp>
+#include <kernel/interrupt/irq_notification_handlers.hpp>
+
+#include <liba9n/libcxx/array>
+#include <liba9n/option/option.hpp>
 
 namespace a9n::kernel
 {
+    class interrupt_port;
+    struct interrupt_port_info;
+
     class interrupt_port : public capability_component
     {
       private:
@@ -59,20 +66,24 @@ namespace a9n::kernel
         };
     };
 
+    inline interrupt_port interrupt_port_core;
+
+    // on-memory representation of interrupt port slot data (slot-local information)
     struct interrupt_port_info
     {
-        a9n::word          irq_number;
-        notification_port *binded_notification_port;
+        a9n::word irq_number;
+        a9n::word flags;
     };
 
     inline interrupt_port_info
         convert_slot_data_to_interrupt_port_info(const capability_slot_data &data)
     {
-        return {
-            .irq_number = data[0],
-            // NOTE: unsafe cast
-            .binded_notification_port = reinterpret_cast<notification_port *>(data[1]),
-        };
+        interrupt_port_info info;
+
+        info.irq_number = data[0];
+        info.flags      = data[1];
+
+        return info;
     }
 
     inline capability_slot_data
@@ -81,20 +92,30 @@ namespace a9n::kernel
         capability_slot_data data;
 
         data[0] = info.irq_number;
-        data[1] = reinterpret_cast<a9n::word>(info.binded_notification_port);
+        data[1] = info.flags;
 
         return data;
     }
 
-    inline kernel_result
-        try_configure_interrupt_port_slot(capability_slot &slot, interrupt_port &port, a9n::word irq_number)
+    inline kernel_result try_configure_interrupt_port_slot(
+        capability_slot &slot,
+        interrupt_port  &port,
+        a9n::word        irq_number,
+        a9n::word        flags
+    )
     {
         slot.init();
         slot.component = &port;
         slot.type      = capability_type::INTERRUPT_PORT;
         slot.rights    = capability_slot::ALL;
         slot.data.fill(0);
-        slot.data = convert_interrupt_port_info_to_slot_data({ .irq_number = irq_number });
+
+        slot.data = convert_interrupt_port_info_to_slot_data(
+            {
+                .irq_number = irq_number,
+                .flags      = flags,
+            }
+        );
 
         return {};
     }

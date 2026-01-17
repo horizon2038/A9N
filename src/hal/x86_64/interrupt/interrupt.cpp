@@ -155,6 +155,7 @@ namespace a9n::hal::x86_64
     // called from asm
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code)
     {
+        DEBUG_LOG("do_irq_from_user : irq_number = %llu", static_cast<uint32_t>(irq_number));
         // exception
         if (irq_number < liba9n::enum_cast(reserved_irq::IO_BASE))
         {
@@ -220,7 +221,6 @@ namespace a9n::hal::x86_64
         }
         else
         {
-            ack_interrupt();
             switch (auto type = static_cast<reserved_irq>(irq_number))
             {
                 case reserved_irq::TIMER :
@@ -237,16 +237,16 @@ namespace a9n::hal::x86_64
                     // TODO
                     break;
 
-                case reserved_irq::CONSOLE_0 :
-                    {
-                        DEBUG_LOG("UART IRQ (CONSOLE_0) occurred\n");
-                        DEBUG_LOG("read : 0xc\n", read_serial());
-                        break;
-                    }
-
                 default :
-                    a9n::kernel::utility::logger::printh("unknown irq : [ 0x%4llu ]\n", irq_number);
-                    interrupt_dispatcher(irq_number);
+                    auto kernel_irq_number = irq_number - liba9n::enum_cast(reserved_irq::IO_BASE);
+                    DEBUG_LOG(
+                        "dispatch interrupt to irq dispatcher : irq_number = %llu (real irq number "
+                        "= %llu)",
+                        static_cast<uint32_t>(kernel_irq_number),
+                        irq_number
+                    );
+                    interrupt_dispatcher(kernel_irq_number);
+
                     break;
             }
         }

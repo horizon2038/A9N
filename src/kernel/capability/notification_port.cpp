@@ -2,6 +2,7 @@
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
 {
@@ -28,15 +29,19 @@ namespace a9n::kernel
         switch (target_operation())
         {
             case operation_type::OPERATION_NOTIFY :
+                DEBUG_LOG("notification_port::notify");
                 return operation_notify(this_process, this_slot);
 
             case operation_type::OPERATION_WAIT :
+                DEBUG_LOG("notification_port::wait");
                 return operation_wait(this_process, this_slot);
 
             case operation_type::OPERATION_POLL :
+                DEBUG_LOG("notification_port::poll");
                 return operation_poll(this_process, this_slot);
 
             case operation_type::OPERATION_IDENTIFY :
+                DEBUG_LOG("notification_port::identify");
                 return operation_identify(this_process, this_slot);
 
             [[unlikely]] default :
@@ -51,17 +56,20 @@ namespace a9n::kernel
         // identifier is slot-local
         auto identifier = convert_slot_data_to_identifier(self.data);
         core.notify(identifier);
+        DEBUG_LOG("notification_port::notify : 0x%llx", identifier);
 
         switch (state)
         {
             case notification_port_state::WAIT :
                 {
+                    DEBUG_LOG("notification_port::notify : no waiters");
                     // notify is always non-blocking; and it is always successful
                     break;
                 }
 
             case notification_port_state::READY_TO_WAKE :
                 {
+                    DEBUG_LOG("notification_port::notify : wake up a waiter");
                     if (!queue_head) [[unlikely]]
                     {
                         // not properly initialized
@@ -99,12 +107,15 @@ namespace a9n::kernel
 
     capability_result notification_port::operation_wait(process &owner, capability_slot &self)
     {
+        DEBUG_LOG("notification_port::wait");
         switch (state)
         {
             case notification_port_state::WAIT :
                 {
+                    DEBUG_LOG("notification_port::wait : no notifications, block process");
                     if (core.has_notification())
                     {
+                        DEBUG_LOG("notification_port::wait : consume notification without blocking");
                         return a9n::hal::configure_message_register(owner, FLAG_WORD, core.consume())
                             .transform_error(convert_hal_to_capability_error);
                     }
@@ -112,13 +123,16 @@ namespace a9n::kernel
                 }
             case notification_port_state::READY_TO_WAKE :
                 {
+                    DEBUG_LOG("notification_port::wait : block process");
                     state        = notification_port_state::READY_TO_WAKE;
                     owner.status = process_status::BLOCKED;
 
+                    DEBUG_LOG("notification_port::wait : push to waitqueue");
                     return push_notification_queue(owner)
                         .and_then(
                             [&](void) -> kernel_result
                             {
+                                DEBUG_LOG("notification_port::wait : schedule another process");
                                 return process_manager_core.try_schedule_and_switch();
                             }
                         )
@@ -126,6 +140,7 @@ namespace a9n::kernel
                 }
 
             [[unlikely]] default :
+                DEBUG_LOG("notification_port::wait : invalid state");
                 return capability_error::ILLEGAL_OPERATION;
         }
     }
