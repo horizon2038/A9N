@@ -11,8 +11,8 @@ MEMORY
     boot       (rwx) : ORIGIN = KERNEL_LMA_BASE, LENGTH = 1M
 
     /* kernel section */
-    kernel_lma (rwx) : ORIGIN = KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 8M
-    kernel_vma (rwx) : ORIGIN = KERNEL_VMA_BASE + KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 8M
+    kernel_lma (rwx) : ORIGIN = KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 256M
+    kernel_vma (rwx) : ORIGIN = KERNEL_VMA_BASE + KERNEL_LMA_BASE + BOOT_SIZE, LENGTH = 256M
 }
 
 SECTIONS
@@ -59,6 +59,25 @@ SECTIONS
         *(.*data.*);
     } > kernel_vma AT > kernel_lma
 
+    .init_array : ALIGN(0x1000)
+    {
+        . = ALIGN(0x1000);
+        __init_constructors_start = .;
+        KEEP(*(
+            .init_array
+            .init_array.*
+            .ctors
+            .ctors.*
+        ))
+        __init_constructors_end = .;
+    } > kernel_vma AT > kernel_lma
+
+    .got : ALIGN(0x1000)
+    {
+        *(*.got);
+        *(*.got.*);
+    } > kernel_vma AT > kernel_lma
+
     .bss (NOLOAD) : ALIGN(0x1000) 
     {
         . = ALIGN(0x1000);
@@ -89,25 +108,6 @@ SECTIONS
 
         . = ALIGN(0x1000);
         __kernel_end = . - KERNEL_VMA_BASE;
-    } > kernel_vma AT > kernel_lma
-
-    .init_array : ALIGN(0x1000)
-    {
-        . = ALIGN(0x1000);
-        __init_constructors_start = .;
-        KEEP(*(
-            .init_array
-            .init_array.*
-            .ctors
-            .ctors.*
-        ))
-        __init_constructors_end = .;
-    } > kernel_vma AT > kernel_lma
-
-    .got : ALIGN(0x1000)
-    {
-        *(*.got);
-        *(*.got.*);
     } > kernel_vma AT > kernel_lma
 
     /DISCARD/ :
