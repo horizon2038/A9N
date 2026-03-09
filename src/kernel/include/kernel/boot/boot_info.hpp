@@ -9,7 +9,7 @@
 
 namespace a9n::kernel
 {
-    static constexpr a9n::word ARCH_INFO_MAX = 8;
+    static constexpr a9n::word ARCH_INFO_MAX = 128;
 
     struct init_image_info
     {

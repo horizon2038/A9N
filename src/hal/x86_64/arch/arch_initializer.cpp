@@ -63,7 +63,7 @@ namespace a9n::hal::x86_64
     {
         init_global_constructors();
 
-        for (auto i = 0; i < 8; i++)
+        for (auto i = 0; i < kernel::ARCH_INFO_MAX; i++)
         {
             a9n::kernel::utility::logger::printh("arch_info [%d] : 0x%016llx\n", i, arch_info[i]);
         }
@@ -329,8 +329,8 @@ namespace a9n::hal::x86_64
 
         a9n::physical_address source_gdt_start
             = reinterpret_cast<a9n::physical_address>(__boot_ap_gdt_start);
-        a9n::physical_address source_gdt_end = reinterpret_cast<a9n::physical_address>(__boot_ap_gdt_end
-        );
+        a9n::physical_address source_gdt_end
+            = reinterpret_cast<a9n::physical_address>(__boot_ap_gdt_end);
         a9n::word source_gdt_size = source_gdt_end - source_gdt_start;
 
         // copy trampolines!
@@ -348,8 +348,8 @@ namespace a9n::hal::x86_64
 
         // make gdtr
         logger::printh("make ap gdtr ... (0x%016llx)\n", destination_gdtr);
-        *a9n::kernel::physical_to_virtual_pointer<uint16_t>(destination_gdtr
-        ) = static_cast<uint16_t>(source_gdt_size - 1);
+        *a9n::kernel::physical_to_virtual_pointer<uint16_t>(destination_gdtr)
+            = static_cast<uint16_t>(source_gdt_size - 1);
         *a9n::kernel::physical_to_virtual_pointer<uint64_t>(destination_gdtr + 2)
             = static_cast<uint64_t>(source_gdt_start);
 
