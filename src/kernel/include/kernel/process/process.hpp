@@ -27,8 +27,6 @@ namespace a9n::kernel
         BLOCKED
     };
 
-    using process_id = a9n::sword;
-
     class process
     {
       public:
@@ -49,6 +47,7 @@ namespace a9n::kernel
         // for fault handling
         fault_type           fault_reason { fault_type::NONE };
         a9n::sword           fault_code;
+        a9n::word            arch_fault_code;
         a9n::virtual_address fault_address;
 
         a9n::physical_address page_table; // TODO: remove
@@ -73,13 +72,10 @@ namespace a9n::kernel
         process *next_ipc_queue;
         process *preview_ipc_queue;
 
-        // when destroy process, it should be removed from the queue
-        enum class reply_state_object : a9n::word
-        {
-            NONE,
-            WAIT,          // set when a reply is not found at `call` time
-            READY_TO_REPLY // available for immediate `reply`
-        };
+        // When a sender is blocked waiting for a receiver, the receiver cannot know the sender's
+        // identifier (which is natural, as it's slot-local!). Therefore, when blocking in this
+        // state, the identifier needs to be temporarily saved here.
+        a9n::word identifier_when_blocked;
 
         enum class source_reply_state_object : a9n::word
         {
@@ -103,10 +99,6 @@ namespace a9n::kernel
 
         // tag for debugging
         char name[PROCESS_NAME_MAX];
-
-        /*=====remove_start=====*/
-        process_id id;
-        /*=====remove_end=====*/
     };
 
     static_assert(sizeof(process) <= 2048);

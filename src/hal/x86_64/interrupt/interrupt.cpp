@@ -160,7 +160,6 @@ namespace a9n::hal::x86_64
         if (irq_number < liba9n::enum_cast(reserved_irq::IO_BASE))
         {
             auto                  fault         = a9n::kernel::fault_type::NONE;
-            a9n::word             fault_code    = 0; // reserved (currently unused)
             a9n::physical_address fault_address = (*current_context())[x86_64::register_index::RIP];
 
             switch (auto type = static_cast<exception_type>(irq_number))
@@ -172,7 +171,9 @@ namespace a9n::hal::x86_64
                     break;
 
                 [[likely]] case exception_type::PAGE_FAULT :
-                    fault         = a9n::kernel::fault_type::MEMORY;
+                    fault         = error_code & (1 << 4) ?
+                                        a9n::kernel::fault_type::MEMORY_INSTRUCTION_FETCH :
+                                        a9n::kernel::fault_type::MEMORY;
                     fault_address = read_cr2(); // overwrite
                     print_page_fault_reason(error_code);
                     break;
@@ -184,7 +185,6 @@ namespace a9n::hal::x86_64
                 case exception_type::NMI :
                 case exception_type::BOUND_RANGE_EXCEEDED :
                 case exception_type::DEVICE_NOT_AVAILABLE :
-                    // TODO: implement lazy-fpu context switch
                 case exception_type::DOUBLE_FAULT :
                 case exception_type::COPROCESSOR_SEGMENT_OVERRUN :
                 case exception_type::INVALID_TSS :
@@ -194,7 +194,6 @@ namespace a9n::hal::x86_64
                 case exception_type::ALIGNMENT_CHECK :
                 case exception_type::MACHINE_CHECK :
                 case exception_type::SIMD_FLOATING_POINT_EXCEPTION :
-                    // TODO: implement lazy-fpu context switch
                 case exception_type::VIRTUALIZATION_EXCEPTION :
                 case exception_type::CONTROL_PROTECTION_EXCEPTION :
                 case exception_type::HYPERVISOR_INJECTION_EXCEPTION :
@@ -217,7 +216,13 @@ namespace a9n::hal::x86_64
                     break;
             }
 
-            fault_dispatcher(fault, 0, fault_address);
+            // configure architecture-specific fault reason
+            fault_dispatcher(
+                fault,
+                static_cast<a9n::sword>(irq_number),
+                static_cast<a9n::word>(error_code),
+                fault_address
+            );
         }
         else
         {

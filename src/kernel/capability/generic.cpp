@@ -446,21 +446,10 @@ namespace a9n::kernel
             return capability_error::ILLEGAL_OPERATION;
         }
 
-        // revoke recursively
-        for (auto start_slot = self.next_slot; start_slot->depth < self.depth;
-             start_slot      = start_slot->next_slot)
-        {
-            if (!start_slot->component)
-            {
-                return {};
-            }
-
-            auto result = start_slot->component->revoke(*start_slot);
-            if (!result)
-            {
-                return result;
-            }
-        }
+        // init this generic (watermark)
+        auto info = create_generic_info(self.data);
+        info.init();
+        self.data = info.dump_slot_data();
 
         return {};
     }

@@ -114,6 +114,7 @@ namespace a9n::kernel
 
         if (slot.type == capability_type::NONE) [[unlikely]]
         {
+            DEBUG_LOG("invalid capability type");
             return handle_capability_error(current_process, capability_error::INVALID_DESCRIPTOR);
         }
 

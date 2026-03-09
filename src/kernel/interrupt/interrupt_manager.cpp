@@ -159,22 +159,33 @@ namespace a9n::kernel
 
     extern "C" void handle_fault(
         a9n::kernel::fault_type type,
-        a9n::sword              arch_fault_code,
+        a9n::sword              fault_code, // type-specific code
+        a9n::word               arch_fault_code,
         a9n::virtual_address    fault_address
     )
     {
+        DEBUG_LOG(
+            "handle_fault : type = %s, fault_code = %d, arch_fault_code = %d, fault_address = "
+            "0x%016llx",
+            a9n::kernel::fault_type_to_string(type),
+            fault_code,
+            arch_fault_code,
+            fault_address
+        );
         process_manager_core.retrieve_current_process()
             .transform_error(convert_kernel_to_capability_error)
             .and_then(
-                [type, arch_fault_code, fault_address](process *current_process) -> capability_result
+                [type, fault_code, arch_fault_code, fault_address](process *current_process) -> capability_result
                 {
-                    current_process->fault_reason  = type;
-                    current_process->fault_address = fault_address;
-                    current_process->fault_code    = arch_fault_code;
+                    current_process->fault_reason    = type;
+                    current_process->fault_address   = fault_address;
+                    current_process->fault_code      = fault_code;
+                    current_process->arch_fault_code = arch_fault_code;
 
                     if ((current_process->resolver_port.type != capability_type::IPC_PORT)
                         || !current_process->resolver_port.component) [[unlikely]]
                     {
+                        DEBUG_LOG("double fault!");
                         // [double fault]
                         // NOTE: at the time of fault handler, current process is still the process
                         // where the fault occurred; therefore, it is necessary to execute

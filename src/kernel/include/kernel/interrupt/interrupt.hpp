@@ -8,8 +8,12 @@ namespace a9n::kernel
 {
     using timer_handler        = void (*)(void);
     using interrupt_dispatcher = void (*)(a9n::word irq_number);
-    using fault_dispatcher
-        = void (*)(fault_type type, a9n::sword arch_fault_code, a9n::virtual_address fault_address);
+    using fault_dispatcher     = void (*)(
+        fault_type           type,
+        a9n::sword           fault_code,
+        a9n::word            arch_fault_code,
+        a9n::virtual_address fault_address
+    );
 }
 
 #endif

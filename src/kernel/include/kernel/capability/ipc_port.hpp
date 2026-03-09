@@ -44,19 +44,25 @@ namespace a9n::kernel
             OPERATION_TYPE,
             MESSAGE_INFO,
             IDENTIFIER,
+            PAYLOAD_START,
         };
 
-        // TODO: add "kernel message" flag
         struct message_info
         {
-            a9n::word data; // 16 bits
+            a9n::word data;
 
-            constexpr message_info(
-                bool    block,
-                uint8_t message_length,
-                uint8_t transfer_count,
-                bool    kernel // if the user sets the kernel bit, the value is ignored
-            )
+            static constexpr a9n::word BLOCK_SHIFT          = 0;
+            static constexpr a9n::word MESSAGE_LENGTH_SHIFT = 1;
+            static constexpr a9n::word TRANSFER_COUNT_SHIFT = 9;
+            static constexpr a9n::word KERNEL_SHIFT         = 15;
+
+            static constexpr a9n::word BLOCK_MASK           = ((a9n::word)0x1) << BLOCK_SHIFT;
+            static constexpr a9n::word MESSAGE_LENGTH_MASK = ((a9n::word)0xFF) << MESSAGE_LENGTH_SHIFT;
+            static constexpr a9n::word TRANSFER_COUNT_MASK = ((a9n::word)0x3F) << TRANSFER_COUNT_SHIFT;
+            static constexpr a9n::word KERNEL_MASK = ((a9n::word)0x1) << KERNEL_SHIFT;
+
+            constexpr message_info(bool block, uint8_t message_length, uint8_t transfer_count, bool kernel)
+                : data(0)
             {
                 configure_block(block);
                 configure_message_length(message_length);
@@ -64,56 +70,54 @@ namespace a9n::kernel
                 configure_kernel(kernel);
             }
 
-            constexpr message_info(a9n::word data) : data(data)
+            constexpr explicit message_info(a9n::word initial_data) : data(initial_data)
             {
             }
-
-            // 0 : block
-            // 1-8 : message length
-            // 9 : transfer capability_slot
-            // 10-15 : transfer count
 
             constexpr void configure_block(bool is_block)
             {
-                data = (data & ~(1 << 0)) | is_block;
+                data = (data & ~BLOCK_MASK) | (((a9n::word)is_block) << BLOCK_SHIFT);
             }
 
-            constexpr void configure_message_length(uint8_t message_length)
+            constexpr void configure_message_length(uint8_t new_message_length)
             {
-                data = data & ~(((1 << 8) - 1) << 1) | ((message_length << 1) & ((1 << 8) - 1));
+                data = (data & ~MESSAGE_LENGTH_MASK)
+                     | ((((a9n::word)new_message_length) & 0xFF) << MESSAGE_LENGTH_SHIFT);
             }
 
-            constexpr void configure_transfer_count(uint8_t transfer_count)
+            constexpr void configure_transfer_count(uint8_t new_transfer_count)
             {
-                data = data & ~(((1 << 5) - 1) << 9) | ((transfer_count << 9) & (1 << 6) - 1);
+                data = (data & ~TRANSFER_COUNT_MASK)
+                     | ((((a9n::word)new_transfer_count) & 0x3F) << TRANSFER_COUNT_SHIFT);
             }
 
-            constexpr void configure_kernel(bool kernel)
+            constexpr void configure_kernel(bool is_kernel)
             {
-                data = data & ~(1 << 15) | (kernel << 15);
+                data = (data & ~KERNEL_MASK) | (((a9n::word)is_kernel) << KERNEL_SHIFT);
             }
 
             constexpr bool is_block(void) const
             {
-                return data & (1 << 0);
+                return ((data & BLOCK_MASK) >> BLOCK_SHIFT) != 0;
             }
 
             constexpr uint8_t message_length(void) const
             {
-                return (data >> 1) & ((1 << 8) - 1);
+                return (uint8_t)((data & MESSAGE_LENGTH_MASK) >> MESSAGE_LENGTH_SHIFT);
             }
 
             constexpr uint8_t transfer_count(void) const
             {
-                return (data >> 9) & ((1 << 6) - 1);
+                return (uint8_t)((data & TRANSFER_COUNT_MASK) >> TRANSFER_COUNT_SHIFT);
             }
 
             constexpr bool is_kernel(void) const
             {
-                return data & (1 << 15);
+                return ((data & KERNEL_MASK) >> KERNEL_SHIFT) != 0;
             }
         };
 
+        // capability-call
       public:
         capability_result execute(process &owner, capability_slot &self) override;
 
@@ -128,8 +132,11 @@ namespace a9n::kernel
         // for kernel
         capability_result operation_fault_call(process &owner, capability_slot &self);
 
+        // internal functions
+      private:
         liba9n::result<message_info, kernel_error> get_message_info(process &owner);
         capability_result transfer_message(process &receiver, process &sender, message_info info);
+        capability_result transfer_fault_message(process &receiver, process &sender);
         bool              is_synchronized(void);
         kernel_result
             copy_messages(process &destination_process, process &source_process, a9n::word message_length);
@@ -142,6 +149,8 @@ namespace a9n::kernel
         kernel_result push_ipc_queue(process &target_process);
         liba9n::result<liba9n::not_null<process>, kernel_error> pop_ipc_queue(void);
 
+        // capability management
+      public:
         capability_result revoke(capability_slot &self) override
         {
             return {};

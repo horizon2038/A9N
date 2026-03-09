@@ -82,6 +82,11 @@ namespace a9n::kernel
             return static_cast<a9n::word>(1) << size_bits;
         }
 
+        inline void init(void)
+        {
+            watermark = base_address;
+        }
+
         capability_slot_data dump_slot_data() const;
     };
 

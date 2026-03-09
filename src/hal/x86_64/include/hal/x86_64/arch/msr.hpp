@@ -15,14 +15,18 @@ namespace a9n::hal::x86_64
         inline constexpr uint32_t APIC_BASE_BSP = 0x100;
 
         // intel-specific MSRs
-        inline constexpr uint32_t FEATURE_CONTROL = 0x3a;
-        inline constexpr uint32_t PAT             = 0x277;
+        inline constexpr uint32_t FEATURE_CONTROL     = 0x3a;
+        inline constexpr uint32_t PAT                 = 0x277;
 
-        inline constexpr uint32_t EFER            = 0xC0000080;
-        inline constexpr uint32_t STAR            = 0xc0000081;
-        inline constexpr uint32_t LSTAR           = 0xc0000082;
-        inline constexpr uint32_t CSTAR           = 0xc0000083;
-        inline constexpr uint32_t SFMASK          = 0xc0000084;
+        inline constexpr uint32_t EFER                = 0xC0000080;
+        inline constexpr uint32_t STAR                = 0xc0000081;
+        inline constexpr uint32_t LSTAR               = 0xc0000082;
+        inline constexpr uint32_t CSTAR               = 0xc0000083;
+        inline constexpr uint32_t SFMASK              = 0xc0000084;
+
+        inline constexpr uint32_t FS_BASE             = 0xc0000100;
+        inline constexpr uint32_t IA32_GS_BASE        = 0xc0000101;
+        inline constexpr uint32_t IA32_KERNEL_GS_BASE = 0xc0000102;
     }
 
     namespace efer_flag

@@ -5,6 +5,8 @@
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
 #include <hal/x86_64/arch/floating_point.hpp>
+#include <hal/x86_64/arch/fsgsbase.hpp>
+#include <hal/x86_64/arch/msr.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
 #include <hal/x86_64/memory/paging.hpp>
@@ -20,16 +22,12 @@
 
 namespace a9n::hal::x86_64
 {
+    // wrgsbase
 }
 
 // interface implementation
 namespace a9n::hal
 {
-    namespace
-    {
-
-    }
-
     hal_result switch_context(a9n::kernel::process &preview_process, a9n::kernel::process &next_process)
     {
         /*
@@ -39,8 +37,12 @@ namespace a9n::hal
         );
         */
 
-        a9n::virtual_address current_cr3;
+        // tls switch
+        x86_64::write_fs_base(next_process.registers[x86_64::register_index::FS_BASE]);
+        x86_64::write_user_gs_base(next_process.registers[x86_64::register_index::GS_BASE]);
 
+        // address space switch
+        a9n::virtual_address current_cr3;
         asm volatile("mov %%cr3, %0" : "=r"(current_cr3) : :);
 
         auto next_pml4 = kernel::convert_slot_data_to_page_table(next_process.root_address_space.data);

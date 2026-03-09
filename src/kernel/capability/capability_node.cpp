@@ -314,6 +314,21 @@ namespace a9n::kernel
                         return revoke(self);
                     }
 
+                    // remove child recursively
+                    // NOTE: Recursive revocation (e.g., generic::revoke) is the responsibility of
+                    // the Capability Object itself; the only thing to do here is to delete the
+                    // children.
+                    for (auto start_slot = slot->next_slot;
+                         start_slot && (start_slot->depth < slot->depth);
+                         start_slot = start_slot->next_slot)
+                    {
+                        auto result = start_slot->try_remove_and_init();
+                        if (!result)
+                        {
+                            return result.transform_error(convert_kernel_to_capability_error);
+                        }
+                    }
+
                     return slot->component->revoke(*slot);
                 }
             );
@@ -369,12 +384,6 @@ namespace a9n::kernel
         if (!capability_slots) [[unlikely]]
         {
             return capability_lookup_error::UNAVAILABLE;
-        }
-
-        if (index >= (static_cast<a9n::word>(1) << radix_bits)) [[unlikely]]
-        {
-            DEBUG_LOG("index out of range");
-            return capability_lookup_error::INDEX_OUT_OF_RANGE;
         }
 
         return &(capability_slots[index]);

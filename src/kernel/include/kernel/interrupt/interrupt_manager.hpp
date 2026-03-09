@@ -33,6 +33,7 @@ namespace a9n::kernel
     extern "C" void handle_fault(
         a9n::kernel::fault_type type,
         a9n::sword              fault_code,
+        a9n::word               arch_fault_code,
         a9n::virtual_address    fault_address
     );
 }

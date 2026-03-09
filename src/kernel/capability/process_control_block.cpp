@@ -1,4 +1,5 @@
 #include "kernel/process/process.hpp"
+#include "kernel/process/process_manager.hpp"
 #include <kernel/capability/process_control_block.hpp>
 
 #include <hal/interface/process_manager.hpp>
@@ -226,6 +227,7 @@ namespace a9n::kernel
                                   .and_then(
                                       [&](a9n::word value) -> capability_result
                                       {
+                                          DEBUG_LOG("thread_local_base : 0x%016llx", value);
                                           if (!a9n::hal::is_valid_user_address(value))
                                           {
                                               return capability_error::ILLEGAL_OPERATION;
@@ -443,7 +445,8 @@ namespace a9n::kernel
                         return capability_error::INVALID_DESCRIPTOR;
                     }
 
-                    auto result = slot->try_remove_and_init();
+                    // auto result = slot->try_remove_and_init();
+                    auto result = process_core.resolver_port.try_remove_and_init();
                     if (!result)
                     {
                         return capability_error::FATAL;

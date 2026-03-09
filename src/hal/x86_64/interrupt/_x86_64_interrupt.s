@@ -158,6 +158,9 @@ interrupt_handler_common:
 
     add rsp, 0x08
 
+    ; NOTE: guard
+    jmp _restore_user_context
+
     ; unreachable
 
 _restore_kernel_context:
@@ -189,13 +192,14 @@ _restore_user_context:
     ; load hardware_context
     mov rsp, [gs:0x08]
 
-    swapgs
-    ; restore segment base
-    mov rbx, [rsp + 0x08 * 20]
-    wrgsbase rbx
-    mov rbx, [rsp + 0x08 * 21]
-    wrfsbase rbx
-    swapgs
+    ; NOTE: Currently, the *restoration* of gsbase and fsbase is implemented within `hal::switch_context`.
+    ; swapgs
+    ; ; restore segment base
+    ; mov rbx, [rsp + 0x08 * 20]
+    ; wrgsbase rbx
+    ; mov rbx, [rsp + 0x08 * 21]
+    ; wrfsbase rbx
+    ; swapgs
 
     ; these are restored from hardware_context
     pop rax

@@ -1,6 +1,9 @@
 #include "hal/x86_64/interrupt/interrupt.hpp"
+#include "kernel/process/process.hpp"
 #include <hal/x86_64/systemcall/syscall.hpp>
 
+#include <hal/x86_64/arch/arch_context.hpp>
+#include <hal/x86_64/arch/fsgsbase.hpp>
 #include <hal/x86_64/arch/msr.hpp>
 #include <hal/x86_64/arch/rflags.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
@@ -67,16 +70,25 @@ namespace a9n::hal::x86_64
         {
             using enum a9n::kernel::kernel_call_type;
 
-            case CAPABILITY_CALL :
+            [[likely]] case CAPABILITY_CALL :
                 [[fallthrough]];
             case YIELD :
                 [[fallthrough]];
             case DEBUG :
-                kernel_call_handler(type);
-                return;
+                {
+                    kernel_call_handler(type);
+                    auto current_clv = reinterpret_cast<kernel::cpu_local_variable *>(read_gs_base());
+                    write_fs_base(
+                        current_clv->current_process->registers[x86_64::register_index::FS_BASE]
+                    );
+                    write_user_gs_base(
+                        current_clv->current_process->registers[x86_64::register_index::GS_BASE]
+                    );
+                    return;
+                }
 
             [[unlikely]] default :
-                fault_dispatcher(a9n::kernel::fault_type::INVALID_KERNEL_CALL, kernel_call_number, 0);
+                fault_dispatcher(a9n::kernel::fault_type::INVALID_KERNEL_CALL, kernel_call_number, 0, 0);
         }
     }
 

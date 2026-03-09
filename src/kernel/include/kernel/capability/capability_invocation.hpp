@@ -57,7 +57,6 @@ namespace a9n::kernel
         template<>
         struct message_register_writer<>
         {
-            template<typename Function>
             static auto run([[maybe_unused]] process &owner) -> capability_result
             {
                 return {};
@@ -103,6 +102,7 @@ namespace a9n::kernel
     //   value0, value1, value2
     // );
     template<a9n::word... INDICES, typename... Values>
+        requires(sizeof...(INDICES) == sizeof...(Values))
     auto write_message_registers(process &owner, Values... values) -> capability_result
     {
         return detail::message_register_writer<INDICES...>::run(owner, values...);

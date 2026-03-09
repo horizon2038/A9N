@@ -1,4 +1,3 @@
-#include "kernel/types.hpp"
 #include <kernel/process/process_manager.hpp>
 
 #include <kernel/capability/address_space.hpp>
@@ -330,6 +329,7 @@ namespace a9n::kernel
                                 local_variable->current_process = next_process;
                                 local_variable->is_idle         = false;
 
+                                DEBUG_LOG("direct switch to process 0x%016llx", next_process);
                                 return a9n::hal::switch_context(preview_process, *next_process);
                             }
                         );
