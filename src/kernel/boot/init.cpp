@@ -35,7 +35,7 @@ namespace a9n::kernel
     using page_size_memory = liba9n::std::array<uint8_t, a9n::PAGE_SIZE>;
 
     // assign only once; no memory freed
-    liba9n::linear_allocator<a9n::PAGE_SIZE * 32> init_allocator {};
+    liba9n::linear_allocator<a9n::PAGE_SIZE * 1024> init_allocator {};
 
     static liba9n::result<liba9n::not_null<init_info>, kernel_error>
                          try_make_init_info(const boot_info &info);
@@ -398,6 +398,15 @@ namespace a9n::kernel
                 {
                     logger::printk("number of pages to be created : %04d\n", depth);
 
+                    // 1. calculate the page count from the image size
+                    // e.g., 4kib -> (depth 0: 1 page, depth 1: 1 page, depth 2: 1 page, depth 3: 1
+                    // page) e.g., 8kib -> (depth 0: 1 page, depth 1: 1 page, depth 2: 1 page, depth
+                    // 3: 2 pages) e.g., 2mib -> (depth 0: 1 page, depth 1: 1 page, depth 2: 2
+                    //
+                    //
+                    // TODO: change HAL API
+                    // Huge Page & Huge Frame
+
                     for (a9n::word slot_index = 0, page_depth = depth; slot_index < depth;
                          slot_index++, page_depth--)
                     {
@@ -549,6 +558,12 @@ namespace a9n::kernel
                       .and_then(
                           [&](void) -> kernel_result
                           {
+                              DEBUG_LOG(
+                                  "try to map frame [0x%016llx] to init address space",
+                                  target_frame.address
+                              );
+
+                              DEBUG_LOG("retrieve slot result");
                               auto target_slot_result = frame_node_slot.component->retrieve_slot(i);
                               if (!target_slot_result)
                               {
@@ -563,6 +578,7 @@ namespace a9n::kernel
                                   return kernel_error::NO_SUCH_ADDRESS;
                               }
 
+                              DEBUG_LOG("try to configure frame slot\n");
                               return try_configure_frame_slot(*target_slot_result.unwrap(), target_frame)
                                   .and_then(
                                       [&](void) -> kernel_result

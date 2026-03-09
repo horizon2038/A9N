@@ -371,6 +371,12 @@ namespace a9n::kernel
             return capability_lookup_error::UNAVAILABLE;
         }
 
+        if (index >= (static_cast<a9n::word>(1) << radix_bits)) [[unlikely]]
+        {
+            DEBUG_LOG("index out of range");
+            return capability_lookup_error::INDEX_OUT_OF_RANGE;
+        }
+
         return &(capability_slots[index]);
     }
 
@@ -385,8 +391,8 @@ namespace a9n::kernel
         DEBUG_LOG("0x%016llx <> 0x%016llx <> 0x%016llx", descriptor, descriptor_max_bits, descriptor_used_bits);
         return lookup_slot(descriptor, descriptor_used_bits)
             .and_then(
-                [this, descriptor, descriptor_max_bits, descriptor_used_bits](capability_slot *slot
-                ) -> capability_lookup_result
+                [this, descriptor, descriptor_max_bits, descriptor_used_bits](capability_slot *slot)
+                    -> capability_lookup_result
                 {
                     /*
                     if (descriptor_used_bits == a9n::WORD_BITS)
