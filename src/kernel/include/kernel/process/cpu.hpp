@@ -30,6 +30,7 @@ namespace a9n::kernel
         a9n::kernel::virtual_cpu *current_virtual_cpu;
 
         a9n::word core_number;
+        a9n::word scratch; // for temporary use in context switch, etc.
         alignas(sizeof(a9n::word)) bool is_idle { false };
     } __attribute__((packed));
 

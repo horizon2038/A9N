@@ -33,6 +33,7 @@ _syscall_handler:
     swapgs
 
     ; temporarily save rsp
+    mov gs:0x20, rax
     mov rax, rsp
 
     ; load hardware_context
@@ -67,6 +68,8 @@ _syscall_handler:
     ; skip rcx (RIP)
     sub rsp, 0x08
     push rbx
+    mov rax, gs:0x20
+    push rax
     ; skip rax
     ; since rax is top-level, no rsp operation is required
 
@@ -103,7 +106,8 @@ _syscall_handler:
 
     ; skip rax
     ; rax is the return value of do_syscall.
-    add rsp, 0x08
+    ; add rsp, 0x08
+    pop rax
     pop rbx
     ; skip rcx (RIP)
     add rsp, 0x08
