@@ -35,9 +35,17 @@ namespace a9n::kernel
     void interrupt_manager::init_handler(void)
     {
         a9n::kernel::utility::logger::printk("init interrupt handlers ...\n");
+
+        a9n::kernel::utility::logger::printk("register timer handler ...\n");
         a9n::hal::register_system_timer_handler(handle_timer);
+
+        a9n::kernel::utility::logger::printk("register kernel call handler ...\n");
         a9n::hal::register_kernel_call_handler(handle_kernel_call);
+
+        a9n::kernel::utility::logger::printk("register interrupt and fault dispatcher ...\n");
         a9n::hal::register_interrupt_dispatcher(handle_interrupt);
+
+        a9n::kernel::utility::logger::printk("register fault dispatcher ...\n");
         a9n::hal::register_fault_dispatcher(handle_fault);
     }
 
@@ -186,6 +194,12 @@ namespace a9n::kernel
                         || !current_process->resolver_port.component) [[unlikely]]
                     {
                         DEBUG_LOG("double fault!");
+                        kernel::utility::logger::printk(
+                            "double fault : %s, fault_code : %d, fault_address : 0x%016llx\n",
+                            a9n::kernel::fault_type_to_string(type),
+                            arch_fault_code,
+                            fault_address
+                        );
                         // [double fault]
                         // NOTE: at the time of fault handler, current process is still the process
                         // where the fault occurred; therefore, it is necessary to execute
