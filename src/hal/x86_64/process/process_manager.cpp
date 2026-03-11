@@ -134,45 +134,50 @@ namespace a9n::hal
     liba9n::result<a9n::word, hal_error>
         get_message_register(const a9n::kernel::process &target_process, a9n::word index)
     {
-        // RSI : message_register[0]
-        // RDX : message_register[1]
-        // R8  : message_register[2]
-        // R9  : message_register[3]
-        // R10 : message_register[4]
-        // R12 : message_register[5]
-        // R13 : message_register[6]
-        // R14 : message_register[7]
-        // R15 : message_register[8]
+        // RAX : Kernel Call Type
+        // RDI : message_register[0]
+        // RSI : message_register[1]
+        // RDX : message_register[2]
+        // R8  : message_register[3]
+        // R9  : message_register[4]
+        // R10 : message_register[5]
+        // R12 : message_register[6]
+        // R13 : message_register[7]
+        // R14 : message_register[8]
+        // R15 : message_register[9]
 
         a9n::word result {};
 
         switch (index)
         {
             case 0 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RSI]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RDI]);
 
             case 1 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RDX]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RSI]);
 
             case 2 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R8]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::RDX]);
 
             case 3 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R9]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R8]);
 
             case 4 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R10]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R9]);
 
             case 5 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R12]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R10]);
 
             case 6 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R13]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R12]);
 
             case 7 :
-                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R14]);
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R13]);
 
             case 8 :
+                return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R14]);
+
+            case 9 :
                 return static_cast<a9n::word>(target_process.registers[x86_64::register_index::R15]);
 
             default :
@@ -217,51 +222,57 @@ namespace a9n::hal
     hal_result
         configure_message_register(a9n::kernel::process &target_process, a9n::word index, a9n::word value)
     {
-        // RSI : message_register[0]
-        // RDX : message_register[1]
-        // R8  : message_register[2]
-        // R9  : message_register[3]
-        // R10 : message_register[4]
-        // R12 : message_register[5]
-        // R13 : message_register[6]
-        // R14 : message_register[7]
-        // R15 : message_register[8]
+        // RAX : Kernel Call Type
+        // RDI : message_register[0]
+        // RSI : message_register[1]
+        // RDX : message_register[2]
+        // R8  : message_register[3]
+        // R9  : message_register[4]
+        // R10 : message_register[5]
+        // R12 : message_register[6]
+        // R13 : message_register[7]
+        // R14 : message_register[8]
+        // R15 : message_register[9]
 
         switch (index)
         {
             case 0 :
-                target_process.registers[x86_64::register_index::RSI] = value;
+                target_process.registers[x86_64::register_index::RDI] = value;
                 return {};
 
             case 1 :
-                target_process.registers[x86_64::register_index::RDX] = value;
+                target_process.registers[x86_64::register_index::RSI] = value;
                 return {};
 
             case 2 :
-                target_process.registers[x86_64::register_index::R8] = value;
+                target_process.registers[x86_64::register_index::RDX] = value;
                 return {};
 
             case 3 :
-                target_process.registers[x86_64::register_index::R9] = value;
+                target_process.registers[x86_64::register_index::R8] = value;
                 return {};
 
             case 4 :
-                target_process.registers[x86_64::register_index::R10] = value;
+                target_process.registers[x86_64::register_index::R9] = value;
                 return {};
 
             case 5 :
-                target_process.registers[x86_64::register_index::R12] = value;
+                target_process.registers[x86_64::register_index::R10] = value;
                 return {};
 
             case 6 :
-                target_process.registers[x86_64::register_index::R13] = value;
+                target_process.registers[x86_64::register_index::R12] = value;
                 return {};
 
             case 7 :
-                target_process.registers[x86_64::register_index::R14] = value;
+                target_process.registers[x86_64::register_index::R13] = value;
                 return {};
 
             case 8 :
+                target_process.registers[x86_64::register_index::R14] = value;
+                return {};
+
+            case 9 :
                 target_process.registers[x86_64::register_index::R15] = value;
                 return {};
 

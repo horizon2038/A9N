@@ -70,21 +70,20 @@ _syscall_handler:
     push rbx
     mov rax, gs:0x20
     push rax
-    ; skip rax
-    ; since rax is top-level, no rsp operation is required
 
     ; setup do_syscall arguments
     ; the argument has already been set
-    ; RDI : kernel call type
-    ; RSI : message_register[0]
-    ; RDX : message_register[1]
-    ; R8  : message_register[2]
-    ; R9  : message_register[3]
-    ; R10 : message_register[4]
-    ; R12 : message_register[5]
-    ; R13 : message_register[6]
-    ; R14 : message_register[7]
-    ; R15 : message_register[8]
+    ; RAX : kernel call type
+    ; RDI : message_register[0]
+    ; RSI : message_register[1]
+    ; RDX : message_register[2]
+    ; R8  : message_register[3]
+    ; R9  : message_register[4]
+    ; R10 : message_register[5]
+    ; R12 : message_register[6]
+    ; R13 : message_register[7]
+    ; R14 : message_register[8]
+    ; R15 : message_register[9]
     ; mov rcx, r8
 
     ; use kernel_stack since do_syscall
@@ -94,6 +93,7 @@ _syscall_handler:
     sub rsp, 8 ; for call (return address)
 
     ; signature : void do_syscall(kernel_call_type)
+    mov rdi, rax ; kernel call type is passed in rax, which is top-level and not saved to hardware_context.
     call do_syscall
 
     add rsp, 0x08
@@ -104,9 +104,6 @@ _syscall_handler:
 
     ; these are restored from hardware_context
 
-    ; skip rax
-    ; rax is the return value of do_syscall.
-    ; add rsp, 0x08
     pop rax
     pop rbx
     ; skip rcx (RIP)
