@@ -11,9 +11,9 @@ namespace a9n::hal::x86_64
         sizeof(a9n::hal::interrupt_handler)
     ) inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
 
-    inline static a9n::kernel::timer_handler        timer_handler;
-    inline static a9n::kernel::interrupt_dispatcher interrupt_dispatcher;
-    inline static a9n::kernel::fault_dispatcher     fault_dispatcher;
+    inline a9n::kernel::timer_handler        timer_handler {};
+    inline a9n::kernel::interrupt_dispatcher interrupt_dispatcher {};
+    inline a9n::kernel::fault_dispatcher     fault_dispatcher {};
 
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code);
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code);

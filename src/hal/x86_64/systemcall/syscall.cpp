@@ -57,12 +57,13 @@ namespace a9n::hal::x86_64
     {
         [[unlikely]] if (!kernel_call_handler)
         {
-            a9n::kernel::utility::logger::printh(
+            a9n::kernel::utility::logger::error(
                 "kernel call handler "
                 "is not set\n"
             );
 
-            return;
+            for (;;)
+                ;
         }
 
         auto type = static_cast<a9n::kernel::kernel_call_type>(kernel_call_number);
@@ -88,7 +89,23 @@ namespace a9n::hal::x86_64
                 }
 
             [[unlikely]] default :
-                fault_dispatcher(a9n::kernel::fault_type::INVALID_KERNEL_CALL, kernel_call_number, 0, 0);
+                {
+                    [[unlikely]] if (!x86_64::fault_dispatcher)
+                    {
+                        a9n::kernel::utility::logger::error("fault dispatcher is not set\n");
+
+                        for (;;)
+                            ;
+                    }
+
+                    x86_64::fault_dispatcher(
+                        a9n::kernel::fault_type::INVALID_KERNEL_CALL,
+                        kernel_call_number,
+                        0,
+                        0
+                    );
+                    return;
+                }
         }
     }
 
