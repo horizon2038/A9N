@@ -195,8 +195,10 @@ namespace a9n::kernel
                     {
                         DEBUG_LOG("double fault!");
                         kernel::utility::logger::printk(
-                            "double fault : %s, fault_code : %d, fault_address : 0x%016llx\n",
+                            "double fault : %s, fault_code : %lld, arch_fault_code: %llu, "
+                            "fault_address : 0x%016llx\n",
                             a9n::kernel::fault_type_to_string(type),
+                            fault_code,
                             arch_fault_code,
                             fault_address
                         );
@@ -224,8 +226,10 @@ namespace a9n::kernel
                 [=](capability_error e) -> kernel_result
                 {
                     a9n::kernel::utility::logger::printk(
-                        "fault : %s, fault_code : %d, fault_address : 0x%016llx\n",
+                        "fault : %s, fault_code : %lld, arch_fault_code: %llu, fault_address : "
+                        "0x%016llx\n",
                         a9n::kernel::fault_type_to_string(type),
+                        fault_code,
                         arch_fault_code,
                         fault_address
                     );

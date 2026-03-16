@@ -98,11 +98,30 @@ namespace a9n::hal::x86_64
                             ;
                     }
 
+                    auto current_clv = reinterpret_cast<kernel::cpu_local_variable *>(read_gs_base());
+                    // *syscall* handler is called with user context, so current_clv and
+                    // current_process must be valid; if not, it means that something went really
+                    // wrong (e.g., kernel stack overflow, GS base corruption, etc.) Therefore, no
+                    // check is performed in this case. The commented-out implementation shows items
+                    // for when a check is performed.
+                    /*
+                    if (!current_clv || !current_clv->current_process) [[unlikely]]
+                    {
+                        a9n::kernel::utility::logger::error("no current process in syscall
+                    handler\n");
+
+                        for (;;)
+                            ;
+                    }
+                    */
+                    auto fault_address
+                        = current_clv->current_process->registers[x86_64::register_index::RIP];
+
                     x86_64::fault_dispatcher(
                         a9n::kernel::fault_type::INVALID_KERNEL_CALL,
                         kernel_call_number,
                         0,
-                        0
+                        fault_address
                     );
                     return;
                 }
