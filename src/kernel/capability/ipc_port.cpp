@@ -178,7 +178,6 @@ namespace a9n::kernel
             case READY_TO_SEND :
                 // The sender exists, so the message will be received as is.
                 {
-                    kernel::utility::logger::printk("ipc_port::operation_receive : READY_TO_SEND\n");
                     DEBUG_LOG("READY_TO_SEND");
                     return pop_ipc_queue()
                         .transform_error(convert_kernel_to_capability_error)
