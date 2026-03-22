@@ -73,7 +73,7 @@ namespace a9n::kernel
             FAULT_PROGRAM_COUNTER,   // MR5
             FAULT_ADDRESS,           // MR6
             ARCHITECTURE_FAULT_CODE, // MR7
-            MESSAGE_LENGTH = 5,
+            MESSAGE_LENGTH,
         };
 
         // user -> kernel

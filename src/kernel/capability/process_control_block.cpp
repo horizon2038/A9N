@@ -452,6 +452,13 @@ namespace a9n::kernel
                         return capability_error::FATAL;
                     }
 
+                    DEBUG_LOG("resolver source=%p data[0]=0x%016llx", slot, slot->data[0]);
+                    DEBUG_LOG(
+                        "resolver dest  =%p data[0]=0x%016llx",
+                        &process_core.resolver_port,
+                        process_core.resolver_port.data[0]
+                    );
+
                     return try_copy_capability_slot(process_core.resolver_port, *slot)
                         .transform_error(convert_kernel_to_capability_error);
                 }

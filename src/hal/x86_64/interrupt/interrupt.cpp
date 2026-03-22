@@ -155,7 +155,7 @@ namespace a9n::hal::x86_64
     // called from asm
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code)
     {
-        DEBUG_LOG("do_irq_from_user : irq_number = %llu", static_cast<uint32_t>(irq_number));
+        // DEBUG_LOG("do_irq_from_user : irq_number = %llu", static_cast<uint32_t>(irq_number));
         // exception
         if (irq_number < liba9n::enum_cast(reserved_irq::IO_BASE))
         {

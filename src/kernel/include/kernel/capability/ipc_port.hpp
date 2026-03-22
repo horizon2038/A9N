@@ -43,7 +43,8 @@ namespace a9n::kernel
             RESERVED = 0, // descriptor
             OPERATION_TYPE,
             MESSAGE_INFO,
-            IDENTIFIER,
+            IDENTIFIER_SOURCE = MESSAGE_INFO, // send
+            IDENTIFIER_DESTINATION,           // receive
             PAYLOAD_START,
         };
 

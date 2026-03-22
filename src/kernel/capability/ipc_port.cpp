@@ -427,7 +427,7 @@ namespace a9n::kernel
             return capability_error::PERMISSION_DENIED;
         }
 
-        return a9n::hal::get_message_register(owner, IDENTIFIER)
+        return a9n::hal::get_message_register(owner, IDENTIFIER_SOURCE)
             .transform_error(convert_hal_to_kernel_error)
             .transform_error(convert_kernel_to_capability_error)
             .and_then(
@@ -435,6 +435,8 @@ namespace a9n::kernel
                 {
                     DEBUG_LOG("identifier : 0x%16llx to slot 0x%016llx", identifier, &self);
                     self.data = convert_identifier_to_slot_data(identifier);
+                    DEBUG_LOG("identify self=%p", &self);
+                    DEBUG_LOG("identify self.data[0]=0x%016llx", self.data[0]);
 
                     return {};
                 }
@@ -457,6 +459,8 @@ namespace a9n::kernel
             owner.fault_code,
             owner.arch_fault_code
         );
+        DEBUG_LOG("fault self=%p", &self);
+        DEBUG_LOG("fault self.data[0]=0x%016llx", self.data[0]);
 
         if (!(self.rights & capability_slot::WRITE) || !(self.rights & capability_slot::READ))
             [[unlikely]]
@@ -464,6 +468,13 @@ namespace a9n::kernel
             owner.status = process_status::BLOCKED;
             return capability_error::PERMISSION_DENIED;
         }
+
+        // configure identifier
+        DEBUG_LOG("configuer identifier_when_blocked");
+        owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
+        DEBUG_LOG("owner.identifier_when_blocked : 0x%016llx", owner.identifier_when_blocked);
+
+        DEBUG_LOG("self: %p", &self);
 
         // send message
         switch (state)
@@ -476,6 +487,10 @@ namespace a9n::kernel
                     owner.status                  = process_status::BLOCKED;
                     owner.source_reply_state      = process::source_reply_state_object::WAIT;
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
+                    DEBUG_LOG(
+                        "owner.status set to BLOCKED, identifier_when_blocked : 0x%016llx",
+                        owner.identifier_when_blocked
+                    );
 
                     return push_ipc_queue(owner)
                         .and_then(try_schedule_and_switch)
@@ -493,6 +508,10 @@ namespace a9n::kernel
                             {
                                 owner.identifier_when_blocked
                                     = convert_slot_data_to_identifier(self.data);
+                                DEBUG_LOG(
+                                    "identifier_when_blocked : 0x%016llx",
+                                    owner.identifier_when_blocked
+                                );
 
                                 [[unlikely]] if (target->destination_reply_state
                                                  != process::destination_reply_state_object::NONE)
@@ -567,7 +586,11 @@ namespace a9n::kernel
         // copy info and identifier
         // NOTE: unchecked copy
         a9n::hal::configure_message_register(receiver, MESSAGE_INFO, info.data);
-        a9n::hal::configure_message_register(receiver, IDENTIFIER, sender.identifier_when_blocked);
+        a9n::hal::configure_message_register(
+            receiver,
+            IDENTIFIER_DESTINATION,
+            sender.identifier_when_blocked
+        );
 
         return copy_messages(receiver, sender, info.message_length())
             .or_else(
@@ -664,7 +687,8 @@ namespace a9n::kernel
                     DEBUG_LOG("is_success : %d", 1);
                     DEBUG_LOG("error_code : %d", 0);
                     DEBUG_LOG("message_info : 0x%016llx", info.data);
-                    DEBUG_LOG("identifier : 0x%016llx", sender.identifier_when_blocked);
+                    DEBUG_LOG("identifier (send) : 0x%016llx", sender.identifier_when_blocked);
+                    DEBUG_LOG("identifier (recv) : 0x%016llx", receiver.identifier_when_blocked);
                     DEBUG_LOG("fault_reason : %s", fault_type_to_string(sender.fault_reason));
                     DEBUG_LOG("fault_program_counter : 0x%016llx", fault_pc);
                     DEBUG_LOG("fault_address : 0x%016llx", sender.fault_address);
@@ -801,6 +825,10 @@ namespace a9n::kernel
             DEBUG_LOG("failed to write fault message registers");
             return result.unwrap_error();
         }
+
+        auto written_identifier = a9n::hal::get_message_register(receiver, fault_index::IDENTIFIER)
+                                      .unwrap_or(static_cast<a9n::word>(0));
+        DEBUG_LOG("written identifier : 0x%016llx", written_identifier);
 
         return {};
     }
@@ -965,6 +993,7 @@ namespace a9n::kernel
 
     kernel_result ipc_port::push_ipc_queue(process &target_process)
     {
+        DEBUG_LOG("[PUSH] identifier_when_blocked : 0x%016llx", target_process.identifier_when_blocked);
         // add to queue end
         if (!queue_head || !queue_end)
         {
@@ -1015,6 +1044,8 @@ namespace a9n::kernel
         DEBUG_LOG("pop ipc queue");
         DEBUG_LOG("queue_head : 0x%016llx", queue_head);
         DEBUG_LOG("queue_end  : 0x%016llx", queue_end);
+
+        DEBUG_LOG("[POP] identifier_when_blocked : 0x%016llx", target->identifier_when_blocked);
 
         return liba9n::not_null<process> { *target };
     }
