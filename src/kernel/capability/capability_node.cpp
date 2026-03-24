@@ -33,6 +33,10 @@ namespace a9n::kernel
         , ignore_bits(initial_ignore_bits)
         , radix_bits(initial_radix_bits)
     {
+        for (auto i = 0; i < (static_cast<a9n::word>(1) << radix_bits); i++)
+        {
+            capability_slots[i].init();
+        }
     }
 
     capability_result capability_node::execute(process &owner, capability_slot &self)
@@ -102,7 +106,7 @@ namespace a9n::kernel
     capability_result capability_node::operation_copy(process &owner, capability_slot &self)
     {
         if (!(self.rights & capability_slot::object_rights::READ)
-            && !(self.rights & capability_slot::object_rights::WRITE))
+            || !(self.rights & capability_slot::object_rights::WRITE))
         {
             return capability_error::ILLEGAL_OPERATION;
         }
@@ -423,13 +427,13 @@ namespace a9n::kernel
                     // checked wether a component exists in the slot.
                     // the capability_lookup_result is only for the existence
                     // of the slot.
-                    if (!slot->component)
+                    if (!slot->component) [[unlikely]]
                     {
                         return capability_lookup_error::EMPTY;
                     }
 
-                    return slot->component
-                        ->traverse_slot(descriptor, descriptor_max_bits, new_used_bits)
+                    return slot->component->traverse_slot(descriptor, descriptor_max_bits, new_used_bits);
+                    /*
                         .or_else(
                             [slot](capability_lookup_error e) -> capability_lookup_result
                             {
@@ -445,6 +449,7 @@ namespace a9n::kernel
                                 return e;
                             }
                         );
+                        */
                 }
             );
     }

@@ -145,9 +145,11 @@ namespace a9n::kernel
         DEBUG_LOG("slot_unit_size : 0x%llx", slot_unit_size);
 
         // create slot
+        auto node_end_address   = base + node_unit_size;
         auto slot_start_address = reinterpret_cast<a9n::physical_address>(
-            liba9n::align_value((base + node_unit_radix), node_unit_size)
+            liba9n::align_value(node_end_address, slot_unit_size)
         );
+        DEBUG_LOG("node_end_address : 0x%llx", node_end_address);
         DEBUG_LOG("slot_start_address : 0x%llx", slot_start_address);
         auto created_slots = new (reinterpret_cast<void *>(slot_start_address))
             capability_slot[static_cast<a9n::word>(1) << radix] {};
@@ -168,6 +170,7 @@ namespace a9n::kernel
             return kernel_error::INIT_FIRST;
         }
 
+        slot.init();
         slot.component = &node;
         slot.type      = capability_type::NODE;
         slot.rights    = capability_slot::object_rights::ALL;
