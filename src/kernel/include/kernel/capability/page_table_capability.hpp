@@ -75,6 +75,7 @@ namespace a9n::kernel
             return kernel_error::ILLEGAL_ARGUMENT;
         }
 
+        slot.init();
         slot.rights    = capability_slot::object_rights::ALL;
         slot.component = &page_table_capability_core;
         slot.type      = capability_type::PAGE_TABLE;

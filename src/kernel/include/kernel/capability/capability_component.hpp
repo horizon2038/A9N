@@ -209,7 +209,8 @@ namespace a9n::kernel
     {
         if (type == capability_type::NONE)
         {
-            // already initialized
+            remove_from_dependency_node();
+            init();
             return {};
         }
 

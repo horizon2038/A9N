@@ -92,6 +92,7 @@ namespace a9n::kernel
             return kernel_error::ILLEGAL_ARGUMENT;
         }
 
+        slot.init();
         slot.component = &frame_capability_core;
         slot.type      = capability_type::FRAME;
         slot.data      = convert_frame_to_slot_data(target_frame);

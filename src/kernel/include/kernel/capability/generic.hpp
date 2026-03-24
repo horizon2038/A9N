@@ -154,6 +154,7 @@ namespace a9n::kernel
 
     inline kernel_result try_configure_generic_slot(capability_slot &slot, const generic_info &info)
     {
+        slot.init();
         slot.component = &generic_core;
         slot.type      = capability_type::GENERIC;
         // copy is not allowed
