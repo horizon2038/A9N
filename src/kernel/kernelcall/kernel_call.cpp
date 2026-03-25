@@ -101,7 +101,7 @@ namespace a9n::kernel
             = current_process.root_slot.component->traverse_slot(raw_descriptor, depth, a9n::BYTE_BITS);
         if (!result) [[unlikely]]
         {
-            a9n::kernel::utility::logger::printk(
+            DEBUG_LOG(
                 "lookup error : %s\n",
                 capability_lookup_error_to_string(result.unwrap_error())
             );
