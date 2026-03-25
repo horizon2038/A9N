@@ -636,16 +636,6 @@ namespace a9n::kernel
             };
         };
 
-        // pseudo (remove this)
-        auto make_call_from_info = [&](message_info info)
-        {
-            return [this, &sender, &receiver, info](void) -> capability_result
-            {
-                // return operation_call(owner, self, info);
-                return {};
-            };
-        };
-
         auto result = capability_result {};
         auto fault_pc = a9n::hal::get_general_register(sender, hal::register_type::INSTRUCTION_POINTER)
                             .unwrap_or(static_cast<a9n::word>(0));
