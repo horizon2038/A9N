@@ -58,14 +58,8 @@ namespace a9n::kernel
 
     inline constexpr page_table convert_slot_data_to_page_table(const capability_slot_data &data)
     {
-        /*
-        page_table table;
-
-        table.address = data[0];
-        table.flags   = data[1];
-        */
-
-        return { .address = data[0], .flags = data[1] };
+        // TODO: setup rights
+        return { data[0], data[1] };
     }
 
     inline kernel_result try_configure_page_table_slot(capability_slot &slot, const page_table &table)
