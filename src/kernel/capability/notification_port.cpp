@@ -153,6 +153,12 @@ namespace a9n::kernel
             case notification_port_state::WAIT :
             case notification_port_state::READY_TO_WAKE :
                 {
+                    if (!core.has_notification())
+                    {
+                        DEBUG_LOG("notification_port::poll : no notifications");
+                        return {};
+                    }
+
                     return a9n::hal::configure_message_register(owner, FLAG_WORD, core.consume())
                         .transform_error(convert_hal_to_capability_error);
                 }
