@@ -64,6 +64,31 @@ namespace a9n::hal::x86_64
                         id                          = io_apic_entry->io_apic_id;
                         base_address                = io_apic_entry->io_apic_address;
                         global_interrupt_base       = io_apic_entry->global_system_interrupt_base;
+                        break;
+                    }
+                case madt_entry_type::INTERRUPT_SOURCE_OVERRIDE :
+                    {
+                        madt_interrupt_source_override *override_entry
+                            = reinterpret_cast<madt_interrupt_source_override *>(entry);
+
+                        if (override_entry->irq_source < 16)
+                        {
+                            interrupt_source_overrides[override_entry->irq_source].valid = true;
+                            interrupt_source_overrides[override_entry->irq_source].irq_source
+                                = override_entry->irq_source;
+                            interrupt_source_overrides[override_entry->irq_source].global_system_interrupt
+                                = override_entry->global_system_interrupt;
+                            interrupt_source_overrides[override_entry->irq_source].flags
+                                = override_entry->flags;
+
+                            a9n::kernel::utility::logger::printh(
+                                "MADT ISO : irq %d -> gsi %d, flags 0x%04x\n",
+                                override_entry->irq_source,
+                                override_entry->global_system_interrupt,
+                                override_entry->flags
+                            );
+                        }
+                        break;
                     }
 
                 default :
@@ -173,41 +198,100 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::disable_interrupt(uint8_t irq_number)
     {
-        const uint8_t real_irq_number  = global_interrupt_base + irq_number;
-        uint32_t      io_apic_register = io_apic_register_index::REDIRECTION_TABLE + irq_number * 2;
-
-        // low
-        return write(
-                   io_apic_register,
-                   (liba9n::enum_cast(reserved_irq::IO_BASE) + real_irq_number) | (1 << 16)
-        )
-            .and_then(
-                [=, this](void) -> hal_result
-                {
-                    // high
-                    // redirect to BSP
-                    return write(io_apic_register + 1, 0);
-                }
-            );
+        return configure_irq(irq_number, MASKED);
     }
 
     hal_result io_apic::enable_interrupt(uint8_t irq_number)
     {
-        // FIXME: real_irq_number -> irq_number
-        const uint8_t  real_irq_number = global_interrupt_base + irq_number;
-        const uint32_t io_apic_register
-            = io_apic_register_index::REDIRECTION_TABLE + real_irq_number * 2;
+        return configure_irq(irq_number, UNMASKED);
+    }
 
-        // low
-        return write(io_apic_register, liba9n::enum_cast(reserved_irq::IO_BASE) + real_irq_number)
-            .and_then(
-                [=, this](void) -> hal_result
-                {
-                    // high
-                    // redirect to BSP
-                    return write(io_apic_register + 1, 0);
-                }
+    hal_result io_apic::configure_irq(uint8_t irq_number, bool mask)
+    {
+        const uint32_t global_system_interrupt = resolve_global_system_interrupt(irq_number);
+
+        if (global_system_interrupt < global_interrupt_base)
+        {
+            a9n::kernel::utility::logger::printh(
+                "IO APIC : irq %d -> gsi %d < gsi_base %d\n",
+                irq_number,
+                global_system_interrupt,
+                global_interrupt_base
             );
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        const uint32_t io_apic_pin   = global_system_interrupt - global_interrupt_base;
+        const uint16_t flags         = resolve_interrupt_flags(irq_number);
+
+        PIN_POLARITY pin_polarity    = ACTIVE_HIGH;
+        TRIGGER_MODE trigger_mode    = EDGE;
+
+        const uint16_t polarity_bits = flags & 0x3;
+        const uint16_t trigger_bits  = (flags >> 2) & 0x3;
+
+        // ACPI MADT flags
+        // polarity:
+        //   00 = conforms
+        //   01 = active high
+        //   11 = active low
+        // trigger:
+        //   00 = conforms
+        //   01 = edge
+        //   11 = level
+        if (polarity_bits == 0x3)
+        {
+            pin_polarity = ACTIVE_LOW;
+        }
+
+        if (trigger_bits == 0x3)
+        {
+            trigger_mode = LEVEL;
+        }
+
+        const uint8_t vector     = liba9n::enum_cast(reserved_irq::IO_BASE) + irq_number;
+        const MASK    mask_typed = mask ? MASKED : UNMASKED;
+
+        const uint64_t entry
+            = make_redirect_entry(vector, FIXED, PHYSICAL, IDLE, pin_polarity, trigger_mode, mask_typed, 0);
+
+        DEBUG_LOG(
+            "IO APIC : irq %d -> gsi %d -> pin %d, vector 0x%02x, flags 0x%04x, mask %d",
+            irq_number,
+            global_system_interrupt,
+            io_apic_pin,
+            vector,
+            flags,
+            static_cast<uint8_t>(mask)
+        );
+
+        return configure_entry(static_cast<uint8_t>(io_apic_pin), entry);
+    }
+
+    uint32_t io_apic::resolve_global_system_interrupt(uint8_t irq_number) const
+    {
+        if (irq_number < 16)
+        {
+            if (interrupt_source_overrides[irq_number].valid)
+            {
+                return interrupt_source_overrides[irq_number].global_system_interrupt;
+            }
+        }
+
+        return irq_number;
+    }
+
+    uint16_t io_apic::resolve_interrupt_flags(uint8_t irq_number) const
+    {
+        if (irq_number < 16)
+        {
+            if (interrupt_source_overrides[irq_number].valid)
+            {
+                return interrupt_source_overrides[irq_number].flags;
+            }
+        }
+
+        return 0;
     }
 
     liba9n::result<uint32_t, hal_error> io_apic::read(uint32_t io_apic_register)

@@ -145,6 +145,15 @@ namespace a9n::hal::x86_64
         uint32_t        global_system_interrupt_base;
     } __attribute__((packed));
 
+    struct madt_interrupt_source_override
+    {
+        madt_entry_header header;
+        uint8_t           bus_source;
+        uint8_t           irq_source;
+        uint32_t          global_system_interrupt;
+        uint16_t          flags;
+    } __attribute__((packed));
+
     struct fadt
     {
         sdt_header header; // 36 byte

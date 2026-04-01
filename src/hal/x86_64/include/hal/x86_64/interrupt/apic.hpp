@@ -59,6 +59,14 @@ namespace a9n::hal::x86_64
         inline constexpr uint8_t REDIRECTION_TABLE    = 0x10;
     }
 
+    struct interrupt_source_override
+    {
+        bool     valid { false };
+        uint8_t  irq_source { 0 };
+        uint32_t global_system_interrupt { 0 };
+        uint16_t flags { 0 };
+    };
+
     class io_apic
     {
       public:
@@ -74,9 +82,10 @@ namespace a9n::hal::x86_64
         hal_result                          write(uint32_t io_apic_register, uint32_t value);
 
       private:
-        uint8_t  id;
-        uint32_t base_address;
-        uint32_t global_interrupt_base;
+        uint8_t                   id;
+        uint32_t                  base_address;
+        uint32_t                  global_interrupt_base;
+        interrupt_source_override interrupt_source_overrides[16];
 
         volatile uint32_t *register_select;
         volatile uint32_t *window;
@@ -84,6 +93,10 @@ namespace a9n::hal::x86_64
         hal_result configure_from_madt(madt *madt_base);
         hal_result configure_registers();
         hal_result configure_entry(uint8_t irq_number, uint64_t entry);
+        // resolve global system interrupt and flags for the given irq number
+        uint32_t   resolve_global_system_interrupt(uint8_t irq_number) const;
+        uint16_t   resolve_interrupt_flags(uint8_t irq_number) const;
+        hal_result configure_irq(uint8_t irq_number, bool mask);
 
         enum DELIVERY_MODE : uint8_t
         {
