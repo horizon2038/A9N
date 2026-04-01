@@ -139,17 +139,17 @@ namespace a9n::kernel
                                     }
                                 )
                                 .and_then(
+                                    [](void) -> kernel_result
+                                    {
+                                        return a9n::kernel::interrupt_manager_core.ack_interrupt();
+                                    }
+                                )
+                                .and_then(
                                     [&](void) -> kernel_result
                                     {
                                         return interrupt_manager_core.disable_interrupt(
                                             handler->irq_number
                                         );
-                                    }
-                                )
-                                .and_then(
-                                    [](void) -> kernel_result
-                                    {
-                                        return a9n::kernel::interrupt_manager_core.ack_interrupt();
                                     }
                                 );
                         }
