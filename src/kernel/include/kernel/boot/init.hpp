@@ -10,7 +10,7 @@ namespace a9n::kernel
     inline constexpr a9n::word INITIAL_PROCESS_ROOT_NODE_COUNT  = 256;
     inline constexpr a9n::word INITIAL_PROCESS_ROOT_NODE_RADIX  = 8;
 
-    inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX          = 1024;
+    inline constexpr a9n::word INITIAL_FRAME_COUNT_MAX          = 16384;
     inline constexpr a9n::word INITIAL_PAGE_TABLE_COUNT_MAX     = 128;
 
     inline constexpr a9n::word INITIAL_GENERIC_COUNT_MAX        = 128;
