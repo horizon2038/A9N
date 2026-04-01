@@ -398,10 +398,27 @@ namespace a9n::kernel
                 return liba9n::option_none;
 
             case NODE :
-                return liba9n::calculate_radix_ceil(
-                    liba9n::calculate_radix_ceil(sizeof(capability_node))
-                    + liba9n::calculate_radix_ceil(sizeof(capability_slot) * specific_bits)
-                );
+                {
+                    constexpr auto node_alignment = static_cast<a9n::word>(
+                        1ULL << liba9n::calculate_radix_ceil(sizeof(capability_node))
+                    );
+                    constexpr auto slot_alignment = static_cast<a9n::word>(
+                        1ULL << liba9n::calculate_radix_ceil(sizeof(capability_slot))
+                    );
+
+                    const auto slot_count        = static_cast<a9n::word>(1) << specific_bits;
+
+                    const auto node_size         = static_cast<a9n::word>(sizeof(capability_node));
+                    const auto aligned_node_size = liba9n::align_value(node_size, node_alignment);
+
+                    const auto slot_array_base = liba9n::align_value(aligned_node_size, slot_alignment);
+                    const auto slot_array_size
+                        = static_cast<a9n::word>(sizeof(capability_slot)) * slot_count;
+
+                    const auto total_size = slot_array_base + slot_array_size;
+
+                    return liba9n::calculate_radix_ceil(total_size);
+                }
 
             case GENERIC :
                 return specific_bits;
@@ -575,8 +592,15 @@ namespace a9n::kernel
                         .and_then(
                             [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                auto target_table
-                                    = page_table { .address = new_watermark, .depth = specific_bits };
+                                auto target_table = page_table { new_watermark, specific_bits };
+
+                                DEBUG_LOG(
+                                    "generic::PAGE_TABLE specific_bits=%llu flags=0x%016llx "
+                                    "depth=%llu\n",
+                                    specific_bits,
+                                    target_table.flags,
+                                    target_table.get_depth()
+                                );
 
                                 return try_configure_page_table_slot(target_slot, target_table)
                                     .transform_error(
