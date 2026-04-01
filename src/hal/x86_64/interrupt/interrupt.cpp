@@ -114,6 +114,11 @@ namespace a9n::hal::x86_64
     void print_registers()
     {
         auto context = current_context();
+        if (!context)
+        {
+            a9n::kernel::utility::logger::printh("failed to read hardware context\n");
+            return;
+        }
 
         for (a9n::word i = 0; i < 22; i++)
         {
@@ -135,19 +140,19 @@ namespace a9n::hal::x86_64
     {
         const char *exception_type = get_exception_type_string(irq_number);
 
-        switch (irq_number)
+        a9n::kernel::utility::logger::printh(
+            "[kernel -> kernel] exception [%2d] : %s : %llu\n",
+            static_cast<int>(irq_number),
+            exception_type,
+            error_code
+        );
+        print_registers();
+        if (irq_number == liba9n::enum_cast(exception_type::PAGE_FAULT))
         {
-            default :
-                a9n::kernel::utility::logger::printh(
-                    "[kernel -> kernel] exception [%2d] : %s : %llu\n",
-                    static_cast<int>(irq_number),
-                    exception_type,
-                    error_code
-                );
-                print_registers();
-                for (;;)
-                    ;
+            print_page_fault_reason(error_code);
         }
+        for (;;)
+            ;
 
         _restore_kernel_context();
     }
@@ -155,7 +160,6 @@ namespace a9n::hal::x86_64
     // called from asm
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code)
     {
-        // DEBUG_LOG("do_irq_from_user : irq_number = %llu", static_cast<uint32_t>(irq_number));
         // exception
         if (irq_number < liba9n::enum_cast(reserved_irq::IO_BASE))
         {
@@ -244,12 +248,6 @@ namespace a9n::hal::x86_64
 
                 default :
                     auto kernel_irq_number = irq_number - liba9n::enum_cast(reserved_irq::IO_BASE);
-                    DEBUG_LOG(
-                        "dispatch interrupt to irq dispatcher : irq_number = %llu (real irq number "
-                        "= %llu)",
-                        static_cast<uint32_t>(kernel_irq_number),
-                        irq_number
-                    );
                     interrupt_dispatcher(kernel_irq_number);
 
                     break;

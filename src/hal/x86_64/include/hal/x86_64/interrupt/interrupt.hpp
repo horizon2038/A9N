@@ -184,9 +184,10 @@ namespace a9n::hal::x86_64
 
     enum class reserved_irq : uint16_t
     {
-        IO_BASE        = 0x20,
-        IPI_HALT       = 0x21,
-        IPI_RESCHEDULE = 0x22,
+        IO_BASE = 0x20,
+        // FIXME
+        IPI_HALT       = 0x48,
+        IPI_RESCHEDULE = 0x49,
 
         CONSOLE_1      = 0x23,
         CONSOLE_0      = 0x24,
