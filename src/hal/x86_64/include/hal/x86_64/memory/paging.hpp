@@ -85,6 +85,24 @@ namespace a9n::hal::x86_64
         return (target_virtual_address >> shift) & 0x1FF;
     }
 
+    inline constexpr liba9n::result<uint16_t, a9n::hal::hal_error>
+        convert_leaf_size_bits_to_internal_depth(a9n::word leaf_size_bits)
+    {
+        switch (leaf_size_bits)
+        {
+            // 4KiB Leaf
+            case 12 :
+                return static_cast<uint16_t>(PAGE_DEPTH::PT);
+            // 2MiB Leaf
+            case 21 :
+                return static_cast<uint16_t>(PAGE_DEPTH::PD);
+            // 1GiB Leaf
+            case 30 :
+                return static_cast<uint16_t>(PAGE_DEPTH::PDPT);
+            default :
+                return a9n::hal::hal_error::ILLEGAL_ARGUMENT;
+        }
+    }
 }
 
 #endif

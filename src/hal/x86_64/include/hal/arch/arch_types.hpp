@@ -22,6 +22,9 @@ namespace a9n::hal
     // WIP
     inline constexpr a9n::word FPU_CONTEXT_SIZE            = 0;
     inline constexpr a9n::word VIRTUAL_MEMORY_CONTEXT_SIZE = 1;
+
+    // 2MiB
+    inline constexpr a9n::word INITIAL_FRAME_SIZE_BITS = 12;
 }
 
 #endif

@@ -32,7 +32,11 @@ namespace a9n::kernel
             UNMAP_ADDRESS    = RESERVED_1,
 
             // for get_unset_depth
-            GET_UNSET_DEPTH_ADDRESS = RESERVED_0,
+            GET_UNSET_DEPTH_ADDRESS        = RESERVED_0,
+            GET_UNSET_DEPTH_LEAF_SIZE_BITS = RESERVED_1,
+
+            // for can_map_frame_size_bits
+            CAN_MAP_FRAME_SIZE_BITS_SIZE_BITS = RESERVED_0,
         };
 
         enum result_index : a9n::word
@@ -49,7 +53,8 @@ namespace a9n::kernel
             NONE,
             MAP,
             UNMAP,
-            GET_UNSET_DEPTH
+            GET_UNSET_DEPTH,
+            CAN_MAP_FRAME_SIZE_BITS,
         };
 
       public:
@@ -58,6 +63,7 @@ namespace a9n::kernel
         capability_result operation_map(process &owner, capability_slot &self);
         capability_result operation_unmap(process &owner, capability_slot &self);
         capability_result operation_get_unset_depth(process &owner, capability_slot &self);
+        capability_result operation_can_map_frame_size_bits(process &owner, capability_slot &self);
 
         capability_result revoke(capability_slot &self) override
         {

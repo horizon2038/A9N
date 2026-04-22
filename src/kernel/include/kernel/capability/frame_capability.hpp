@@ -71,6 +71,7 @@ namespace a9n::kernel
 
         data[0] = target_frame.address;
         data[1] = target_frame.flags;
+        data[2] = target_frame.size_bits;
 
         return data;
     }
@@ -79,8 +80,9 @@ namespace a9n::kernel
     {
         frame target_frame;
 
-        target_frame.address = data[0];
-        target_frame.flags   = data[1];
+        target_frame.address   = data[0];
+        target_frame.flags     = data[1];
+        target_frame.size_bits = data[2];
 
         return target_frame;
     }

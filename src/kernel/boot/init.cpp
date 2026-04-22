@@ -35,7 +35,7 @@ namespace a9n::kernel
     using page_size_memory = liba9n::std::array<uint8_t, a9n::PAGE_SIZE>;
 
     // assign only once; no memory freed
-    liba9n::linear_allocator<a9n::PAGE_SIZE * 32> init_allocator {};
+    liba9n::linear_allocator<a9n::PAGE_SIZE * 512> init_allocator {};
 
     static liba9n::result<liba9n::not_null<init_info>, kernel_error>
                          try_make_init_info(const boot_info &info);
@@ -380,7 +380,11 @@ namespace a9n::kernel
             .and_then(
                 [&](page_table table) -> kernel_result
                 {
-                    logger::printk("init root : 0x%016llx (depth %04llu)\n", table.address, table.depth);
+                    logger::printk(
+                        "init root : 0x%016llx (depth %04llu)\n",
+                        table.address,
+                        table.get_depth()
+                    );
 
                     capability_slot &target_slot = pcb.process_core.root_address_space;
 
@@ -419,122 +423,151 @@ namespace a9n::kernel
         try_make_init_process_pages(const init_image_info &info, process_control_block &pcb)
     {
         using kernel::utility::logger;
+
         logger::printk("try to make the pages in init process ...\n");
 
-        if (!pcb.process_core.root_slot.component)
+        if (!pcb.process_core.root_slot.component
+            || pcb.process_core.root_slot.type != capability_type::NODE)
         {
-            logger::error("the node that stores the frame is imcomplete");
+            logger::error("the root node is imcomplete");
+            return kernel_error::INIT_FIRST;
+        }
+
+        auto page_node_slot_result = pcb.process_core.root_slot.component->retrieve_slot(
+            liba9n::enum_cast(init_slot_offset::PROCESS_PAGE_TABLE_NODE)
+        );
+        if (!page_node_slot_result)
+        {
+            logger::error("no node was found to store the pages");
+            return kernel_error::NO_SUCH_ADDRESS;
+        }
+
+        capability_slot &page_node_slot = *page_node_slot_result.unwrap();
+        if (!page_node_slot.component || page_node_slot.type != capability_type::NODE)
+        {
+            logger::error("the node that stores the pages is imcomplete");
             return kernel_error::INIT_FIRST;
         }
 
         auto root_table = convert_slot_data_to_page_table(pcb.process_core.root_address_space.data);
-        return hal::search_unset_page_table_depth(root_table, 0)
-            .transform_error(
-                [&](memory_map_error e) -> kernel_error
-                {
-                    logger::error("failed to map search unset table depth");
-                    return kernel_error::NO_SUCH_ADDRESS;
-                }
-            )
-            .and_then(
-                [&](a9n::word depth) -> kernel_result
-                {
-                    logger::printk("number of pages to be created : %04d\n", depth);
 
-                    for (a9n::word slot_index = 0, page_depth = depth; slot_index < depth;
-                         slot_index++, page_depth--)
-                    {
-                        DEBUG_LOG("slot_index : %llu | pade_depth : %llu\n", slot_index, page_depth);
-                        auto result
-                            = init_allocator.allocate<page_size_memory>(1)
-                                  .transform_error(
-                                      [&]([[maybe_unused]] liba9n::allocator_error e) -> kernel_error
-                                      {
-                                          return kernel_error::UNEXPECTED;
-                                      }
-                                  )
-                                  .and_then(
-                                      [&](liba9n::not_null<page_size_memory> memory)
-                                          -> liba9n::result<page_table, kernel_error>
-                                      {
-                                          auto page_physical = virtual_to_physical_address(
-                                              reinterpret_cast<a9n::virtual_address>(memory->data())
-                                          );
-                                          return page_table { .address = page_physical,
-                                                              .depth   = page_depth };
-                                      }
-                                  )
-                                  .and_then(
-                                      [&](page_table table) -> liba9n::result<page_table, kernel_error>
-                                      {
-                                          return hal::map_page_table(root_table, table, 0)
-                                              .transform_error(
-                                                  [&](memory_map_error e) -> kernel_error
-                                                  {
-                                                      logger::error("failed to map root table");
-                                                      return kernel_error::NO_SUCH_ADDRESS;
-                                                  }
-                                              )
-                                              .and_then(
-                                                  [&](void) -> liba9n::result<page_table, kernel_error>
-                                                  {
-                                                      return table;
-                                                  }
-                                              );
-                                      }
-                                  )
-                                  .and_then(
-                                      [&](page_table table) -> kernel_result
-                                      {
-                                          return pcb.process_core.root_slot.component
-                                              ->retrieve_slot(
-                                                  liba9n::enum_cast(init_slot_offset::PROCESS_PAGE_TABLE_NODE)
-                                              )
-                                              .transform_error(
-                                                  [&]([[maybe_unused]] capability_lookup_error e) -> kernel_error
-                                                  {
-                                                      logger::error("failed to lookup node");
-                                                      return kernel_error::UNEXPECTED;
-                                                  }
-                                              )
-                                              .and_then(
-                                                  [&](capability_slot *slot) -> kernel_result
-                                                  {
-                                                      if (!slot->component
-                                                          || slot->type != capability_type::NODE)
-                                                      {
-                                                          logger::error(
-                                                              "the node that stores the "
-                                                              "pages is imcomplete"
-                                                          );
-                                                          return kernel_error::INIT_FIRST;
-                                                      }
+        constexpr a9n::word FRAME_SIZE = static_cast<a9n::word>(1) << a9n::hal::INITIAL_FRAME_SIZE_BITS;
 
-                                                      auto target_slot_result
-                                                          = slot->component->retrieve_slot(slot_index);
-                                                      if (!target_slot_result)
-                                                      {
-                                                          return kernel_error::NO_SUCH_ADDRESS;
-                                                      }
-                                                      return try_configure_page_table_slot(
-                                                          *target_slot_result.unwrap(),
-                                                          table
-                                                      );
-                                                  }
-                                              );
-                                      }
-                                  );
+        a9n::word last_mapped_virtual_address = info.init_image_size * FRAME_SIZE;
 
-                        if (!result)
-                        {
-                            logger::error("failed to create init pages");
-                            return kernel_error::UNEXPECTED;
-                        }
-                    }
+        logger::printk("last mapped virtual address : 0x%016llx\n", last_mapped_virtual_address);
 
-                    return {};
-                }
+        a9n::word page_table_slot_index = 0;
+
+        auto allocate_and_map_page_table =
+            [&](a9n::word depth, a9n::virtual_address map_address) -> kernel_result
+        {
+            DEBUG_LOG(
+                "create page table: slot=%llu depth=%llu va=0x%016llx\n",
+                page_table_slot_index,
+                depth,
+                map_address
             );
+
+            return init_allocator.allocate<page_size_memory>(1)
+                .transform_error(
+                    [&]([[maybe_unused]] liba9n::allocator_error e) -> kernel_error
+                    {
+                        logger::error("failed to allocate page table memory");
+                        return kernel_error::UNEXPECTED;
+                    }
+                )
+                .and_then(
+                    [&](liba9n::not_null<page_size_memory> memory) -> liba9n::result<page_table, kernel_error>
+                    {
+                        auto page_physical = virtual_to_physical_address(
+                            reinterpret_cast<a9n::virtual_address>(memory->data())
+                        );
+
+                        return page_table {
+                            page_physical,
+                            depth,
+                        };
+                    }
+                )
+                .and_then(
+                    [&](page_table table) -> liba9n::result<page_table, kernel_error>
+                    {
+                        return hal::map_page_table(root_table, table, map_address)
+                            .transform_error(
+                                [&](memory_map_error e) -> kernel_error
+                                {
+                                    logger::error("failed to map page table");
+                                    DEBUG_LOG(
+                                        "(slot=%llu, depth=%llu, va=0x%016llx)",
+                                        page_table_slot_index,
+                                        depth,
+                                        map_address
+                                    );
+                                    return kernel_error::NO_SUCH_ADDRESS;
+                                }
+                            )
+                            .and_then(
+                                [&](void) -> liba9n::result<page_table, kernel_error>
+                                {
+                                    return table;
+                                }
+                            );
+                    }
+                )
+                .and_then(
+                    [&](page_table table) -> kernel_result
+                    {
+                        auto target_slot_result
+                            = page_node_slot.component->retrieve_slot(page_table_slot_index);
+                        if (!target_slot_result)
+                        {
+                            logger::error("page table slot does not exist");
+                            return kernel_error::NO_SUCH_ADDRESS;
+                        }
+
+                        return try_configure_page_table_slot(*target_slot_result.unwrap(), table);
+                    }
+                )
+                .and_then(
+                    [&](void) -> kernel_result
+                    {
+                        page_table_slot_index++;
+                        return {};
+                    }
+                );
+        };
+
+        for (a9n::word map_address = 0; map_address <= last_mapped_virtual_address;)
+        {
+            auto unset_depth_result = hal::search_unset_page_table_depth(
+                root_table,
+                map_address,
+                a9n::hal::INITIAL_FRAME_SIZE_BITS
+            );
+            if (!unset_depth_result)
+            {
+                logger::error("failed to search unset page table depth");
+                return kernel_error::NO_SUCH_ADDRESS;
+            }
+
+            a9n::word unset_depth = unset_depth_result.unwrap();
+
+            if (unset_depth == 0)
+            {
+                map_address += FRAME_SIZE;
+                continue;
+            }
+
+            auto create_result = allocate_and_map_page_table(unset_depth, map_address);
+            if (!create_result)
+            {
+                logger::error("failed to create page table");
+                return create_result.unwrap_error();
+            }
+        }
+
+        return {};
     }
 
     static kernel_result try_make_init_process_frames(
@@ -571,14 +604,32 @@ namespace a9n::kernel
         capability_slot &frame_node_slot = *frame_node_slot_result.unwrap();
         auto root_table = convert_slot_data_to_page_table(pcb.process_core.root_address_space.data);
 
+        logger::printk("loaded_address      : 0x%016llx\n", info.loaded_address);
+        logger::printk("frame_size_bits     : %llu\n", a9n::hal::INITIAL_FRAME_SIZE_BITS);
+        logger::printk(
+            "frame_size          : 0x%016llx\n",
+            static_cast<a9n::word>(1) << a9n::hal::INITIAL_FRAME_SIZE_BITS
+        );
+        logger::printk(
+            "loaded aligned?     : %s\n",
+            ((info.loaded_address
+              & ((static_cast<a9n::word>(1) << a9n::hal::INITIAL_FRAME_SIZE_BITS) - 1))
+             == 0) ?
+                "yes" :
+                "no"
+        );
+
         a9n::physical_address frame_ipc_buffer_base = info.loaded_address + info.init_ipc_buffer_address;
 
-        // create frames
-        for (auto i = 0; i <= info.init_image_size; i++)
+        constexpr a9n::word FRAME_SIZE = static_cast<a9n::word>(1) << a9n::hal::INITIAL_FRAME_SIZE_BITS;
+
+        for (auto i = 0; i < info.init_image_size; i++)
         {
-            a9n::physical_address base_address = info.loaded_address + (a9n::PAGE_SIZE * i);
-            a9n::virtual_address  map_address  = a9n::PAGE_SIZE * i;
-            auto                  target_frame = frame { .address = base_address };
+            a9n::physical_address base_address = info.loaded_address + (FRAME_SIZE * i);
+            a9n::virtual_address  map_address  = FRAME_SIZE * i;
+
+            auto target_frame
+                = frame { .address = base_address, .size_bits = a9n::hal::INITIAL_FRAME_SIZE_BITS };
 
             auto result
                 = hal::map_frame(root_table, target_frame, map_address)
@@ -599,10 +650,7 @@ namespace a9n::kernel
                                       "slot error code : 0x%016llx",
                                       static_cast<a9n::word>(target_slot_result.unwrap_error())
                                   );
-                                  logger::error(
-                                      "slot does not exist in the node that stores the "
-                                      "frame"
-                                  );
+                                  logger::error("slot does not exist in the node that stores the frame");
                                   return kernel_error::NO_SUCH_ADDRESS;
                               }
 
@@ -618,10 +666,20 @@ namespace a9n::kernel
                                           logger::printk("try make ipc buffer frame ...\n");
 
                                           init_info_page.ipc_buffer = info.init_ipc_buffer_address;
+                                          logger::printk(
+                                              "ipc buffer physical address : 0x%016llx\n",
+                                              frame_ipc_buffer_base
+                                          );
                                           pcb.process_core.buffer
                                               = a9n::kernel::physical_to_virtual_pointer<ipc_buffer>(
                                                   frame_ipc_buffer_base
                                               );
+                                          logger::printk(
+                                              "ipc buffer virtual address : 0x%016llx\n",
+                                              reinterpret_cast<a9n::virtual_address>(
+                                                  pcb.process_core.buffer
+                                              )
+                                          );
 
                                           auto frame_ipc_buffer_slot_result
                                               = pcb.process_core.root_slot.component->retrieve_slot(
@@ -647,7 +705,6 @@ namespace a9n::kernel
                                               .and_then(
                                                   [&](void) -> kernel_result
                                                   {
-                                                      // register sibling
                                                       target_slot_result.unwrap()->insert_sibling(
                                                           frame_ipc_buffer_slot
                                                       );

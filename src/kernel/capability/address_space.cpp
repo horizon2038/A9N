@@ -82,6 +82,10 @@ namespace a9n::kernel
                 DEBUG_LOG("address_space::get_unset_depth");
                 return operation_get_unset_depth(owner, self);
 
+            case operation_type::CAN_MAP_FRAME_SIZE_BITS :
+                DEBUG_LOG("address_space::can_map_frame_size_bits");
+                return operation_can_map_frame_size_bits(owner, self);
+
             default :
                 DEBUG_LOG("address_space::<ILLEGAL_OPERATION>");
                 return capability_error::ILLEGAL_OPERATION;
@@ -302,10 +306,30 @@ namespace a9n::kernel
             return get_message_register(owner, GET_UNSET_DEPTH_ADDRESS);
         };
 
-        auto get_unset_depth =
-            [&](a9n::virtual_address address) -> liba9n::result<a9n::word, capability_error>
+        struct get_unset_depth_argument
         {
-            return a9n::hal::search_unset_page_table_depth(self_table, address)
+            a9n::virtual_address address;
+            a9n::word            leaf_size_bits;
+        };
+
+        auto get_leaf_size_bits = [&](a9n::virtual_address address)
+            -> liba9n::result<get_unset_depth_argument, capability_error>
+        {
+            return get_message_register(owner, GET_UNSET_DEPTH_LEAF_SIZE_BITS)
+                .and_then(
+                    [&]([[maybe_unused]] a9n::word leaf_size_bits)
+                        -> liba9n::result<get_unset_depth_argument, capability_error>
+                    {
+                        return get_unset_depth_argument { .address        = address,
+                                                          .leaf_size_bits = leaf_size_bits };
+                    }
+                );
+        };
+
+        auto get_unset_depth =
+            [&](get_unset_depth_argument argument) -> liba9n::result<a9n::word, capability_error>
+        {
+            return a9n::hal::search_unset_page_table_depth(self_table, argument.address, argument.leaf_size_bits)
                 .transform_error(convert_memory_map_to_capability_error);
         };
 
@@ -318,8 +342,30 @@ namespace a9n::kernel
 
         return validate_root_address_space(self_table)
             .and_then(get_unset_depth_argument_address)
+            .and_then(get_leaf_size_bits)
             .and_then(get_unset_depth)
             .and_then(write_result);
     }
 
+    capability_result
+        address_space::operation_can_map_frame_size_bits(process &owner, capability_slot &self)
+    {
+        auto self_table = convert_slot_data_to_page_table(self.data);
+
+        return validate_root_address_space(self_table)
+            .and_then(
+                [&](void) -> liba9n::result<a9n::word, capability_error>
+                {
+                    return get_message_register(owner, CAN_MAP_FRAME_SIZE_BITS_SIZE_BITS);
+                }
+            )
+            .and_then(
+                [&](a9n::word size_bits) -> capability_result
+                {
+                    return a9n::hal::validate_frame_size_bits(size_bits).transform_error(
+                        convert_memory_map_to_capability_error
+                    );
+                }
+            );
+    }
 }

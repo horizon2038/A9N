@@ -427,7 +427,15 @@ namespace a9n::kernel
                 return liba9n::calculate_radix(a9n::PAGE_SIZE);
 
             case FRAME :
-                return liba9n::calculate_radix(a9n::PAGE_SIZE);
+                {
+                    auto frame_result = a9n::hal::validate_frame_size_bits(specific_bits);
+                    if (!frame_result)
+                    {
+                        return liba9n::option_none;
+                    }
+
+                    return specific_bits;
+                }
 
             case PROCESS_CONTROL_BLOCK :
                 return liba9n::calculate_radix_ceil(sizeof(process_control_block));
@@ -616,12 +624,20 @@ namespace a9n::kernel
             case FRAME :
                 {
                     DEBUG_LOG("convert to frame");
+
+                    if (!memory_size_bits)
+                    {
+                        a9n::kernel::utility::logger::error("invalid frame size");
+                        return capability_error::INVALID_ARGUMENT;
+                    }
+
                     return info.try_apply_allocate(memory_size_bits)
                         .transform_error(convert_memory_error_to_capability_error)
                         .and_then(
                             [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                auto target_frame = frame { .address = new_watermark };
+                                auto target_frame = frame { .address   = new_watermark,
+                                                            .size_bits = memory_size_bits };
 
                                 return try_configure_frame_slot(target_slot, target_frame)
                                     .transform_error(

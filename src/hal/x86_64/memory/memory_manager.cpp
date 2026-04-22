@@ -196,7 +196,22 @@ namespace a9n::hal
             return kernel::memory_map_error::INVALID_FRAME;
         }
 
-        return traverse_page_table_entry(target_root, target_address, x86_64::PAGE_DEPTH::PT)
+        auto target_leaf_depth_result
+            = x86_64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits)
+                  .transform_error(
+                      [&](hal::hal_error e) -> kernel::memory_map_error
+                      {
+                          return kernel::memory_map_error::ILLEGAL_DEPTH;
+                      }
+                  );
+        if (!target_leaf_depth_result)
+        {
+            DEBUG_LOG("invalid frame size bits");
+            return target_leaf_depth_result.unwrap_error();
+        }
+        a9n::word target_leaf_depth = target_leaf_depth_result.unwrap();
+
+        return traverse_page_table_entry(target_root, target_address, target_leaf_depth)
             .and_then(
                 [=](x86_64::page *entry) -> kernel::memory_map_result<>
                 {
@@ -209,13 +224,16 @@ namespace a9n::hal
 
                     DEBUG_LOG("target_frame : 0x%016llx", target_frame.address);
 
+                    entry->init();
                     entry->configure_physical_address(target_frame.address);
                     entry->present         = true;
                     entry->rw              = true;
                     entry->user_supervisor = true;
+                    entry->page_size       = (target_leaf_depth != x86_64::PAGE_DEPTH::PT);
 
                     DEBUG_LOG("entry addr : 0x%016llx", reinterpret_cast<uint64_t>(entry));
                     DEBUG_LOG("entry.all : 0x%016llx", entry->all);
+                    DEBUG_LOG("entry.page_size (is huge-page): %s", entry->page_size ? "true" : "false");
 
                     DEBUG_LOG("invalidate page");
                     return try_maybe_invalidate_page(target_root, target_address);
@@ -234,11 +252,25 @@ namespace a9n::hal
             return kernel::memory_map_error::INVALID_FRAME;
         }
 
-        return traverse_page_table_entry(target_root, target_address, x86_64::PAGE_DEPTH::OFFSET)
+        auto target_leaf_depth_result
+            = x86_64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits)
+                  .transform_error(
+                      [&](hal::hal_error e) -> kernel::memory_map_error
+                      {
+                          return kernel::memory_map_error::ILLEGAL_DEPTH;
+                      }
+                  );
+        if (!target_leaf_depth_result)
+        {
+            return target_leaf_depth_result.unwrap_error();
+        }
+        const a9n::word target_leaf_depth = target_leaf_depth_result.unwrap();
+
+        return traverse_page_table_entry(target_root, target_address, target_leaf_depth)
             .and_then(
                 [=](x86_64::page *entry) -> kernel::memory_map_result<>
                 {
-                    if (entry->present)
+                    if (!entry->present)
                     {
                         return kernel::memory_map_error::ALREADY_MAPPED;
                     }
@@ -252,38 +284,48 @@ namespace a9n::hal
 
     kernel::memory_map_result<a9n::word> search_unset_page_table_depth(
         const a9n::kernel::page_table &target_root,
-        const a9n::virtual_address     target_address
+        const a9n::virtual_address     target_address,
+        a9n::word                      leaf_size_bits
     )
     {
         return validate_root_address_space(target_root)
             .and_then(
                 [=](void) -> kernel::memory_map_result<a9n::word>
                 {
+                    auto target_leaf_page_result
+                        = x86_64::convert_leaf_size_bits_to_internal_depth(leaf_size_bits)
+                              .transform_error(
+                                  [&](hal::hal_error e) -> kernel::memory_map_error
+                                  {
+                                      return kernel::memory_map_error::ILLEGAL_DEPTH;
+                                  }
+                              );
+                    if (!target_leaf_page_result)
+                    {
+                        return target_leaf_page_result.unwrap_error();
+                    }
+
+                    const a9n::word target_leaf_depth = target_leaf_page_result.unwrap();
+
                     x86_64::page *current_table
                         = a9n::kernel::physical_to_virtual_pointer<x86_64::page>(target_root.address);
 
-                    //
-                    // target_root is PML4
-                    //
-                    // return value:
-                    //   3 : PDPT is not configured
-                    //   2 : PD is not configured
-                    //   1 : PT is not configured
-                    //   0 : PT is configured, so frame can be mapped
-                    //
-
-                    // 1. check PML4 entry
+                    for (a9n::word current_depth = x86_64::PAGE_DEPTH::PML4;
+                         current_depth > target_leaf_depth;
+                         current_depth--)
                     {
-                        auto current_table_index = x86_64::calculate_page_table_index(
-                            target_address,
-                            x86_64::PAGE_DEPTH::PML4
-                        );
-
+                        auto current_table_index
+                            = x86_64::calculate_page_table_index(target_address, current_depth);
                         x86_64::page *current_entry = &current_table[current_table_index];
 
                         if (!current_entry->present)
                         {
-                            return 3;
+                            return current_depth - 1;
+                        }
+
+                        if (current_entry->page_size)
+                        {
+                            return kernel::memory_map_error::ALREADY_MAPPED;
                         }
 
                         auto next_physical_address = current_entry->get_physical_address();
@@ -297,59 +339,7 @@ namespace a9n::hal
                         );
                     }
 
-                    // 2. check PDPT entry
-                    {
-                        auto current_table_index = x86_64::calculate_page_table_index(
-                            target_address,
-                            x86_64::PAGE_DEPTH::PDPT
-                        );
-
-                        x86_64::page *current_entry = &current_table[current_table_index];
-
-                        if (!current_entry->present)
-                        {
-                            return 2;
-                        }
-
-                        auto next_physical_address = current_entry->get_physical_address();
-                        if (!next_physical_address)
-                        {
-                            return kernel::memory_map_error::NO_SUCH_PAGE_TABLE;
-                        }
-
-                        current_table = a9n::kernel::physical_to_virtual_pointer<x86_64::page>(
-                            next_physical_address
-                        );
-                    }
-
-                    // 3. check PD entry
-                    {
-                        auto current_table_index = x86_64::calculate_page_table_index(
-                            target_address,
-                            x86_64::PAGE_DEPTH::PD
-                        );
-
-                        x86_64::page *current_entry = &current_table[current_table_index];
-
-                        if (!current_entry->present)
-                        {
-                            return 1;
-                        }
-
-                        auto next_physical_address = current_entry->get_physical_address();
-                        if (!next_physical_address)
-                        {
-                            return kernel::memory_map_error::NO_SUCH_PAGE_TABLE;
-                        }
-
-                        current_table = a9n::kernel::physical_to_virtual_pointer<x86_64::page>(
-                            next_physical_address
-                        );
-                    }
-
-                    // PD, PT table are reachable.
-                    // therefore frame can be mapped into PT.
-                    return 0;
+                    return static_cast<a9n::word>(0);
                 }
             );
     }
@@ -452,5 +442,48 @@ namespace a9n::hal
         }
 
         return {};
+    }
+
+    kernel::memory_map_result<a9n::word>
+        search_page_table_cover_size_by_depth(const a9n::kernel::page_table &target_root, a9n::word depth)
+    {
+        if (depth > x86_64::PAGE_DEPTH::PML4 || depth < x86_64::PAGE_DEPTH::PT) [[unlikely]]
+        {
+            DEBUG_LOG("illegal target depth!\n");
+            return kernel::memory_map_error::ILLEGAL_DEPTH;
+        }
+
+        switch (depth)
+        {
+            case x86_64::PAGE_DEPTH::PML4 :
+                return 512ULL * 512ULL * 512ULL * a9n::PAGE_SIZE;
+
+            case x86_64::PAGE_DEPTH::PDPT :
+                return 512ULL * 512ULL * a9n::PAGE_SIZE;
+
+            case x86_64::PAGE_DEPTH::PD :
+                return 512ULL * a9n::PAGE_SIZE;
+
+            case x86_64::PAGE_DEPTH::PT :
+                return static_cast<a9n::word>(a9n::PAGE_SIZE);
+
+            default :
+                __builtin_unreachable();
+        }
+    }
+
+    kernel::memory_map_result<> validate_frame_size_bits(a9n::word size_bits)
+    {
+        switch (size_bits)
+        {
+            case 12 : // 4KiB
+            // TODO: return "ok" if huge page is supported
+            case 21 : // 2MiB
+            case 30 : // 1GiB
+                return {};
+
+            default :
+                return kernel::memory_map_error::ILLEGAL_DEPTH;
+        }
     }
 }

@@ -89,6 +89,7 @@ namespace a9n::kernel
         // 2^12 = 4096 (most commonly used)
         // 2^21 = 2097152 (2MiB)
         // 2^30 = 1,073,741,824 (1GiB)
+        a9n::word size_bits;
 
         // [0:7] depth, [8:15] rights
         a9n::word flags;
