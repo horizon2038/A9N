@@ -75,6 +75,9 @@ namespace a9n::hal::x86_64
         static constexpr uint16_t OFFSET = 0;
     }
 
+    inline bool SUPPORT_2MiB_PAGE = false;
+    inline bool SUPPORT_1GiB_PAGE = false;
+
     inline constexpr uint64_t
         calculate_page_table_index(a9n::virtual_address target_virtual_address, uint16_t table_depth)
     {

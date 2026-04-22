@@ -278,6 +278,34 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
+                    a9n::kernel::utility::logger::printh("check huge page support ...\n");
+                    return try_get_cpuid(cpuid_leaf::EXTENDED_PROCESSOR_INFO_AND_FEATURE_BITS, 0)
+                        .and_then(
+                            [](cpuid_info info) -> hal_result
+                            {
+                                const bool is_2mib_page_supported = info.rdx & (1 << 3);
+                                const bool is_1gib_page_supported = info.rdx & (1 << 26);
+
+                                SUPPORT_2MiB_PAGE                 = is_2mib_page_supported;
+                                SUPPORT_1GiB_PAGE                 = is_1gib_page_supported;
+
+                                a9n::kernel::utility::logger::printh(
+                                    "2MiB page support : %s\n",
+                                    is_2mib_page_supported ? "yes" : "no"
+                                );
+                                a9n::kernel::utility::logger::printh(
+                                    "1GiB page support : %s\n",
+                                    is_1gib_page_supported ? "yes" : "no"
+                                );
+
+                                return {};
+                            }
+                        );
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
                     return enable_vmx()
                         // .and_then(run_test_vm)
                         .or_else(

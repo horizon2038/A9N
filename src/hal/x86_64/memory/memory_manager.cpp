@@ -477,9 +477,22 @@ namespace a9n::hal
         switch (size_bits)
         {
             case 12 : // 4KiB
-            // TODO: return "ok" if huge page is supported
+                return {};
             case 21 : // 2MiB
+                // basically, 2MiB page is supported on all x86_64 CPUs, but we check it just in
+                // case.
+                if (!x86_64::SUPPORT_2MiB_PAGE) [[unlikely]]
+                {
+                    return kernel::memory_map_error::ILLEGAL_DEPTH;
+                }
+                return {};
             case 30 : // 1GiB
+                // basically, 1GiB page is supported on all x86_64 CPU (since 2010), but we check it
+                // just in case.
+                if (!x86_64::SUPPORT_1GiB_PAGE)
+                {
+                    return kernel::memory_map_error::ILLEGAL_DEPTH;
+                }
                 return {};
 
             default :
