@@ -2,10 +2,13 @@
 #let toc() = {
   set text(size: 12pt)
   set par(leading: 1.24em, first-line-indent: 0pt)
-  locate(loc => {
-    let elements = query(heading.where(outlined: true), loc)
+  context {
+    let loc = here()
+    let elements = query(heading.where(outlined: true))
+
     for el in elements {
-      let before_toc = query(heading.where(outlined: true).before(loc), loc).find((one) => {one.body == el.body}) != none
+      let before_toc = query(heading.where(outlined: true).before(loc)).find((one) => {one.body == el.body}) != none
+
       let page_num = if before_toc {
         numbering("1", counter(page).at(el.location()).first())
       } else if (el.level >= 1) and (el.level <= 3) {
@@ -31,16 +34,18 @@
           chapt_num
           " "
           el.body
-        } else {
+        } else if el.level == 3 {
           h(2em)
           chapt_num
           " "
           el.body
+        } else {
+            continue
         }
       }]
       box(width: 1fr, h(0.5em) + box(width: 1fr, repeat[.]) + h(0.5em))
       [#page_num]
       linebreak()
     }
-  })
+  }
 }
