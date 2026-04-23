@@ -1,4 +1,4 @@
-#import "@preview/bytefield:0.0.6": *
+#import "@preview/bytefield:0.0.8": *
 #import "/components/api_table.typ" : *
 
 = Capability
