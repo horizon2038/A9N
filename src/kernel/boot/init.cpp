@@ -1,3 +1,4 @@
+#include "liba9n/libc/string.hpp"
 #include <kernel/boot/init.hpp>
 
 #include <kernel/capability/address_space.hpp>
@@ -19,6 +20,7 @@
 
 #include <kernel/process/scheduler.hpp>
 #include <kernel/utility/logger.hpp>
+#include <kernel/version.hpp>
 
 #include <hal/interface/memory_manager.hpp>
 #include <hal/interface/process_manager.hpp>
@@ -77,6 +79,14 @@ namespace a9n::kernel
             return init_info_result.unwrap_error();
         }
         auto init_info_page = init_info_result.unwrap();
+
+        // configure version
+        liba9n::semantic_version version { KERNEL_VERSION_STRING };
+        init_info_page->kernel_major_version = version.current_major();
+        init_info_page->kernel_minor_version = version.current_minor();
+        init_info_page->kernel_patch_version = version.current_patch();
+        liba9n::std::memcpy(init_info_page->kernel_pre_release, version.current_pre_release(), 32);
+        liba9n::std::memcpy(init_info_page->kernel_build_meta_data, version.current_build_meta_data(), 32);
 
         // create init : process control block
         logger::printk("create init process control block ...\n");

@@ -3,6 +3,8 @@
 
 #include <liba9n/option/option.hpp>
 
+#include <stdint.h>
+
 namespace liba9n
 {
     struct value_with_current
@@ -72,6 +74,7 @@ namespace liba9n
     {
       public:
         semantic_version(const char *version);
+
         semantic_version(
             uintmax_t   major,
             uintmax_t   minor,
@@ -117,42 +120,87 @@ namespace liba9n
             FINISHED,
         } current_state { state::UNINITIALIZED };
 
+        static constexpr uintmax_t IDENTIFIER_BUFFER_SIZE = 32;
+
         uintmax_t major { 0 };
         uintmax_t minor { 0 };
         uintmax_t patch { 0 };
 
-        // option field
-        char pre_release[32];
-        char build_meta_data[32];
+        char pre_release[IDENTIFIER_BUFFER_SIZE] { 0 };
+        char build_meta_data[IDENTIFIER_BUFFER_SIZE] { 0 };
 
-        inline liba9n::option<const char *> parse_base(const char *base_version);
-        liba9n::option<const char *>        parse_pre_release(const char *pre_release);
-        liba9n::option<const char *>        parse_build_meta_data(const char *build_meta_data);
+        static bool is_identifier_character(char character)
+        {
+            return (character >= '0' && character <= '9') || (character >= 'A' && character <= 'Z')
+                || (character >= 'a' && character <= 'z') || character == '-' || character == '.';
+        }
+
+        static liba9n::option<const char *> copy_until_separator(
+            char       *destination,
+            uintmax_t   destination_size,
+            const char *source,
+            char        separator
+        )
+        {
+            if (!destination || !source || destination_size == 0)
+            {
+                return {};
+            }
+
+            uintmax_t index = 0;
+
+            while (*source != '\0' && *source != separator)
+            {
+                if (!is_identifier_character(*source))
+                {
+                    return {};
+                }
+
+                if (index + 1 >= destination_size)
+                {
+                    return {};
+                }
+
+                destination[index] = *source;
+                index++;
+                source++;
+            }
+
+            if (index == 0)
+            {
+                return {};
+            }
+
+            destination[index] = '\0';
+
+            if (*source == separator)
+            {
+                source++;
+            }
+
+            return source;
+        }
+
+        liba9n::option<const char *> parse_base(const char *base_version);
+        liba9n::option<const char *> parse_pre_release(const char *target_pre_release);
+        liba9n::option<const char *> parse_build_meta_data(const char *target_build_meta_data);
     };
-
-    // example
-    // 1.0.0
-    // 1.0.0 -pre-alpha.0.1 +exp.test.debug
 
     inline semantic_version::semantic_version(const char *version)
     {
         auto captured_parse_pre_release =
-            [this](const char *pre_release) -> liba9n::option<const char *>
+            [this](const char *target_pre_release) -> liba9n::option<const char *>
         {
-            return parse_pre_release(pre_release);
+            return parse_pre_release(target_pre_release);
         };
 
         auto captured_parse_build_meta_data =
-            [this](const char *build_meta_data) -> liba9n::option<const char *>
+            [this](const char *target_build_meta_data) -> liba9n::option<const char *>
         {
-            return parse_build_meta_data(build_meta_data);
+            return parse_build_meta_data(target_build_meta_data);
         };
 
-        // clang-format off
-        parse_base(version)
-            .and_then(captured_parse_pre_release)
-            .and_then(captured_parse_build_meta_data);
-        // clang-format on
+        parse_base(version).and_then(captured_parse_pre_release).and_then(captured_parse_build_meta_data);
     }
 
     inline semantic_version::semantic_version(
@@ -164,11 +212,20 @@ namespace liba9n
     )
     {
         major = target_major;
-        minor = target_major;
+        minor = target_minor;
         patch = target_patch;
 
-        // copy pre_release
-        // copy build_meta_data
+        if (target_pre_release && *target_pre_release)
+        {
+            copy_until_separator(pre_release, IDENTIFIER_BUFFER_SIZE, target_pre_release, '\0');
+        }
+
+        if (target_build_meta_data && *target_build_meta_data)
+        {
+            copy_until_separator(build_meta_data, IDENTIFIER_BUFFER_SIZE, target_build_meta_data, '\0');
+        }
+
+        current_state = state::FINISHED;
     }
 
     inline liba9n::option<const char *> semantic_version::parse_base(const char *base_version)
@@ -185,51 +242,59 @@ namespace liba9n
             switch (current_state)
             {
                 case state::MAJOR :
-                    if (auto result = string_to_value<'.'>(base_version))
                     {
-                        major         = result.unwrap().value;
-                        base_version  = result.unwrap().current;
-                        current_state = state::MINOR;
-                        break;
-                    }
-                    else
-                    {
+                        if (auto result = string_to_value<'.'>(base_version))
+                        {
+                            major         = result.unwrap().value;
+                            base_version  = result.unwrap().current;
+                            current_state = state::MINOR;
+                            break;
+                        }
+
                         return {};
                     }
 
                 case state::MINOR :
-                    if (auto result = string_to_value<'.'>(base_version))
                     {
-                        minor         = result.unwrap().value;
-                        base_version  = result.unwrap().current;
-                        current_state = state::PATCH;
-                        break;
-                    }
-                    else
-                    {
+                        if (auto result = string_to_value<'.'>(base_version))
+                        {
+                            minor         = result.unwrap().value;
+                            base_version  = result.unwrap().current;
+                            current_state = state::PATCH;
+                            break;
+                        }
+
                         return {};
                     }
 
                 case state::PATCH :
-                    if (auto result = string_to_value<'-', '+'>(base_version))
                     {
-                        patch        = result.unwrap().value;
-                        base_version = result.unwrap().current;
-
-                        switch (*(base_version - 1))
+                        if (auto result = string_to_value<'-', '+'>(base_version))
                         {
-                            case '-' :
+                            patch            = result.unwrap().value;
+
+                            const char *next = result.unwrap().current;
+
+                            if (next > base_version && *(next - 1) == '-')
+                            {
                                 current_state = state::PRE_RELEASE;
-                                return base_version;
+                                return next;
+                            }
 
-                            case '+' :
+                            if (next > base_version && *(next - 1) == '+')
+                            {
                                 current_state = state::BUILD_META_DATA;
-                                return base_version;
+                                return next;
+                            }
 
-                            default :
+                            if (*next == '\0')
+                            {
                                 current_state = state::FINISHED;
                                 return {};
+                            }
                         }
+
+                        return {};
                     }
 
                 default :
@@ -238,7 +303,7 @@ namespace liba9n
         }
 
         return {};
-    };
+    }
 
     inline liba9n::option<const char *>
         semantic_version::parse_pre_release(const char *target_pre_release)
@@ -248,14 +313,23 @@ namespace liba9n
             return {};
         }
 
-        if (auto result = string_to_value<'-'>(target_pre_release))
+        if (auto result
+            = copy_until_separator(pre_release, IDENTIFIER_BUFFER_SIZE, target_pre_release, '+'))
         {
-            // copy char*
-            // TODO: implementation this
+            const char *current = result.unwrap();
+
+            if (current > target_pre_release && *(current - 1) == '+')
+            {
+                current_state = state::BUILD_META_DATA;
+                return current;
+            }
+
+            current_state = state::FINISHED;
+            return {};
         }
 
         return {};
-    };
+    }
 
     inline liba9n::option<const char *>
         semantic_version::parse_build_meta_data(const char *target_build_meta_data)
@@ -265,15 +339,15 @@ namespace liba9n
             return {};
         }
 
-        if (auto result = string_to_value<'+'>(target_build_meta_data))
+        if (auto result
+            = copy_until_separator(build_meta_data, IDENTIFIER_BUFFER_SIZE, target_build_meta_data, '\0'))
         {
-            // copy char*
-            // TODO: implementation this
+            current_state = state::FINISHED;
+            return result.unwrap();
         }
 
         return {};
-    };
-
+    }
 }
 
 #endif

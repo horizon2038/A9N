@@ -33,6 +33,7 @@
 #include <liba9n/result/result.hpp>
 
 #include <kernel/boot/init.hpp>
+#include <kernel/version.hpp>
 
 void kernel_main(void);
 
@@ -61,6 +62,8 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     logger::a9nout();
     logger::printk("start A9N kernel ...\n");
     logger::split();
+
+    logger::printk("kernel version: %s \n", a9n::kernel::KERNEL_VERSION_STRING);
 
     logger::printk("kernel entry : 0x%016llx\n", reinterpret_cast<uint64_t>(kernel_entry));
     logger::printk("boot info address : 0x%016llx\n", reinterpret_cast<uint64_t>(target_boot_info));
