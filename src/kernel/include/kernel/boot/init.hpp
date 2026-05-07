@@ -5,6 +5,10 @@
 #include <kernel/kernel_result.hpp>
 #include <kernel/types.hpp>
 
+#define KERNEL_MAJOR_VERSION 0
+#define KERNEL_MINOR_VERSION 1
+#define KERNEL_PATCH_VERSION 0
+
 namespace a9n::kernel
 {
     inline constexpr a9n::word INITIAL_PROCESS_ROOT_NODE_COUNT  = 256;
@@ -45,7 +49,11 @@ namespace a9n::kernel
     struct init_info
     {
         // kernel description
-        a9n::word kernel_version {};
+        a9n::word kernel_major_version {};
+        a9n::word kernel_minor_version {};
+        a9n::word kernel_patch_version {};
+        char      kernel_pre_release[32] {};
+        char      kernel_build_meta_data[32] {};
 
         // architectural information
         a9n::word arch_info[ARCH_INFO_MAX];
