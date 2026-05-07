@@ -725,8 +725,6 @@ namespace a9n::kernel
             }
         }
 
-        init_info_page.kernel_version = 0xdeadc0de;
-
         return {};
     }
 
