@@ -1,6 +1,7 @@
 #include "hal/hal_result.hpp"
 #include "kernel/kernel_result.hpp"
 #include <kernel/utility/logger.hpp>
+#include <kernel/version.hpp>
 
 #include <hal/interface/cpu.hpp>
 
@@ -152,16 +153,13 @@ namespace a9n::kernel::utility
             "\e[11F"
             "\e[36G"
             "\e[32m"
-            "kernel: \e[52G\e[37mA9N v0.2.1\n"
+            "kernel: \e[52G\e[37mA9N v%s\n"
             "\e[36G"
             "\e[32m"
-            "architecture: \e[52G\e[37m%s\n"
+            "creator: \e[52G\e[37mRekka 'horizon' IGUMI\n"
             "\e[36G"
             "\e[32m"
-            "creator: \e[52G\e[37mhorizon2k38\n"
-            "\e[36G"
-            "\e[32m"
-            "project: \e[52G\e[37mmitoujr\n"
+            "project: \e[52G\e[37mA9N Project\n"
             "\e[36G"
             "\e[32m"
             "about: \e[52G\e[37mA9N is a kernel built on HAL <Hardware "
@@ -172,7 +170,7 @@ namespace a9n::kernel::utility
             "scalability.\n"
             "\e[0m"
             "\e[13E",
-            "x86_64" // TODO: change hard-coded architecture.
+            KERNEL_VERSION_STRING
         );
     }
 
@@ -215,32 +213,5 @@ namespace a9n::kernel::utility
     void logger::print_splitter()
     {
         // this_logger->_print.printf(": ");
-    }
-
-    void logger::mitoujr()
-    {
-        this_logger->_print.printf(
-            "\e[32m"
-            "                                                  \n"
-            "                         /                        \n"
-            "                       /////                      \n"
-            "                      /// ///                     \n"
-            "                    ///     ///                   \n"
-            "                   ///       ///                  \n"
-            "                 ////         ////                \n"
-            "                ////           ////               \n"
-            "              ////////       ////////             \n"
-            "             ///    ///     ///    ///            \n"
-            "            ///      ///   ///      ///           \n"
-            "          ///          /////          ///         \n"
-            "         ///            ///            ///        \n"
-            "       ///            /// ///            ///      \n"
-            "      ///            ///   ///            ///     \n"
-            "    ////           ////     ////           ////   \n"
-            "   ///            ///         ///            ///  \n"
-            "  //////////////////           //////////////////(\n"
-            "                                                  \n"
-            "\e[0m"
-        );
     }
 }

@@ -59,8 +59,6 @@ namespace a9n::kernel::utility
         static void split(); // for clean-log
         static void a9nout();
 
-        static void mitoujr();
-
       private:
         static uint32_t    log_id;
         static logger     *this_logger;
