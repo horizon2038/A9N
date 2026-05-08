@@ -66,12 +66,17 @@ Currently supported architectures:
 
 ## Build (with Docker)
 
+### Syntax
+
 ```bash
-docker build -t a9n-build .
-docker run --rm -v $(pwd):/A9N a9n-build bash -c "./scripts/setup.sh && make -j8"
+ARCH={target_arch} BUILD_TYPE={Debug|Release} docker compose run --rm a9n-build
 ```
-> [!WARNING]
-> Docker-based builds are currently under maintenance and unavailable.
+
+### Example (x86_64, Release)
+
+```bash
+ARCH=x86_64 BUILD_TYPE=Release docker compose run --rm a9n-build
+```
 
 ## Build (with CMake)
 

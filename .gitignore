@@ -3,6 +3,7 @@
 /chain/
 /test/build/
 /test/library/
+/build*
 
 # bin
 *.fd

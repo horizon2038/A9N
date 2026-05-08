@@ -1,0 +1,33 @@
+services:
+  a9n-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    working_dir: /workspace
+
+    volumes:
+      - .:/workspace
+      - a9n-ccache:/workspace/.ccache
+
+    environment:
+      CCACHE_DIR: /workspace/.ccache
+      CCACHE_MAXSIZE: 2G
+      ARCH: ${ARCH:-x86_64}
+      BUILD_TYPE: ${BUILD_TYPE:-Release}
+
+    command:
+      - bash
+      - -lc
+      - |
+        set -eux
+        build_dir="build-${ARCH}-${BUILD_TYPE}"
+        cmake -S . -B "$${build_dir}" \
+          -DARCH="${ARCH}" \
+          -DCMAKE_TOOLCHAIN_FILE="./src/hal/${ARCH}/toolchain.cmake" \
+          -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+          -G Ninja
+        cmake --build "$${build_dir}" -- -k 0
+
+volumes:
+  a9n-ccache:
