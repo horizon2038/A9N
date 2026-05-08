@@ -1,0 +1,8 @@
+#ifndef LIBA9N_LIBCXX_ARRAY_HPP
+#define LIBA9N_LIBCXX_ARRAY_HPP
+
+#include <liba9n/libcxx/__array/array_common.hpp>
+#include <liba9n/libcxx/__array/array_impl.hpp>
+#include <liba9n/libcxx/__array/array_zero_impl.hpp>
+
+#endif

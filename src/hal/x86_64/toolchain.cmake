@@ -1,0 +1,126 @@
+# x86_64 : toolchain configuration (clang version)
+
+# CMake base settings
+cmake_minimum_required(VERSION 3.29)
+
+# system configuration
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR x86_64)
+
+find_program(LLVM_CONFIG_EXECUTABLE llvm-config)
+if(LLVM_CONFIG_EXECUTABLE)
+    execute_process(
+        COMMAND ${LLVM_CONFIG_EXECUTABLE} --bindir
+        OUTPUT_VARIABLE LLVM_BINDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(LLVM_BIN "${LLVM_BINDIR}")
+else()
+    message(FATAL_ERROR "llvm-config is not found. Please install it or create an alias as llvm-config if it has a version-specific name.")
+endif()
+
+set(CMAKE_C_COMPILER ${LLVM_BIN}/clang CACHE STRING "" FORCE)
+set(
+    CMAKE_C_FLAGS
+    "${CMAKE_C_FLAGS} \
+    --target=x86_64-elf \
+    -mcmodel=large \
+    -mno-red-zone \
+    -fno-pic \
+    -fno-pie \
+    -fomit-frame-pointer \
+    -mno-mmx \
+    -mno-sse \
+    -mno-sse2 \
+    -mno-avx \
+    -mno-avx2 \
+    -fno-threadsafe-statics \
+    -ffreestanding \
+    -nostdlib \
+    -fdata-sections \
+    -ffunction-sections \
+    -flto=full \
+    -fmacro-prefix-map=/Users/horizon/Documents/Program/A9N/= \
+    "
+)
+
+set(CMAKE_CXX_COMPILER ${LLVM_BIN}/clang++ CACHE STRING "" FORCE)
+set(
+    CMAKE_CXX_FLAGS
+    "${CMAKE_CXX_FLAGS} \
+    --target=x86_64-elf \
+    -mcmodel=large \
+    -mno-red-zone \
+    -fno-pic \
+    -fno-pie \
+    -fomit-frame-pointer \
+    -mno-mmx \
+    -mno-sse \
+    -mno-sse2 \
+    -mno-avx \
+    -mno-avx2 \
+    -fno-threadsafe-statics \
+    -fno-exceptions \
+    -fno-rtti \
+    -ffreestanding \
+    -nostdlib \
+    -fdata-sections \
+    -ffunction-sections \
+    -flto=full \
+    -fforce-emit-vtables \
+    -fmacro-prefix-map=/Users/horizon/Documents/Program/A9N/= \
+    "
+)
+
+add_compile_options(
+    $<$<CONFIG:DEBUG>:-g>
+    $<$<CONFIG:DEBUG>:-O0>
+    $<$<CONFIG:RELEASE>:-O3>
+    $<$<CONFIG:RELEASE>:-funroll-loops>
+    $<$<CONFIG:RELEASE>:-ftree-vectorize>
+    $<$<CONFIG:RELEASE>:-ftree-vectorizer-verbose>
+)
+
+message(STATUS "CXX Compiler Flags : ${CMAKE_CXX_FLAGS}")
+
+# Asm configuration
+find_program(NASM_EXECUTABLE nasm)
+if (NOT NASM_EXECUTABLE)
+    message(FATAL_ERROR "assembler error : NASM does not exist")
+endif()
+set(CMAKE_ASM_NASM_COMPILER ${NASM_EXECUTABLE})
+set(CMAKE_ASM_NASM_FLAGS "-f elf64 -O5")
+set(CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS s nasm asm)
+set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> ${CMAKE_ASM_NASM_FLAGS} -o <OBJECT> <SOURCE>")
+
+message(STATUS "linker type : ${CMAKE_LINKER_TYPE}")
+
+# lld configuration
+set(LLD_EXECUTABLE "${LLVM_BIN}/ld.lld")
+
+set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> ${CMAKE_GNULD_IMAGE_VERSION} <LINK_LIBRARIES>")
+set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> ${CMAKE_GNULD_IMAGE_VERSION} <LINK_LIBRARIES>")
+
+message(STATUS "CMAKE_CXX_LINK_EXECUTABLE : ${CMAKE_CXX_LINK_EXECUTABLE}")
+
+set(LINKER_MODE TOOL)
+set(CMAKE_C_USING_LINKER_MODE "${LINKER_MODE}")
+set(CMAKE_CXX_USING_LINKER_MODE "${LINKER_MODE}")
+
+set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/src/hal/x86_64/kernel.ld")
+set(MAP_FILE "${CMAKE_BINARY_DIR}/kernel.map")
+
+add_link_options(
+    ${CMAKE_EXE_LINKER_FLAGS}
+    -T "${LINKER_SCRIPT}"
+    "SHELL:-z norelro -z separate-code"
+    --static
+    -nostdlib
+    -Map "${MAP_FILE}"
+    --gc-sections
+)
+
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+message(STATUS "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
+
