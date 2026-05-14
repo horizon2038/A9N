@@ -22,8 +22,6 @@ namespace a9n::kernel
 
         kernel_result handle_timer(void);
 
-        kernel_result switch_context(void);
-
         kernel_result switch_to_user(void);
         kernel_result switch_to_idle(void);
 
