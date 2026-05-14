@@ -262,6 +262,34 @@ namespace a9n::kernel
             );
     }
 
+    kernel_result process_manager::try_schedule(void)
+    {
+        return a9n::hal::current_local_variable()
+            .and_then(
+                [&](cpu_local_variable *local_variable) -> hal::hal_result
+                {
+                    return scheduler_core.schedule()
+                        .transform_error(
+                            [&](scheduler_error e) -> hal::hal_error
+                            {
+                                DEBUG_LOG("scheduler error : %s", scheduler_error_to_string(e));
+                                return hal::hal_error::TRY_AGAIN;
+                            }
+                        )
+                        .and_then(
+                            [&](process *next_process) -> hal::hal_result
+                            {
+                                local_variable->current_process = next_process;
+                                local_variable->is_idle         = false;
+
+                                return {};
+                            }
+                        );
+                }
+            )
+            .transform_error(convert_hal_to_kernel_error);
+    }
+
     kernel_result process_manager::try_schedule_and_switch(void)
     {
         return a9n::hal::current_local_variable()

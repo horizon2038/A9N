@@ -92,7 +92,7 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     a9n::kernel::interrupt_manager_core.ack_interrupt();
 
     logger::printk("init process_manager ...\n");
-    result = a9n::kernel::process_manager_core.init();
+    result = a9n::kernel::cpu_local_variables[a9n::kernel::BSP_ID].process_manager_core.init();
     logger::split();
 
     // create user thread
@@ -108,7 +108,9 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
 
     logger::printk("all initialization completed successfully\n");
 
-    a9n::kernel::process_manager_core.switch_to_user();
+    a9n::hal::start_other_cores();
+
+    a9n::kernel::cpu_local_variables[a9n::kernel::BSP_ID].process_manager_core.switch_to_user();
 
     for (;;)
         ;

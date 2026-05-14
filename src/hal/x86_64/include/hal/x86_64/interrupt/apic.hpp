@@ -165,6 +165,7 @@ namespace a9n::hal::x86_64
 
         liba9n::result<uint32_t, hal_error> read(uint32_t offset);
         hal_result                          write(uint32_t offset, uint64_t value);
+        liba9n::result<uint8_t, hal_error>  id(void);
 
         hal_result end_of_interrupt();
 

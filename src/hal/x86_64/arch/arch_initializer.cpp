@@ -244,6 +244,19 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
+                    return local_apic_core.id().and_then(
+                        [](uint8_t id) -> hal_result
+                        {
+                            logger::printh("local apic id: 0x%02x\n", id);
+                            a9n::hal::x86_64::arch_cpu_local_variables[0].local_apic_id = id;
+                            return {};
+                        }
+                    );
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
                     logger::printh("re-configure serial (for debug) ...\n");
                     reconfigure_serial();
                     return {};
@@ -463,13 +476,29 @@ namespace a9n::hal::x86_64
                   .and_then(
                       [](a9n::word core_number) -> hal_result
                       {
-                          kernel::utility::logger::printh(
+                          a9n::kernel::utility::logger::printh(
                               "configure local variable [%04llx]\n",
                               core_number
                           );
-                          return a9n::hal::configure_local_variable(
-                              &a9n::kernel::cpu_local_variables[core_number]
-                          );
+
+                          return local_apic_core.id()
+                              .and_then(
+                                  [core_number](uint8_t id) -> hal_result
+                                  {
+                                      a9n::hal::x86_64::arch_cpu_local_variables[core_number].local_apic_id
+                                          = id;
+                                      a9n::kernel::utility::logger::printh("local apic id: 0x%02x\n", id);
+                                      return {};
+                                  }
+                              )
+                              .and_then(
+                                  [core_number](void) -> hal_result
+                                  {
+                                      return a9n::hal::configure_local_variable(
+                                          &a9n::kernel::cpu_local_variables[core_number]
+                                      );
+                                  }
+                              );
                       }
                   )
                   .and_then(
@@ -486,10 +515,31 @@ namespace a9n::hal::x86_64
             return;
         }
 
-        for (;;)
+        while (!is_ap_runnable)
         {
-            _idle();
+            // busy wait
         }
+
+        a9n::hal::current_local_variable().and_then(
+            [](a9n::kernel::cpu_local_variable *clv) -> hal_result
+            {
+                a9n::kernel::utility::logger::printh("start AP ...\n");
+                for (;;)
+                {
+                    // a9n::kernel::utility::logger::printh("AP: try schedule and switch ...\n");
+                    _enable_interrupt_all();
+                    auto result = clv->process_manager_core.switch_to_idle();
+                    if (!result)
+                    {
+                        a9n::kernel::utility::logger::printh(
+                            "AP: failed to schedule and switch : %s, re-looping ...\n",
+                            kernel_error_to_string(result.unwrap_error())
+                        );
+                        continue;
+                    }
+                }
+            }
+        );
     }
 
     hal_result init_sub_core(void)
@@ -520,6 +570,13 @@ namespace a9n::hal::x86_64
                         static_cast<a9n::word>(e)
                     );
                     return e;
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    a9n::kernel::utility::logger::printh("init IDT handler ...\n");
+                    return init_idt_handler();
                 }
             )
             .and_then(

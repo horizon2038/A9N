@@ -54,8 +54,8 @@ namespace a9n::hal::x86_64
         using a9n::kernel::utility::logger;
 
         return a9n::hal::current_local_variable().and_then(
-            [](a9n::kernel::cpu_local_variable *local_variable
-            ) -> liba9n::result<arch_cpu_local_variable *, hal_error>
+            [](a9n::kernel::cpu_local_variable *local_variable)
+                -> liba9n::result<arch_cpu_local_variable *, hal_error>
             {
                 return &arch_cpu_local_variables[local_variable->core_number];
             }
@@ -149,6 +149,14 @@ namespace a9n::hal
                 return local_variable->core_number;
             }
         );
+    }
+
+    hal_result start_other_cores(void)
+    {
+        a9n::kernel::utility::logger::logger::printh("start other cores ...\n");
+        x86_64::is_ap_runnable = true;
+
+        return {};
     }
 
 }

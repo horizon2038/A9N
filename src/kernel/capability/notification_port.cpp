@@ -92,8 +92,37 @@ namespace a9n::kernel
                                     .and_then(
                                         [&](void) -> capability_result
                                         {
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(target.get())
+                                            return a9n::hal::current_local_variable()
+                                                .transform_error(convert_hal_to_kernel_error)
+                                                .and_then(
+                                                    [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                                                    {
+                                                        if (target->core_affinity
+                                                            != clv->core_number) [[unlikely]]
+                                                        {
+                                                            return cpu_local_variables[target->core_affinity]
+                                                                .process_manager_core
+                                                                .mark_scheduled(target.get())
+                                                                .and_then(
+                                                                    [&](void) -> kernel_result
+                                                                    {
+                                                                        return hal::send_ipi(
+                                                                                   hal::ipi_type::RESCHEDULE,
+                                                                                   target->core_affinity
+                                                                        )
+                                                                            .transform_error(
+                                                                                convert_hal_to_kernel_error
+                                                                            );
+                                                                    }
+                                                                );
+                                                        }
+
+                                                        return clv->process_manager_core
+                                                            .try_direct_schedule_and_switch(
+                                                                target.get()
+                                                            );
+                                                    }
+                                                )
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -133,7 +162,15 @@ namespace a9n::kernel
                             [&](void) -> kernel_result
                             {
                                 DEBUG_LOG("notification_port::wait : schedule another process");
-                                return process_manager_core.try_schedule_and_switch();
+
+                                return a9n::hal::current_local_variable()
+                                    .transform_error(convert_hal_to_kernel_error)
+                                    .and_then(
+                                        [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                                        {
+                                            return clv->process_manager_core.try_schedule_and_switch();
+                                        }
+                                    );
                             }
                         )
                         .transform_error(convert_kernel_to_capability_error);

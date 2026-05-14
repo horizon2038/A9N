@@ -74,31 +74,53 @@ namespace a9n::kernel
                 return scheduler_error::INVALID_PROCESS;
             }
 
-            add_process(target_process);
+            auto add_result = add_process(target_process);
+            if (!add_result)
+            {
+                return add_result.unwrap_error();
+            }
 
             return schedule();
         }
 
-        bool has_next    = static_cast<bool>(target_process->next);
-        bool has_preview = static_cast<bool>(target_process->preview);
+        auto &target_queue = queue[target_priority];
+        bool  is_head      = (target_queue.head == target_process);
+        bool  is_tail      = (target_queue.tail == target_process);
+        bool  has_next     = static_cast<bool>(target_process->next);
+        bool  has_preview  = static_cast<bool>(target_process->preview);
 
-        // target_process is head
-        if (has_next && !has_preview)
+        // Unlink target process if it is in the ready-queue.
+        // (single-element queue case: head==tail==target, next==preview==nullptr)
+        if (is_head || is_tail || has_next || has_preview)
         {
-            queue[target_priority].head          = target_process->next;
-            queue[target_priority].head->preview = nullptr;
-        }
-        // target_process is tail
-        else if (!has_next && has_preview)
-        {
-            queue[target_priority].tail       = target_process->preview;
-            queue[target_priority].tail->next = nullptr;
-        }
-        // target_process exists at the center of queue
-        else if (has_next && has_preview)
-        {
-            target_process->preview->next = target_process->next;
-            target_process->next->preview = target_process->preview;
+            auto preview = target_process->preview;
+            auto next    = target_process->next;
+
+            if (preview)
+            {
+                preview->next = next;
+            }
+            if (next)
+            {
+                next->preview = preview;
+            }
+            if (is_head)
+            {
+                target_queue.head = next;
+            }
+            if (is_tail)
+            {
+                target_queue.tail = preview;
+            }
+
+            if (!target_queue.head)
+            {
+                target_queue.tail = nullptr;
+            }
+            else if (!target_queue.tail)
+            {
+                target_queue.tail = target_queue.head;
+            }
         }
         // if target_process does not exist in queue, it can be scheduled as it is
 
@@ -115,28 +137,29 @@ namespace a9n::kernel
     {
         if (!target_process) [[unlikely]]
         {
-            DEBUG_LOG("invalid process");
+            // a9n::kernel::utility::logger::printk("invalid process\n");
             return scheduler_error::INVALID_PROCESS;
         }
 
         if (target_process->status != process_status::READY) [[unlikely]]
         {
             // in benno scheduling, only executable processes exist in the ready-queue
-            DEBUG_LOG("invalid process status");
+            // a9n::kernel::utility::logger::printk("invalid process status\n");
             return scheduler_error::INVALID_PROCESS;
         }
 
         auto target_priority = target_process->priority;
         if (target_priority < 0 || target_priority >= PRIORITY_MAX) [[unlikely]]
         {
-            DEBUG_LOG("invalid priority");
+            // a9n::kernel::utility::logger::printk("invalid priority\n");
             return scheduler_error::INVALID_PRIORITY;
         }
 
         if (target_process->next || target_process->preview) [[unlikely]]
         {
             DEBUG_LOG("process already exists in queue");
-            return scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE;
+            // do nothing
+            return {};
         }
 
         if (target_priority > highest_priority)

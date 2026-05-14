@@ -1,3 +1,4 @@
+#include "hal/interface/cpu.hpp"
 #include "hal/interface/process_manager.hpp"
 #include "kernel/types.hpp"
 #include <kernel/capability/ipc_port.hpp>
@@ -17,9 +18,23 @@ namespace a9n::kernel
     // helper
     namespace
     {
-        inline kernel_result try_schedule_and_switch(void)
+        // SMP switch
+        inline kernel_result try_schedule_and_switch(uintmax_t core)
         {
-            return process_manager_core.try_schedule_and_switch();
+            return a9n::hal::current_local_variable()
+                .transform_error(convert_hal_to_kernel_error)
+                .and_then(
+                    [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                    {
+                        if (clv->core_number != core) [[unlikely]]
+                        {
+                            return hal::send_ipi(hal::ipi_type::RESCHEDULE, core)
+                                .transform_error(convert_hal_to_kernel_error);
+                        }
+
+                        return clv->process_manager_core.try_schedule_and_switch();
+                    }
+                );
         }
     }
 
@@ -102,7 +117,12 @@ namespace a9n::kernel
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&]() -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner.core_affinity);
+                            }
+                        )
                         .transform_error(
                             [](kernel_error e) -> capability_error
                             {
@@ -128,8 +148,35 @@ namespace a9n::kernel
                                     .and_then(
                                         [&](void) -> capability_result
                                         {
-                                            // re-queueing
-                                            return process_manager_core.mark_scheduled(target.get())
+                                            return a9n::hal::current_local_variable()
+                                                .transform_error(convert_hal_to_kernel_error)
+                                                .and_then(
+                                                    [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                                                    {
+                                                        if (target->core_affinity
+                                                            != clv->core_number) [[unlikely]]
+                                                        {
+                                                            return cpu_local_variables[target->core_affinity]
+                                                                .process_manager_core
+                                                                .mark_scheduled(target.get())
+                                                                .and_then(
+                                                                    [&](void) -> kernel_result
+                                                                    {
+                                                                        return hal::send_ipi(
+                                                                                   hal::ipi_type::RESCHEDULE,
+                                                                                   target->core_affinity
+                                                                        )
+                                                                            .transform_error(
+                                                                                convert_hal_to_kernel_error
+                                                                            );
+                                                                    }
+                                                                );
+                                                        }
+
+                                                        return clv->process_manager_core
+                                                            .mark_scheduled(target.get());
+                                                    }
+                                                )
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -171,7 +218,12 @@ namespace a9n::kernel
                     owner.status = process_status::BLOCKED;
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&]() -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner.core_affinity);
+                            }
+                        )
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
@@ -200,7 +252,12 @@ namespace a9n::kernel
                                     owner.status = process_status::BLOCKED;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
                                     return push_ipc_queue(owner)
-                                        .and_then(try_schedule_and_switch)
+                                        .and_then(
+                                            [&owner]() -> kernel_result
+                                            {
+                                                return try_schedule_and_switch(owner.core_affinity);
+                                            }
+                                        )
                                         .transform_error(convert_kernel_to_capability_error);
                                 }
 
@@ -236,8 +293,35 @@ namespace a9n::kernel
                                                 = process::destination_reply_state_object::READY_TO_REPLY;
                                             owner.destination_reply_target = &target.get();
 
-                                            // re-queueing
-                                            return process_manager_core.mark_scheduled(target.get())
+                                            return a9n::hal::current_local_variable()
+                                                .transform_error(convert_hal_to_kernel_error)
+                                                .and_then(
+                                                    [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                                                    {
+                                                        if (target->core_affinity
+                                                            != clv->core_number) [[unlikely]]
+                                                        {
+                                                            return cpu_local_variables[target->core_affinity]
+                                                                .process_manager_core
+                                                                .mark_scheduled(target.get())
+                                                                .and_then(
+                                                                    [&](void) -> kernel_result
+                                                                    {
+                                                                        return hal::send_ipi(
+                                                                                   hal::ipi_type::RESCHEDULE,
+                                                                                   target->core_affinity
+                                                                        )
+                                                                            .transform_error(
+                                                                                convert_hal_to_kernel_error
+                                                                            );
+                                                                    }
+                                                                );
+                                                        }
+
+                                                        return clv->process_manager_core
+                                                            .mark_scheduled(target.get());
+                                                    }
+                                                )
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -277,7 +361,12 @@ namespace a9n::kernel
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&]() -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner.core_affinity);
+                            }
+                        )
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
@@ -304,7 +393,12 @@ namespace a9n::kernel
                                     owner.status = process_status::BLOCKED;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
                                     return push_ipc_queue(owner)
-                                        .and_then(try_schedule_and_switch)
+                                        .and_then(
+                                            [&owner]() -> kernel_result
+                                            {
+                                                return try_schedule_and_switch(owner.core_affinity);
+                                            }
+                                        )
                                         .transform_error(convert_kernel_to_capability_error);
                                 }
 
@@ -317,8 +411,38 @@ namespace a9n::kernel
                                         [&, this](void) -> capability_result
                                         {
                                             target->status = process_status::READY;
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(target.get())
+
+                                            return a9n::hal::current_local_variable()
+                                                .transform_error(convert_hal_to_kernel_error)
+                                                .and_then(
+                                                    [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                                                    {
+                                                        if (target->core_affinity
+                                                            != clv->core_number) [[unlikely]]
+                                                        {
+                                                            return cpu_local_variables[target->core_affinity]
+                                                                .process_manager_core
+                                                                .mark_scheduled(target.get())
+                                                                .and_then(
+                                                                    [&](void) -> kernel_result
+                                                                    {
+                                                                        return hal::send_ipi(
+                                                                                   hal::ipi_type::RESCHEDULE,
+                                                                                   target->core_affinity
+                                                                        )
+                                                                            .transform_error(
+                                                                                convert_hal_to_kernel_error
+                                                                            );
+                                                                    }
+                                                                );
+                                                        }
+
+                                                        return clv->process_manager_core
+                                                            .try_direct_schedule_and_switch(
+                                                                target.get()
+                                                            );
+                                                    }
+                                                )
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -382,18 +506,35 @@ namespace a9n::kernel
                                     = process::destination_reply_state_object::NONE;
                                 owner.destination_reply_target = nullptr;
 
-                                return process_manager_core.mark_scheduled(*client)
-                                    .transform_error(convert_kernel_to_capability_error)
+                                return a9n::hal::current_local_variable()
+                                    .transform_error(convert_hal_to_kernel_error)
                                     .and_then(
-                                        [&](void) -> capability_result
+                                        [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
                                         {
-                                            owner.status = process_status::READY;
+                                            if (client->core_affinity != clv->core_number)
+                                                [[unlikely]]
+                                            {
+                                                return cpu_local_variables[client->core_affinity]
+                                                    .process_manager_core.mark_scheduled(*client)
+                                                    .and_then(
+                                                        [&](void) -> kernel_result
+                                                        {
+                                                            return hal::send_ipi(
+                                                                       hal::ipi_type::RESCHEDULE,
+                                                                       client->core_affinity
+                                                            )
+                                                                .transform_error(
+                                                                    convert_hal_to_kernel_error
+                                                                );
+                                                        }
+                                                    );
+                                            }
 
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(owner)
-                                                .transform_error(convert_kernel_to_capability_error);
+                                            return clv->process_manager_core
+                                                .try_direct_schedule_and_switch(*client);
                                         }
-                                    );
+                                    )
+                                    .transform_error(convert_kernel_to_capability_error);
                             }
                         );
                 }
@@ -492,7 +633,12 @@ namespace a9n::kernel
                     );
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&]() -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner.core_affinity);
+                            }
+                        )
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
@@ -518,7 +664,12 @@ namespace a9n::kernel
                                     owner.status = process_status::BLOCKED;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
                                     return push_ipc_queue(owner)
-                                        .and_then(try_schedule_and_switch)
+                                        .and_then(
+                                            [&owner]() -> kernel_result
+                                            {
+                                                return try_schedule_and_switch(owner.core_affinity);
+                                            }
+                                        )
                                         .transform_error(convert_kernel_to_capability_error);
                                 }
 
@@ -531,8 +682,38 @@ namespace a9n::kernel
                                         [&, this](void) -> capability_result
                                         {
                                             target->status = process_status::READY;
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(target.get())
+
+                                            return a9n::hal::current_local_variable()
+                                                .transform_error(convert_hal_to_kernel_error)
+                                                .and_then(
+                                                    [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                                                    {
+                                                        if (target->core_affinity
+                                                            != clv->core_number) [[unlikely]]
+                                                        {
+                                                            return cpu_local_variables[target->core_affinity]
+                                                                .process_manager_core
+                                                                .mark_scheduled(target.get())
+                                                                .and_then(
+                                                                    [&](void) -> kernel_result
+                                                                    {
+                                                                        return hal::send_ipi(
+                                                                                   hal::ipi_type::RESCHEDULE,
+                                                                                   target->core_affinity
+                                                                        )
+                                                                            .transform_error(
+                                                                                convert_hal_to_kernel_error
+                                                                            );
+                                                                    }
+                                                                );
+                                                        }
+
+                                                        return clv->process_manager_core
+                                                            .try_direct_schedule_and_switch(
+                                                                target.get()
+                                                            );
+                                                    }
+                                                )
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );

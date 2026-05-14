@@ -356,7 +356,9 @@ namespace a9n::kernel
                     liba9n::std::strcpy(init_process_control_block->process_core.name, "INIT");
 
                     init_process_control_block->process_core.status = process_status::READY;
-                    process_manager_core.mark_scheduled(init_process_control_block->process_core);
+                    cpu_local_variables[BSP_ID].process_manager_core.mark_scheduled(
+                        init_process_control_block->process_core
+                    );
 
                     return init_process_control_block;
                 }

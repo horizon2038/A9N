@@ -1,3 +1,4 @@
+#include "kernel/interrupt/interrupt.hpp"
 #include <hal/interface/interrupt.hpp>
 
 #include <hal/hal_result.hpp>
@@ -138,6 +139,11 @@ namespace a9n::hal::x86_64
     // called from asm
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code)
     {
+        if (current_local_variable().unwrap()->is_idle)
+        {
+            do_irq_from_user(irq_number, error_code);
+        }
+
         const char *exception_type = get_exception_type_string(irq_number);
 
         a9n::kernel::utility::logger::printh(
@@ -241,9 +247,15 @@ namespace a9n::hal::x86_64
                     // TODO
                     break;
 
+                case reserved_irq::IPI_INVALIDATE_TLB :
+                    DEBUG_LOG("IPI INVALIDATE TLB");
+                    // TODO
+                    break;
+
                 case reserved_irq::IPI_RESCHEDULE :
                     DEBUG_LOG("IPI RESCHEDULE");
-                    // TODO
+                    ipi_reschedule_handler();
+                    ack_interrupt();
                     break;
 
                 default :
@@ -354,8 +366,8 @@ namespace a9n::hal::x86_64
         }
         else
         {
-            icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 14; // Trigger Mode
-            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 15;  // Level State
+            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 14;  // Level State
+            icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 15; // Trigger Mode
             icr_low |= (vector & 0xFF);                                    // Vector
         }
 
@@ -463,38 +475,31 @@ namespace a9n::hal::x86_64
 // interface implementation
 namespace a9n::hal
 {
-    hal_result register_interrupt_handler(a9n::word irq_number, interrupt_handler handler)
-    {
-        x86_64::interrupt_handler_table[irq_number] = handler;
-
-        if (!handler)
-        {
-            return hal_error::NO_SUCH_ADDRESS;
-        };
-
-        a9n::kernel::utility::logger::printh(
-            "register interrupt handler : %lu : 0x%016llx\n",
-            irq_number,
-            reinterpret_cast<uint64_t>(handler)
-        );
-
-        return {};
-    }
-
-    hal_result register_system_timer_handler(interrupt_handler handler)
+    hal_result register_system_timer_handler(a9n::kernel::timer_handler handler)
     {
         if (!handler)
         {
             return hal_error::ILLEGAL_ARGUMENT;
         }
 
-        // x86_64::interrupt_handler_table[0x20] = handler; // TODO: remove this
         x86_64::timer_handler = handler;
 
         return {};
     }
 
-    hal_result register_kernel_call_handler(kernel_call_handler handler)
+    hal_result register_ipi_reschedule_handler(a9n::kernel::ipi_reschedule_handler handler)
+    {
+        if (!handler)
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        x86_64::ipi_reschedule_handler = handler;
+
+        return {};
+    }
+
+    hal_result register_kernel_call_handler(a9n::kernel::kernel_call_handler handler)
     {
         if (!handler)
         {
@@ -566,4 +571,80 @@ namespace a9n::hal
     {
         return x86_64::local_apic_core.end_of_interrupt();
     }
+
+    hal_result send_ipi_impl(ipi_type type, bool is_broadcast, uintmax_t core_number)
+    {
+        using x86_64::ipi_destination_shorthand;
+        using x86_64::ipi_delivery_mode;
+        using x86_64::ipi_trigger_mode;
+        using x86_64::ipi_level_state;
+
+        ipi_delivery_mode delivery_mode;
+        ipi_trigger_mode  trigger_mode;
+        ipi_level_state   level_state;
+        uint8_t           vector = 0;
+
+        switch (type)
+        {
+            case ipi_type::RESCHEDULE :
+                delivery_mode = ipi_delivery_mode::FIXED;
+                trigger_mode  = x86_64::ipi_trigger_mode::EDGE;
+                level_state   = x86_64::ipi_level_state::ASSERT;
+                vector        = static_cast<uint8_t>(x86_64::reserved_irq::IPI_RESCHEDULE);
+                break;
+
+            case ipi_type::INVALIDATE_TLB :
+                delivery_mode = ipi_delivery_mode::FIXED; // NMI is used for TLB shootdown in Linux
+                trigger_mode  = x86_64::ipi_trigger_mode::EDGE;
+                level_state   = x86_64::ipi_level_state::DEASSERT;
+                vector        = static_cast<uint8_t>(x86_64::reserved_irq::IPI_INVALIDATE_TLB);
+                break;
+
+            case ipi_type::HALT :
+                delivery_mode = ipi_delivery_mode::NON_MASKABLE_INTERRUPT;
+                trigger_mode  = x86_64::ipi_trigger_mode::EDGE;
+                level_state   = x86_64::ipi_level_state::DEASSERT;
+                vector        = static_cast<uint8_t>(x86_64::reserved_irq::IPI_HALT);
+                break;
+
+            [[unlikely]] default :
+                // unreachable
+                return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        if (is_broadcast)
+        {
+            return x86_64::ipi(
+                vector,
+                delivery_mode,
+                ipi_destination_shorthand::ALL_EXCLUDING_SELF,
+                0, // ignored
+                trigger_mode,
+                level_state
+            );
+        }
+        else
+        {
+            auto local_apic_id = x86_64::arch_cpu_local_variables[core_number].local_apic_id;
+            return x86_64::ipi(
+                vector,
+                delivery_mode,
+                ipi_destination_shorthand::NO_SHORTHAND,
+                local_apic_id,
+                trigger_mode,
+                level_state
+            );
+        }
+    }
+
+    hal_result send_ipi(ipi_type type, uintmax_t core_number)
+    {
+        return send_ipi_impl(type, false, core_number);
+    }
+
+    hal_result broadcast_ipi(ipi_type type)
+    {
+        return send_ipi_impl(type, true, 0);
+    }
+
 }

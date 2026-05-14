@@ -1,3 +1,4 @@
+#include "kernel/process/lock.hpp"
 #include <kernel/kernelcall/kernel_call.hpp>
 
 #include <kernel/capability/capability_component.hpp>
@@ -17,30 +18,39 @@ namespace a9n::kernel
     // called from hal's system call handler
     void handle_kernel_call(kernel_call_type type)
     {
-        auto result = process_manager_core.retrieve_current_process().and_then(
-            [type](process *current_process) -> kernel_result
-            {
-                switch (type)
-                {
-                    using enum kernel_call_type;
-                    [[likely]] case CAPABILITY_CALL :
-                        // DEBUG_LOG("capability call");
-                        return handle_capability_call(*current_process);
+        lock_guard lock(giant_lock);
+        auto       result
+            = a9n::hal::current_local_variable()
+                  .transform_error(convert_hal_to_kernel_error)
+                  .and_then(
+                      [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                      {
+                          return clv->process_manager_core.retrieve_current_process().and_then(
+                              [type](process *current_process) -> kernel_result
+                              {
+                                  switch (type)
+                                  {
+                                      using enum kernel_call_type;
+                                      [[likely]] case CAPABILITY_CALL :
+                                          // DEBUG_LOG("capability call");
+                                          return handle_capability_call(*current_process);
 
-                    case YIELD :
-                        DEBUG_LOG("yield");
-                        return handle_yield(*current_process);
+                                      case YIELD :
+                                          DEBUG_LOG("yield");
+                                          return handle_yield(*current_process);
 
-                    case DEBUG :
-                        // DEBUG_LOG("debug call");
-                        return handle_debug_call(*current_process);
+                                      case DEBUG :
+                                          // DEBUG_LOG("debug call");
+                                          return handle_debug_call(*current_process);
 
-                    default :
-                        // usually unreachable
-                        return kernel_error::UNEXPECTED;
-                }
-            }
-        );
+                                      default :
+                                          // usually unreachable
+                                          return kernel_error::UNEXPECTED;
+                                  }
+                              }
+                          );
+                      }
+                  );
 
         if (!result) [[unlikely]]
         {
@@ -152,7 +162,14 @@ namespace a9n::kernel
 
     kernel_result handle_yield(process &current_process)
     {
-        return process_manager_core.yield();
+        return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [&](cpu_local_variable *clv) -> kernel_result
+                {
+                    return clv->process_manager_core.yield();
+                }
+            );
     }
 
     kernel_result handle_debug_call(process &current_process)

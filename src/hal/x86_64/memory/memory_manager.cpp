@@ -229,7 +229,22 @@ namespace a9n::hal
                     entry->present         = true;
                     entry->rw              = true;
                     entry->user_supervisor = true;
-                    entry->page_size       = (target_leaf_depth != x86_64::PAGE_DEPTH::PT);
+
+                    const a9n::word frame_size = static_cast<a9n::word>(1) << target_frame.size_bits;
+                    const a9n::word frame_mask = frame_size - 1;
+
+                    if ((target_frame.address & frame_mask) != 0)
+                    {
+                        DEBUG_LOG("frame address is not aligned to its size!");
+                        return kernel::memory_map_error::ILLEGAL_DEPTH;
+                    }
+                    if ((target_address & frame_mask) != 0)
+                    {
+                        DEBUG_LOG("target address is not aligned to frame size!");
+                        return kernel::memory_map_error::ILLEGAL_DEPTH;
+                    }
+
+                    entry->page_size = (target_leaf_depth != x86_64::PAGE_DEPTH::PT);
 
                     DEBUG_LOG("entry addr : 0x%016llx", reinterpret_cast<uint64_t>(entry));
                     DEBUG_LOG("entry.all : 0x%016llx", entry->all);
@@ -272,7 +287,8 @@ namespace a9n::hal
                 {
                     if (!entry->present)
                     {
-                        return kernel::memory_map_error::ALREADY_MAPPED;
+                        // already unmapped
+                        return {};
                     }
 
                     entry->init();
@@ -314,6 +330,7 @@ namespace a9n::hal
                          current_depth > target_leaf_depth;
                          current_depth--)
                     {
+                        DEBUG_LOG("search_unset_page_table_depth : current_depth = %llu\n", current_depth);
                         auto current_table_index
                             = x86_64::calculate_page_table_index(target_address, current_depth);
                         x86_64::page *current_entry = &current_table[current_table_index];
@@ -325,6 +342,9 @@ namespace a9n::hal
 
                         if (current_entry->page_size)
                         {
+                            a9n::kernel::utility::logger::printh(
+                                "encountered huge page, cannot map a page table here!\n"
+                            );
                             return kernel::memory_map_error::ALREADY_MAPPED;
                         }
 

@@ -11,9 +11,10 @@ namespace a9n::hal::x86_64
         sizeof(a9n::hal::interrupt_handler)
     ) inline static a9n::hal::interrupt_handler interrupt_handler_table[256];
 
-    inline a9n::kernel::timer_handler        timer_handler {};
-    inline a9n::kernel::interrupt_dispatcher interrupt_dispatcher {};
-    inline a9n::kernel::fault_dispatcher     fault_dispatcher {};
+    inline a9n::kernel::timer_handler          timer_handler {};
+    inline a9n::kernel::interrupt_dispatcher   interrupt_dispatcher {};
+    inline a9n::kernel::ipi_reschedule_handler ipi_reschedule_handler {};
+    inline a9n::kernel::fault_dispatcher       fault_dispatcher {};
 
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code);
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code);
@@ -184,16 +185,15 @@ namespace a9n::hal::x86_64
 
     enum class reserved_irq : uint16_t
     {
-        IO_BASE = 0x20,
-        // FIXME
-        IPI_HALT       = 0x48,
-        IPI_RESCHEDULE = 0x49,
+        IO_BASE            = 0x20,
+        CONSOLE_1          = 0x23,
+        CONSOLE_0          = 0x24,
 
-        CONSOLE_1      = 0x23,
-        CONSOLE_0      = 0x24,
-
-        BASE           = 0x30,
-        TIMER          = BASE,
+        BASE               = 0x30,
+        TIMER              = BASE,
+        IPI_HALT           = 0x31,
+        IPI_RESCHEDULE     = 0x32,
+        IPI_INVALIDATE_TLB = 0x33,
     };
 
     // inline interrupt interrupt_core {};

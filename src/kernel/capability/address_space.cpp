@@ -229,7 +229,7 @@ namespace a9n::kernel
                                                 .and_then(
                                                     [&](a9n::word address) -> capability_result
                                                     {
-                                                        if (!a9n::hal::is_valid_user_address(descriptor))
+                                                        if (!a9n::hal::is_valid_user_address(address))
                                                         {
                                                             return capability_error::INVALID_ARGUMENT;
                                                         }

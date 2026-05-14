@@ -1,3 +1,4 @@
+#include "kernel/process/cpu.hpp"
 #include "kernel/process/process.hpp"
 #include "kernel/process/process_manager.hpp"
 #include <kernel/capability/process_control_block.hpp>
@@ -283,9 +284,36 @@ namespace a9n::kernel
                     if (info.is_affinity())
                     {
                         DEBUG_LOG("process_control_block::configure::affinity");
-                        // process_core.core_affinity = self.data[0];
-                        process_core.core_affinity = a9n::hal::get_message_register(owner, AFFINITY)
-                                                         .unwrap_or(static_cast<a9n::word>(0));
+                        auto old_affinity = process_core.core_affinity;
+                        auto new_affinity = a9n::hal::get_message_register(owner, AFFINITY)
+                                                .unwrap_or(static_cast<a9n::word>(old_affinity));
+                        if (old_affinity != new_affinity)
+                        {
+                            auto &process_manager_core
+                                = cpu_local_variables[new_affinity].process_manager_core;
+                            auto result
+                                = process_manager_core.mark_scheduled(process_core)
+                                      .and_then(
+                                          [&](void) -> kernel_result
+                                          {
+                                              if (new_affinity == hal::current_core_number())
+                                              {
+                                                  return {};
+                                              }
+
+                                              // send ipi if the target process is scheduled on
+                                              // another core
+                                              return hal::send_ipi(hal::ipi_type::RESCHEDULE, new_affinity)
+                                                  .transform_error(convert_hal_to_kernel_error);
+                                          }
+                                      );
+                            if (!result)
+                            {
+                                return convert_kernel_to_capability_error(result.unwrap_error());
+                            }
+                        }
+
+                        process_core.core_affinity = new_affinity;
                     }
 
                     return {};
@@ -543,18 +571,24 @@ namespace a9n::kernel
 
     capability_result process_control_block::operation_resume(process &owner, capability_slot &self)
     {
-        process_core.status = process_status::READY;
+        process_core.status        = process_status::READY;
 
-        return process_manager_core
-            .mark_scheduled(process_core)
-            /*
+        auto &process_manager_core = cpu_local_variables[process_core.core_affinity].process_manager_core;
+
+        return process_manager_core.mark_scheduled(process_core)
             .and_then(
                 [&](void) -> kernel_result
                 {
-                    return process_manager_core.try_schedule_and_switch();
+                    if (process_core.core_affinity == hal::current_core_number())
+                    {
+                        return {};
+                    }
+
+                    // send ipi if the target process is scheduled on another core
+                    return hal::send_ipi(hal::ipi_type::RESCHEDULE, process_core.core_affinity)
+                        .transform_error(convert_hal_to_kernel_error);
                 }
             )
-            */
             .transform_error(convert_kernel_to_capability_error);
     }
 

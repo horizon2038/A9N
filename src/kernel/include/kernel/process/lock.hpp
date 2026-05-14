@@ -156,9 +156,9 @@ namespace a9n::kernel
     };
 
     template<lockable Lock, typename Function>
-        requires(liba9n::std::is_same_v<
-                 liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>,
-                 kernel_result>)
+        requires(
+            liba9n::std::is_same_v<liba9n::std::remove_cvref_t<liba9n::std::invoke_result_t<Function>>, kernel_result>
+        )
     kernel_result lock_region(Lock &lock, Function function)
     {
         return lock.lock()
@@ -177,7 +177,7 @@ namespace a9n::kernel
     }
 
     // kernel giant lock
-    inline spin_lock giant_lock {};
+    inline spin_lock_no_owner giant_lock {};
 }
 
 #endif

@@ -30,6 +30,7 @@ namespace a9n::kernel
 
     extern "C" void handle_timer();
     extern "C" void handle_interrupt(a9n::word irq_number);
+    extern "C" void handle_ipi_reschedule(void);
     extern "C" void handle_fault(
         a9n::kernel::fault_type type,
         a9n::sword              fault_code,

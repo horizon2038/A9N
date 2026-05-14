@@ -2,13 +2,16 @@
 #define A9N_KERNEL_INTERRUPT_HPP
 
 #include <kernel/interrupt/fault.hpp>
+#include <kernel/kernelcall/kernel_call.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::kernel
 {
-    using timer_handler        = void (*)(void);
-    using interrupt_dispatcher = void (*)(a9n::word irq_number);
-    using fault_dispatcher     = void (*)(
+    using timer_handler          = void (*)(void);
+    using interrupt_dispatcher   = void (*)(a9n::word irq_number);
+    using ipi_reschedule_handler = void (*)(void);
+    using kernel_call_handler    = void (*)(kernel_call_type type);
+    using fault_dispatcher       = void (*)(
         fault_type           type,
         a9n::sword           fault_code,
         a9n::word            arch_fault_code,

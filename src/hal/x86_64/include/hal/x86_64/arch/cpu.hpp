@@ -47,6 +47,8 @@ namespace a9n::hal::x86_64
 
     liba9n::result<arch_cpu_local_variable *, hal_error> current_arch_local_variable(void);
     liba9n::result<a9n::word, hal_error>                 try_allocate_core_number(void);
+
+    inline volatile bool is_ap_runnable { false };
 }
 
 #endif

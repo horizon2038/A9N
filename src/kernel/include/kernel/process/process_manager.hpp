@@ -27,6 +27,7 @@ namespace a9n::kernel
         kernel_result switch_to_user(void);
         kernel_result switch_to_idle(void);
 
+        kernel_result try_schedule(void);
         kernel_result try_schedule_and_switch(void);
         kernel_result try_direct_schedule_and_switch(process &target_process);
 
@@ -42,7 +43,7 @@ namespace a9n::kernel
         alignas(a9n::WORD_BITS) scheduler scheduler_core {};
     };
 
-    alignas(a9n::WORD_BITS) inline process_manager process_manager_core {};
+    // alignas(a9n::WORD_BITS) inline process_manager process_manager_core {};
 }
 
 #endif

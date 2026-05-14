@@ -1,3 +1,4 @@
+#include "kernel/process/cpu.hpp"
 #include <kernel/interrupt/interrupt_manager.hpp>
 
 #include <kernel/capability/ipc_port.hpp>
@@ -44,6 +45,9 @@ namespace a9n::kernel
 
         a9n::kernel::utility::logger::printk("register interrupt and fault dispatcher ...\n");
         a9n::hal::register_interrupt_dispatcher(handle_interrupt);
+
+        a9n::kernel::utility::logger::printk("register ipi reschedule handler ...\n");
+        a9n::hal::register_ipi_reschedule_handler(handle_ipi_reschedule);
 
         a9n::kernel::utility::logger::printk("register fault dispatcher ...\n");
         a9n::hal::register_fault_dispatcher(handle_fault);
@@ -92,17 +96,35 @@ namespace a9n::kernel
     // this handler is required
     extern "C" void handle_timer(void)
     {
-        auto result = a9n::kernel::process_manager_core.handle_timer().and_then(
-            [](void) -> kernel_result
-            {
-                a9n::kernel::interrupt_manager_core.ack_interrupt();
-                return {};
-            }
-        );
+        lock_guard guard(giant_lock);
+        auto       result
+            = a9n::hal::current_local_variable()
+                  .transform_error(convert_hal_to_kernel_error)
+                  .and_then(
+                      [](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                      {
+                          return clv->process_manager_core.handle_timer().and_then(
+                              [](void) -> kernel_result
+                              {
+                                  return a9n::hal::ack_interrupt().transform_error(
+                                      convert_hal_to_kernel_error
+                                  );
+                              }
+                          );
+                      }
+                  )
+                  .and_then(
+                      [](void) -> kernel_result
+                      {
+                          a9n::hal::ack_interrupt();
+                          return {};
+                      }
+                  );
     }
 
     extern "C" void handle_interrupt(a9n::word irq_number)
     {
+        lock_guard guard(giant_lock);
         irq_number_to_irq_notification_handler(irq_number)
             .and_then(
                 [](liba9n::not_null<irq_notification_handler> handler) -> kernel_result
@@ -126,34 +148,46 @@ namespace a9n::kernel
                         return kernel_error::TRY_AGAIN;
                     }
 
-                    return process_manager_core.retrieve_current_process().and_then(
-                        [&handler](process *current_process) -> kernel_result
-                        {
-                            auto &port
-                                = reinterpret_cast<notification_port &>(*(handler->slot.component));
-                            return port.operation_notify(*current_process, handler->slot)
-                                .transform_error(
-                                    [&handler](capability_error e) -> kernel_error
+                    return a9n::hal::current_local_variable()
+                        .transform_error(convert_hal_to_kernel_error)
+                        .and_then(
+                            [&](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                            {
+                                auto &process_manager_core = clv->process_manager_core;
+
+                                return process_manager_core.retrieve_current_process().and_then(
+                                    [&handler](process *current_process) -> kernel_result
                                     {
-                                        return kernel_error::TRY_AGAIN;
-                                    }
-                                )
-                                .and_then(
-                                    [](void) -> kernel_result
-                                    {
-                                        return a9n::kernel::interrupt_manager_core.ack_interrupt();
-                                    }
-                                )
-                                .and_then(
-                                    [&](void) -> kernel_result
-                                    {
-                                        return interrupt_manager_core.disable_interrupt(
-                                            handler->irq_number
+                                        auto &port = reinterpret_cast<notification_port &>(
+                                            *(handler->slot.component)
                                         );
+                                        return port
+                                            .operation_notify(*current_process, handler->slot)
+                                            .transform_error(
+                                                [&handler](capability_error e) -> kernel_error
+                                                {
+                                                    return kernel_error::TRY_AGAIN;
+                                                }
+                                            )
+                                            .and_then(
+                                                [](void) -> kernel_result
+                                                {
+                                                    return a9n::kernel::interrupt_manager_core
+                                                        .ack_interrupt();
+                                                }
+                                            )
+                                            .and_then(
+                                                [&](void) -> kernel_result
+                                                {
+                                                    return interrupt_manager_core.disable_interrupt(
+                                                        handler->irq_number
+                                                    );
+                                                }
+                                            );
                                     }
                                 );
-                        }
-                    );
+                            }
+                        );
                 }
             )
             .or_else(
@@ -165,6 +199,45 @@ namespace a9n::kernel
             );
     }
 
+    extern "C" void handle_ipi_reschedule(void)
+    {
+        lock_guard guard(giant_lock);
+        // a9n::kernel::utility::logger::printk("handle_ipi_reschedule ...\n");
+        auto result
+            = a9n::hal::current_local_variable()
+                  .transform_error(convert_hal_to_kernel_error)
+                  .and_then(
+                      [](a9n::kernel::cpu_local_variable *clv) -> kernel_result
+                      {
+                          // IPI reschedule is used to preempt the current process; therefore, it is
+                          // necessary to mark the current process as scheduled before scheduling
+                          // and switching.
+                          return clv->process_manager_core.retrieve_current_process().and_then(
+                              [clv](process *current_process) -> kernel_result
+                              {
+                                  return clv->process_manager_core.mark_scheduled(*current_process)
+                                      .and_then(
+                                          [clv](void) -> kernel_result
+                                          {
+                                              return clv->process_manager_core.try_schedule_and_switch();
+                                          }
+                                      );
+                              }
+                          );
+                      }
+                  )
+                  .or_else(
+                      [](kernel_error e) -> kernel_result
+                      {
+                          a9n::kernel::utility::logger::printk(
+                              "failed to handle ipi reschedule : %s",
+                              kernel_error_to_string(e)
+                          );
+                          return e;
+                      }
+                  );
+    }
+
     extern "C" void handle_fault(
         a9n::kernel::fault_type type,
         a9n::sword              fault_code, // type-specific code
@@ -172,6 +245,7 @@ namespace a9n::kernel
         a9n::virtual_address    fault_address
     )
     {
+        lock_guard guard(giant_lock);
         DEBUG_LOG(
             "handle_fault : type = %s, fault_code = %d, arch_fault_code = %d, fault_address = "
             "0x%016llx",
@@ -180,6 +254,17 @@ namespace a9n::kernel
             arch_fault_code,
             fault_address
         );
+        auto current_clv_result
+            = a9n::hal::current_local_variable().transform_error(convert_hal_to_kernel_error);
+        if (!current_clv_result)
+        {
+            a9n::kernel::utility::logger::printk(
+                "failed to read current local variable : %s\n",
+                a9n::kernel::kernel_error_to_string(current_clv_result.unwrap_error())
+            );
+        }
+        auto &process_manager_core = current_clv_result.unwrap()->process_manager_core;
+
         process_manager_core.retrieve_current_process()
             .transform_error(convert_kernel_to_capability_error)
             .and_then(
@@ -223,7 +308,7 @@ namespace a9n::kernel
                 }
             )
             .or_else(
-                [=](capability_error e) -> kernel_result
+                [=, &process_manager_core](capability_error e) -> kernel_result
                 {
                     a9n::kernel::utility::logger::printk(
                         "fault : %s, fault_code : %lld, arch_fault_code: %llu, fault_address : "
