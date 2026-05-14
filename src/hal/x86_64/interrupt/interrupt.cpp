@@ -463,24 +463,6 @@ namespace a9n::hal::x86_64
 // interface implementation
 namespace a9n::hal
 {
-    hal_result register_interrupt_handler(a9n::word irq_number, interrupt_handler handler)
-    {
-        x86_64::interrupt_handler_table[irq_number] = handler;
-
-        if (!handler)
-        {
-            return hal_error::NO_SUCH_ADDRESS;
-        };
-
-        a9n::kernel::utility::logger::printh(
-            "register interrupt handler : %lu : 0x%016llx\n",
-            irq_number,
-            reinterpret_cast<uint64_t>(handler)
-        );
-
-        return {};
-    }
-
     hal_result register_system_timer_handler(interrupt_handler handler)
     {
         if (!handler)

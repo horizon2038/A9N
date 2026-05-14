@@ -18,15 +18,9 @@ namespace a9n::hal
         EXCEPTION
     };
 
-    // TODO: devirtualization
-    // register some handlers
-
-    // TODO: remove this
-    hal_result register_interrupt_handler(a9n::word irq_number, interrupt_handler handler);
-
+    // register handlers
     hal_result register_system_timer_handler(interrupt_handler handler);
     hal_result register_kernel_call_handler(kernel_call_handler handler);
-
     hal_result register_interrupt_dispatcher(a9n::kernel::interrupt_dispatcher dispatcher);
     hal_result register_fault_dispatcher(a9n::kernel::fault_dispatcher dispatcher);
 
