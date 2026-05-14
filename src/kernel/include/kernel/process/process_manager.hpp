@@ -10,11 +10,6 @@
 
 namespace a9n::kernel
 {
-    namespace
-    {
-        inline constexpr uint16_t PROCESS_COUNT_MAX = 128;
-    }
-
     class process_manager
     {
       public:
