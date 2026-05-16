@@ -82,7 +82,7 @@ namespace a9n::hal::x86_64
                                 = override_entry->flags;
 
                             a9n::kernel::utility::logger::printh(
-                                "MADT ISO: irq %d -> gsi %d, flags 0x%04x\n",
+                                "MADT ISO: IRQ %d -> GSI %d, flags 0x%04x\n",
                                 override_entry->irq_source,
                                 override_entry->global_system_interrupt,
                                 override_entry->flags
@@ -256,7 +256,7 @@ namespace a9n::hal::x86_64
             = make_redirect_entry(vector, FIXED, PHYSICAL, IDLE, pin_polarity, trigger_mode, mask_typed, 0);
 
         DEBUG_LOG(
-            "IO APIC: irq %d -> gsi %d -> pin %d, vector 0x%02x, flags 0x%04x, mask %d",
+            "IO APIC: IRQ %d -> GSI %d -> pin %d, vector 0x%02x, flags 0x%04x, mask %d",
             irq_number,
             global_system_interrupt,
             io_apic_pin,

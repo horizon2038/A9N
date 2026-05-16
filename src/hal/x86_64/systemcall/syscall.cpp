@@ -24,10 +24,7 @@ namespace a9n::hal::x86_64
         _write_msr(msr::SFMASK, rflags_flag::INTERRUPT);
         // setup syscall entry point
         _write_msr(msr::LSTAR, reinterpret_cast<uint64_t>(_syscall_handler));
-        a9n::kernel::utility::logger::printh(
-            "_syscall_handler address : 0x%016llx\n",
-            reinterpret_cast<uint64_t>(_syscall_handler)
-        );
+        a9n::kernel::utility::logger::printh("ASM _syscall_handler: address=%p\n", _syscall_handler);
 
         // When a `syscall` occurs in Long Mode, the segments are loaded as
         // follows:
