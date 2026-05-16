@@ -59,6 +59,9 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     a9n::kernel::utility::logger              *my_logger = new ((void *)logger_buf)
         a9n::kernel::utility::logger { *hal_instance->_serial };
 
+    // reset terminal and print boot information
+    logger::printn("\e[0m\e[2J\e[H");
+
     logger::a9nout();
     logger::printk("Booting the A9N kernel ...\n");
     logger::printk("Kernel version: %s \n", a9n::kernel::KERNEL_VERSION_STRING);
