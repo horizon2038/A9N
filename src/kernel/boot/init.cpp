@@ -326,7 +326,6 @@ namespace a9n::kernel
         for (auto memory_map_index = 0, slot_index = 0; memory_map_index < memory.memory_map_count;
              memory_map_index++)
         {
-            logger::printk("Configuring init generic [0x%02x] ...\n", memory_map_index);
             auto entry = physical_to_virtual_pointer<a9n::kernel::memory_map_entry>(
                 reinterpret_cast<a9n::physical_address>(&memory.memory_map[memory_map_index])
             );
@@ -357,7 +356,6 @@ namespace a9n::kernel
                     break;
                 }
 
-                // a9n::kernel::utility::logger::printk("re-splitting [%2d] ...\n", i);
                 remain = TRY(try_configure_generic_descriptor_from_memory_map(
                     remain,
                     init.generic_list[slot_index]
