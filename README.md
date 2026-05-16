@@ -90,15 +90,30 @@ cmake --build build
 
 ## How to Use
 
+The A9N Microkernel can be custom-configured and automatically configured to suit the needs of a User-space OS.
+
+### Custom Build: Assemble and use everything yourself
+
+This method involves configuring and building the kernel, Init, and bootloader separately and then combining them. Currently, we support the following tools for building Init and the following bootloaders.
+
 - [Nun OS Framework](https://github.com/horizon2038/Nun) is a framework for building Operating Systems based on A9N; Written in Rust.
-- [A9NLoader](https://github.com/horizon2038/A9NLoader) is a bootloader for A9N-based systems (compatible with *A9N Boot Protocol x86_64*); Written in C w/EDK2.
 - [A9NLoader-rs](https://github.com/horizon2038/a9nloader-rs) is a bootloader for A9N-based systems (compatible with *A9N Boot Protocol x86_64*); Written in Rust.
+
+We also provide crates for using the A9N Microkernel, which is utilized internally by the Nun OS Framework, in Rust.
+
+- [a9n-types](https://github.com/horizon2038/a9n-types): Defines the basic types for A9N.
+- [a9n_abi](https://github.com/horizon2038/a9n-abi): Contains ABI definitions for communicating with the A9N Kernel (e.g., Kernel Calls).
+
+### Automatic Configuration: Utilize a convenient runtime (Quick-start)
+
+This is a method to automatically configure and build the kernel, Init, and bootloader. You can build executable binaries as quickly as possible through the ecosystem.
+[*SPENCER*](https://github.com/horizon2038/spencer) is an OS ToolKit / Embedded Runtime designed for this purpose. Please refer to the [*SPENCER* project page](https://github.com/horizon2038/spencer) for details.
 
 ## Author
 
 horizon2k38 ( Rekka "horizon" IGUMI )
 
-Email : horizon "at" sfc.wide.ad.jp  
+Email : me "at" horizon2k38 "dot" com 
 X : [@horizon2k38](https://x.com/horizon2k38)  
 Mastodon : [@horizon2k38@mstdn.jp](https://mstdn.jp/@horizon2k38)  
 Misskey : [@horizon](https://misskey.io/@horizon)  
