@@ -448,7 +448,7 @@ namespace a9n::hal::x86_64
 
         uint8_t page_number = trampoline_address >> 12;
 
-        logger::printh("IPI startup : 0x%016llx -> (APIC id : 0x%02x)\n", page_number, receiver_cpu);
+        logger::printh("IPI startup: 0x%016llx -> (APIC ID: 0x%02x)\n", page_number, receiver_cpu);
 
         return ipi(
             page_number,

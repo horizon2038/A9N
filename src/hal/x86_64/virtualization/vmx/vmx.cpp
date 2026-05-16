@@ -53,7 +53,7 @@ namespace a9n::hal::x86_64
 
     hal_result run_test_vm(void)
     {
-        a9n::kernel::utility::logger::printh("init VMCS Region ...\n");
+        a9n::kernel::utility::logger::printh("Initializing VMCS Region ...\n");
         return try_get_vmcs_revision_id()
             .transform_error(
                 [](hal_error e) -> vmx_error
@@ -93,7 +93,7 @@ namespace a9n::hal::x86_64
 
     hal_result enable_vmx(void)
     {
-        a9n::kernel::utility::logger::printh("enable VMX ...\n");
+        a9n::kernel::utility::logger::printh("Enabling VMX ...\n");
         return check_support_vmx()
             .and_then(enable_vmx_control_registers)
             .and_then(
@@ -140,17 +140,17 @@ __      _________
     {
         using a9n::kernel::utility::logger;
 
-        logger::printh("check support VMX ...\n");
+        logger::printh("Checking for VMX support...\n");
 
         return try_get_vendor_id()
             .and_then(
                 [](vendor_id id) -> hal_result
                 {
-                    logger::printh("check vendor id ...\n");
+                    logger::printh("Checking vendor id ...\n");
                     if (liba9n::std::memcmp(vendor_identifier::INTEL, id.data(), sizeof(vendor_id))
                         != 0)
                     {
-                        logger::printh("VMX : unsupported vendor id [%s]\n", id.data());
+                        logger::printh("VMX: unsupported vendor id [%s]\n", id.data());
                         return hal_error::UNSUPPORTED;
                     }
 
@@ -161,7 +161,7 @@ __      _________
             .and_then(
                 []([[maybe_unused]] cpuid_info info) -> hal_result
                 {
-                    logger::printh("check cpuid ...\n");
+                    logger::printh("Checking CPUID ...\n");
                     if ((info.rcx & liba9n::enum_cast(cpuid_feature_information::VMX)) == 0)
                     {
                         logger::printh("VMX : VMX bit is invalid\n");
@@ -174,13 +174,13 @@ __      _________
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("check MSRs ...\n");
+                    logger::printh("Checking MSRs ...\n");
                     auto value = _read_msr(msr::FEATURE_CONTROL);
                     if ((value & liba9n::enum_cast(msr_feature_control::ENABLE_VMX_OUTSIDE_SMX)) == 0)
                     {
                         if ((value & liba9n::enum_cast(msr_feature_control::LOCK_BIT)) == 0)
                         {
-                            logger::printh("VMX : MSR is locked\n");
+                            logger::printh("VMX: MSR is locked\n");
                             return hal_error::UNSUPPORTED;
                         }
 
@@ -210,7 +210,7 @@ __      _________
 
     static hal_result enable_vmx_control_registers(void)
     {
-        a9n::kernel::utility::logger::printh("enable VMX control registers ...\n");
+        a9n::kernel::utility::logger::printh("Enabling VMX control registers ...\n");
 
         auto crs = get_vmx_control_registers();
 
@@ -245,7 +245,7 @@ __      _________
 
     static hal_result configure_vmxon_region(vmxon_region &region)
     {
-        a9n::kernel::utility::logger::printh("configure VMXON region ...\n");
+        a9n::kernel::utility::logger::printh("Configuring VMXON region ...\n");
 
         return try_get_vmcs_revision_id().and_then(
             [&](uint32_t revision_id) -> hal_result
@@ -260,7 +260,7 @@ __      _________
     // `vmxon` : call `_vmxon` described by NASM source codes
     static vmx_result<> vmxon(vmxon_region &region)
     {
-        a9n::kernel::utility::logger::printh("vmxon [0x%016llx] ...\n", &region);
+        a9n::kernel::utility::logger::printh("VMXON [0x%016llx] ...\n", &region);
 
         auto region_address = reinterpret_cast<a9n::virtual_address>(&region);
         if (region_address % a9n::PAGE_SIZE != 0)
@@ -275,7 +275,7 @@ __      _________
         return check_vmx_result().or_else(
             [](vmx_error e) -> vmx_result<>
             {
-                a9n::kernel::utility::logger::printh("vmxon failed : [%s]\n", vmx_error_to_string(e));
+                a9n::kernel::utility::logger::printh("VMXON failed : [%s]\n", vmx_error_to_string(e));
                 return e;
             }
         );

@@ -34,24 +34,24 @@ namespace a9n::kernel
 
     void interrupt_manager::init_handler(void)
     {
-        a9n::kernel::utility::logger::printk("init interrupt handlers ...\n");
+        a9n::kernel::utility::logger::printk("Initializing interrupt handlers ...\n");
 
-        a9n::kernel::utility::logger::printk("register timer handler ...\n");
+        a9n::kernel::utility::logger::printk("Registering timer handler ...\n");
         a9n::hal::register_system_timer_handler(handle_timer);
 
-        a9n::kernel::utility::logger::printk("register kernel call handler ...\n");
+        a9n::kernel::utility::logger::printk("Registering kernel call handler ...\n");
         a9n::hal::register_kernel_call_handler(handle_kernel_call);
 
-        a9n::kernel::utility::logger::printk("register interrupt and fault dispatcher ...\n");
+        a9n::kernel::utility::logger::printk("Registering interrupt dispatcher ...\n");
         a9n::hal::register_interrupt_dispatcher(handle_interrupt);
 
-        a9n::kernel::utility::logger::printk("register fault dispatcher ...\n");
+        a9n::kernel::utility::logger::printk("Registering fault dispatcher ...\n");
         a9n::hal::register_fault_dispatcher(handle_fault);
     }
 
     void interrupt_manager::init_irq_notification_handlers(void)
     {
-        a9n::kernel::utility::logger::printk("init irq notification handlers ...\n");
+        a9n::kernel::utility::logger::printk("Initializing IRQ notification handlers ...\n");
 
         for (auto i = 0; i < a9n::hal::IRQ_NUMBER_MAX; i++)
         {
@@ -62,25 +62,25 @@ namespace a9n::kernel
 
     kernel_result interrupt_manager::enable_interrupt(a9n::word irq_number)
     {
-        DEBUG_LOG("enable interrupt [ %llu ] ...\n", irq_number);
+        DEBUG_LOG("Enabling interrupt [ %llu ] ...\n", irq_number);
         return a9n::hal::enable_interrupt(irq_number).transform_error(convert_hal_to_kernel_error);
     }
 
     kernel_result interrupt_manager::disable_interrupt(a9n::word irq_number)
     {
-        DEBUG_LOG("disable interrupt [ %llu ] ...\n", irq_number);
+        DEBUG_LOG("Disabling interrupt [ %llu ] ...\n", irq_number);
         return a9n::hal::disable_interrupt(irq_number).transform_error(convert_hal_to_kernel_error);
     }
 
     kernel_result interrupt_manager::enable_interrupt_all(void)
     {
-        a9n::kernel::utility::logger::printk("enable interrupt ...\n");
+        a9n::kernel::utility::logger::printk("Enabling all interrupts ...\n");
         return a9n::hal::enable_interrupt_all().transform_error(convert_hal_to_kernel_error);
     }
 
     kernel_result interrupt_manager::disable_interrupt_all(void)
     {
-        a9n::kernel::utility::logger::printk("disable interrupt ...\n");
+        a9n::kernel::utility::logger::printk("Disabling all interrupts ...\n");
         return a9n::hal::disable_interrupt_all().transform_error(convert_hal_to_kernel_error);
     }
 
@@ -109,20 +109,14 @@ namespace a9n::kernel
                 {
                     if (handler->slot.type == capability_type::NONE)
                     {
-                        DEBUG_LOG(
-                            "handle_interrupt : no handler for irq_number %04llu",
-                            handler->irq_number
-                        );
+                        DEBUG_LOG("No handler for IRQ number %04llu", handler->irq_number);
                         return kernel_error::TRY_AGAIN;
                     }
 
                     if ((handler->slot.type != capability_type::NOTIFICATION_PORT)
                         || !(handler->slot.component)) [[unlikely]]
                     {
-                        DEBUG_LOG(
-                            "handle_interrupt : invalid handler type for irq_number %llu",
-                            handler->irq_number
-                        );
+                        DEBUG_LOG("Invalid handler type for IRQ_number %llu", handler->irq_number);
                         return kernel_error::TRY_AGAIN;
                     }
 
@@ -173,7 +167,7 @@ namespace a9n::kernel
     )
     {
         DEBUG_LOG(
-            "handle_fault : type = %s, fault_code = %d, arch_fault_code = %d, fault_address = "
+            "Handle fault : type = %s, fault_code = %d, arch_fault_code = %d, fault_address = "
             "0x%016llx",
             a9n::kernel::fault_type_to_string(type),
             fault_code,
@@ -193,15 +187,16 @@ namespace a9n::kernel
                     if ((current_process->resolver_port.type != capability_type::IPC_PORT)
                         || !current_process->resolver_port.component) [[unlikely]]
                     {
-                        DEBUG_LOG("double fault!");
+#ifdef A9N_CONFIG_ENABLE_LOG_DOUBLE_FAULT
                         kernel::utility::logger::printk(
-                            "double fault : %s, fault_code : %lld, arch_fault_code: %llu, "
+                            "Double fault : %s, fault_code : %lld, arch_fault_code: %llu, "
                             "fault_address : 0x%016llx\n",
                             a9n::kernel::fault_type_to_string(type),
                             fault_code,
                             arch_fault_code,
                             fault_address
                         );
+#endif
                         // [double fault]
                         // NOTE: at the time of fault handler, current process is still the process
                         // where the fault occurred; therefore, it is necessary to execute
@@ -225,14 +220,16 @@ namespace a9n::kernel
             .or_else(
                 [=](capability_error e) -> kernel_result
                 {
+#ifdef A9N_CONFIG_ENABLE_LOG_FAULT
                     a9n::kernel::utility::logger::printk(
-                        "fault : %s, fault_code : %lld, arch_fault_code: %llu, fault_address : "
+                        "Fault : %s, fault_code : %lld, arch_fault_code: %llu, fault_address : "
                         "0x%016llx\n",
                         a9n::kernel::fault_type_to_string(type),
                         fault_code,
                         arch_fault_code,
                         fault_address
                     );
+#endif
 
                     return process_manager_core.try_schedule_and_switch();
                 }

@@ -16,7 +16,7 @@ namespace a9n::hal::x86_64
 
     hal_result init_cpu_core_features(void)
     {
-        a9n::kernel::utility::logger::printh("configure cpu features ...\n");
+        a9n::kernel::utility::logger::printh("Configuring CPU features ...\n");
         _write_cr4(
             _read_cr4()                    // :)
             | cr4_flag::FS_GS_BASE         // rdgsbase, wrgsbase, rdfsbase, wrfsbase
@@ -35,7 +35,7 @@ namespace a9n::hal::x86_64
         return current_arch_local_variable().and_then(
             [](arch_cpu_local_variable *local_variable) -> hal_result
             {
-                a9n::kernel::utility::logger::printh("configure cpu core ...\n");
+                a9n::kernel::utility::logger::printh("Configuring CPU core ...\n");
                 segment::configure_gdt(local_variable->gdt);
                 segment::configure_idt(local_variable->idt);
                 segment::configure_tss(local_variable->gdt, local_variable->tss);
@@ -54,8 +54,8 @@ namespace a9n::hal::x86_64
         using a9n::kernel::utility::logger;
 
         return a9n::hal::current_local_variable().and_then(
-            [](a9n::kernel::cpu_local_variable *local_variable
-            ) -> liba9n::result<arch_cpu_local_variable *, hal_error>
+            [](a9n::kernel::cpu_local_variable *local_variable)
+                -> liba9n::result<arch_cpu_local_variable *, hal_error>
             {
                 return &arch_cpu_local_variables[local_variable->core_number];
             }
@@ -68,10 +68,10 @@ namespace a9n::hal::x86_64
     liba9n::result<a9n::word, hal_error> try_allocate_core_number(void)
     {
         lock.lock();
-        a9n::kernel::utility::logger::printh("try allocate core number ...\n");
+        a9n::kernel::utility::logger::printh("Trying to allocate a core number ...\n");
         if (current_cpu_number++ >= a9n::kernel::CPU_COUNT_MAX)
         {
-            a9n::kernel::utility::logger::error("no such cpu number!\n");
+            a9n::kernel::utility::logger::error("No such CPU number!\n");
             return hal_error::NO_SUCH_DEVICE;
         }
         lock.unlock();
@@ -87,13 +87,13 @@ namespace a9n::hal
 
         if (!target_local_variable)
         {
-            logger::printh("local variable is null!\n");
+            logger::printh("CPU local variable is null!\n");
             return hal_error::ILLEGAL_ARGUMENT;
         }
 
         if (!target_local_variable->kernel_stack_pointer)
         {
-            logger::printh("kernel stack pointer is null!\n");
+            logger::printh("Kernel stack pointer is null!\n");
             return hal_error::INIT_FIRST;
         }
 
@@ -134,7 +134,7 @@ namespace a9n::hal
         auto local_variable = reinterpret_cast<a9n::kernel::cpu_local_variable *>(_read_gs_base());
         if (!local_variable) [[unlikely]]
         {
-            kernel::utility::logger::printh("cpu_local_variable not found\n");
+            kernel::utility::logger::error("CPU local variable could not be found\n");
             return hal_error::NO_SUCH_ADDRESS;
         }
 

@@ -65,10 +65,12 @@ namespace a9n::hal::x86_64
 
         for (auto i = 0; i < kernel::ARCH_INFO_MAX; i++)
         {
-            a9n::kernel::utility::logger::printh("arch_info [%d] : 0x%016llx\n", i, arch_info[i]);
+            a9n::kernel::utility::logger::printh(
+                "arch_info: offset=%4d, value=0x%016llx\n",
+                i,
+                arch_info[i]
+            );
         }
-
-        a9n::kernel::utility::logger::split();
 
         return init_main_core(arch_info[0])
             .and_then(
@@ -99,7 +101,7 @@ namespace a9n::hal::x86_64
 
     void init_global_constructors(void)
     {
-        a9n::kernel::utility::logger::printh("call global ctors ...\n");
+        a9n::kernel::utility::logger::printh("Calling C++ global constructors ...\n");
 
         using constructor = void (*)(void);
         a9n::word constructor_count
@@ -125,21 +127,21 @@ namespace a9n::hal::x86_64
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh("cpu initialization failed\n", static_cast<a9n::word>(e));
+                    logger::error("Failed to initialize CPU\n");
                     return e;
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("init Local APIC\n");
+                    logger::printh("Initializing Local APIC ...\n");
                     return local_apic_core.init();
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("init 8259 PIC\n");
+                    logger::printh("Initializing 8259 PIC ...\n");
                     init_pic(); // disable
 
                     return {};
@@ -162,14 +164,14 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](madt *madt_base) -> hal_result
                 {
-                    logger::printh("init IO APIC\n");
+                    logger::printh("Initializing IO APIC ...\n");
                     return io_apic_core.init(madt_base);
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("init IMCR\n");
+                    a9n::kernel::utility::logger::printh("Initializing IMCR in IO APIC\n");
                     configure_imcr_to_apic(); // bsp
                     return {};
                 }
@@ -177,52 +179,52 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> liba9n::result<fadt *, hal_error>
                 {
-                    logger::printh("init ACPI\n");
+                    logger::printh("Initializing ACPI ...\n");
                     return acpi_core.current_fadt();
                 }
             )
             .and_then(
                 [](fadt *fadt_base) -> hal_result
                 {
-                    logger::printh("init ACPI PM Timer\n");
+                    logger::printh("Initializing ACPI PM Timer ...\n");
                     return acpi_pm_timer_core.init(fadt_base);
                 }
             )
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh("ACPI / APIC initialization failed : %s\n", hal_error_to_string(e));
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("Failed to initialize ACPI / APIC\n");
                     return e;
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("init syscall\n");
+                    a9n::kernel::utility::logger::printh("Initializing Local APIC Timer ...\n");
                     return local_apic_timer_core.init();
                 }
             )
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh(
-                        "Local APIC Timer initialization failed : %s\n",
-                        hal_error_to_string(e)
-                    );
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("Failed to initialize Local APIC Timer\n");
                     return e;
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("init syscall\n");
+                    a9n::kernel::utility::logger::printh("Initializing syscall ...\n");
                     return init_syscall();
                 }
             )
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh("syscall initialization failed : %s\n", hal_error_to_string(e));
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("Failed to initialize syscall\n");
                     return e;
                 }
             )
@@ -230,21 +232,22 @@ namespace a9n::hal::x86_64
                 [](void) -> hal_result
                 {
                     // return interrupt_core.init();
-                    a9n::kernel::utility::logger::printh("init IDT handler ...\n");
+                    a9n::kernel::utility::logger::printh("Initializing IDT handler ...\n");
                     return init_idt_handler();
                 }
             )
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh("interrupt initialization failed : %s\n", hal_error_to_string(e));
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("failed to initialize interrupt\n");
                     return e;
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("re-configure serial (for debug) ...\n");
+                    logger::printh("Reconfiguring serial port ...\n");
                     reconfigure_serial();
                     return {};
                 }
@@ -252,11 +255,11 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("load vendor id ...\n");
+                    a9n::kernel::utility::logger::printh("Loading vendor id ...\n");
                     return try_get_vendor_id().and_then(
                         [](vendor_id id) -> hal_result
                         {
-                            a9n::kernel::utility::logger::printh("vendor id : %s\n", id.data());
+                            a9n::kernel::utility::logger::printh("Vendor id: %s\n", id.data());
                             return {};
                         }
                     );
@@ -265,11 +268,11 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("load cpu name ...\n");
+                    a9n::kernel::utility::logger::printh("Loading CPU name ...\n");
                     return try_get_cpu_name().and_then(
                         [](cpu_name name) -> hal_result
                         {
-                            a9n::kernel::utility::logger::printh("cpu name : %s\n", name.data());
+                            a9n::kernel::utility::logger::printh("CPU name: %s\n", name.data());
                             return {};
                         }
                     );
@@ -278,7 +281,7 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("check huge page support ...\n");
+                    a9n::kernel::utility::logger::printh("Checking huge page support ...\n");
                     return try_get_cpuid(cpuid_leaf::EXTENDED_PROCESSOR_INFO_AND_FEATURE_BITS, 0)
                         .and_then(
                             [](cpuid_info info) -> hal_result
@@ -315,11 +318,12 @@ namespace a9n::hal::x86_64
                                 {
                                     return e;
                                 }
-
                                 a9n::kernel::utility::logger::printh(
-                                    "%s : virtualization is "
-                                    "unsupported\n"
+                                    "HAL error: %s\n",
+                                    hal_error_to_string(e)
                                 );
+                                a9n::kernel::utility::logger::printh("Virtualization is unsupported\n");
+
                                 return {};
                             }
                         );
@@ -363,7 +367,7 @@ namespace a9n::hal::x86_64
 
         // copy trampolines!
         logger::printh(
-            "copy trampoline codes ... [0x%016llx - 0x%016llx) -> 0x%016llx\n",
+            "Copying trampoline codes ... [0x%016llx - 0x%016llx) -> 0x%016llx\n",
             source_trampoline_start,
             (source_trampoline_start + boot_ap_trampoline_size),
             destination_trampoline_start
@@ -375,7 +379,7 @@ namespace a9n::hal::x86_64
         );
 
         // make gdtr
-        logger::printh("make ap gdtr ... (0x%016llx)\n", destination_gdtr);
+        logger::printh("Making AP GDTR ... (0x%016llx)\n", destination_gdtr);
         *a9n::kernel::physical_to_virtual_pointer<uint16_t>(destination_gdtr)
             = static_cast<uint16_t>(source_gdt_size - 1);
         *a9n::kernel::physical_to_virtual_pointer<uint64_t>(destination_gdtr + 2)
@@ -403,9 +407,7 @@ namespace a9n::hal::x86_64
         for (auto i = 1; i < cpu_max; i++)
         {
             auto local_apic_id = smp_info_result.unwrap()->local_apic_ids[i];
-
-            logger::printh("starting core [%4d] (local apic : 0x%08lx) ...\n", i, local_apic_id);
-
+            logger::printh("Starting core (core=%4d, Local APIC ID=0x%08lx) ...\n", i, local_apic_id);
             auto result
                 = ipi_init(local_apic_id)
                       .and_then(
@@ -456,7 +458,7 @@ namespace a9n::hal::x86_64
     // for smp
     extern "C" void x86_64_ap_entry(void)
     {
-        kernel::utility::logger::printh("ap entry!\n");
+        kernel::utility::logger::printh("AP entry ...\n");
 
         auto result
             = try_allocate_core_number()
@@ -464,7 +466,7 @@ namespace a9n::hal::x86_64
                       [](a9n::word core_number) -> hal_result
                       {
                           kernel::utility::logger::printh(
-                              "configure local variable [%04llx]\n",
+                              "Configuring CPU local variable [%04llx]\n",
                               core_number
                           );
                           return a9n::hal::configure_local_variable(
@@ -475,14 +477,14 @@ namespace a9n::hal::x86_64
                   .and_then(
                       [](void) -> hal_result
                       {
-                          kernel::utility::logger::printh("init sub cores ...\n");
+                          kernel::utility::logger::printh("Initializing core ...\n");
                           return init_sub_core();
                       }
                   );
         // .and_then(enable_vmx);
         if (!result)
         {
-            a9n::kernel::utility::logger::error("can't configure AP\n");
+            a9n::kernel::utility::logger::error("Can't configure AP\n");
             return;
         }
 
@@ -501,38 +503,38 @@ namespace a9n::hal::x86_64
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh("cpu initialization failed\n", static_cast<a9n::word>(e));
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("Failed to initialize CPU\n");
                     return e;
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    logger::printh("init Local APIC\n");
+                    logger::printh("Initializing Local APIC (AP) ...\n");
                     return local_apic_core.init();
                 }
             )
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh(
-                        "ACPI / APIC initialization failed : 0x%llx\n",
-                        static_cast<a9n::word>(e)
-                    );
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("Failed to initialize Local APIC (AP)");
                     return e;
                 }
             )
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("init syscall\n");
+                    a9n::kernel::utility::logger::printh("Initializing syscall (AP) ...\n");
                     return init_syscall();
                 }
             )
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::printh("syscall initialization failed : 0x%llx\n", static_cast<a9n::word>(e));
+                    logger::printh("HAL error: %s\n", hal_error_to_string(e));
+                    logger::error("Failed to initialize syscall (AP)\n");
                     return e;
                 }
             )
@@ -550,9 +552,10 @@ namespace a9n::hal::x86_64
                                 }
 
                                 a9n::kernel::utility::logger::printh(
-                                    "%s : virtualization is "
-                                    "unsupported\n"
+                                    "HAL error: %s\n",
+                                    hal_error_to_string(e)
                                 );
+                                a9n::kernel::utility::logger::printh("Virtualization is unsupported\n");
                                 return {};
                             }
                         );

@@ -35,15 +35,15 @@ namespace a9n::hal::x86_64
         // ACPI v1
         if (fadt_base->header.revision <= 2)
         {
-            logger::printh("ACPI PM Timer : v1\n");
+            logger::printh("ACPI PM Timer: v1\n");
             is_mmio = false;
             port    = fadt_base->pm_timer_block;
-            logger::printh("ACPI PM Timer : port : %016llx\n", port);
+            logger::printh("ACPI PM Timer: port=%016llx\n", port);
         }
         // ACPI v2+
         else
         {
-            logger::printh("ACPI PM Timer : v2\n");
+            logger::printh("ACPI PM Timer: v2\n");
             using enum generic_address_space_type;
             switch (fadt_base->x_pm_timer_block.address_space)
             {
@@ -52,13 +52,13 @@ namespace a9n::hal::x86_64
                     address = a9n::kernel::physical_to_virtual_pointer<volatile uint32_t>(
                         fadt_base->x_pm_timer_block.address
                     );
-                    logger::printh("ACPI PM Timer : address : %p\n", address);
+                    logger::printh("ACPI PM Timer: address=%p\n", address);
                     break;
 
                 case SYSTEM_IO :
                     is_mmio = false;
                     port    = fadt_base->x_pm_timer_block.address;
-                    logger::printh("ACPI PM Timer : port : %016llx\n", port);
+                    logger::printh("ACPI PM Timer: port=%016llx\n", port);
                     break;
 
                 default :
@@ -118,7 +118,7 @@ namespace a9n::hal::x86_64
                     if (!result)
                     {
                         a9n::kernel::utility::logger::printh(
-                            "ACPI PM Timer : read "
+                            "ACPI PM Timer: read "
                             "failed\n"
                         );
                         return result.unwrap_error();

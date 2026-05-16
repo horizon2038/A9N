@@ -41,7 +41,7 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::configure_from_madt(madt *madt_base)
     {
-        a9n::kernel::utility::logger::printh("configure from MADT\n");
+        a9n::kernel::utility::logger::printh("Configuring from MADT\n");
         if (!madt_base)
         {
             a9n::kernel::utility::logger::printh("MADT is empty\n");
@@ -82,7 +82,7 @@ namespace a9n::hal::x86_64
                                 = override_entry->flags;
 
                             a9n::kernel::utility::logger::printh(
-                                "MADT ISO : irq %d -> gsi %d, flags 0x%04x\n",
+                                "MADT ISO: irq %d -> gsi %d, flags 0x%04x\n",
                                 override_entry->irq_source,
                                 override_entry->global_system_interrupt,
                                 override_entry->flags
@@ -98,10 +98,10 @@ namespace a9n::hal::x86_64
             madt_entry_pointer += entry->length;
         }
 
-        a9n::kernel::utility::logger::printh("IO APIC : id %4llx\n", id);
-        a9n::kernel::utility::logger::printh("IO APIC : base address 0x%016llx\n", base_address);
+        a9n::kernel::utility::logger::printh("IO APIC: id %4llx\n", id);
+        a9n::kernel::utility::logger::printh("IO APIC: base address 0x%016llx\n", base_address);
         a9n::kernel::utility::logger::printh(
-            "IO APIC : global interrupt base 0x%016llx\n",
+            "IO APIC: global interrupt base 0x%016llx\n",
             global_interrupt_base
         );
 
@@ -125,7 +125,7 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::disable_interrupt_all(void)
     {
-        a9n::kernel::utility::logger::printh("IO APIC : disable_interrupt\n");
+        a9n::kernel::utility::logger::printh("IO APIC: disable_interrupt\n");
         return read(io_apic_register_index::VERSION)
             .and_then(
                 [this](uint32_t version) -> hal_result
@@ -135,12 +135,12 @@ namespace a9n::hal::x86_64
                     hal_result result {};
                     for (uint8_t irq_number = 0; irq_number < max_redirection_entries; irq_number++)
                     {
-                        a9n::kernel::utility::logger::printh("IO APIC : disable IRQ %4d\n", irq_number);
+                        a9n::kernel::utility::logger::printh("IO APIC: disable IRQ %4d\n", irq_number);
                         result = disable_interrupt(irq_number);
                         if (!result)
                         {
                             a9n::kernel::utility::logger::printh(
-                                "IO APIC : disable IRQ %4d failed\n",
+                                "IO APIC: disable IRQ %4d failed\n",
                                 irq_number
                             );
                             break;
@@ -154,7 +154,7 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::enable_interrupt_all(void)
     {
-        a9n::kernel::utility::logger::printh("IO APIC : enable_interrupt\n");
+        a9n::kernel::utility::logger::printh("IO APIC: enable_interrupt\n");
         return read(io_apic_register_index::VERSION)
             .and_then(
                 [this](uint32_t version) -> hal_result
@@ -164,12 +164,12 @@ namespace a9n::hal::x86_64
                     hal_result result {};
                     for (uint8_t irq_number = 0; irq_number < max_redirection_entries; irq_number++)
                     {
-                        a9n::kernel::utility::logger::printh("IO APIC : enable IRQ %4d\n", irq_number);
+                        a9n::kernel::utility::logger::printh("IO APIC: enable IRQ %4d\n", irq_number);
                         result = enable_interrupt(irq_number);
                         if (!result)
                         {
                             a9n::kernel::utility::logger::printh(
-                                "IO APIC : enable IRQ %4d failed\n",
+                                "IO APIC: enable IRQ %4d failed\n",
                                 irq_number
                             );
                             break;
@@ -213,7 +213,7 @@ namespace a9n::hal::x86_64
         if (global_system_interrupt < global_interrupt_base)
         {
             a9n::kernel::utility::logger::printh(
-                "IO APIC : irq %d -> gsi %d < gsi_base %d\n",
+                "IO APIC: IRQ %2x -> GSI %2x < GSI base %2x\n",
                 irq_number,
                 global_system_interrupt,
                 global_interrupt_base
@@ -256,7 +256,7 @@ namespace a9n::hal::x86_64
             = make_redirect_entry(vector, FIXED, PHYSICAL, IDLE, pin_polarity, trigger_mode, mask_typed, 0);
 
         DEBUG_LOG(
-            "IO APIC : irq %d -> gsi %d -> pin %d, vector 0x%02x, flags 0x%04x, mask %d",
+            "IO APIC: irq %d -> gsi %d -> pin %d, vector 0x%02x, flags 0x%04x, mask %d",
             irq_number,
             global_system_interrupt,
             io_apic_pin,
@@ -332,7 +332,7 @@ namespace a9n::hal::x86_64
             return hal_error::NO_SUCH_ADDRESS;
         }
 
-        logger::printh("APIC base address : 0x%016llx\n", apic_base_address);
+        logger::printh("APIC base address: 0x%016llx\n", apic_base_address);
 
         // enable APIC
         apic_base_address |= local_apic_flag::APIC_ENABLE;

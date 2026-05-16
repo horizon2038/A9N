@@ -20,7 +20,7 @@ namespace a9n::hal::x86_64
 
     hal_result local_apic_timer::init()
     {
-        a9n::kernel::utility::logger::printh("init Local APIC Timer\n");
+        a9n::kernel::utility::logger::printh("Initializing Local APIC Timer ...\n");
         divide_config = 0x03;
 
         return calibrate()
@@ -63,8 +63,8 @@ namespace a9n::hal::x86_64
                 {
                     // clear Local APIC Timer
                     a9n::kernel::utility::logger::printh(
-                        "clear Local APIC "
-                        "Timer\n"
+                        "Clearing Local APIC "
+                        "Timer ...\n"
                     );
                     return local_apic_core.write(local_apic_offset::TIMER_INIT_COUNT, 0xFFFFFFFF);
                 }
@@ -73,7 +73,7 @@ namespace a9n::hal::x86_64
                 [&, this](void) -> hal_result
                 {
                     // configure divide
-                    a9n::kernel::utility::logger::printh("configure divide\n");
+                    a9n::kernel::utility::logger::printh("Configuring timer divide ...\n");
                     return local_apic_core.write(local_apic_offset::TIMER_DIVIDE, divide_config & 0x0F);
                 }
             )
@@ -82,7 +82,7 @@ namespace a9n::hal::x86_64
                 {
                     // start Local APIC Timer
                     a9n::kernel::utility::logger::printh(
-                        "start Local APIC "
+                        "Starting Local APIC "
                         "Timer measurement ...\n"
                     );
                     return local_apic_core.write(local_apic_offset::TIMER_INIT_COUNT, 0xFFFFFFFF);
@@ -106,16 +106,16 @@ namespace a9n::hal::x86_64
                 {
                     // calculate Local APIC Timer frequency
                     a9n::kernel::utility::logger::printh(
-                        "calculate Local APIC "
+                        "Calculating Local APIC "
                         "Timer frequency\n"
                     );
                     uint32_t elapsed_clock = 0xFFFFFFFF - start_clock;
                     frequency              = (elapsed_clock * 100);
 
-                    a9n::kernel::utility::logger::printh("elapsed_clock : %8llu times\n", elapsed_clock);
+                    a9n::kernel::utility::logger::printh("  Elapsed clock: %8llu times\n", elapsed_clock);
 
                     a9n::kernel::utility::logger::printh(
-                        "Local APIC Timer frequency : %10llu Hz ( %4llu MHz "
+                        "Local APIC Timer frequency: %10llu Hz ( %4llu MHz "
                         ")\n",
                         frequency,
                         frequency / 1000000
@@ -148,10 +148,7 @@ namespace a9n::hal::x86_64
             .or_else(
                 [&, this](hal_error e) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh(
-                        "configure_cycle "
-                        "failed\n"
-                    );
+                    a9n::kernel::utility::logger::error("Failed to configure Local APIC Timer cycle\n");
                     return e;
                 }
             );

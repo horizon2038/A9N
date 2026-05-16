@@ -60,54 +60,41 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
         a9n::kernel::utility::logger { *hal_instance->_serial };
 
     logger::a9nout();
-    logger::printk("start A9N kernel ...\n");
-    logger::split();
-
-    logger::printk("kernel version: %s \n", a9n::kernel::KERNEL_VERSION_STRING);
-
-    logger::printk("kernel entry : 0x%016llx\n", reinterpret_cast<uint64_t>(kernel_entry));
-    logger::printk("boot info address : 0x%016llx\n", reinterpret_cast<uint64_t>(target_boot_info));
-    logger::split();
+    logger::printk("Booting the A9N kernel ...\n");
+    logger::printk("Kernel version: %s \n", a9n::kernel::KERNEL_VERSION_STRING);
+    logger::printk("Kernel entry: address=%p\n", kernel_entry);
+    logger::printk("Boot information: address=%p\n", reinterpret_cast<uint64_t>(target_boot_info));
 
     // init cpu local variables
-    logger::printk("init local variables ...\n");
+    logger::printk("Initializing per-CPU local variables ...\n");
     a9n::kernel::init_cpu_local_variable();
 
-    logger::printk("init architecture ...\n");
-    logger::printk("- init HAL\n");
-    logger::printk("- init io\n");
-    logger::printk("- init serial\n");
-    logger::printk("- init logger\n");
-
+    logger::printk("Initializing architecture (HAL) ...\n");
     auto arch_res = hal_instance->_arch_initializer->init_architecture(target_boot_info->arch_info);
     if (!arch_res)
     {
-        logger::error("failed to init architecture");
+        logger::error("Failed to initialize architecture!");
         return 0;
     }
 
-    logger::printk("init interrupt_manager ...\n");
+    logger::printk("Initializing interrupt system ...\n");
     result = a9n::kernel::interrupt_manager_core.init();
-
     a9n::kernel::interrupt_manager_core.ack_interrupt();
 
-    logger::printk("init process_manager ...\n");
+    logger::printk("Initializing process-management system ...\n");
     result = a9n::kernel::process_manager_core.init();
-    logger::split();
 
     // create user thread
-    logger::printk("create initial threads ...\n");
-
+    logger::printk("Initializing init process ...\n");
     auto init_res = create_init(*target_boot_info);
     if (!init_res)
     {
-        logger::error("failed to create init");
+        logger::error("Failed to create init!");
         for (;;)
             ;
     }
 
-    logger::printk("all initialization completed successfully\n");
-
+    logger::printk("All initializations completed successfully, Launching init ...\n");
     a9n::kernel::process_manager_core.switch_to_user();
 
     for (;;)

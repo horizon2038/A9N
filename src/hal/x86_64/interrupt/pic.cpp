@@ -188,7 +188,7 @@ namespace a9n::hal::x86_64
     {
 #ifdef CONFIG_PIC
         // remap IRQs to 0x20+
-        a9n::kernel::utility::logger::printh("PIC : remap all IRQs to 0x20+ ...\n");
+        a9n::kernel::utility::logger::printh("Setting the offset for all IRQs to 0x20+ (PIC) ...\n");
         uint8_t master_offset = 0x20;
         uint8_t slave_offset  = 0x28;
 

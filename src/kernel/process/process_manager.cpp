@@ -100,7 +100,7 @@ namespace a9n::kernel
 
         auto log_kernel_error = [](kernel_error e) -> kernel_result
         {
-            a9n::kernel::utility::logger::printk("kernel error : %llu\n", static_cast<a9n::word>(e));
+            a9n::kernel::utility::logger::printk("Kernel error : %llu\n", static_cast<a9n::word>(e));
             return e;
         };
 
@@ -126,10 +126,9 @@ namespace a9n::kernel
         auto hal_res = a9n::hal::current_local_variable().and_then(
             [=, this](cpu_local_variable *local_variable) -> a9n::hal::hal_result
             {
-                a9n::kernel::utility::logger::printk("start schedule ...\n");
                 if (!local_variable)
                 {
-                    a9n::kernel::utility::logger::error("failed to get local variable");
+                    a9n::kernel::utility::logger::error("Failed to retrieve CPU local variable\n");
                     return hal::hal_error::NO_SUCH_ADDRESS;
                 }
 
@@ -140,12 +139,12 @@ namespace a9n::kernel
                     {
                         return hal::hal_error::NO_SUCH_ADDRESS;
                     }
-                    a9n::kernel::utility::logger::printk("local variable : 0x%016llx\n", local_variable);
-                    a9n::kernel::utility::logger::printk("next process : 0x%016llx\n", next_process);
+                    DEBUG_LOG("Local variable : 0x%016llx\n", local_variable);
+                    DEBUG_LOG("Next process : 0x%016llx\n", next_process);
 
                     local_variable->current_process = next_process;
 
-                    utility::logger::printk("switch to user ...\n");
+                    utility::logger::printk("Switching to user ...\n");
                     a9n::hal::switch_context(*next_process, *next_process); // *preview_process* is
                                                                             // not used (stub)
                     a9n::hal::restore_context(a9n::hal::cpu_mode::USER);
@@ -153,14 +152,14 @@ namespace a9n::kernel
                     return {};
                 }
 
-                utility::logger::printk("can't schedule\n");
+                utility::logger::error("Scheduling failed!\n");
                 return hal::hal_error::TRY_AGAIN;
             }
         );
 
         if (!hal_res) [[unlikely]]
         {
-            utility::logger::printk("no such local variable\n");
+            utility::logger::error("No such local variable\n");
             return kernel_error::HAL_ERROR;
         }
 
@@ -174,7 +173,7 @@ namespace a9n::kernel
             .and_then(
                 [&](cpu_local_variable *local_variable) -> kernel_result
                 {
-                    DEBUG_LOG("switch to IDLE ...\n");
+                    DEBUG_LOG("Switching to IDLE ...\n");
                     local_variable->current_process = &idle_process;
                     local_variable->is_idle         = true;
 
@@ -220,7 +219,7 @@ namespace a9n::kernel
                                 return switch_to_idle().transform_error(
                                     [&](kernel_error) -> hal::hal_error
                                     {
-                                        DEBUG_LOG("failed to switch to IDLE");
+                                        DEBUG_LOG("Failed to switch to IDLE");
                                         return hal::hal_error::TRY_AGAIN;
                                     }
                                 );
@@ -256,7 +255,7 @@ namespace a9n::kernel
                                 local_variable->current_process = next_process;
                                 local_variable->is_idle         = false;
 
-                                DEBUG_LOG("direct switch to process 0x%016llx", next_process);
+                                DEBUG_LOG("Switching directly to process %p ...", next_process);
                                 return a9n::hal::switch_context(preview_process, *next_process);
                             }
                         );
@@ -290,20 +289,17 @@ namespace a9n::kernel
         if (!result) [[unlikely]]
         {
             utility::logger::printk(
-                "failed to retrieve process : HAL error : %s\n",
+                "HAL error : %s\n",
                 a9n::hal::hal_error_to_string(result.unwrap_error())
             );
+            utility::logger::error("Failed to retrieve CPU local variable\n");
             return kernel_error::HAL_ERROR;
         }
 
         auto current_process = result.unwrap()->current_process;
         if (!current_process) [[unlikely]]
         {
-            utility::logger::printk(
-                "failed to retrieve process : process is empty\n",
-                a9n::hal::hal_error_to_string(result.unwrap_error())
-            );
-
+            utility::logger::error("Failed to retrieve process : process is empty\n");
             return kernel_error::NO_SUCH_ADDRESS;
         }
 
@@ -323,7 +319,7 @@ namespace a9n::kernel
         auto result = scheduler_core.add_process(&process);
         [[unlikely]] if (!result)
         {
-            utility::logger::printk("failed to add process to scheduler\n");
+            utility::logger::error("Failed to add the process to the scheduler");
             return kernel_error::UNEXPECTED;
         }
 

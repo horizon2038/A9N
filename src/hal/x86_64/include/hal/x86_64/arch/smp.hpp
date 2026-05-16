@@ -28,7 +28,7 @@ namespace a9n::hal::x86_64
         auto result = acpi_core.current_madt().and_then(
             [&](madt *madt_base) -> hal_result
             {
-                logger::printh("smp_info : configure from MADT\n");
+                logger::printh("Configuring SMP information from MADT ...\n");
                 if (!madt_base)
                 {
                     a9n::kernel::utility::logger::printk("MADT is empty\n");
@@ -40,9 +40,9 @@ namespace a9n::hal::x86_64
 
                 while (madt_entry_pointer < end)
                 {
-                    madt_entry_header *entry = reinterpret_cast<madt_entry_header *>(madt_entry_pointer
-                    );
-                    logger::printh("madt entry : 0x%016llx\n", entry);
+                    madt_entry_header *entry
+                        = reinterpret_cast<madt_entry_header *>(madt_entry_pointer);
+                    logger::printh("  MADT entry: address=%p\n", entry);
 
                     switch (entry->type)
                     {
@@ -54,7 +54,7 @@ namespace a9n::hal::x86_64
                                     smp_info_core.local_apic_ids[smp_info_core.enabled_ap_count]
                                         = local_apic_entry->apic_id;
                                     smp_info_core.enabled_ap_count++;
-                                    logger::printh("madt type : Local APIC\n");
+                                    logger::printh("  MADT type: Local APIC\n");
                                 }
 
                                 break;
@@ -62,15 +62,15 @@ namespace a9n::hal::x86_64
 
                         case madt_entry_type::PROCESSOR_LOCAL_X2APIC :
                             {
-                                auto *local_x2_apic_entry = reinterpret_cast<madt_local_x2_apic *>(entry
-                                );
+                                auto *local_x2_apic_entry
+                                    = reinterpret_cast<madt_local_x2_apic *>(entry);
 
                                 if (local_x2_apic_entry->flags & 1)
                                 {
                                     smp_info_core.local_apic_ids[smp_info_core.enabled_ap_count]
                                         = local_x2_apic_entry->apic_id;
                                     smp_info_core.enabled_ap_count++;
-                                    logger::printh("madt type : Local X2APIC\n");
+                                    logger::printh("  MADT type: Local X2APIC\n");
                                 }
 
                                 break;
@@ -92,7 +92,7 @@ namespace a9n::hal::x86_64
             return result.unwrap_error();
         }
 
-        logger::printh("number of processor : %04d\n", smp_info_core.enabled_ap_count);
+        logger::printh("Number of detected processors is %04d\n", smp_info_core.enabled_ap_count);
 
         return smp_info_core;
     }
