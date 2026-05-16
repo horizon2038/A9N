@@ -58,7 +58,7 @@ namespace a9n::kernel::utility
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::GREEN);
-        this_logger->print_sender("KERNEL");
+        this_logger->print_sender("KERNEL", terminal_color::GREEN);
         this_logger->print_core();
         this_logger->print_splitter();
         this_logger->_print.vprintf(format, args);
@@ -71,7 +71,7 @@ namespace a9n::kernel::utility
         __builtin_va_list args;
         __builtin_va_start(args, format);
         this_logger->print_log_id(terminal_color::YELLOW);
-        this_logger->print_sender("HAL");
+        this_logger->print_sender("HAL", terminal_color::YELLOW);
         this_logger->print_core();
         this_logger->print_splitter();
         this_logger->_print.vprintf(format, args);
@@ -174,27 +174,30 @@ namespace a9n::kernel::utility
         );
     }
 
-    void logger::print_log_id(const char *color_id)
+    void logger::print_log_id([[maybe_unused]] const char *color_id)
     {
+#ifdef A9N_CONFIG_ENABLE_LOG_ID
         this_logger->_print
             .printf("[ %s%s%010d%s ]", terminal_color::RESET, color_id, log_id, terminal_color::RESET);
         log_id++;
+#endif
     }
 
     void logger::print_sender(const char *sender, const char *color_id)
     {
         this_logger->_print
-            .printf("[ %s%s%8s%s ]", terminal_color::RESET, color_id, sender, terminal_color::RESET);
+            .printf("[%s%s%8s%s]", terminal_color::RESET, color_id, sender, terminal_color::RESET);
     }
 
     void logger::print_core(void)
     {
+#ifdef A9N_CONFIG_ENABLE_LOG_CORE_ID
         auto result
             = a9n::hal::current_core_number()
                   .and_then(
                       [](a9n::word core_number) -> a9n::hal::hal_result
                       {
-                          this_logger->_print.printf("[ %03d ] ", core_number);
+                          this_logger->_print.printf("[%02x]", core_number);
 
                           return {};
                       }
@@ -203,15 +206,16 @@ namespace a9n::kernel::utility
                   .or_else(
                       [](kernel_error e) -> kernel_result
                       {
-                          this_logger->_print.printf("[ %03s ] ", "-");
+                          this_logger->_print.printf("[%02s]", "-");
 
                           return {};
                       }
                   );
+#endif
     }
 
     void logger::print_splitter()
     {
-        // this_logger->_print.printf(": ");
+        this_logger->_print.printf(" ");
     }
 }
