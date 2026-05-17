@@ -259,7 +259,7 @@ namespace a9n::hal::x86_64
                     return try_get_vendor_id().and_then(
                         [](vendor_id id) -> hal_result
                         {
-                            a9n::kernel::utility::logger::printh("Vendor ID: %s\n", id.data());
+                            a9n::kernel::utility::logger::printh("  Vendor ID=%s\n", id.data());
                             return {};
                         }
                     );
@@ -272,7 +272,7 @@ namespace a9n::hal::x86_64
                     return try_get_cpu_name().and_then(
                         [](cpu_name name) -> hal_result
                         {
-                            a9n::kernel::utility::logger::printh("CPU name: %s\n", name.data());
+                            a9n::kernel::utility::logger::printh("  CPU name=%s\n", name.data());
                             return {};
                         }
                     );
@@ -379,7 +379,7 @@ namespace a9n::hal::x86_64
         );
 
         // make gdtr
-        logger::printh("Making AP GDTR ... (0x%016llx)\n", destination_gdtr);
+        logger::printh("Making Global Descriptor Table (GDTR) for AP... (0x%016llx)\n", destination_gdtr);
         *a9n::kernel::physical_to_virtual_pointer<uint16_t>(destination_gdtr)
             = static_cast<uint16_t>(source_gdt_size - 1);
         *a9n::kernel::physical_to_virtual_pointer<uint64_t>(destination_gdtr + 2)

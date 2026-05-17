@@ -41,7 +41,7 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::configure_from_madt(madt *madt_base)
     {
-        a9n::kernel::utility::logger::printh("Configuring from MADT\n");
+        a9n::kernel::utility::logger::printh("Configuring IO APIC from MADT: address=%p\n", madt_base);
         if (!madt_base)
         {
             a9n::kernel::utility::logger::printh("MADT is empty\n");
@@ -82,7 +82,7 @@ namespace a9n::hal::x86_64
                                 = override_entry->flags;
 
                             a9n::kernel::utility::logger::printh(
-                                "MADT ISO: IRQ %d -> GSI %d, flags 0x%04x\n",
+                                "  MADT ISO: IRQ=%3d -> GSI=%3d, flags=0x%04x\n",
                                 override_entry->irq_source,
                                 override_entry->global_system_interrupt,
                                 override_entry->flags
@@ -98,10 +98,10 @@ namespace a9n::hal::x86_64
             madt_entry_pointer += entry->length;
         }
 
-        a9n::kernel::utility::logger::printh("IO APIC: id %4llx\n", id);
-        a9n::kernel::utility::logger::printh("IO APIC: base address 0x%016llx\n", base_address);
         a9n::kernel::utility::logger::printh(
-            "IO APIC: global interrupt base 0x%016llx\n",
+            "  ID=%4llx, address=%p, global_interrupt_base=0x%08llx\n",
+            id,
+            base_address,
             global_interrupt_base
         );
 

@@ -146,11 +146,11 @@ __      _________
             .and_then(
                 [](vendor_id id) -> hal_result
                 {
-                    logger::printh("Checking vendor id ...\n");
+                    logger::printh("Checking vendor ID ...\n");
                     if (liba9n::std::memcmp(vendor_identifier::INTEL, id.data(), sizeof(vendor_id))
                         != 0)
                     {
-                        logger::printh("VMX: unsupported vendor id [%s]\n", id.data());
+                        logger::printh("VMX: unsupported vendor ID [%s]\n", id.data());
                         return hal_error::UNSUPPORTED;
                     }
 
