@@ -109,69 +109,56 @@ namespace a9n::kernel::utility
         this_logger->_print.printf("\n");
     }
 
+    // clang-format off
+    constexpr const char *A9N_LOGO_ASCII[] = {
+        "                                   ",
+        "         @@@@@@  @@@@@@@@@         ",
+        "        @@@@@@@  @@@@@@@@@@        ",
+        "        @@@@@@  @@@@@@@@@@@        ",
+        "       @@@@@@@  @@@@@@@@@@@@       ",
+        "       @@@@@@  @@@@@@ @@@@@@       ",
+        "      @@@@@@@  @@@@@@ &@@@@@@      ",
+        "      @@@@@@  @@@@@@   @@@@@@      ",
+        "     @@@@@@@  @@@@@@   0@@@@@@     ",
+        "     @@@@@@  @@@@@@  @  @@@@@@     ",
+        "    @@@@@@&  @@@@@@  @@ &@@@@@@    ",
+        "    @@@@@@  ......  @@@  @@@@@@    ",
+        "   @@@@@@@  @@@@@@@@@@@@ &@@@@@@   ",
+        "   @@@@@@  @@@@@@@@@@@@@  @@@@@@   ",
+        "  @@@@@@@ .@@@@@@@@@@@@@0 (@@@@@@  ",
+        "  @@@@@@  @@@@@@           @@@@@@  ",
+        " @@@@@@0  @@@@@@           /@@@@@@ ",
+        "                                   "
+    };
+    constexpr const char *A9N_LOGO_ASCII_STR[] = {
+        "                                   ",
+            "        d8888 .d8888b. 888b    888 ",
+            "       d88888d88P  Y88b8888b   888 ",
+            "      d88P888888    88888888b  888 ",
+            "     d88P 888Y88b. d888888Y88b 888 ",
+            "    d88P  888  Y888P888888 Y88b888 ",
+            "   d88P   888       888888  Y88888 ",
+            "  d8888888888Y88b  d88P888   Y8888 ",
+            " d88P     888  Y8888P  888    Y888 ",
+            "                                   "
+    };
+    constexpr const char A9N_DESCRIPTION[] = "A9N is a Capability-based Microkernel that supports a variety of hardware platforms through appropriate HAL.";
+    constexpr const char A9N_AUTHOR[]      = "Rekka 'horizon' IGUMI";
+    constexpr const char A9N_PROJECT[]     = "A9N Project";
+    // clang-format on
+
     void logger::a9nout()
     {
-        this_logger->_print.printf(
-            "\e[32m"
-            "                                   \n"
-            "        d8888 .d8888b. 888b    888 \n"
-            "       d88888d88P  Y88b8888b   888 \n"
-            "      d88P888888    88888888b  888 \n"
-            "     d88P 888Y88b. d888888Y88b 888 \n"
-            "    d88P  888  Y888P888888 Y88b888 \n"
-            "   d88P   888       888888  Y88888 \n"
-            "  d8888888888Y88b  d88P888   Y8888 \n"
-            " d88P     888  Y8888P  888    Y888 \n"
-            "                                   \n"
-            "\e[0m"
-        );
+        for (const char *line : A9N_LOGO_ASCII)
+        {
+            printk("\e[32m%s\e[0m\n", line);
+        }
 
-        this_logger->_print.printf(
-            "\e[32m"
-            "                                   \n"
-            "         @@@@@@  @@@@@@@@@         \n"
-            "        @@@@@@@  @@@@@@@@@@        \n"
-            "        @@@@@@  @@@@@@@@@@@        \n"
-            "       @@@@@@@  @@@@@@@@@@@@       \n"
-            "       @@@@@@  @@@@@@ @@@@@@       \n"
-            "      @@@@@@@  @@@@@@ &@@@@@@      \n"
-            "      @@@@@@  @@@@@@   @@@@@@      \n"
-            "     @@@@@@@  @@@@@@   0@@@@@@     \n"
-            "     @@@@@@  @@@@@@  @  @@@@@@     \n"
-            "    @@@@@@&  @@@@@@  @@ &@@@@@@    \n"
-            "    @@@@@@  ......  @@@  @@@@@@    \n"
-            "   @@@@@@@  @@@@@@@@@@@@ &@@@@@@   \n"
-            "   @@@@@@  @@@@@@@@@@@@@  @@@@@@   \n"
-            "  @@@@@@@ .@@@@@@@@@@@@@0 (@@@@@@  \n"
-            "  @@@@@@  @@@@@@           @@@@@@  \n"
-            " @@@@@@0  @@@@@@           /@@@@@@ \n"
-            "                                   \n"
-            "\e[0m"
-        );
-
-        this_logger->_print.printf(
-            "\e[11F"
-            "\e[36G"
-            "\e[32m"
-            "kernel: \e[52G\e[37mA9N v%s\n"
-            "\e[36G"
-            "\e[32m"
-            "creator: \e[52G\e[37mRekka 'horizon' IGUMI\n"
-            "\e[36G"
-            "\e[32m"
-            "project: \e[52G\e[37mA9N Project\n"
-            "\e[36G"
-            "\e[32m"
-            "about: \e[52G\e[37mA9N is a kernel built on HAL <Hardware "
-            "Abstraction Layer> and microkernel.\n"
-            "\e[36G"
-            "\e[32m"
-            "\e[52G\e[37mIt combines high portability, stability, and "
-            "scalability.\n"
-            "\e[0m"
-            "\e[13E",
-            KERNEL_VERSION_STRING
-        );
+        printk("A9N Microkernel v%s\n", KERNEL_VERSION_STRING);
+        printk("  Description: %s\n", A9N_DESCRIPTION);
+        printk("  Project: %s\n", A9N_PROJECT);
+        printk("  Author: %s\n", A9N_AUTHOR);
+        printk("\n");
     }
 
     void logger::print_log_id([[maybe_unused]] const char *color_id)

@@ -61,10 +61,8 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
 
     // reset terminal and print boot information
     logger::printn("\e[0m\e[2J\e[H");
-
+    logger::printk("Booting the A9N Microkernel ...\n");
     logger::a9nout();
-    logger::printk("Booting the A9N kernel ...\n");
-    logger::printk("Kernel version: %s \n", a9n::kernel::KERNEL_VERSION_STRING);
     logger::printk("Kernel entry: address=%p\n", kernel_entry);
     logger::printk("Boot information: address=%p\n", reinterpret_cast<uint64_t>(target_boot_info));
 
