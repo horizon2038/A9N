@@ -255,11 +255,11 @@ namespace a9n::hal::x86_64
             .and_then(
                 [](void) -> hal_result
                 {
-                    a9n::kernel::utility::logger::printh("Loading vendor id ...\n");
+                    a9n::kernel::utility::logger::printh("Loading vendor ID ...\n");
                     return try_get_vendor_id().and_then(
                         [](vendor_id id) -> hal_result
                         {
-                            a9n::kernel::utility::logger::printh("Vendor id: %s\n", id.data());
+                            a9n::kernel::utility::logger::printh("Vendor ID: %s\n", id.data());
                             return {};
                         }
                     );
@@ -286,18 +286,18 @@ namespace a9n::hal::x86_64
                         .and_then(
                             [](cpuid_info info) -> hal_result
                             {
-                                const bool is_2mib_page_supported = info.rdx & (1 << 3);
+                                const bool is_2mib_page_supported = info.rdx & (1 << 29);
                                 const bool is_1gib_page_supported = info.rdx & (1 << 26);
 
                                 SUPPORT_2MiB_PAGE                 = is_2mib_page_supported;
                                 SUPPORT_1GiB_PAGE                 = is_1gib_page_supported;
 
                                 a9n::kernel::utility::logger::printh(
-                                    "2MiB page support : %s\n",
+                                    "  2MiB page support=%s\n",
                                     is_2mib_page_supported ? "yes" : "no"
                                 );
                                 a9n::kernel::utility::logger::printh(
-                                    "1GiB page support : %s\n",
+                                    "  1GiB page support=%s\n",
                                     is_1gib_page_supported ? "yes" : "no"
                                 );
 
