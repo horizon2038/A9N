@@ -128,7 +128,7 @@ namespace a9n::kernel
             {
                 if (!local_variable)
                 {
-                    a9n::kernel::utility::logger::error("Failed to retrieve CPU local variable\n");
+                    a9n::kernel::utility::logger::error("Failed to retrieve CPU local variable");
                     return hal::hal_error::NO_SUCH_ADDRESS;
                 }
 
@@ -152,14 +152,14 @@ namespace a9n::kernel
                     return {};
                 }
 
-                utility::logger::error("Scheduling failed!\n");
+                utility::logger::error("Scheduling failed!");
                 return hal::hal_error::TRY_AGAIN;
             }
         );
 
         if (!hal_res) [[unlikely]]
         {
-            utility::logger::error("No such local variable\n");
+            utility::logger::error("No such local variable");
             return kernel_error::HAL_ERROR;
         }
 
@@ -292,14 +292,14 @@ namespace a9n::kernel
                 "HAL error : %s\n",
                 a9n::hal::hal_error_to_string(result.unwrap_error())
             );
-            utility::logger::error("Failed to retrieve CPU local variable\n");
+            utility::logger::error("Failed to retrieve CPU local variable");
             return kernel_error::HAL_ERROR;
         }
 
         auto current_process = result.unwrap()->current_process;
         if (!current_process) [[unlikely]]
         {
-            utility::logger::error("Failed to retrieve process : process is empty\n");
+            utility::logger::error("Failed to retrieve process : process is empty");
             return kernel_error::NO_SUCH_ADDRESS;
         }
 

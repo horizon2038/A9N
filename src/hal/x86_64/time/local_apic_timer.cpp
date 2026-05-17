@@ -148,7 +148,7 @@ namespace a9n::hal::x86_64
             .or_else(
                 [&, this](hal_error e) -> hal_result
                 {
-                    a9n::kernel::utility::logger::error("Failed to configure Local APIC Timer cycle\n");
+                    a9n::kernel::utility::logger::error("Failed to configure Local APIC Timer cycle");
                     return e;
                 }
             );

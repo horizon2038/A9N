@@ -127,7 +127,7 @@ namespace a9n::hal::x86_64
             .or_else(
                 [](hal_error e) -> hal_result
                 {
-                    logger::error("Failed to initialize CPU\n");
+                    logger::error("Failed to initialize CPU");
                     return e;
                 }
             )
@@ -194,7 +194,7 @@ namespace a9n::hal::x86_64
                 [](hal_error e) -> hal_result
                 {
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
-                    logger::error("Failed to initialize ACPI / APIC\n");
+                    logger::error("Failed to initialize ACPI / APIC");
                     return e;
                 }
             )
@@ -209,7 +209,7 @@ namespace a9n::hal::x86_64
                 [](hal_error e) -> hal_result
                 {
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
-                    logger::error("Failed to initialize Local APIC Timer\n");
+                    logger::error("Failed to initialize Local APIC Timer");
                     return e;
                 }
             )
@@ -224,7 +224,7 @@ namespace a9n::hal::x86_64
                 [](hal_error e) -> hal_result
                 {
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
-                    logger::error("Failed to initialize syscall\n");
+                    logger::error("Failed to initialize syscall");
                     return e;
                 }
             )
@@ -240,7 +240,7 @@ namespace a9n::hal::x86_64
                 [](hal_error e) -> hal_result
                 {
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
-                    logger::error("failed to initialize interrupt\n");
+                    logger::error("failed to initialize interrupt");
                     return e;
                 }
             )
@@ -484,7 +484,7 @@ namespace a9n::hal::x86_64
         // .and_then(enable_vmx);
         if (!result)
         {
-            a9n::kernel::utility::logger::error("Can't configure AP\n");
+            a9n::kernel::utility::logger::error("Can't configure AP");
             return;
         }
 
@@ -504,7 +504,7 @@ namespace a9n::hal::x86_64
                 [](hal_error e) -> hal_result
                 {
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
-                    logger::error("Failed to initialize CPU\n");
+                    logger::error("Failed to initialize CPU");
                     return e;
                 }
             )
@@ -534,7 +534,7 @@ namespace a9n::hal::x86_64
                 [](hal_error e) -> hal_result
                 {
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
-                    logger::error("Failed to initialize syscall (AP)\n");
+                    logger::error("Failed to initialize syscall (AP)");
                     return e;
                 }
             )

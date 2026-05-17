@@ -55,8 +55,8 @@ namespace a9n::hal::x86_64
         [[unlikely]] if (!kernel_call_handler)
         {
             a9n::kernel::utility::logger::error(
-                "kernel call handler "
-                "is not set\n"
+                "Kernel call handler "
+                "is not registered"
             );
 
             for (;;)
@@ -89,7 +89,7 @@ namespace a9n::hal::x86_64
                 {
                     [[unlikely]] if (!x86_64::fault_dispatcher)
                     {
-                        a9n::kernel::utility::logger::error("fault dispatcher is not set\n");
+                        a9n::kernel::utility::logger::error("Fault dispatcher is not registered");
 
                         for (;;)
                             ;

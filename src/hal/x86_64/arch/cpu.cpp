@@ -71,7 +71,7 @@ namespace a9n::hal::x86_64
         a9n::kernel::utility::logger::printh("Trying to allocate a core number ...\n");
         if (current_cpu_number++ >= a9n::kernel::CPU_COUNT_MAX)
         {
-            a9n::kernel::utility::logger::error("No such CPU number!\n");
+            a9n::kernel::utility::logger::error("No such CPU number!");
             return hal_error::NO_SUCH_DEVICE;
         }
         lock.unlock();
@@ -134,7 +134,7 @@ namespace a9n::hal
         auto local_variable = reinterpret_cast<a9n::kernel::cpu_local_variable *>(_read_gs_base());
         if (!local_variable) [[unlikely]]
         {
-            kernel::utility::logger::error("CPU local variable could not be found\n");
+            kernel::utility::logger::error("CPU local variable could not be found");
             return hal_error::NO_SUCH_ADDRESS;
         }
 

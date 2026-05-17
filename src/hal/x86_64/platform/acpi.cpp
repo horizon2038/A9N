@@ -39,7 +39,7 @@ namespace a9n::hal::x86_64
 
         if (!validate_rsdp(initial_rsdp_address))
         {
-            a9n::kernel::utility::logger::error("RSDP is invalid\n");
+            a9n::kernel::utility::logger::error("RSDP is invalid");
             return;
         }
 

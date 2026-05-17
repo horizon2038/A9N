@@ -319,7 +319,7 @@ namespace a9n::kernel
 
         if (memory.memory_map_count > INITIAL_GENERIC_COUNT_MAX)
         {
-            logger::error("Memory map count is out of range!\n");
+            logger::error("Memory map count is out of range!");
             return a9n::kernel::kernel_error::ILLEGAL_ARGUMENT;
         }
 

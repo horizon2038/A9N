@@ -142,7 +142,7 @@ namespace a9n::kernel
 
             default :
                 {
-                    a9n::kernel::utility::logger::error("illegal operaton\n");
+                    DEBUG_LOG("Illegal operaton!");
                     return capability_error::ILLEGAL_OPERATION;
                 }
         }

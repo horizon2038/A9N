@@ -79,7 +79,7 @@ namespace a9n::kernel
     {
         if (!current_process.root_slot.component) [[unlikely]]
         {
-            a9n::kernel::utility::logger::error("capability slot is empty\n");
+            a9n::kernel::utility::logger::error("Capability slot is not configured");
             return kernel_error::INIT_FIRST;
         }
 
