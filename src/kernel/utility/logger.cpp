@@ -48,7 +48,7 @@ namespace a9n::kernel::utility
         this_logger->print_log_id();
         this_logger->print_sender("ERROR", terminal_color::RED);
         this_logger->print_core();
-        // this_logger->print_splitter();
+        this_logger->print_splitter();
         this_logger->_print.printf("%s\n", message);
     }
 
