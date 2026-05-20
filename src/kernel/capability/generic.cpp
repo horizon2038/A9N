@@ -426,6 +426,9 @@ namespace a9n::kernel
             case GENERIC :
                 return specific_bits;
 
+            case ADDRESS_SPACE :
+                return liba9n::calculate_radix(a9n::PAGE_SIZE);
+
             case PAGE_TABLE :
                 return liba9n::calculate_radix(a9n::PAGE_SIZE);
 
