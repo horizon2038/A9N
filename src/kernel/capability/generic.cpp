@@ -96,7 +96,7 @@ namespace a9n::kernel
         auto aligned_watermark  = liba9n::align_value(watermark, unit_size);
         auto boundary_address   = aligned_watermark + (unit_size);
 
-        if (boundary_address >= (base_address + size()))
+        if (boundary_address > (base_address + size()))
         {
             return memory_error::OUT_OF_MEMORY;
         }
@@ -227,18 +227,21 @@ namespace a9n::kernel
                         .and_then(
                             [&](void) -> capability_result
                             {
-                                [[unlikely]] if (count == 0 || count == 0)
+                                [[unlikely]] if (count == 0)
                                 {
+                                    a9n::kernel::utility::logger::error("count must be greater than 0");
                                     return capability_error::INVALID_ARGUMENT;
                                 }
 
                                 type = static_cast<capability_type>(type_raw);
-                                [[unlikely]] if (self_info.is_device() && type != capability_type::FRAME)
+                                [[unlikely]] if (self_info.is_device()
+                                                 && (type != capability_type::FRAME
+                                                     && type != capability_type::GENERIC))
                                 {
                                     a9n::kernel::utility::logger::error(
                                         "device generic cannot be "
                                         "converted to anything "
-                                        "other than frame"
+                                        "other than frame or generic"
                                     );
                                     return capability_error::INVALID_ARGUMENT;
                                 }
