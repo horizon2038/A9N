@@ -97,6 +97,7 @@ namespace a9n::kernel
         slot.init();
         slot.component = &frame_capability_core;
         slot.type      = capability_type::FRAME;
+        slot.rights    = capability_slot::object_rights::ALL;
         slot.data      = convert_frame_to_slot_data(target_frame);
 
         return {};
