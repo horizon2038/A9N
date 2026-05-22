@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.29)
 # project base configuration
 project(
     A9N
-    VERSION 0.2.1
+    VERSION 0.1.6
     DESCRIPTION "A9N Microkernel"
     LANGUAGES C CXX
 )
