@@ -166,7 +166,7 @@ namespace a9n::kernel
                         return capability_error::INVALID_ARGUMENT;
                     }
 
-                    return try_configure_io_port_slot(destination_slot.get(), *this, new_range)
+                    return try_configure_io_port_slot(destination_slot.get(), new_range)
                         .transform_error(convert_kernel_to_capability_error);
 
                     return {};

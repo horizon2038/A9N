@@ -115,14 +115,13 @@ namespace a9n::kernel
         return data;
     }
 
-    inline constexpr kernel_result try_configure_io_port_slot(
-        capability_slot      &slot,
-        io_port_capability   &port,
-        io_port_address_range range
-    )
+    inline io_port_capability io_port_capability_core;
+
+    inline constexpr kernel_result
+        try_configure_io_port_slot(capability_slot &slot, io_port_address_range range)
     {
         slot.init();
-        slot.component = &port;
+        slot.component = &io_port_capability_core;
         slot.type      = capability_type::IO_PORT;
         slot.rights    = capability_slot::ALL;
         slot.data      = convert_address_range_to_slot_data(range);

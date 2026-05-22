@@ -246,9 +246,16 @@ namespace a9n::kernel
                                     return capability_error::INVALID_ARGUMENT;
                                 }
 
-                                auto memory_size_bits
-                                    = calculate_capability_memory_size_bits(type, specific_bits)
-                                          .unwrap_or(0);
+                                auto memory_size_bits_option
+                                    = calculate_capability_memory_size_bits(type, specific_bits);
+                                if (!memory_size_bits_option)
+                                {
+                                    a9n::kernel::utility::logger::error(
+                                        "invalid capability type or specific bits"
+                                    );
+                                    return capability_error::INVALID_ARGUMENT;
+                                }
+                                auto memory_size_bits = memory_size_bits_option.unwrap_or(0);
                                 if (!self_info.is_allocatable(memory_size_bits, count))
                                 {
                                     a9n::kernel::utility::logger::error("out of memory");
@@ -268,10 +275,6 @@ namespace a9n::kernel
                                                       if (destination_slot->type
                                                           != capability_type::NONE)
                                                       {
-                                                          // clang-format off
-                                                          a9n::kernel::utility::logger::printk("slot type : 0x%llx\n", destination_slot->type);
-                                                          a9n::kernel::utility::logger::error("slot is already used");
-                                                          // clang-format on
                                                           return capability_error::INVALID_ARGUMENT;
                                                       }
 
@@ -453,11 +456,11 @@ namespace a9n::kernel
                 return liba9n::calculate_radix_ceil(sizeof(notification_port));
 
             case INTERRUPT_REGION :
+                [[fallthrough]];
             case INTERRUPT_PORT :
-                return liba9n::option_none;
-
+                [[fallthrough]];
             case IO_PORT :
-                return liba9n::calculate_radix_ceil(sizeof(io_port_capability));
+                return liba9n::option_none;
 
             case VIRTUAL_CPU :
                 return liba9n::calculate_radix_ceil(sizeof(virtual_cpu_capability));
@@ -711,29 +714,15 @@ namespace a9n::kernel
                 }
             case INTERRUPT_REGION :
                 DEBUG_LOG("convert to interrupt_region");
-                return capability_error::DEBUG_UNIMPLEMENTED;
+                return capability_error::INVALID_ARGUMENT;
 
             case INTERRUPT_PORT :
                 DEBUG_LOG("convert to interrupt_port");
-                return capability_error::DEBUG_UNIMPLEMENTED;
+                return capability_error::INVALID_ARGUMENT;
 
             case IO_PORT :
                 DEBUG_LOG("convert to io_port");
-                return info.try_apply_allocate(memory_size_bits)
-                    .transform_error(convert_memory_error_to_capability_error)
-                    .and_then(
-                        [&](a9n::physical_address new_watermark) -> capability_result
-                        {
-                            auto port = new (
-                                a9n::kernel::physical_to_virtual_pointer<void *>(new_watermark)
-                            ) io_port_capability {};
-                            auto caution_test_address_range
-                                = io_port_address_range { .min = 0, .max = ~static_cast<a9n::word>(0) };
-
-                            return try_configure_io_port_slot(target_slot, *port, caution_test_address_range)
-                                .transform_error(convert_kernel_to_capability_error);
-                        }
-                    );
+                return capability_error::INVALID_ARGUMENT;
 
             case VIRTUAL_CPU :
                 {
