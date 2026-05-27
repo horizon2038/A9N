@@ -7,6 +7,7 @@
 #include <kernel/capability/frame_capability.hpp>
 #include <kernel/capability/generic.hpp>
 #include <kernel/capability/interrupt_region.hpp>
+#include <kernel/capability/io_port_capability.hpp>
 #include <kernel/capability/page_table_capability.hpp>
 #include <kernel/capability/process_control_block.hpp>
 #include <kernel/kernel_result.hpp>
@@ -59,6 +60,7 @@ namespace a9n::kernel
     kernel_result try_configure_init_generic_descriptors(const memory_info &memory, init_info &init);
     liba9n::result<memory_map_entry, kernel_error> try_configure_generic_descriptor_from_memory_map(const memory_map_entry &entry, generic_descriptor &descriptor);
     kernel_result try_configure_init_process_control_block(capability_instance<process_control_block> &pcb, const init_info &info, const boot_info &boot);
+    kernel_result try_configure_init_io_ports(process_control_block &pcb);
     kernel_result try_configure_init_address_space(process_control_block &pcb, const boot_info &boot, const init_info &init);
     kernel_result try_configure_init_root_address_space(process_control_block &pcb);
     kernel_result try_configure_init_page_tables(process_control_block &pcb, const init_image_info &info);
@@ -482,8 +484,35 @@ namespace a9n::kernel
         // init metadata
         liba9n::std::strcpy(pcb.component.process_core.name, "INIT");
 
+        // finalize
+        TRY_VOID(try_configure_init_io_ports(pcb.component));
         TRY_VOID(try_configure_init_address_space(pcb.component, boot, info));
         TRY_VOID(process_manager_core.mark_scheduled(pcb.component.process_core));
+
+        return {};
+    }
+
+    kernel_result try_configure_init_io_ports(process_control_block &pcb)
+    {
+        using a9n::kernel::utility::logger;
+        logger::printk("Configuring init IO ports ...\n");
+
+        return pcb.process_core.root_slot.component
+            ->retrieve_slot(liba9n::enum_cast(init_slot_offset::IO_PORT))
+            .transform_error(
+                [&]([[maybe_unused]] capability_lookup_error e) -> kernel_error
+                {
+                    logger::error("No slot was found to store the IO port capability!");
+                    return kernel_error::NO_SUCH_ADDRESS;
+                }
+            )
+            .and_then(
+                [&](capability_slot *slot) -> kernel_result
+                {
+                    io_port_address_range range { .min = 0, .max = ~static_cast<a9n::word>(0) };
+                    return try_configure_io_port_slot(*slot, range);
+                }
+            );
 
         return {};
     }
