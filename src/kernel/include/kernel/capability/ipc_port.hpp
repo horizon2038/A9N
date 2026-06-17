@@ -13,12 +13,15 @@
 
 namespace a9n::kernel
 {
+    class ipc_port;
+    class notification_port;
+
     class ipc_port : public capability_component
     {
       private:
         // head / end makes the search O(1)
-        process *queue_head;
-        process *queue_end; // TODO: rename to queue_tail
+        process *queue_head { nullptr };
+        process *queue_tail { nullptr }; // TODO: rename to queue_tail
 
         enum ipc_port_state : a9n::word
         {
@@ -43,32 +46,49 @@ namespace a9n::kernel
             RESERVED = 0, // descriptor
             OPERATION_TYPE,
             MESSAGE_INFO,
-            IDENTIFIER_SOURCE = MESSAGE_INFO, // send
-            IDENTIFIER_DESTINATION,           // receive
+            IDENTIFIER_SOURCE = MESSAGE_INFO, // for identify()
+            IDENTIFIER_DESTINATION,           // for send/receive/call/reply/reply_receive
             PAYLOAD_START,
         };
 
         struct message_info
         {
+            enum class message_source : uint8_t
+            {
+                NORMAL       = 0,
+                FAULT        = 1,
+                NOTIFICATION = 2,
+                RESERVED     = 3,
+            };
+
             a9n::word data;
 
             static constexpr a9n::word BLOCK_SHIFT          = 0;
             static constexpr a9n::word MESSAGE_LENGTH_SHIFT = 1;
             static constexpr a9n::word TRANSFER_COUNT_SHIFT = 9;
-            static constexpr a9n::word KERNEL_SHIFT         = 15;
+            static constexpr a9n::word SOURCE_SHIFT         = 13;
+            static constexpr a9n::word RESERVED_SHIFT       = 15;
 
-            static constexpr a9n::word BLOCK_MASK           = ((a9n::word)0x1) << BLOCK_SHIFT;
-            static constexpr a9n::word MESSAGE_LENGTH_MASK = ((a9n::word)0xFF) << MESSAGE_LENGTH_SHIFT;
-            static constexpr a9n::word TRANSFER_COUNT_MASK = ((a9n::word)0x3F) << TRANSFER_COUNT_SHIFT;
-            static constexpr a9n::word KERNEL_MASK = ((a9n::word)0x1) << KERNEL_SHIFT;
+            static constexpr a9n::word BLOCK_MASK = static_cast<a9n::word>(0x01) << BLOCK_SHIFT;
+            static constexpr a9n::word MESSAGE_LENGTH_MASK
+                = static_cast<a9n::word>(0xFF) << MESSAGE_LENGTH_SHIFT;
+            static constexpr a9n::word TRANSFER_COUNT_MASK
+                = static_cast<a9n::word>(0x0F) << TRANSFER_COUNT_SHIFT;
+            static constexpr a9n::word SOURCE_MASK = static_cast<a9n::word>(0x03) << SOURCE_SHIFT;
+            static constexpr a9n::word RESERVED_MASK = static_cast<a9n::word>(0x01) << RESERVED_SHIFT;
 
-            constexpr message_info(bool block, uint8_t message_length, uint8_t transfer_count, bool kernel)
+            constexpr message_info(
+                bool           block,
+                uint8_t        message_length,
+                uint8_t        transfer_count,
+                message_source source
+            )
                 : data(0)
             {
                 configure_block(block);
                 configure_message_length(message_length);
                 configure_transfer_count(transfer_count);
-                configure_kernel(kernel);
+                configure_source(source);
             }
 
             constexpr explicit message_info(a9n::word initial_data) : data(initial_data)
@@ -89,12 +109,13 @@ namespace a9n::kernel
             constexpr void configure_transfer_count(uint8_t new_transfer_count)
             {
                 data = (data & ~TRANSFER_COUNT_MASK)
-                     | ((((a9n::word)new_transfer_count) & 0x3F) << TRANSFER_COUNT_SHIFT);
+                     | ((static_cast<a9n::word>(new_transfer_count) & 0x0f) << TRANSFER_COUNT_SHIFT);
             }
 
-            constexpr void configure_kernel(bool is_kernel)
+            constexpr void configure_source(message_source new_source)
             {
-                data = (data & ~KERNEL_MASK) | (((a9n::word)is_kernel) << KERNEL_SHIFT);
+                data = (data & ~SOURCE_MASK)
+                     | ((static_cast<a9n::word>(new_source) & 0x03) << SOURCE_SHIFT);
             }
 
             constexpr bool is_block(void) const
@@ -112,9 +133,24 @@ namespace a9n::kernel
                 return (uint8_t)((data & TRANSFER_COUNT_MASK) >> TRANSFER_COUNT_SHIFT);
             }
 
-            constexpr bool is_kernel(void) const
+            constexpr message_source source(void) const
             {
-                return ((data & KERNEL_MASK) >> KERNEL_SHIFT) != 0;
+                return static_cast<message_source>((data & SOURCE_MASK) >> SOURCE_SHIFT);
+            }
+
+            constexpr bool is_normal(void) const
+            {
+                return source() == message_source::NORMAL;
+            }
+
+            constexpr bool is_fault(void) const
+            {
+                return source() == message_source::FAULT;
+            }
+
+            constexpr bool is_notification(void) const
+            {
+                return source() == message_source::NOTIFICATION;
             }
         };
 
@@ -133,12 +169,18 @@ namespace a9n::kernel
         // for kernel
         capability_result operation_fault_call(process &owner, capability_slot &self);
 
-        // internal functions
       private:
+        // internal functions
         liba9n::result<message_info, kernel_error> get_message_info(process &owner);
         capability_result transfer_message(process &receiver, process &sender, message_info info);
+        capability_result
+            transfer_direct_message(process &receiver, process &sender, message_info info);
         capability_result transfer_fault_message(process &receiver, process &sender);
-        bool              is_synchronized(void);
+        capability_result complete_reply_without_switch(process &owner, message_info info);
+        capability_result try_receive_from_ready_sender(process &receiver);
+        capability_result try_deliver_pending_binded_notification(process &owner, bool &delivered);
+
+        bool is_synchronized(void);
         kernel_result
             copy_messages(process &destination_process, process &source_process, a9n::word message_length);
         capability_result move_capabilities(
@@ -149,6 +191,8 @@ namespace a9n::kernel
 
         kernel_result push_ipc_queue(process &target_process);
         liba9n::result<liba9n::not_null<process>, kernel_error> pop_ipc_queue(void);
+        // for notification port
+        kernel_result remove_ipc_queue(process &target_process);
 
         // capability management
       public:
@@ -170,6 +214,9 @@ namespace a9n::kernel
         {
             return capability_lookup_error::TERMINAL;
         };
+
+      private:
+        friend class notification_port;
     };
 
     inline constexpr a9n::word convert_slot_data_to_identifier(const capability_slot_data &data)

@@ -10,7 +10,7 @@
 namespace a9n::kernel
 {
     inline constexpr a9n::word CPU_COUNT_MAX         = 64;
-    inline constexpr a9n::word KERNEL_STACK_SIZE_MAX = a9n::PAGE_SIZE;
+    inline constexpr a9n::word KERNEL_STACK_SIZE_MAX = a9n::PAGE_SIZE * 2;
 
     using kernel_stack = liba9n::std::array<uint8_t, KERNEL_STACK_SIZE_MAX>;
 

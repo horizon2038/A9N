@@ -23,6 +23,8 @@ namespace a9n::kernel
         kernel_result try_schedule_and_switch(void);
         kernel_result try_direct_schedule_and_switch(process &target_process);
 
+        kernel_result schedule_if_preempted_by(process &target);
+
         kernel_result yield(void);
 
         liba9n::result<process *, kernel_error> retrieve_current_process();

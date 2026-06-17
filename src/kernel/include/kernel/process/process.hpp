@@ -22,17 +22,22 @@ namespace a9n::kernel
     enum class process_status : uint16_t
     {
         UNUSED,
-        RUNNING,
         READY,
-        BLOCKED
+        // for IPC / Notification
+        BLOCKED_SEND,
+        BLOCKED_RECEIVE,
+        BLOCKED_REPLY,
+        BLOCKED_WAIT, // for notification
+        BLOCKED_SUSPEND,
+        BLOCKED_FAULT,
     };
 
     class process
     {
       public:
         // hardware_context is always top
-        hardware_context registers;
-        alignas(a9n::WORD_BITS) floating_context floating_registers;
+        hardware_context registers {};
+        alignas(a9n::WORD_BITS) floating_context floating_registers {};
 
         // for context-switch
         process_status status;
@@ -41,8 +46,8 @@ namespace a9n::kernel
 
         // for priority-scheduling
         a9n::word core_affinity;
-        process  *preview;
-        process  *next;
+        process  *preview { nullptr };
+        process  *next { nullptr };
 
         // for fault handling
         fault_type           fault_reason { fault_type::NONE };
@@ -61,16 +66,26 @@ namespace a9n::kernel
         // to ipc buffer
         capability_slot buffer_frame { /* .type = capability_type::FRAME */ };
 
+        // to notification port
+        capability_slot
+            binded_notification_port { /* .type = capability_type::NOTIFICATION_PORT */ };
+
         // to resolver port
         capability_slot resolver_port { /* .type = capability_type::IPC_PORT */ };
 
         // buffer is *kernel* address (physical -> kernel (id))
-        ipc_buffer *buffer;
+        ipc_buffer *buffer { nullptr };
 
         // for IPC / notification
-        // TODO: rename to `*communication_queue_*`
-        process *next_ipc_queue;
-        process *preview_ipc_queue;
+        process *next_ipc_queue { nullptr };
+        process *preview_ipc_queue { nullptr };
+
+        process *next_notification_queue { nullptr };
+        process *preview_notification_queue { nullptr };
+
+        // for notification mechanism
+        class ipc_port          *current_ipc_port { nullptr };
+        class notification_port *current_notification_port { nullptr };
 
         // When a sender is blocked waiting for a receiver, the receiver cannot know the sender's
         // identifier (which is natural, as it's slot-local!). Therefore, when blocking in this
@@ -94,14 +109,14 @@ namespace a9n::kernel
         // via Revoke/Remove). Although process B has A as the reply target, it will hold a pointer
         // to an invalid process (A in this case) that has already been destroyed.
         // Therefore, it is necessary to allow the caller to refer to the callee.
-        process *source_reply_target;
-        process *destination_reply_target;
+        process *source_reply_target { nullptr };
+        process *destination_reply_target { nullptr };
 
         // tag for debugging
         char name[PROCESS_NAME_MAX];
     };
 
-    static_assert(sizeof(process) <= 2048);
+    static_assert(sizeof(process) <= 4096);
 }
 
 #endif

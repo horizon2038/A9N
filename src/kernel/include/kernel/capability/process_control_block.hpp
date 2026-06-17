@@ -189,7 +189,7 @@ namespace a9n::kernel
 
             // ipc
             FRAME_IPC_BUFFER_DESCRIPTOR,
-            NOTIFICATION_PORT,
+            NOTIFICATION_PORT_DESCRIPTOR,
 
             // resolver (fault handler)
             IPC_PORT_RESOLVER,

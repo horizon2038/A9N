@@ -101,16 +101,6 @@ namespace a9n::hal::x86_64
                     // wrong (e.g., kernel stack overflow, GS base corruption, etc.) Therefore, no
                     // check is performed in this case. The commented-out implementation shows items
                     // for when a check is performed.
-                    /*
-                    if (!current_clv || !current_clv->current_process) [[unlikely]]
-                    {
-                        a9n::kernel::utility::logger::error("no current process in syscall
-                    handler\n");
-
-                        for (;;)
-                            ;
-                    }
-                    */
                     auto fault_address
                         = current_clv->current_process->registers[x86_64::register_index::RIP];
 

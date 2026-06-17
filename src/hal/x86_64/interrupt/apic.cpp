@@ -255,16 +255,6 @@ namespace a9n::hal::x86_64
         const uint64_t entry
             = make_redirect_entry(vector, FIXED, PHYSICAL, IDLE, pin_polarity, trigger_mode, mask_typed, 0);
 
-        DEBUG_LOG(
-            "IO APIC: IRQ %d -> GSI %d -> pin %d, vector 0x%02x, flags 0x%04x, mask %d",
-            irq_number,
-            global_system_interrupt,
-            io_apic_pin,
-            vector,
-            flags,
-            static_cast<uint8_t>(mask)
-        );
-
         return configure_entry(static_cast<uint8_t>(io_apic_pin), entry);
     }
 
@@ -289,6 +279,14 @@ namespace a9n::hal::x86_64
             {
                 return interrupt_source_overrides[irq_number].flags;
             }
+        }
+
+        // Heuristic default for PCI INTx routes on PC-compatible machines:
+        // when MADT has no explicit ISO for GSI16..23, treat them as
+        // Active-Low + Level-Triggered.
+        if (irq_number >= 16 && irq_number <= 23)
+        {
+            return 0x0f;
         }
 
         return 0;

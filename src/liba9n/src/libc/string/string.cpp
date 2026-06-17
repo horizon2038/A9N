@@ -1,7 +1,10 @@
 #include <liba9n/libc/string.hpp>
 
+#define HAS_BUITIN_STD_STRING 0
+
 namespace liba9n::std
 {
+#if !HAS_BUITIN_STD_STRING
     void *memset(void *buffer, char value, size_t buffer_size)
     {
         uint8_t *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
@@ -17,7 +20,7 @@ namespace liba9n::std
 
     void *memcpy(void *buffer, const void *source, size_t size)
     {
-        uint8_t *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
+        uint8_t       *buffer_pointer = reinterpret_cast<uint8_t *>(buffer);
         const uint8_t *source_pointer = reinterpret_cast<const uint8_t *>(source);
 
         for (size_t i = 0; i < size; i++)
@@ -94,5 +97,37 @@ namespace liba9n::std
 
         return result;
     }
+#else
+    void *memset(void *buffer, char value, size_t buffer_size)
+    {
+        return __builtin_memset(buffer, value, buffer_size);
+    }
+
+    void *memcpy(void *buffer, const void *source, size_t size)
+    {
+        return __builtin_memcpy(buffer, source, size);
+    }
+
+    int memcmp(const void *source_1, const void *source_2, size_t size)
+    {
+        return __builtin_memcmp(source_1, source_2, size);
+    }
+
+    char *strcpy(char *buffer, const char *source)
+    {
+        return __builtin_strcpy(buffer, source);
+    }
+
+    int strcmp(const char *source_1, const char *source_2)
+    {
+        return __builtin_strcmp(source_1, source_2);
+    }
+
+    int strncmp(const char *source_1, const char *source_2, size_t size)
+    {
+        return __builtin_strncmp(source_1, source_2, size);
+    }
+
+#endif
 
 }

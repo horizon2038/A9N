@@ -1,6 +1,9 @@
-#include "kernel/process/process.hpp"
-#include "kernel/process/process_manager.hpp"
 #include <kernel/capability/process_control_block.hpp>
+
+#include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/notification_port.hpp>
+#include <kernel/process/process.hpp>
+#include <kernel/process/process_manager.hpp>
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
@@ -11,6 +14,7 @@ namespace a9n::kernel
     {
         // init hardware-specific contexts
         hal::init_hardware_context(hal::cpu_mode::USER, process_core.registers);
+        hal::init_floating_context(process_core.floating_registers);
     }
 
     capability_result process_control_block::execute(process &owner, capability_slot &self)
@@ -125,7 +129,18 @@ namespace a9n::kernel
                     if (info.is_notification_port())
                     {
                         DEBUG_LOG("process_control_block::configure::notification_port");
-                        return capability_error::DEBUG_UNIMPLEMENTED;
+                        auto result
+                            = get_argument(NOTIFICATION_PORT_DESCRIPTOR)
+                                  .and_then(
+                                      [&](a9n::word descriptor) -> capability_result
+                                      {
+                                          return configure_notification_port(owner, descriptor);
+                                      }
+                                  );
+                        if (!result)
+                        {
+                            return result;
+                        }
                     }
 
                     if (info.is_ipc_port_resolver())
@@ -421,7 +436,57 @@ namespace a9n::kernel
         a9n::capability_descriptor descriptor
     )
     {
-        return capability_error::DEBUG_UNIMPLEMENTED;
+        return owner.root_slot.component
+            ->traverse_slot(descriptor, extract_depth(descriptor), a9n::BYTE_BITS)
+            .transform_error(
+                [](capability_lookup_error e) -> capability_error
+                {
+                    return capability_error::INVALID_DESCRIPTOR;
+                }
+            )
+            .and_then(
+                [&](capability_slot *source_notification_port) -> capability_result
+                {
+                    if (source_notification_port->type != capability_type::NOTIFICATION_PORT
+                        || !source_notification_port->component)
+                    {
+                        return capability_error::INVALID_DESCRIPTOR;
+                    }
+
+                    auto *target_notification_port
+                        = static_cast<notification_port *>(source_notification_port->component);
+
+                    if (process_core.binded_notification_port.type == capability_type::NOTIFICATION_PORT
+                        && process_core.binded_notification_port.component)
+                    {
+                        // unsafe downcast
+                        auto *old_notification_port = static_cast<notification_port *>(
+                            process_core.binded_notification_port.component
+                        );
+
+                        old_notification_port->unbind_process(process_core);
+                    }
+
+                    auto result = process_core.binded_notification_port.try_remove_and_init();
+                    if (!result)
+                    {
+                        return capability_error::FATAL;
+                    }
+
+                    return target_notification_port->bind_process(process_core)
+                        .transform_error(convert_kernel_to_capability_error)
+                        .and_then(
+                            [&]() -> capability_result
+                            {
+                                return try_copy_capability_slot(
+                                           process_core.binded_notification_port,
+                                           *source_notification_port
+                                )
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
+                }
+            );
     }
 
     capability_result process_control_block::configure_ipc_port_resolver(
@@ -560,7 +625,7 @@ namespace a9n::kernel
 
     capability_result process_control_block::operation_suspend(process &owner, capability_slot &self)
     {
-        process_core.status   = process_status::BLOCKED;
+        process_core.status   = process_status::BLOCKED_SUSPEND;
         process_core.priority = 0;
 
         return {};
@@ -592,6 +657,29 @@ namespace a9n::kernel
                 {
                     a9n::hal::init_hardware_context(hal::cpu_mode::USER, process_core.registers);
                     return {};
+                }
+            )
+            .and_then(
+                [&](void) -> kernel_result
+                {
+                    a9n::hal::init_floating_context(process_core.floating_registers);
+                    return {};
+                }
+            )
+            .and_then(
+                [&](void) -> kernel_result
+                {
+                    if (process_core.binded_notification_port.type == capability_type::NOTIFICATION_PORT
+                        && process_core.binded_notification_port.component)
+                    {
+                        auto *target_notification_port = static_cast<notification_port *>(
+                            process_core.binded_notification_port.component
+                        );
+
+                        target_notification_port->unbind_process(process_core);
+                    }
+
+                    return process_core.binded_notification_port.try_remove_and_init();
                 }
             )
             .transform_error(convert_kernel_to_capability_error);

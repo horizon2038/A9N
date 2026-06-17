@@ -77,12 +77,12 @@ interrupt_handler_common:
 
     ; align 16-byte boundary 
     and rsp, qword -0x10
-    sub rsp, 8 ; for call (return address)
+    ; sub rsp, 8 ; for call (return address)
 
     ; void do_irq_from_kernel(irq_number, error_code)
     call do_irq_from_kernel
 
-    add rsp, 0x10
+    ; add rsp, 0x10
 
     ; unreachable
 

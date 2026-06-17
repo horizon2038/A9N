@@ -43,11 +43,14 @@ namespace a9n::kernel
         notification core;
 
         // waitqueue
-        process *queue_head;
-        process *queue_tail;
+        process *queue_head { nullptr };
+        process *queue_tail { nullptr };
 
         // binded port
-        class interrupt_port *binded_interrupt_port;
+        // class interrupt_port *binded_interrupt_port { nullptr };
+
+        // binded process (for interrupting the process ipc wait)
+        process *binded_process { nullptr };
 
         enum notification_port_state : a9n::word
         {
@@ -62,11 +65,27 @@ namespace a9n::kernel
         capability_result operation_wait(process &owner, capability_slot &self);
         capability_result operation_poll(process &owner, capability_slot &self);
         capability_result operation_identify(process &owner, capability_slot &self);
+        capability_result try_wake_binded_process(void);
 
+        kernel_result bind_process(process &target_process);
+        kernel_result unbind_process(process &target_process);
+
+        constexpr bool has_pending_notification(void) const
+        {
+            return core.has_notification();
+        }
+
+        constexpr a9n::word consume_notification(void)
+        {
+            return core.consume();
+        }
+
+      private:
         // queue control
         kernel_result push_notification_queue(process &target_process);
         liba9n::result<liba9n::not_null<process>, kernel_error> pop_notification_queue(void);
 
+      public:
         capability_result revoke(capability_slot &self) override
         {
             // remove all processes from the queue

@@ -53,10 +53,20 @@ namespace a9n::kernel
     capability_result
         notification_port::operation_notify([[maybe_unused]] process &owner, capability_slot &self)
     {
+        if (!(self.rights & capability_slot::WRITE)) [[unlikely]]
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
         // identifier is slot-local
         auto identifier = convert_slot_data_to_identifier(self.data);
         core.notify(identifier);
         DEBUG_LOG("notification_port::notify : 0x%llx", identifier);
+
+        if (binded_process && binded_process->status == process_status::BLOCKED_RECEIVE)
+        {
+            return try_wake_binded_process();
+        }
 
         switch (state)
         {
@@ -81,8 +91,6 @@ namespace a9n::kernel
                         .and_then(
                             [&](liba9n::not_null<process> target) -> capability_result
                             {
-                                target->status = process_status::READY;
-
                                 return a9n::hal::configure_message_register(
                                            target.get(),
                                            FLAG_WORD,
@@ -92,8 +100,14 @@ namespace a9n::kernel
                                     .and_then(
                                         [&](void) -> capability_result
                                         {
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(target.get())
+                                            return process_manager_core.mark_scheduled(target.get())
+                                                .and_then(
+                                                    [&](void) -> kernel_result
+                                                    {
+                                                        return process_manager_core
+                                                            .schedule_if_preempted_by(target.get());
+                                                    }
+                                                )
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -108,6 +122,16 @@ namespace a9n::kernel
     capability_result notification_port::operation_wait(process &owner, capability_slot &self)
     {
         DEBUG_LOG("notification_port::wait");
+        if (!(self.rights & capability_slot::READ)) [[unlikely]]
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
+        if (binded_process && binded_process != &owner) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
         switch (state)
         {
             case notification_port_state::WAIT :
@@ -125,7 +149,7 @@ namespace a9n::kernel
                 {
                     DEBUG_LOG("notification_port::wait : block process");
                     state        = notification_port_state::READY_TO_WAKE;
-                    owner.status = process_status::BLOCKED;
+                    owner.status = process_status::BLOCKED_WAIT;
 
                     DEBUG_LOG("notification_port::wait : push to waitqueue");
                     return push_notification_queue(owner)
@@ -148,6 +172,16 @@ namespace a9n::kernel
     // non-blocking !
     capability_result notification_port::operation_poll(process &owner, capability_slot &self)
     {
+        if (!(self.rights & capability_slot::READ)) [[unlikely]]
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
+        if (binded_process && binded_process != &owner) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
         switch (state)
         {
             case notification_port_state::WAIT :
@@ -156,7 +190,9 @@ namespace a9n::kernel
                     if (!core.has_notification())
                     {
                         DEBUG_LOG("notification_port::poll : no notifications");
-                        return {};
+                        // write "0" to flag word if no notification is available
+                        return a9n::hal::configure_message_register(owner, FLAG_WORD, 0)
+                            .transform_error(convert_hal_to_capability_error);
                     }
 
                     return a9n::hal::configure_message_register(owner, FLAG_WORD, core.consume())
@@ -186,21 +222,108 @@ namespace a9n::kernel
             );
     }
 
+    capability_result notification_port::try_wake_binded_process(void)
+    {
+        if (!binded_process) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
+        auto &target_process = *binded_process;
+
+        if (target_process.status != process_status::BLOCKED_RECEIVE) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
+        if (!target_process.current_ipc_port) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
+        auto *target_ipc_port = target_process.current_ipc_port;
+
+        return target_ipc_port->remove_ipc_queue(target_process)
+            .transform_error(convert_kernel_to_capability_error)
+            .and_then(
+                [&]() -> capability_result
+                {
+                    ipc_port::message_info
+                        info { false, 0, 0, ipc_port::message_info::message_source::NOTIFICATION };
+
+                    auto notification_identifier = core.consume();
+
+                    return a9n::hal::configure_message_register(
+                               target_process,
+                               ipc_port::operation_index::MESSAGE_INFO,
+                               info.data
+                    )
+                        .transform_error(convert_hal_to_capability_error)
+                        .and_then(
+                            [&]() -> capability_result
+                            {
+                                return a9n::hal::configure_message_register(
+                                           target_process,
+                                           ipc_port::operation_index::IDENTIFIER_DESTINATION,
+                                           notification_identifier
+                                )
+                                    .transform_error(convert_hal_to_capability_error);
+                            }
+                        )
+                        .and_then(
+                            [&]() -> capability_result
+                            {
+                                target_process.status                    = process_status::READY;
+                                target_process.current_ipc_port          = nullptr;
+                                target_process.current_notification_port = nullptr;
+
+                                return process_manager_core.mark_scheduled(target_process)
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
+                }
+            );
+    }
+
+    kernel_result notification_port::bind_process(process &target_process)
+    {
+        if (binded_process && binded_process != &target_process) [[unlikely]]
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        binded_process = &target_process;
+
+        return {};
+    }
+
+    kernel_result notification_port::unbind_process(process &target_process)
+    {
+        if (binded_process != &target_process) [[unlikely]]
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        binded_process = nullptr;
+
+        return {};
+    }
+
     kernel_result notification_port::push_notification_queue(process &target_process)
     {
         // add to queue end
         if (!queue_head || !queue_tail)
         {
-            queue_head                       = &target_process;
-            queue_tail                       = &target_process;
-            target_process.preview_ipc_queue = nullptr;
-            target_process.next_ipc_queue    = nullptr;
+            queue_head                                = &target_process;
+            queue_tail                                = &target_process;
+            target_process.preview_notification_queue = nullptr;
+            target_process.next_notification_queue    = nullptr;
         }
         else
         {
-            queue_tail->next_ipc_queue       = &target_process;
-            target_process.preview_ipc_queue = queue_tail;
-            queue_tail                       = &target_process;
+            queue_tail->next_notification_queue       = &target_process;
+            target_process.preview_notification_queue = queue_tail;
+            queue_tail                                = &target_process;
         }
 
         return {};
@@ -209,9 +332,13 @@ namespace a9n::kernel
     liba9n::result<liba9n::not_null<process>, kernel_error>
         notification_port::pop_notification_queue(void)
     {
-        // target (queue_head) null check is already done
         auto target = queue_head;
-        queue_head  = queue_head->next_ipc_queue;
+        if (!target) [[unlikely]]
+        {
+            return kernel_error::NO_SUCH_ADDRESS;
+        }
+
+        queue_head = queue_head->next_notification_queue;
 
         if (!queue_head)
         {
@@ -219,13 +346,9 @@ namespace a9n::kernel
             state      = WAIT;
         }
 
-        if (!target) [[unlikely]]
-        {
-            return kernel_error::NO_SUCH_ADDRESS;
-        }
-
-        target->next_ipc_queue    = nullptr;
-        target->preview_ipc_queue = nullptr;
+        target->next_notification_queue    = nullptr;
+        target->preview_notification_queue = nullptr;
+        target->current_notification_port  = nullptr;
 
         return liba9n::not_null<process> { *target };
     }

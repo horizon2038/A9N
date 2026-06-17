@@ -1,6 +1,18 @@
-#include "hal/x86_64/io/port_io.hpp"
-#include <liba9n/libcxx/new>
+#include <kernel/types.hpp>
 #include <stdint.h>
+
+#include <kernel/boot/boot_info.hpp>
+#include <kernel/boot/init.hpp>
+#include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/capability_node.hpp>
+#include <kernel/capability/generic.hpp>
+#include <kernel/interrupt/interrupt_manager.hpp>
+#include <kernel/kernel_result.hpp>
+#include <kernel/process/cpu.hpp>
+#include <kernel/process/process.hpp>
+#include <kernel/process/process_manager.hpp>
+#include <kernel/utility/logger.hpp>
+#include <kernel/version.hpp>
 
 #include <hal/interface/hal.hpp>
 #include <hal/interface/hal_factory.hpp>
@@ -9,31 +21,15 @@
 #include <hal/interface/port_io.hpp>
 #include <hal/interface/timer.hpp>
 
-#include <kernel/boot/boot_info.hpp>
-#include <kernel/interrupt/interrupt_manager.hpp>
-#include <kernel/process/cpu.hpp>
-#include <kernel/process/process.hpp>
-#include <kernel/process/process_manager.hpp>
-#include <kernel/utility/logger.hpp>
-
-#include <kernel/capability/capability_component.hpp>
-#include <kernel/capability/capability_node.hpp>
-#include <kernel/capability/generic.hpp>
-
-#include <kernel/kernel_result.hpp>
-#include <kernel/types.hpp>
-
-#include <liba9n/libc/string.hpp>
-
+// TODO: devirtualize and remove hal_factory
 #include <hal/x86_64/factory/hal_factory.hpp>
 
 #include <liba9n/common/allocator.hpp>
 #include <liba9n/common/calculate.hpp>
+#include <liba9n/libc/string.hpp>
+#include <liba9n/libcxx/new>
 #include <liba9n/option/option.hpp>
 #include <liba9n/result/result.hpp>
-
-#include <kernel/boot/init.hpp>
-#include <kernel/version.hpp>
 
 void kernel_main(void);
 

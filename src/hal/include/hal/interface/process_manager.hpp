@@ -29,6 +29,7 @@ namespace a9n::hal
     hal_result restore_context(cpu_mode current_mode);
     void       idle(void);
     hal_result init_hardware_context(cpu_mode mode, a9n::kernel::hardware_context &context);
+    hal_result init_floating_context(a9n::kernel::floating_context &context);
 
     liba9n::result<a9n::word, hal_error>
         get_message_register(const a9n::kernel::process &target_process, a9n::word index);

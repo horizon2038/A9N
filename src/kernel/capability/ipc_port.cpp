@@ -10,6 +10,7 @@
 
 #include <kernel/capability/capability_invocation.hpp>
 #include <kernel/capability/capability_utility.hpp>
+#include <kernel/capability/notification_port.hpp>
 #include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
@@ -21,6 +22,7 @@ namespace a9n::kernel
         {
             return process_manager_core.try_schedule_and_switch();
         }
+
     }
 
     capability_result ipc_port::execute(process &owner, capability_slot &self)
@@ -38,9 +40,11 @@ namespace a9n::kernel
             .and_then(
                 [&](message_info info) -> capability_result
                 {
-                    // execute(...) is calld only from user.
-                    // when called by user, the kernel bit is always 0
-                    info.configure_kernel(false);
+                    if (!info.is_normal()) [[unlikely]]
+                    {
+                        DEBUG_LOG("invalid message source for ipc_port::execute");
+                        return capability_error::INVALID_ARGUMENT;
+                    }
 
                     switch (target_operation())
                     {
@@ -98,7 +102,7 @@ namespace a9n::kernel
                         return {};
                     }
 
-                    owner.status                  = process_status::BLOCKED;
+                    owner.status                  = process_status::BLOCKED_SEND;
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
 
                     return push_ipc_queue(owner)
@@ -168,7 +172,7 @@ namespace a9n::kernel
                         return {};
                     }
 
-                    owner.status = process_status::BLOCKED;
+                    owner.status = process_status::BLOCKED_RECEIVE;
 
                     return push_ipc_queue(owner)
                         .and_then(try_schedule_and_switch)
@@ -179,70 +183,7 @@ namespace a9n::kernel
                 // The sender exists, so the message will be received as is.
                 {
                     DEBUG_LOG("READY_TO_SEND");
-                    return pop_ipc_queue()
-                        .transform_error(convert_kernel_to_capability_error)
-                        .and_then(
-                            [&](liba9n::not_null<process> target) -> capability_result
-                            {
-                                // sender
-                                auto target_message_info = get_message_info(target.get()).unwrap();
-
-                                // if the receiver has a pending reply, the sender cannot send a
-                                // message to the receiver until the pending reply is handled.
-                                if (owner.destination_reply_state
-                                    != process::destination_reply_state_object::NONE) [[unlikely]]
-                                {
-                                    if (!info.is_block())
-                                    {
-                                        return {};
-                                    }
-
-                                    owner.status = process_status::BLOCKED;
-                                    owner.source_reply_state = process::source_reply_state_object::WAIT;
-                                    return push_ipc_queue(owner)
-                                        .and_then(try_schedule_and_switch)
-                                        .transform_error(convert_kernel_to_capability_error);
-                                }
-
-                                // if the sender has a pending fault, the kernel needs to "spoof"
-                                // the fault message.
-                                if (target->fault_reason != fault_type::NONE) [[unlikely]]
-                                {
-                                    DEBUG_LOG(
-                                        "target has fault reason : %s",
-                                        fault_type_to_string(target->fault_reason)
-                                    );
-
-                                    return transfer_fault_message(owner, target.get())
-                                        .and_then(
-                                            [&](void) -> capability_result
-                                            {
-                                                owner.destination_reply_state
-                                                    = process::destination_reply_state_object::READY_TO_REPLY;
-                                                owner.destination_reply_target = &target.get();
-
-                                                // A process that has a fault will not be
-                                                // re-executed until Reply or Resume is performed.
-                                                return {};
-                                            }
-                                        );
-                                }
-
-                                return transfer_message(owner, target.get(), target_message_info)
-                                    .and_then(
-                                        [&](void) -> capability_result
-                                        {
-                                            owner.destination_reply_state
-                                                = process::destination_reply_state_object::READY_TO_REPLY;
-                                            owner.destination_reply_target = &target.get();
-
-                                            // re-queueing
-                                            return process_manager_core.mark_scheduled(target.get())
-                                                .transform_error(convert_kernel_to_capability_error);
-                                        }
-                                    );
-                            }
-                        );
+                    return try_receive_from_ready_sender(owner);
                 }
 
             [[unlikely]] default :
@@ -272,7 +213,20 @@ namespace a9n::kernel
                         return {};
                     }
 
-                    owner.status                  = process_status::BLOCKED;
+                    // TODO: optimize this path
+                    bool delivered_notification = false;
+                    if (auto notification_result
+                        = try_deliver_pending_binded_notification(owner, delivered_notification);
+                        !notification_result) [[unlikely]]
+                    {
+                        return notification_result;
+                    }
+                    if (delivered_notification) [[unlikely]]
+                    {
+                        return {};
+                    }
+
+                    owner.status                  = process_status::BLOCKED_SEND;
                     owner.source_reply_state      = process::source_reply_state_object::WAIT;
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
 
@@ -293,24 +247,19 @@ namespace a9n::kernel
                                 owner.identifier_when_blocked
                                     = convert_slot_data_to_identifier(self.data);
 
-                                [[unlikely]] if (target->destination_reply_state
-                                                 != process::destination_reply_state_object::NONE)
+                                if (target->destination_reply_state
+                                    != process::destination_reply_state_object::NONE) [[unlikely]]
                                 {
-                                    if (!info.is_block())
-                                    {
-                                        return {};
-                                    }
-
-                                    owner.status = process_status::BLOCKED;
-                                    owner.source_reply_state = process::source_reply_state_object::WAIT;
-                                    return push_ipc_queue(owner)
-                                        .and_then(try_schedule_and_switch)
-                                        .transform_error(convert_kernel_to_capability_error);
+                                    return capability_error::FATAL;
                                 }
 
                                 target->destination_reply_state
                                     = process::destination_reply_state_object::READY_TO_REPLY;
                                 target->destination_reply_target = &owner;
+
+                                owner.status                     = process_status::BLOCKED_REPLY;
+                                owner.source_reply_state = process::source_reply_state_object::WAIT;
+                                owner.source_reply_target = &target.get();
 
                                 return transfer_message(target.get(), owner, info)
                                     .and_then(
@@ -319,6 +268,9 @@ namespace a9n::kernel
                                             target->status = process_status::READY;
                                             return process_manager_core
                                                 .try_direct_schedule_and_switch(target.get())
+                                                .transform_error(convert_kernel_to_capability_error);
+
+                                            return process_manager_core.try_schedule_and_switch()
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -350,7 +302,7 @@ namespace a9n::kernel
                     DEBUG_LOG("destination_reply_target : 0x%016llx", owner.destination_reply_target);
                     auto client = owner.destination_reply_target;
 
-                    return transfer_message(*client, owner, info)
+                    return transfer_direct_message(*client, owner, info)
                         .and_then(
                             [&](void) -> capability_result
                             {
@@ -409,11 +361,219 @@ namespace a9n::kernel
     capability_result
         ipc_port::operation_reply_receive(process &owner, capability_slot &self, message_info info)
     {
-        return operation_reply(owner, self, info)
+        if (!(self.rights & capability_slot::READ)) [[unlikely]]
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
+
+        return complete_reply_without_switch(owner, info)
             .and_then(
-                [&, this](void) -> capability_result
+                [&]() -> capability_result
                 {
-                    return operation_receive(owner, self, info);
+                    switch (state)
+                    {
+                        [[likely]] case READY_TO_SEND :
+                            {
+                                return try_receive_from_ready_sender(owner);
+                            }
+
+                        [[unlikely]] case WAIT :
+                            {
+                                state = READY_TO_RECEIVE;
+                                [[fallthrough]];
+                            }
+
+                        [[unlikely]] case READY_TO_RECEIVE :
+                            {
+                                bool delivered_notification = false;
+                                if (auto notification_result
+                                    = try_deliver_pending_binded_notification(owner, delivered_notification);
+                                    !notification_result)
+                                {
+                                    return notification_result;
+                                }
+                                if (delivered_notification) [[unlikely]]
+                                {
+                                    return {};
+                                }
+
+                                if (!info.is_block()) [[unlikely]]
+                                {
+                                    return {};
+                                }
+
+                                owner.status = process_status::BLOCKED_RECEIVE;
+
+                                return push_ipc_queue(owner)
+                                    .and_then(try_schedule_and_switch)
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+
+                        [[unlikely]] default :
+                            {
+                                return capability_error::FATAL;
+                            }
+                    }
+                }
+            );
+    }
+
+    capability_result ipc_port::complete_reply_without_switch(process &owner, message_info info)
+    {
+        if (owner.destination_reply_state == process::destination_reply_state_object::NONE)
+        {
+            return {};
+        }
+
+        if (owner.destination_reply_state != process::destination_reply_state_object::READY_TO_REPLY)
+            [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
+        auto *client = owner.destination_reply_target;
+        if (!client) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
+        return transfer_direct_message(*client, owner, info)
+            .and_then(
+                [&]() -> capability_result
+                {
+                    client->status              = process_status::READY;
+                    client->source_reply_state  = process::source_reply_state_object::NONE;
+                    client->source_reply_target = nullptr;
+
+                    if (client->fault_reason != fault_type::NONE) [[unlikely]]
+                    {
+                        client->fault_reason = fault_type::NONE;
+                    }
+
+                    owner.destination_reply_state  = process::destination_reply_state_object::NONE;
+                    owner.destination_reply_target = nullptr;
+
+                    return process_manager_core.mark_scheduled(*client).transform_error(
+                        convert_kernel_to_capability_error
+                    );
+                }
+            );
+    }
+
+    capability_result ipc_port::try_receive_from_ready_sender(process &receiver)
+    {
+        if (state != READY_TO_SEND) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+
+        return pop_ipc_queue()
+            .transform_error(convert_kernel_to_capability_error)
+            .and_then(
+                [&](liba9n::not_null<process> sender) -> capability_result
+                {
+                    auto sender_info_result = get_message_info(sender.get());
+                    if (!sender_info_result) [[unlikely]]
+                    {
+                        return convert_kernel_to_capability_error(sender_info_result.unwrap_error());
+                    }
+
+                    auto sender_info = sender_info_result.unwrap();
+
+                    if (receiver.destination_reply_state
+                        != process::destination_reply_state_object::NONE) [[unlikely]]
+                    {
+                        return capability_error::FATAL;
+                    }
+
+                    if (sender->fault_reason != fault_type::NONE) [[unlikely]]
+                    {
+                        return transfer_fault_message(receiver, sender.get())
+                            .and_then(
+                                [&]() -> capability_result
+                                {
+                                    receiver.destination_reply_state
+                                        = process::destination_reply_state_object::READY_TO_REPLY;
+                                    receiver.destination_reply_target = &sender.get();
+
+                                    sender->status = process_status::BLOCKED_REPLY;
+
+                                    return {};
+                                }
+                            );
+                    }
+
+                    const bool is_call_sender
+                        = sender->source_reply_state == process::source_reply_state_object::WAIT;
+
+                    return transfer_message(receiver, sender.get(), sender_info)
+                        .and_then(
+                            [&]() -> capability_result
+                            {
+                                if (is_call_sender)
+                                {
+                                    receiver.destination_reply_state
+                                        = process::destination_reply_state_object::READY_TO_REPLY;
+                                    receiver.destination_reply_target = &sender.get();
+
+                                    sender->status = process_status::BLOCKED_REPLY;
+
+                                    return {};
+                                }
+
+                                receiver.destination_reply_state
+                                    = process::destination_reply_state_object::NONE;
+                                receiver.destination_reply_target = nullptr;
+
+                                sender->status                    = process_status::READY;
+
+                                return process_manager_core.mark_scheduled(sender.get())
+                                    .transform_error(convert_kernel_to_capability_error);
+                            }
+                        );
+                }
+            );
+    }
+
+    capability_result ipc_port::try_deliver_pending_binded_notification(process &owner, bool &delivered)
+    {
+        delivered = false;
+
+        if (owner.binded_notification_port.type != capability_type::NOTIFICATION_PORT
+            || !owner.binded_notification_port.component) [[likely]]
+        {
+            return {};
+        }
+
+        auto *port = static_cast<notification_port *>(owner.binded_notification_port.component);
+        if (!port->has_pending_notification()) [[likely]]
+        {
+            return {};
+        }
+
+        // slowpath
+        message_info info {
+            false,
+            0,
+            0,
+            ipc_port::message_info::message_source::NOTIFICATION,
+        };
+        auto identifier = port->consume_notification();
+
+        delivered       = true;
+        return a9n::hal::configure_message_register(owner, ipc_port::operation_index::MESSAGE_INFO, info.data)
+            .transform_error(convert_hal_to_kernel_error)
+            .transform_error(convert_kernel_to_capability_error)
+            .and_then(
+                [&](void) -> capability_result
+                {
+                    return a9n::hal::configure_message_register(
+                               owner,
+                               ipc_port::operation_index::IDENTIFIER_DESTINATION,
+                               identifier
+                    )
+                        .transform_error(convert_hal_to_kernel_error)
+                        .transform_error(convert_kernel_to_capability_error);
                 }
             );
     }
@@ -464,7 +624,7 @@ namespace a9n::kernel
         if (!(self.rights & capability_slot::WRITE) || !(self.rights & capability_slot::READ))
             [[unlikely]]
         {
-            owner.status = process_status::BLOCKED;
+            owner.status = process_status::BLOCKED_FAULT;
             return capability_error::PERMISSION_DENIED;
         }
 
@@ -483,7 +643,7 @@ namespace a9n::kernel
                 [[fallthrough]];
             case READY_TO_SEND :
                 {
-                    owner.status                  = process_status::BLOCKED;
+                    owner.status                  = process_status::BLOCKED_FAULT;
                     owner.source_reply_state      = process::source_reply_state_object::WAIT;
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
                     DEBUG_LOG(
@@ -515,7 +675,7 @@ namespace a9n::kernel
                                 [[unlikely]] if (target->destination_reply_state
                                                  != process::destination_reply_state_object::NONE)
                                 {
-                                    owner.status = process_status::BLOCKED;
+                                    owner.status = process_status::BLOCKED_FAULT;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
                                     return push_ipc_queue(owner)
                                         .and_then(try_schedule_and_switch)
@@ -545,6 +705,46 @@ namespace a9n::kernel
         }
     }
 
+    kernel_result ipc_port::remove_ipc_queue(process &target_process)
+    {
+        if (target_process.current_ipc_port != this) [[unlikely]]
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        if (target_process.preview_ipc_queue)
+        {
+            target_process.preview_ipc_queue->next_ipc_queue = target_process.next_ipc_queue;
+        }
+        else
+        {
+            // target_process is head
+            queue_head = target_process.next_ipc_queue;
+        }
+
+        if (target_process.next_ipc_queue)
+        {
+            target_process.next_ipc_queue->preview_ipc_queue = target_process.preview_ipc_queue;
+        }
+        else
+        {
+            // target_process is tail
+            queue_tail = target_process.preview_ipc_queue;
+        }
+
+        target_process.next_ipc_queue    = nullptr;
+        target_process.preview_ipc_queue = nullptr;
+        target_process.current_ipc_port  = nullptr;
+
+        if (!queue_head)
+        {
+            queue_tail = nullptr;
+            state      = WAIT;
+        }
+
+        return {};
+    }
+
     liba9n::result<ipc_port::message_info, kernel_error> ipc_port::get_message_info(process &owner)
     {
         return a9n::hal::get_message_register(owner, MESSAGE_INFO)
@@ -555,10 +755,11 @@ namespace a9n::kernel
                     auto target_message_info = message_info(v);
                     DEBUG_LOG(
                         "message_info is_block : %c, message_length : %u, "
-                        "transfer_count : %u",
+                        "transfer_count : %u, source : %u",
                         target_message_info.is_block() ? 'T' : 'F',
                         target_message_info.message_length(),
-                        target_message_info.transfer_count()
+                        target_message_info.transfer_count(),
+                        static_cast<a9n::word>(target_message_info.source())
                     );
 
                     return target_message_info;
@@ -569,12 +770,6 @@ namespace a9n::kernel
     capability_result ipc_port::transfer_message(process &receiver, process &sender, message_info info)
     {
         using enum ipc_port_state;
-
-        // retrieves one from the queue and copies the message
-        if (!is_synchronized()) [[unlikely]]
-        {
-            return capability_error::FATAL;
-        }
 
         // if it is the end of the queue, reset the state to WAIT
         if (!queue_head)
@@ -608,6 +803,36 @@ namespace a9n::kernel
             );
     }
 
+    capability_result
+        ipc_port::transfer_direct_message(process &receiver, process &sender, message_info info)
+    {
+        a9n::hal::configure_message_register(receiver, MESSAGE_INFO, info.data);
+        a9n::hal::configure_message_register(
+            receiver,
+            IDENTIFIER_DESTINATION,
+            sender.identifier_when_blocked
+        );
+
+        return copy_messages(receiver, sender, info.message_length())
+            .or_else(
+                [&](kernel_error e) -> capability_result
+                {
+                    return capability_error::FATAL;
+                }
+            )
+            .and_then(
+                [&](void) -> capability_result
+                {
+                    if (info.transfer_count() != 0) [[unlikely]]
+                    {
+                        return move_capabilities(receiver, sender, info.transfer_count());
+                    }
+
+                    return {};
+                }
+            );
+    }
+
     // message__info for fault message is determined by the kernel, not the sender, so we don't need
     // to read it from the sender's message register.
     capability_result ipc_port::transfer_fault_message(process &receiver, process &sender)
@@ -629,10 +854,10 @@ namespace a9n::kernel
         auto make_message_info = [](a9n::word message_length) -> message_info
         {
             return message_info {
-                true,                                 // block
+                false,                                // block
                 static_cast<uint8_t>(message_length), // message length
                 0,                                    // transfer count
-                true                                  // kernel
+                message_info::message_source::FAULT   // source
             };
         };
 
@@ -646,11 +871,11 @@ namespace a9n::kernel
                 {
                     auto info = make_message_info(fault_memory_index::MESSAGE_LENGTH);
                     DEBUG_LOG(
-                        "message_info : block=%d, message_length=%d, transfer_count=%d, kernel=%d",
+                        "message_info : block=%d, message_length=%d, transfer_count=%d, source=%u",
                         info.is_block(),
                         info.message_length(),
                         info.transfer_count(),
-                        info.is_kernel()
+                        static_cast<a9n::word>(info.source())
                     );
                     DEBUG_LOG("message_info.data : 0x%016llx", info.data);
                     result = write_message_registers<
@@ -826,12 +1051,12 @@ namespace a9n::kernel
     {
         if (state != WAIT)
         {
-            if (!queue_head || !queue_end) [[unlikely]]
+            if (!queue_head || !queue_tail) [[unlikely]]
             {
                 // synchronization failed;
                 DEBUG_LOG("state is not WAIT but queue is empty");
                 DEBUG_LOG("queue_head : 0x%016llx", queue_head);
-                DEBUG_LOG("queue_end  : 0x%016llx", queue_end);
+                DEBUG_LOG("queue_tail  : 0x%016llx", queue_tail);
 
                 state = WAIT;
                 return false;
@@ -983,25 +1208,27 @@ namespace a9n::kernel
     kernel_result ipc_port::push_ipc_queue(process &target_process)
     {
         DEBUG_LOG("[PUSH] identifier_when_blocked : 0x%016llx", target_process.identifier_when_blocked);
+        target_process.current_ipc_port = this;
+
         // add to queue end
-        if (!queue_head || !queue_end)
+        if (!queue_head || !queue_tail)
         {
             queue_head                       = &target_process;
-            queue_end                        = &target_process;
+            queue_tail                       = &target_process;
             target_process.preview_ipc_queue = nullptr;
             target_process.next_ipc_queue    = nullptr;
         }
         else
         {
             target_process.next_ipc_queue    = nullptr;
-            target_process.preview_ipc_queue = queue_end;
-            queue_end->next_ipc_queue        = &target_process;
-            queue_end                        = &target_process;
+            target_process.preview_ipc_queue = queue_tail;
+            queue_tail->next_ipc_queue       = &target_process;
+            queue_tail                       = &target_process;
         }
 
         DEBUG_LOG("push ipc queue");
         DEBUG_LOG("queue_head : 0x%016llx", queue_head);
-        DEBUG_LOG("queue_end  : 0x%016llx", queue_end);
+        DEBUG_LOG("queue_tail  : 0x%016llx", queue_tail);
 
         return {};
     }
@@ -1010,29 +1237,30 @@ namespace a9n::kernel
     {
         // target (queue_head) null check is already done
         auto target = queue_head;
-        queue_head  = queue_head->next_ipc_queue;
+        if (!target) [[unlikely]]
+        {
+            return kernel_error::NO_SUCH_ADDRESS;
+        }
+
+        queue_head = queue_head->next_ipc_queue;
 
         if (!queue_head)
         {
-            queue_end = nullptr;
-            state     = WAIT;
+            queue_tail = nullptr;
+            state      = WAIT;
         }
         else
         {
             queue_head->preview_ipc_queue = nullptr;
         }
 
-        if (!target) [[unlikely]]
-        {
-            return kernel_error::NO_SUCH_ADDRESS;
-        }
-
         target->next_ipc_queue    = nullptr;
         target->preview_ipc_queue = nullptr;
+        target->current_ipc_port  = nullptr;
 
         DEBUG_LOG("pop ipc queue");
         DEBUG_LOG("queue_head : 0x%016llx", queue_head);
-        DEBUG_LOG("queue_end  : 0x%016llx", queue_end);
+        DEBUG_LOG("queue_tail  : 0x%016llx", queue_tail);
 
         DEBUG_LOG("[POP] identifier_when_blocked : 0x%016llx", target->identifier_when_blocked);
 

@@ -26,7 +26,7 @@ namespace a9n::hal::x86_64
     {
         asm volatile(
             "xsave64 %0"
-            : "=m"(*context)
+            : "+m"(*context)
             : "a"(mask & 0xFFFF'FFFF),        // lower 32-bit
               "d"((mask >> 32) & 0xFFFF'FFFF) // upper 32-bit
             : "memory"
@@ -37,7 +37,7 @@ namespace a9n::hal::x86_64
     {
         asm volatile(
             "xsaveopt64 %0"
-            : "=m"(*context)
+            : "+m"(*context)
             : "a"(mask & 0xFFFF'FFFF),        // lower 32-bit
               "d"((mask >> 32) & 0xFFFF'FFFF) // upper 32-bit
             : "memory"
@@ -84,11 +84,33 @@ namespace a9n::hal::x86_64
         return x_get_bitmap(1);
     }
 
+    alignas(64) inline a9n::kernel::floating_context initial_floating_context {};
+
+    inline void reset_floating_unit(void)
+    {
+        alignas(16) static constexpr uint32_t DEFAULT_MXCSR = 0x1F80;
+
+        asm volatile(
+            "fninit\n"
+            "ldmxcsr %0\n"
+            :
+            : "m"(DEFAULT_MXCSR)
+            : "memory"
+        );
+    }
+
+    inline void init_floating_context_template(void)
+    {
+        // XCR0 / x_save_mask configured first
+        reset_floating_unit();
+        x_save(&initial_floating_context, x_save_mask);
+    }
+
     inline void configure_floating_mode(void)
     {
         uint64_t mask
-            = x_get_cr0()     // :)
-            | x_cr0_flag::X87 // always must be set
+            // = x_get_cr0()     // :)
+            = x_cr0_flag::X87 // always must be set
             | x_cr0_flag::SSE // mxcsr and xmm
             | x_cr0_flag::AVX // ymm
             ;
@@ -96,6 +118,20 @@ namespace a9n::hal::x86_64
         x_set_bitmap(0, mask);
 
         x_save_mask = x_get_cr0();
+
+        init_floating_context_template();
+    }
+
+    inline void init_floating_context(a9n::kernel::floating_context &context)
+    {
+        context = initial_floating_context;
+        /*
+        __builtin_memcpy(
+            context.data(),
+            initial_floating_context.data(),
+            sizeof(a9n::kernel::floating_context)
+        );
+        */
     }
 
     inline void switch_floating_context(

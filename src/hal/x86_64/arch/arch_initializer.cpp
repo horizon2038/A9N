@@ -440,8 +440,8 @@ namespace a9n::hal::x86_64
                       .and_then(
                           [=](void) -> hal_result
                           {
-                              // wait 10ms
-                              return acpi_pm_timer_core.wait(100000);
+                              // wait 1ms
+                              return acpi_pm_timer_core.wait(1000);
                           }
                       );
             if (!result)

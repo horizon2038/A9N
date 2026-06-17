@@ -13,7 +13,7 @@ namespace a9n::hal
 
     // context
     inline constexpr a9n::word HARDWARE_CONTEXT_SIZE    = 22;
-    inline constexpr a9n::word FLOATING_CONTEXT_SIZE    = 128;
+    inline constexpr a9n::word FLOATING_CONTEXT_SIZE    = 256;
     inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = a9n::PAGE_SIZE * 4;
     inline constexpr a9n::word VIRTUAL_CPU_STATE_COUNT  = 64;
 

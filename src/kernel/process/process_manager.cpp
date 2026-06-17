@@ -28,6 +28,12 @@ namespace a9n::kernel
             alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_stack;
 
             return a9n::hal::init_hardware_context(hal::cpu_mode::USER, target.registers)
+                .and_then(
+                    [&](void) -> hal::hal_result
+                    {
+                        return a9n::hal::init_floating_context(target.floating_registers);
+                    }
+                )
                 .transform_error(convert_hal_to_kernel_error)
                 .and_then(
                     [&](void) -> kernel_result
@@ -262,6 +268,35 @@ namespace a9n::kernel
                 }
             )
             .transform_error(convert_hal_to_kernel_error);
+    }
+
+    kernel_result process_manager::schedule_if_preempted_by(process &target)
+    {
+        return retrieve_current_process().and_then(
+            [&](process *current) -> kernel_result
+            {
+                if (!current)
+                {
+                    return kernel_error::NO_SUCH_ADDRESS;
+                }
+
+                if (target.priority <= current->priority)
+                {
+                    return {};
+                }
+
+                if (current->status == process_status::READY)
+                {
+                    auto result = scheduler_core.add_process(current);
+                    if (!result)
+                    {
+                        return kernel_error::UNEXPECTED;
+                    }
+                }
+
+                return try_schedule_and_switch();
+            }
+        );
     }
 
     kernel_result process_manager::yield(void)

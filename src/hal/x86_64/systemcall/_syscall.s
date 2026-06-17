@@ -90,13 +90,13 @@ _syscall_handler:
     mov rsp, [gs:0x00]
 
     and rsp, qword -0x10
-    sub rsp, 8 ; for call (return address)
+    ; sub rsp, 8 ; for call (return address)
 
     ; signature : void do_syscall(kernel_call_type)
     mov rdi, rax ; kernel call type is passed in rax, which is top-level and not saved to hardware_context.
     call do_syscall
 
-    add rsp, 0x08
+    ; add rsp, 0x08
 
 .restore_context:
     ; load hardware_context

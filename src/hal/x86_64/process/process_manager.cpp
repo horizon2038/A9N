@@ -30,12 +30,10 @@ namespace a9n::hal
 {
     hal_result switch_context(a9n::kernel::process &preview_process, a9n::kernel::process &next_process)
     {
-        /*
         x86_64::switch_floating_context(
             preview_process.floating_registers,
             next_process.floating_registers
         );
-        */
 
         // tls switch
         x86_64::write_fs_base(next_process.registers[x86_64::register_index::FS_BASE]);
@@ -92,7 +90,7 @@ namespace a9n::hal
 
     hal_result init_hardware_context(cpu_mode mode, a9n::kernel::hardware_context &context)
     {
-        liba9n::std::memset(&context, 0, a9n::hal::HARDWARE_CONTEXT_SIZE);
+        liba9n::std::memset(&context, 0, a9n::hal::HARDWARE_CONTEXT_SIZE * sizeof(a9n::word));
 
         switch (mode)
         {
@@ -126,6 +124,12 @@ namespace a9n::hal
                 return hal_error::ILLEGAL_ARGUMENT;
         }
 
+        return {};
+    }
+
+    hal_result init_floating_context(a9n::kernel::floating_context &context)
+    {
+        x86_64::init_floating_context(context);
         return {};
     }
 

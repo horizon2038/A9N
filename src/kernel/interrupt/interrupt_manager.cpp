@@ -125,6 +125,7 @@ namespace a9n::kernel
                         {
                             auto &port
                                 = reinterpret_cast<notification_port &>(*(handler->slot.component));
+
                             return port.operation_notify(*current_process, handler->slot)
                                 .transform_error(
                                     [&handler](capability_error e) -> kernel_error
@@ -144,6 +145,18 @@ namespace a9n::kernel
                                         return interrupt_manager_core.disable_interrupt(
                                             handler->irq_number
                                         );
+                                    }
+                                )
+                                .and_then(
+                                    [&](void) -> kernel_result
+                                    {
+                                        return {};
+
+                                        // WARN: NOT WORKING
+                                        /*
+                                        return a9n::kernel::process_manager_core
+                                            .reschedule_from_interrupt();
+                                        */
                                     }
                                 );
                         }
@@ -201,7 +214,7 @@ namespace a9n::kernel
                         // NOTE: at the time of fault handler, current process is still the process
                         // where the fault occurred; therefore, it is necessary to execute
                         // re-schedule + switch even if resolver does not exist
-                        current_process->status = process_status::BLOCKED;
+                        current_process->status = process_status::BLOCKED_SUSPEND;
                         return capability_error::INVALID_DESCRIPTOR;
                     }
 
@@ -211,7 +224,7 @@ namespace a9n::kernel
                         .or_else(
                             [current_process](capability_error e) -> capability_result
                             {
-                                current_process->status = process_status::BLOCKED;
+                                current_process->status = process_status::BLOCKED_SUSPEND;
                                 return e;
                             }
                         );

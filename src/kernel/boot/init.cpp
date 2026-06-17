@@ -474,7 +474,9 @@ namespace a9n::kernel
         logger::printk("Configuring init process control block ...\n");
 
         // init hardware contexts
+        logger::printk("Initializing hardware context for init process ...\n");
         hal::init_hardware_context(hal::cpu_mode::USER, pcb.component.process_core.registers);
+        hal::init_floating_context(pcb.component.process_core.floating_registers);
         hal::configure_general_register(
             pcb.component.process_core,
             hal::register_type::INSTRUCTION_POINTER,
@@ -482,7 +484,16 @@ namespace a9n::kernel
         );
 
         // init metadata
+        logger::printk("Initializing metadata for init process ...\n");
         liba9n::std::strcpy(pcb.component.process_core.name, "INIT");
+
+        // init basic scheduling properties
+        logger::printk("Initializing scheduling properties for init process ...\n");
+        pcb.component.process_core.priority = PRIORITY_MAX - 1;
+        logger::printk(
+            "Init process is set to the highest priority (%u) to run first.\n",
+            pcb.component.process_core.priority
+        );
 
         // finalize
         TRY_VOID(try_configure_init_io_ports(pcb.component));
