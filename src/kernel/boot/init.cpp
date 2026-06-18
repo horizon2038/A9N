@@ -36,7 +36,8 @@ namespace a9n::kernel
     using page_size_memory = liba9n::std::array<uint8_t, a9n::PAGE_SIZE>;
 
     // assign only once; no memory freed
-    liba9n::linear_allocator<a9n::PAGE_SIZE * 512> init_allocator {};
+    // TODO: allocate once from the initial generics
+    liba9n::linear_allocator<a9n::PAGE_SIZE * 1024> init_allocator {};
 
     // forward declaration
     template<typename T>
