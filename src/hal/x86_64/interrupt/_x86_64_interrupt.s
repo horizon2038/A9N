@@ -5,6 +5,11 @@ global _restore_user_context
 
 extern do_irq_from_kernel
 extern do_irq_from_user
+extern _restore_syscall_context
+
+%define CTX_ENTER_FROM   22
+%define ENTER_SYSCALL    1
+%define ENTER_INTERRUPT  2
 
 align 16
 _interrupt_handlers:
@@ -94,6 +99,7 @@ interrupt_handler_common:
     ; NOTE: error code and IRET Frame are loaded into kernel stack; not hardware_context.
     ; what we need to do is to load hardware_context into RSP and store registers into it.
     mov rsp, [gs:0x08]
+    mov qword [rsp + 0x08 * CTX_ENTER_FROM], ENTER_INTERRUPT
 
     ; need to reserve register space.
     add rsp, 0x08 * 15 
@@ -191,15 +197,10 @@ _restore_kernel_context:
 _restore_user_context:
     ; load hardware_context
     mov rsp, [gs:0x08]
+    cmp qword [rsp + 0x08 * CTX_ENTER_FROM], ENTER_SYSCALL
+    je _restore_syscall_context
 
     ; NOTE: Currently, the *restoration* of gsbase and fsbase is implemented within `hal::switch_context`.
-    ; swapgs
-    ; ; restore segment base
-    ; mov rbx, [rsp + 0x08 * 20]
-    ; wrgsbase rbx
-    ; mov rbx, [rsp + 0x08 * 21]
-    ; wrfsbase rbx
-    ; swapgs
 
     ; these are restored from hardware_context
     pop rax
@@ -219,20 +220,17 @@ _restore_user_context:
     pop r15
 
     mov rsp, [gs:0x08]
+    ; move the stack pointer to the top of IRET Frame (SS) for `iret` to pop the IRET Frame correctly.
     add rsp, 0x08 * 15
 
-
-    ; mov rax, [gs:0x08]
-
-    ; restore IRET Frame
-    ; push qword [rax + 0x08 * 19] ; SS
-    ; push qword [rax + 0x08 * 18] ; RSP
-    ; push qword [rax + 0x08 * 17] ; RFLAGS
-    ; push qword [rax + 0x08 * 16] ; CS
-    ; push qword [rax + 0x08 * 15] ; RIP
+    ; NOTE
+    ; [rax + 0x08 * 19] ; SS
+    ; [rax + 0x08 * 18] ; RSP
+    ; [rax + 0x08 * 17] ; RFLAGS
+    ; [rax + 0x08 * 16] ; CS
+    ; [rax + 0x08 * 15] ; RIP
 
     ; since we are going back to user from kernel, it is necessary to re-swap the swapped GS back.  
     swapgs
 
     o64 iret
-

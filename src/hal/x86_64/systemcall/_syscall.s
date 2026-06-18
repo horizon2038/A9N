@@ -1,8 +1,13 @@
 section .text
 
 global _syscall_handler
+global _restore_syscall_context
 
 extern do_syscall
+extern _restore_user_context
+
+%define CTX_ENTER_FROM   22
+%define ENTER_SYSCALL    1
 
 _syscall_handler:
 .handle_syscall:
@@ -38,6 +43,7 @@ _syscall_handler:
 
     ; load hardware_context
     mov rsp, [gs:0x08]
+    mov qword [rsp + 0x08 * CTX_ENTER_FROM], ENTER_SYSCALL
 
     ; need to reserve register space.
     add rsp, 0x08 * 19
@@ -92,18 +98,20 @@ _syscall_handler:
     and rsp, qword -0x10
     ; sub rsp, 8 ; for call (return address)
 
-    ; signature : void do_syscall(kernel_call_type)
+    ; signature : bool do_syscall(kernel_call_type)
     mov rdi, rax ; kernel call type is passed in rax, which is top-level and not saved to hardware_context.
     call do_syscall
 
-    ; add rsp, 0x08
+    ; do_syscall returns a bool: is_entered_by_syscall (in RAX).
+    ; If this is false, we must execute IRQ Exit and properly restore RCX/R11.
+    test al, al
+    jnz _restore_user_context ; unhappy-path
 
-.restore_context:
+_restore_syscall_context:
     ; load hardware_context
     mov rsp, [gs:0x08]
 
     ; these are restored from hardware_context
-
     pop rax
     pop rbx
     ; skip rcx (RIP)

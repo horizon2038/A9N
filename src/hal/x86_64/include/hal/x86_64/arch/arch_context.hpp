@@ -61,6 +61,16 @@ namespace a9n::hal::x86_64
         // for core-local/thread-local variables
         inline constexpr a9n::word GS_BASE = 20;
         inline constexpr a9n::word FS_BASE = 21;
+
+        // Virtual register: entry path that saved this context.
+        inline constexpr a9n::word ENTER_FROM = 22;
+    }
+
+    namespace context_entry
+    {
+        inline constexpr a9n::word NONE      = 0;
+        inline constexpr a9n::word SYSCALL   = 1;
+        inline constexpr a9n::word INTERRUPT = 2;
     }
 
 }

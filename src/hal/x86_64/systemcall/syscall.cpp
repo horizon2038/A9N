@@ -50,7 +50,8 @@ namespace a9n::hal::x86_64
         return {};
     }
 
-    extern "C" void do_syscall(a9n::sword kernel_call_number)
+    // return true if the current context is not SYSCALL, otherwise return false
+    extern "C" bool do_syscall(a9n::sword kernel_call_number)
     {
         [[unlikely]] if (!kernel_call_handler)
         {
@@ -82,7 +83,8 @@ namespace a9n::hal::x86_64
                     write_user_gs_base(
                         current_clv->current_process->registers[x86_64::register_index::GS_BASE]
                     );
-                    return;
+                    return (*current_clv->current_context)[x86_64::register_index::ENTER_FROM]
+                        != x86_64::context_entry::SYSCALL;
                 }
 
             [[unlikely]] default :
@@ -110,7 +112,13 @@ namespace a9n::hal::x86_64
                         0,
                         fault_address
                     );
-                    return;
+
+                    // NOTE: IRQ and `syscall` handle registers differently. Since `syscall`
+                    // destroys (or rather, utilizes) RCX/R11, applying `syscall` Exit to a process
+                    // blocked by an IRQ will corrupt RCX/R11. Therefore, they must be properly
+                    // distinguished.
+                    return (*current_clv->current_context)[x86_64::register_index::ENTER_FROM]
+                        != x86_64::context_entry::SYSCALL;
                 }
         }
     }
