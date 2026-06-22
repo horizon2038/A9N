@@ -4,6 +4,7 @@
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/capability_local_state.hpp>
 #include <kernel/kernel_result.hpp>
+#include <kernel/memory/memory.hpp>
 #include <kernel/memory/memory_type.hpp>
 
 #include <kernel/capability/frame_capability.hpp>
@@ -68,6 +69,12 @@ namespace a9n::kernel
         {
             return kernel_error::ILLEGAL_ARGUMENT;
         }
+
+        __builtin_memset(
+            a9n::kernel::physical_to_virtual_pointer<void>(table.address),
+            0,
+            a9n::PAGE_SIZE
+        );
 
         slot.init();
         slot.rights    = capability_slot::object_rights::ALL;
