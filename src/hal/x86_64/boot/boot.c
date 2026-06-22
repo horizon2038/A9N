@@ -2,6 +2,7 @@
 
 #define KERNEL_VMA 0xFFFF800000000000;
 #define KERNEL_LMA 0x200000;
+#define KERNEL_DIRECT_MAP_GIB 16
 
 extern uint64_t __kernel_start, __kernel_end;
 extern uint64_t __kernel_pml4, __kernel_pdpt, __kernel_pd;
@@ -20,7 +21,7 @@ void __attribute__((section(".boot"))) init_page_table(void)
 
     // Set up the PDPT table
     uint64_t *pdpt_table = (uint64_t *)&__kernel_pdpt;
-    for (uint64_t i = 0; i < 8; i++)
+    for (uint64_t i = 0; i < KERNEL_DIRECT_MAP_GIB; i++)
     {
         pdpt_table[i] = (uint64_t)(&__kernel_pd + i * 512) | 0x3 | 0x04;
     }
@@ -28,7 +29,7 @@ void __attribute__((section(".boot"))) init_page_table(void)
     // Set up the PD table for 2MiB pages
     // TODO: reconsider virtual-address-map-policy
     uint64_t *pd_table = (uint64_t *)&__kernel_pd;
-    for (uint64_t i = 0; i < 8 * 512; i++)
+    for (uint64_t i = 0; i < KERNEL_DIRECT_MAP_GIB * 512; i++)
     {
         // 512 entries for 2MiB pages cover 1GiB
         uint64_t physical_addr = i * 0x200000; // 2MiB per page

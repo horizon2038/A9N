@@ -4,6 +4,7 @@ KERNEL_VMA_BASE = 0xFFFF800000000000;
 KERNEL_LMA_BASE = 0x200000;
 BOOT_SIZE = 0x2000;
 CPU_COUNT_MAX = 64;
+KERNEL_DIRECT_MAP_GIB = 16;
 
 MEMORY
 {
@@ -99,7 +100,7 @@ SECTIONS
 
         . = ALIGN(0x1000);
         __kernel_pd = . - KERNEL_VMA_BASE;
-        . += 4 * 512 * 8;
+        . += KERNEL_DIRECT_MAP_GIB * 512 * 8;
 
         . = ALIGN(0x1000);
         __boot_stack_start = . - KERNEL_VMA_BASE;
@@ -115,4 +116,3 @@ SECTIONS
         *(*.eh_frame);
     } > kernel_vma AT > kernel_lma
 }
-
