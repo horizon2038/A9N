@@ -155,6 +155,37 @@ namespace a9n::kernel
             return capability_error::PERMISSION_DENIED;
         }
 
+        // NOTE:
+        // this discard path is intentionally only for RECEIVE, not REPLY_RECEIVE.
+        //
+        // in a normal reply-receive event loop, user code runs after the receive part has
+        // completed. Therefore, when the server enters REPLY_RECEIVE again, the old reply
+        // target is replied to before the next receive is performed. There is no point at
+        // which REPLY_RECEIVE should discard the existing reply target.
+        //
+        // if the server wants to drop the current caller without replying, it must enter
+        // RECEIVE again. In that case, RECEIVE discards the old reply target before waiting
+        // for or accepting the next sender.
+        if (owner.destination_reply_state != process::destination_reply_state_object::NONE)
+            [[unlikely]]
+        {
+            if (owner.destination_reply_state
+                != process::destination_reply_state_object::READY_TO_REPLY) [[unlikely]]
+            {
+                return capability_error::FATAL;
+            }
+
+            auto *client = owner.destination_reply_target;
+            if (client)
+            {
+                client->source_reply_state  = process::source_reply_state_object::NONE;
+                client->source_reply_target = nullptr;
+            }
+
+            owner.destination_reply_state  = process::destination_reply_state_object::NONE;
+            owner.destination_reply_target = nullptr;
+        }
+
         switch (state)
         {
             case WAIT :
