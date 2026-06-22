@@ -323,14 +323,15 @@ namespace a9n::kernel
                     // the Capability Object itself; the only thing to do here is to delete the
                     // children.
                     for (auto start_slot = slot->next_slot;
-                         start_slot && (start_slot->depth < slot->depth);
-                         start_slot = start_slot->next_slot)
+                         start_slot && (start_slot->depth > slot->depth);)
                     {
+                        auto next_slot = start_slot->next_slot;
                         auto result = start_slot->try_remove_and_init();
                         if (!result)
                         {
                             return result.transform_error(convert_kernel_to_capability_error);
                         }
+                        start_slot = next_slot;
                     }
 
                     return slot->component->revoke(*slot);
