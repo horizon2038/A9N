@@ -333,6 +333,21 @@ namespace a9n::kernel
                     DEBUG_LOG("destination_reply_target : 0x%016llx", owner.destination_reply_target);
                     auto client = owner.destination_reply_target;
 
+                    if (client->fault_reason != fault_type::NONE) [[unlikely]]
+                    {
+                        return complete_fault_reply_without_message_transfer(owner, *client)
+                            .and_then(
+                                [&]() -> capability_result
+                                {
+                                    owner.status = process_status::READY;
+
+                                    return process_manager_core
+                                        .try_direct_schedule_and_switch(owner)
+                                        .transform_error(convert_kernel_to_capability_error);
+                                }
+                            );
+                    }
+
                     return transfer_direct_message(*client, owner, info)
                         .and_then(
                             [&](void) -> capability_result
@@ -449,6 +464,22 @@ namespace a9n::kernel
             );
     }
 
+    capability_result
+        ipc_port::complete_fault_reply_without_message_transfer(process &owner, process &client)
+    {
+        client.status                  = process_status::READY;
+        client.source_reply_state      = process::source_reply_state_object::NONE;
+        client.source_reply_target     = nullptr;
+        client.fault_reason            = fault_type::NONE;
+
+        owner.destination_reply_state  = process::destination_reply_state_object::NONE;
+        owner.destination_reply_target = nullptr;
+
+        return process_manager_core.mark_scheduled(client).transform_error(
+            convert_kernel_to_capability_error
+        );
+    }
+
     capability_result ipc_port::complete_reply_without_switch(process &owner, message_info info)
     {
         if (owner.destination_reply_state == process::destination_reply_state_object::NONE)
@@ -466,6 +497,11 @@ namespace a9n::kernel
         if (!client) [[unlikely]]
         {
             return capability_error::FATAL;
+        }
+
+        if (client->fault_reason != fault_type::NONE) [[unlikely]]
+        {
+            return complete_fault_reply_without_message_transfer(owner, *client);
         }
 
         return transfer_direct_message(*client, owner, info)
@@ -716,6 +752,8 @@ namespace a9n::kernel
                                 target->destination_reply_state
                                     = process::destination_reply_state_object::READY_TO_REPLY;
                                 target->destination_reply_target = &owner;
+                                owner.status                     = process_status::BLOCKED_FAULT;
+                                owner.source_reply_state = process::source_reply_state_object::WAIT;
 
                                 return transfer_fault_message(target.get(), owner)
                                     .and_then(

@@ -176,6 +176,8 @@ namespace a9n::kernel
         capability_result
             transfer_direct_message(process &receiver, process &sender, message_info info);
         capability_result transfer_fault_message(process &receiver, process &sender);
+        capability_result
+            complete_fault_reply_without_message_transfer(process &owner, process &client);
         capability_result complete_reply_without_switch(process &owner, message_info info);
         capability_result try_receive_from_ready_sender(process &receiver);
         capability_result try_deliver_pending_binded_notification(process &owner, bool &delivered);
