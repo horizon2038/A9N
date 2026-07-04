@@ -1,7 +1,10 @@
 #include <kernel/capability/process_control_block.hpp>
 
 #include <kernel/capability/capability_component.hpp>
+#include <kernel/capability/frame_capability.hpp>
 #include <kernel/capability/notification_port.hpp>
+#include <kernel/ipc/ipc_buffer.hpp>
+#include <kernel/memory/memory.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
 
@@ -425,8 +428,17 @@ namespace a9n::kernel
                         return capability_error::FATAL;
                     }
 
+                    auto target_frame = convert_slot_data_to_frame(slot->data);
                     return try_copy_capability_slot(process_core.buffer_frame, *slot)
-                        .transform_error(convert_kernel_to_capability_error);
+                        .transform_error(convert_kernel_to_capability_error)
+                        .and_then(
+                            [&]() -> capability_result
+                            {
+                                process_core.buffer
+                                    = physical_to_virtual_pointer<ipc_buffer>(target_frame.address);
+                                return {};
+                            }
+                        );
                 }
             );
     }
