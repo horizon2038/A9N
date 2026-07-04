@@ -655,7 +655,9 @@ namespace a9n::kernel
             .and_then(
                 [&](void) -> kernel_result
                 {
-                    return process_core.buffer_frame.try_remove_and_init();
+                    auto result         = process_core.buffer_frame.try_remove_and_init();
+                    process_core.buffer = nullptr;
+                    return result;
                 }
             )
             .and_then(
