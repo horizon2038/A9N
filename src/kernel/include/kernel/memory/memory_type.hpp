@@ -30,33 +30,25 @@ namespace a9n::kernel
         memory_map_entry *memory_map;
     };
 
+    enum class rights : a9n::word
+    {
+        READ    = 1 << 0,
+        WRITE   = 1 << 1,
+        EXECUTE = 1 << 2,
+        ALL     = READ | WRITE | EXECUTE,
+    };
+
     struct page_table
     {
         a9n::physical_address address;
         a9n::word             flags;
 
-        constexpr page_table(
-            a9n::physical_address initial_address,
-            a9n::word             initial_depth,
-            a9n::word             initial_rights = flag_type::ALL
-        )
+        constexpr page_table(a9n::physical_address initial_address, a9n::word initial_depth)
             : address { initial_address }
             , flags { 0 }
         {
             configure_depth(initial_depth);
-            configure_rights(initial_rights);
         }
-
-        // architecture-independent attribute
-        // TODO: rename to "rights"
-        enum flag_type : uint8_t
-        {
-            NONE    = 0,
-            READ    = 1 << 1,
-            WRITE   = 1 << 2,
-            EXECUTE = 1 << 3,
-            ALL     = READ | WRITE | EXECUTE,
-        };
 
         void configure_depth(uint8_t depth)
         {
@@ -67,17 +59,6 @@ namespace a9n::kernel
         uint8_t get_depth(void) const
         {
             return flags & 0xFF;
-        }
-
-        void configure_rights(uint8_t rights)
-        {
-            flags &= ~static_cast<a9n::word>(0xFF00);
-            flags |= (static_cast<a9n::word>(rights) << 8);
-        }
-
-        uint8_t get_rights(void) const
-        {
-            return (flags >> 8) & 0xFF;
         }
     };
 

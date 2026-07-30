@@ -179,6 +179,7 @@ namespace a9n::hal::x86_64
                                         a9n::kernel::fault_type::MEMORY_INSTRUCTION_FETCH :
                                         a9n::kernel::fault_type::MEMORY;
                     fault_address = read_cr2(); // overwrite
+                    print_registers();          // TEST
                     print_page_fault_reason(error_code);
                     break;
 

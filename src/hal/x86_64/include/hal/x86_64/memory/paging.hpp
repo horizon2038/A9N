@@ -47,7 +47,8 @@ namespace a9n::hal::x86_64
             uint64_t global          : 1;
             uint64_t                 : 3;
             uint64_t address         : 40;
-            uint64_t                 : 12;
+            uint64_t                 : 11;
+            uint64_t execute_disable : 1;
         } __attribute__((packed));
 
         a9n::physical_address get_physical_address() const

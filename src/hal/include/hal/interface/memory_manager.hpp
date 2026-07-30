@@ -19,7 +19,8 @@ namespace a9n::hal
     kernel::memory_map_result<> map_page_table(
         const a9n::kernel::page_table &target_root,
         const a9n::kernel::page_table &target_table,
-        const a9n::virtual_address     target_address
+        const a9n::virtual_address     target_address,
+        const a9n::word                rights = static_cast<a9n::word>(a9n::kernel::rights::ALL)
     );
     kernel::memory_map_result<> unmap_page_table(
         const a9n::kernel::page_table &target_root,
@@ -30,7 +31,8 @@ namespace a9n::hal
     kernel::memory_map_result<> map_frame(
         const a9n::kernel::page_table &target_root,
         const a9n::kernel::frame      &target_frame,
-        const a9n::virtual_address     target_address
+        const a9n::virtual_address     target_address,
+        const a9n::word                rights = static_cast<a9n::word>(a9n::kernel::rights::ALL)
     );
     kernel::memory_map_result<> unmap_frame(
         const a9n::kernel::page_table &target_root,

@@ -32,7 +32,7 @@ namespace a9n::hal
                         if (!variable->current_process)
                         {
                             DEBUG_LOG("no process");
-                            return {};
+                            return { };
                         }
 
                         if (variable->current_process->root_address_space.type
@@ -52,7 +52,7 @@ namespace a9n::hal
                             x86_64::_invalidate_page(target_address);
                         }
 
-                        return {};
+                        return { };
                     }
                 )
                 .transform_error(
@@ -104,7 +104,8 @@ namespace a9n::hal
     kernel::memory_map_result<> map_page_table(
         const a9n::kernel::page_table &target_root,
         const a9n::kernel::page_table &target_table,
-        const a9n::virtual_address     target_address
+        const a9n::virtual_address     target_address,
+        const a9n::word                rights
     )
     {
         return validate_root_address_space(target_root)
@@ -141,12 +142,20 @@ namespace a9n::hal
                                     return kernel::memory_map_error::ALREADY_MAPPED;
                                 }
 
+                                bool is_writable
+                                    = (rights & static_cast<a9n::word>(a9n::kernel::rights::WRITE))
+                                   != 0;
+                                bool is_executable
+                                    = (rights & static_cast<a9n::word>(a9n::kernel::rights::EXECUTE))
+                                   != 0;
+
                                 entry->init();
                                 entry->configure_physical_address(target_table.address);
                                 entry->present         = true;
-                                entry->rw              = true;
+                                entry->rw              = is_writable;
                                 entry->user_supervisor = true;
                                 entry->page_size       = false;
+                                entry->execute_disable = !is_executable;
 
                                 return try_maybe_invalidate_page(target_root, target_address);
                             }
@@ -173,7 +182,7 @@ namespace a9n::hal
                     if (!entry->present)
                     {
                         // already unmapped
-                        return {};
+                        return { };
                     }
 
                     entry->init();
@@ -186,7 +195,8 @@ namespace a9n::hal
     kernel::memory_map_result<> map_frame(
         const a9n::kernel::page_table &target_root,
         const a9n::kernel::frame      &target_frame,
-        const a9n::virtual_address     target_address
+        const a9n::virtual_address     target_address,
+        const a9n::word                rights
     )
     {
         DEBUG_LOG("map_frame");
@@ -224,12 +234,18 @@ namespace a9n::hal
 
                     DEBUG_LOG("target_frame : 0x%016llx", target_frame.address);
 
+                    bool is_writable
+                        = (rights & static_cast<a9n::word>(a9n::kernel::rights::WRITE)) != 0;
+                    bool is_executable
+                        = (rights & static_cast<a9n::word>(a9n::kernel::rights::EXECUTE)) != 0;
+
                     entry->init();
                     entry->configure_physical_address(target_frame.address);
                     entry->present         = true;
-                    entry->rw              = true;
+                    entry->rw              = is_writable;
                     entry->user_supervisor = true;
                     entry->page_size       = (target_leaf_depth != x86_64::PAGE_DEPTH::PT);
+                    entry->execute_disable = !is_executable;
 
                     DEBUG_LOG("entry addr : 0x%016llx", reinterpret_cast<uint64_t>(entry));
                     DEBUG_LOG("entry.all : 0x%016llx", entry->all);
@@ -376,7 +392,7 @@ namespace a9n::hal
                     x86_64::page *current_table
                         = a9n::kernel::physical_to_virtual_pointer<x86_64::page>(target_root.address);
 
-                    x86_64::page *current_entry {};
+                    x86_64::page *current_entry { };
 
                     for (auto i = x86_64::PAGE_DEPTH::PML4; i > depth; i--)
                     {
@@ -441,7 +457,7 @@ namespace a9n::hal
             return kernel::memory_map_error::INVALID_PAGE_TABLE;
         }
 
-        return {};
+        return { };
     }
 
     kernel::memory_map_result<a9n::word>
@@ -477,7 +493,7 @@ namespace a9n::hal
         switch (size_bits)
         {
             case 12 : // 4KiB
-                return {};
+                return { };
             case 21 : // 2MiB
                 // basically, 2MiB page is supported on all x86_64 CPUs, but we check it just in
                 // case.
@@ -485,7 +501,7 @@ namespace a9n::hal
                 {
                     return kernel::memory_map_error::ILLEGAL_DEPTH;
                 }
-                return {};
+                return { };
             case 30 : // 1GiB
                 // basically, 1GiB page is supported on all x86_64 CPU (since 2010), but we check it
                 // just in case.
@@ -493,7 +509,7 @@ namespace a9n::hal
                 {
                     return kernel::memory_map_error::ILLEGAL_DEPTH;
                 }
-                return {};
+                return { };
 
             default :
                 return kernel::memory_map_error::ILLEGAL_DEPTH;

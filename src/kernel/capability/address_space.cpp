@@ -55,7 +55,7 @@ namespace a9n::kernel
             return a9n::hal::validate_root_address_space(target_root)
                 .transform_error(convert_memory_map_to_capability_error);
 
-            return {};
+            return { };
         }
     }
 
@@ -140,11 +140,20 @@ namespace a9n::kernel
                                                             target_table.address
                                                         );
 
+                                                        auto attr = TRY(
+                                                            a9n::hal::get_message_register(owner, ATTRIBUTE)
+                                                                .transform_error(convert_hal_to_kernel_error)
+                                                                .transform_error(
+                                                                    convert_kernel_to_capability_error
+                                                                )
+                                                        );
+
                                                         DEBUG_LOG("hal::map_page_table");
                                                         return a9n::hal::map_page_table(
                                                                    root_table,
                                                                    target_table,
-                                                                   address
+                                                                   address,
+                                                                   attr
                                                         )
                                                             .transform_error(
                                                                 convert_memory_map_to_capability_error
@@ -175,11 +184,20 @@ namespace a9n::kernel
                                                             target_frame.address
                                                         );
 
+                                                        auto attr = TRY(
+                                                            a9n::hal::get_message_register(owner, ATTRIBUTE)
+                                                                .transform_error(convert_hal_to_kernel_error)
+                                                                .transform_error(
+                                                                    convert_kernel_to_capability_error
+                                                                )
+                                                        );
+
                                                         DEBUG_LOG("hal::map_frame");
                                                         return a9n::hal::map_frame(
                                                                    root_table,
                                                                    target_frame,
-                                                                   address
+                                                                   address,
+                                                                   attr
                                                         )
                                                             .transform_error(
                                                                 convert_memory_map_to_capability_error
