@@ -20,6 +20,7 @@ namespace a9n::hal::x86_64
         _write_cr4(
             _read_cr4()                    // :)
             | cr4_flag::FS_GS_BASE         // rdgsbase, wrgsbase, rdfsbase, wrfsbase
+            | cr4_flag::PAGE_GLOBAL        // retain shared kernel mappings across CR3 reloads
             | cr4_flag::OS_X_SAVE          // xsave, xrstor, xsetbv, xgetbv
             | cr4_flag::OS_FX_SAVE_RESTORE // fxsave, fxrstor
             | cr4_flag::OS_XMM_EXCEPTION   // unmasked SIMD floating-point exceptions
@@ -27,7 +28,7 @@ namespace a9n::hal::x86_64
         configure_floating_mode();
         // _write_cr0(_read_cr0() | cr0_flag::WRITE_PROTECT);
 
-        return {};
+        return { };
     }
 
     hal_result init_cpu_core_segments(void)
@@ -44,7 +45,7 @@ namespace a9n::hal::x86_64
                 segment::load_task_register(segment_selector::KERNEL_TSS);
                 segment::load_idt(local_variable->idt);
 
-                return {};
+                return { };
             }
         );
     }
@@ -110,7 +111,7 @@ namespace a9n::hal
         target_arch_cpu_variable->tss.rsp_0 = kernel_stack_address;
         target_arch_cpu_variable->tss.ist_1 = kernel_stack_address;
 
-        return {};
+        return { };
     }
 
     liba9n::result<a9n::kernel::cpu_local_variable *, hal_error> current_local_variable(void)

@@ -66,6 +66,12 @@ _load_segment_register:
     ret
 
 _boot_lower_half:
+    ; UEFI may leave PGE enabled. Keep it disabled while the temporary
+    ; lower-half alias shares the kernel's global leaf entries.
+    mov rax, cr4
+    btr rax, 7
+    mov cr4, rax
+
     ; setup paging
     extern init_page_table
     call init_page_table
@@ -100,4 +106,3 @@ none:
     cli
     hlt
     jmp none
-

@@ -53,7 +53,6 @@ boot_ap_32:
     ; enable some flags
     mov ecx, cr4
     or ecx, 1 << 5 ; enable PAE
-    or ecx, 1 << 7 ; enable PGE
     mov cr4, ecx
 
     ; enable long mode
