@@ -10,5 +10,5 @@ _flush_tlb: ; void flash_tlb()
     ret
 
 _invalidate_page:
-    invlpg [rsi]
+    invlpg [rdi]
     ret
