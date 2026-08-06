@@ -107,6 +107,7 @@ SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
+SpaceInEmptyBraces: Never
 # Standard: c++20
 UseTab: Never
 BraceWrapping:
