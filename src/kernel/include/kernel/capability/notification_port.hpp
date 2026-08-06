@@ -84,6 +84,7 @@ namespace a9n::kernel
         // queue control
         kernel_result push_notification_queue(process &target_process);
         liba9n::result<liba9n::not_null<process>, kernel_error> pop_notification_queue(void);
+        kernel_result remove_notification_queue(process &target_process);
 
       public:
         capability_result revoke(capability_slot &self) override
@@ -107,6 +108,7 @@ namespace a9n::kernel
         }
 
         friend class interrupt_port;
+        friend class process_control_block;
     };
 
     inline constexpr kernel_result try_configure_notification_port_slot(

@@ -311,6 +311,8 @@ namespace a9n::kernel
 
     kernel_result notification_port::push_notification_queue(process &target_process)
     {
+        target_process.current_notification_port = this;
+
         // add to queue end
         if (!queue_head || !queue_tail)
         {
@@ -321,6 +323,7 @@ namespace a9n::kernel
         }
         else
         {
+            target_process.next_notification_queue    = nullptr;
             queue_tail->next_notification_queue       = &target_process;
             target_process.preview_notification_queue = queue_tail;
             queue_tail                                = &target_process;
@@ -345,12 +348,56 @@ namespace a9n::kernel
             queue_tail = nullptr;
             state      = WAIT;
         }
+        else
+        {
+            queue_head->preview_notification_queue = nullptr;
+        }
 
         target->next_notification_queue    = nullptr;
         target->preview_notification_queue = nullptr;
         target->current_notification_port  = nullptr;
 
         return liba9n::not_null<process> { *target };
+    }
+
+    kernel_result notification_port::remove_notification_queue(process &target_process)
+    {
+        if (target_process.current_notification_port != this) [[unlikely]]
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
+
+        if (target_process.preview_notification_queue)
+        {
+            target_process.preview_notification_queue->next_notification_queue
+                = target_process.next_notification_queue;
+        }
+        else
+        {
+            queue_head = target_process.next_notification_queue;
+        }
+
+        if (target_process.next_notification_queue)
+        {
+            target_process.next_notification_queue->preview_notification_queue
+                = target_process.preview_notification_queue;
+        }
+        else
+        {
+            queue_tail = target_process.preview_notification_queue;
+        }
+
+        target_process.next_notification_queue    = nullptr;
+        target_process.preview_notification_queue = nullptr;
+        target_process.current_notification_port  = nullptr;
+
+        if (!queue_head)
+        {
+            queue_tail = nullptr;
+            state      = WAIT;
+        }
+
+        return {};
     }
 
 }

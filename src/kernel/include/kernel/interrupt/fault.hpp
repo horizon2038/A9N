@@ -111,7 +111,8 @@ namespace a9n::kernel
             RESERVED = fault_index::RESERVED,
             FAULT_PROGRAM_COUNTER,
             KERNEL_CALL_NUMBER,
-            MESSAGE_LENGTH,
+            HARDWARE_CONTEXT_START,
+            MESSAGE_LENGTH = HARDWARE_CONTEXT_START,
         };
     };
 

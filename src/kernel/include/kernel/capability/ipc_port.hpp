@@ -178,6 +178,11 @@ namespace a9n::kernel
         capability_result transfer_fault_message(process &receiver, process &sender);
         capability_result
             complete_fault_reply_without_message_transfer(process &owner, process &client);
+        capability_result apply_invalid_kernel_call_reply_context(
+            process      &owner,
+            process      &client,
+            message_info  info
+        );
         capability_result complete_reply_without_switch(process &owner, message_info info);
         capability_result try_receive_from_ready_sender(process &receiver);
         capability_result try_deliver_pending_binded_notification(process &owner, bool &delivered);
@@ -219,6 +224,7 @@ namespace a9n::kernel
 
       private:
         friend class notification_port;
+        friend class process_control_block;
     };
 
     inline constexpr a9n::word convert_slot_data_to_identifier(const capability_slot_data &data)

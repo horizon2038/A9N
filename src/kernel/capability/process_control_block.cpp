@@ -635,16 +635,50 @@ namespace a9n::kernel
             .transform_error(convert_kernel_to_capability_error);
     }
 
-    capability_result process_control_block::operation_suspend(process &owner, capability_slot &self)
+    capability_result process_control_block::detach_from_wait_queues(void)
     {
-        process_core.status   = process_status::BLOCKED_SUSPEND;
-        process_core.priority = 0;
+        if (process_core.current_ipc_port)
+        {
+            auto result = process_core.current_ipc_port->remove_ipc_queue(process_core);
+            if (!result) [[unlikely]]
+            {
+                return result.transform_error(convert_kernel_to_capability_error);
+            }
+        }
+
+        if (process_core.current_notification_port)
+        {
+            auto result
+                = process_core.current_notification_port->remove_notification_queue(process_core);
+            if (!result) [[unlikely]]
+            {
+                return result.transform_error(convert_kernel_to_capability_error);
+            }
+        }
 
         return {};
     }
 
+    capability_result process_control_block::operation_suspend(process &owner, capability_slot &self)
+    {
+        return detach_from_wait_queues().and_then(
+            [&](void) -> capability_result
+            {
+                process_core.status   = process_status::BLOCKED_SUSPEND;
+                process_core.priority = 0;
+                return {};
+            }
+        );
+    }
+
     capability_result process_control_block::revoke(capability_slot &self)
     {
+        auto detach_result = detach_from_wait_queues();
+        if (!detach_result) [[unlikely]]
+        {
+            return detach_result;
+        }
+
         return process_core.root_slot.try_remove_and_init()
             .and_then(
                 [&](void) -> kernel_result

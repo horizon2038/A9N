@@ -335,7 +335,13 @@ namespace a9n::kernel
 
                     if (client->fault_reason != fault_type::NONE) [[unlikely]]
                     {
-                        return complete_fault_reply_without_message_transfer(owner, *client)
+                        return apply_invalid_kernel_call_reply_context(owner, *client, info)
+                            .and_then(
+                                [&]() -> capability_result
+                                {
+                                    return complete_fault_reply_without_message_transfer(owner, *client);
+                                }
+                            )
                             .and_then(
                                 [&]() -> capability_result
                                 {
@@ -480,6 +486,38 @@ namespace a9n::kernel
         );
     }
 
+    capability_result ipc_port::apply_invalid_kernel_call_reply_context(
+        process     &owner,
+        process     &client,
+        message_info info
+    )
+    {
+        if (client.fault_reason != fault_type::INVALID_KERNEL_CALL)
+        {
+            return {};
+        }
+
+        const auto register_count = static_cast<a9n::word>(info.message_length());
+        if (register_count > a9n::hal::HARDWARE_CONTEXT_SIZE) [[unlikely]]
+        {
+            return capability_error::INVALID_ARGUMENT;
+        }
+
+        for (a9n::word i = 0; i < register_count; i++)
+        {
+            auto value = a9n::hal::get_message_register(owner, PAYLOAD_START + i);
+            if (!value) [[unlikely]]
+            {
+                return convert_kernel_to_capability_error(
+                    convert_hal_to_kernel_error(value.unwrap_error())
+                );
+            }
+            client.registers[i] = value.unwrap();
+        }
+
+        return {};
+    }
+
     capability_result ipc_port::complete_reply_without_switch(process &owner, message_info info)
     {
         if (owner.destination_reply_state == process::destination_reply_state_object::NONE)
@@ -501,7 +539,13 @@ namespace a9n::kernel
 
         if (client->fault_reason != fault_type::NONE) [[unlikely]]
         {
-            return complete_fault_reply_without_message_transfer(owner, *client);
+            return apply_invalid_kernel_call_reply_context(owner, *client, info)
+                .and_then(
+                    [&]() -> capability_result
+                    {
+                        return complete_fault_reply_without_message_transfer(owner, *client);
+                    }
+                );
         }
 
         return transfer_direct_message(*client, owner, info)
@@ -739,8 +783,10 @@ namespace a9n::kernel
                                     owner.identifier_when_blocked
                                 );
 
-                                [[unlikely]] if (target->destination_reply_state
-                                                 != process::destination_reply_state_object::NONE)
+                                [[unlikely]] if (
+                                    target->destination_reply_state
+                                    != process::destination_reply_state_object::NONE
+                                )
                                 {
                                     owner.status = process_status::BLOCKED_FAULT;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
@@ -982,14 +1028,14 @@ namespace a9n::kernel
                 {
                     auto info = make_message_info(fault_memory_index::MESSAGE_LENGTH);
                     result    = write_message_registers<
-                           fault_index::IS_SUCCESS,
-                           fault_index::ERROR_CODE,
-                           fault_index::MESSAGE_INFO,
-                           fault_index::IDENTIFIER,
-                           fault_index::FAULT_REASON,
-                           fault_memory_index::FAULT_PROGRAM_COUNTER,
-                           fault_memory_index::FAULT_ADDRESS,
-                           fault_memory_index::ARCHITECTURE_FAULT_CODE>(
+                        fault_index::IS_SUCCESS,
+                        fault_index::ERROR_CODE,
+                        fault_index::MESSAGE_INFO,
+                        fault_index::IDENTIFIER,
+                        fault_index::FAULT_REASON,
+                        fault_memory_index::FAULT_PROGRAM_COUNTER,
+                        fault_memory_index::FAULT_ADDRESS,
+                        fault_memory_index::ARCHITECTURE_FAULT_CODE>(
                         receiver,
                         1,                              // is_success
                         0,                              // error_code
@@ -1006,13 +1052,13 @@ namespace a9n::kernel
                 {
                     auto info = make_message_info(fault_invalid_instruction_index::MESSAGE_LENGTH);
                     result    = write_message_registers<
-                           fault_index::IS_SUCCESS,
-                           fault_index::ERROR_CODE,
-                           fault_index::MESSAGE_INFO,
-                           fault_index::IDENTIFIER,
-                           fault_index::FAULT_REASON,
-                           fault_invalid_instruction_index::FAULT_PROGRAM_COUNTER,
-                           fault_invalid_instruction_index::ARCHITECTURE_FAULT_CODE>(
+                        fault_index::IS_SUCCESS,
+                        fault_index::ERROR_CODE,
+                        fault_index::MESSAGE_INFO,
+                        fault_index::IDENTIFIER,
+                        fault_index::FAULT_REASON,
+                        fault_invalid_instruction_index::FAULT_PROGRAM_COUNTER,
+                        fault_invalid_instruction_index::ARCHITECTURE_FAULT_CODE>(
                         receiver,
                         1,                                                       // is_success
                         0,                                                       // error_code
@@ -1022,19 +1068,20 @@ namespace a9n::kernel
                         fault_pc, // fault_program_counter
                         sender.arch_fault_code
                     );
+
                     break;
                 }
             case fault_type::INVALID_ARITHMETIC :
                 {
                     auto info = make_message_info(fault_invalid_arithmetic_index::MESSAGE_LENGTH);
                     result    = write_message_registers<
-                           fault_index::IS_SUCCESS,
-                           fault_index::ERROR_CODE,
-                           fault_index::MESSAGE_INFO,
-                           fault_index::IDENTIFIER,
-                           fault_index::FAULT_REASON,
-                           fault_invalid_arithmetic_index::FAULT_PROGRAM_COUNTER,
-                           fault_invalid_arithmetic_index::ARCHITECTURE_FAULT_CODE>(
+                        fault_index::IS_SUCCESS,
+                        fault_index::ERROR_CODE,
+                        fault_index::MESSAGE_INFO,
+                        fault_index::IDENTIFIER,
+                        fault_index::FAULT_REASON,
+                        fault_invalid_arithmetic_index::FAULT_PROGRAM_COUNTER,
+                        fault_invalid_arithmetic_index::ARCHITECTURE_FAULT_CODE>(
                         receiver,
                         1,                                                      // is_success
                         0,                                                      // error_code
@@ -1048,15 +1095,17 @@ namespace a9n::kernel
                 }
             case fault_type::INVALID_KERNEL_CALL :
                 {
-                    auto info = make_message_info(fault_invalid_kernel_call_index::MESSAGE_LENGTH);
+                    constexpr auto context_start
+                        = fault_invalid_kernel_call_index::HARDWARE_CONTEXT_START;
+                    auto info = make_message_info(context_start + a9n::hal::HARDWARE_CONTEXT_SIZE);
                     result    = write_message_registers<
-                           fault_index::IS_SUCCESS,
-                           fault_index::ERROR_CODE,
-                           fault_index::MESSAGE_INFO,
-                           fault_index::IDENTIFIER,
-                           fault_index::FAULT_REASON,
-                           fault_invalid_kernel_call_index::FAULT_PROGRAM_COUNTER,
-                           fault_invalid_kernel_call_index::KERNEL_CALL_NUMBER>(
+                        fault_index::IS_SUCCESS,
+                        fault_index::ERROR_CODE,
+                        fault_index::MESSAGE_INFO,
+                        fault_index::IDENTIFIER,
+                        fault_index::FAULT_REASON,
+                        fault_invalid_kernel_call_index::FAULT_PROGRAM_COUNTER,
+                        fault_invalid_kernel_call_index::KERNEL_CALL_NUMBER>(
                         receiver,
                         1,                                                       // is_success
                         0,                                                       // error_code
@@ -1066,19 +1115,38 @@ namespace a9n::kernel
                         fault_pc, // fault_program_counter
                         sender.fault_code
                     );
+
+                    if (result)
+                    {
+                        for (a9n::word i = 0; i < a9n::hal::HARDWARE_CONTEXT_SIZE; i++)
+                        {
+                            result = a9n::hal::configure_message_register(
+                                         receiver,
+                                         context_start + i,
+                                         sender.registers[i]
+                            )
+                                         .transform_error(convert_hal_to_kernel_error)
+                                         .transform_error(convert_kernel_to_capability_error);
+                            if (!result) [[unlikely]]
+                            {
+                                break;
+                            }
+                        }
+                    }
+
                     break;
                 }
             case fault_type::ARCHITECTURE :
                 {
                     auto info = make_message_info(fault_architecture_index::MESSAGE_LENGTH);
                     result    = write_message_registers<
-                           fault_index::IS_SUCCESS,
-                           fault_index::ERROR_CODE,
-                           fault_index::MESSAGE_INFO,
-                           fault_index::IDENTIFIER,
-                           fault_index::FAULT_REASON,
-                           fault_architecture_index::FAULT_PROGRAM_COUNTER,
-                           fault_architecture_index::ARCHITECTURE_FAULT_CODE>(
+                        fault_index::IS_SUCCESS,
+                        fault_index::ERROR_CODE,
+                        fault_index::MESSAGE_INFO,
+                        fault_index::IDENTIFIER,
+                        fault_index::FAULT_REASON,
+                        fault_architecture_index::FAULT_PROGRAM_COUNTER,
+                        fault_architecture_index::ARCHITECTURE_FAULT_CODE>(
                         receiver,
                         1,                                                // is_success
                         0,                                                // error_code

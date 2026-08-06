@@ -241,6 +241,7 @@ namespace a9n::kernel
         capability_result operation_write_register(process &owner, capability_slot &self);
         capability_result operation_resume(process &owner, capability_slot &self);
         capability_result operation_suspend(process &owner, capability_slot &self);
+        capability_result detach_from_wait_queues(void);
 
         capability_result revoke(capability_slot &self) override;
 
