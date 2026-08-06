@@ -68,6 +68,7 @@ namespace a9n::kernel
         liba9n::result<process *, scheduler_error> schedule(void);
         liba9n::result<process *, scheduler_error> try_direct_schedule(process *target_process);
         scheduler_result                           add_process(process *target_process);
+        scheduler_result                           remove_process(process *target_process);
 
       private:
         process_queue queue[PRIORITY_MAX];

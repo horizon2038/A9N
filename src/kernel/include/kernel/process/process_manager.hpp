@@ -29,6 +29,7 @@ namespace a9n::kernel
 
         liba9n::result<process *, kernel_error> retrieve_current_process();
         kernel_result                           mark_scheduled(process &target_process);
+        kernel_result                           mark_suspended(process &target_process);
 
       private:
         process   *current_process;

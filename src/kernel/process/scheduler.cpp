@@ -159,4 +159,57 @@ namespace a9n::kernel
 
         return {};
     }
+
+    scheduler_result scheduler::remove_process(process *target_process)
+    {
+        if (!target_process) [[unlikely]]
+        {
+            return scheduler_error::INVALID_PROCESS;
+        }
+
+        for (a9n::sword priority = 0; priority < PRIORITY_MAX; priority++)
+        {
+            process *previous = nullptr;
+            process *current  = queue[priority].head;
+
+            while (current)
+            {
+                if (current == target_process)
+                {
+                    auto *next = current->next;
+                    if (previous)
+                    {
+                        previous->next = next;
+                    }
+                    else
+                    {
+                        queue[priority].head = next;
+                    }
+
+                    if (next)
+                    {
+                        next->preview = previous;
+                    }
+                    else
+                    {
+                        queue[priority].tail = previous;
+                    }
+
+                    current->next    = nullptr;
+                    current->preview = nullptr;
+
+                    while (highest_priority > 0 && !queue[highest_priority].head)
+                    {
+                        highest_priority--;
+                    }
+                    return {};
+                }
+
+                previous = current;
+                current  = current->next;
+            }
+        }
+
+        return scheduler_error::PROCESS_NOT_IN_QUEUE;
+    }
 }

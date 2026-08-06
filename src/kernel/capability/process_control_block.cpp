@@ -664,9 +664,8 @@ namespace a9n::kernel
         return detach_from_wait_queues().and_then(
             [&](void) -> capability_result
             {
-                process_core.status   = process_status::BLOCKED_SUSPEND;
-                process_core.priority = 0;
-                return {};
+                return process_manager_core.mark_suspended(process_core)
+                    .transform_error(convert_kernel_to_capability_error);
             }
         );
     }
@@ -677,6 +676,12 @@ namespace a9n::kernel
         if (!detach_result) [[unlikely]]
         {
             return detach_result;
+        }
+
+        auto suspend_result = process_manager_core.mark_suspended(process_core);
+        if (!suspend_result) [[unlikely]]
+        {
+            return suspend_result.transform_error(convert_kernel_to_capability_error);
         }
 
         return process_core.root_slot.try_remove_and_init()

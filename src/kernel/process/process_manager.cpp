@@ -360,4 +360,16 @@ namespace a9n::kernel
 
         return {};
     }
+
+    kernel_result process_manager::mark_suspended(process &process)
+    {
+        auto result = scheduler_core.remove_process(&process);
+        if (!result && result.unwrap_error() != scheduler_error::PROCESS_NOT_IN_QUEUE)
+        {
+            return kernel_error::UNEXPECTED;
+        }
+
+        process.status = process_status::BLOCKED_SUSPEND;
+        return {};
+    }
 }
