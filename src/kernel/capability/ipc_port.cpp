@@ -23,7 +23,7 @@ namespace a9n::kernel
             return process_manager_core.try_schedule_and_switch();
         }
 
-    }
+    } // namespace
 
     capability_result ipc_port::execute(process &owner, capability_slot &self)
     {
@@ -94,7 +94,8 @@ namespace a9n::kernel
                 state = READY_TO_SEND;
                 [[fallthrough]];
             case READY_TO_SEND :
-                // The sender is ready, but there is no recipient. Waiting until a recipient appears.
+                // The sender is ready, but there is no recipient. Waiting until a recipient
+                // appears.
                 {
                     if (!info.is_block()) [[unlikely]]
                     {
@@ -158,14 +159,15 @@ namespace a9n::kernel
         // NOTE:
         // this discard path is intentionally only for RECEIVE, not REPLY_RECEIVE.
         //
-        // in a normal reply-receive event loop, user code runs after the receive part has
-        // completed. Therefore, when the server enters REPLY_RECEIVE again, the old reply
-        // target is replied to before the next receive is performed. There is no point at
-        // which REPLY_RECEIVE should discard the existing reply target.
+        // in a normal reply-receive event loop, user code runs after the receive part
+        // has completed. Therefore, when the server enters REPLY_RECEIVE again, the
+        // old reply target is replied to before the next receive is performed. There
+        // is no point at which REPLY_RECEIVE should discard the existing reply
+        // target.
         //
-        // if the server wants to drop the current caller without replying, it must enter
-        // RECEIVE again. In that case, RECEIVE discards the old reply target before waiting
-        // for or accepting the next sender.
+        // if the server wants to drop the current caller without replying, it must
+        // enter RECEIVE again. In that case, RECEIVE discards the old reply target
+        // before waiting for or accepting the next sender.
         if (owner.destination_reply_state != process::destination_reply_state_object::NONE)
             [[unlikely]]
         {
@@ -193,8 +195,8 @@ namespace a9n::kernel
                 state = READY_TO_RECEIVE;
                 [[fallthrough]];
             case READY_TO_RECEIVE :
-                // The receiver (self) is ready, but there is no sender. Waiting until a sender
-                // appears.
+                // The receiver (self) is ready, but there is no sender. Waiting until a
+                // sender appears.
                 {
                     DEBUG_LOG("READY_TO_RECEIVE");
                     if (!info.is_block()) [[unlikely]]
@@ -236,7 +238,8 @@ namespace a9n::kernel
                 state = READY_TO_SEND;
                 [[fallthrough]];
             case READY_TO_SEND :
-                // The sender is ready, but there is no recipient. Waiting until a recipient appears.
+                // The sender is ready, but there is no recipient. Waiting until a recipient
+                // appears.
                 {
                     if (!info.is_block()) [[unlikely]]
                     {
@@ -267,8 +270,9 @@ namespace a9n::kernel
                 }
 
             [[likely]] case READY_TO_RECEIVE :
-                // The receiver exists, so the message will be sent as is. However, the sender will
-                // be blocked until the reply is handled, since it's a call operation.
+                // The receiver exists, so the message will be sent as is. However, the
+                // sender will be blocked until the reply is handled, since it's a call
+                // operation.
                 {
                     return pop_ipc_queue()
                         .transform_error(convert_kernel_to_capability_error)
@@ -299,9 +303,6 @@ namespace a9n::kernel
                                             target->status = process_status::READY;
                                             return process_manager_core
                                                 .try_direct_schedule_and_switch(target.get())
-                                                .transform_error(convert_kernel_to_capability_error);
-
-                                            return process_manager_core.try_schedule_and_switch()
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -719,7 +720,8 @@ namespace a9n::kernel
     capability_result ipc_port::operation_fault_call(process &owner, capability_slot &self)
     {
         DEBUG_LOG(
-            "ipc_port::operation_fault_call self=%p component=%p owner=%p fault_reason=%llu "
+            "ipc_port::operation_fault_call self=%p component=%p owner=%p "
+            "fault_reason=%llu "
             "fault_address=%llx fault_code=%llx arch_fault_code=%llx",
             &self,
             self.component,
@@ -768,8 +770,9 @@ namespace a9n::kernel
                 }
 
             [[likely]] case READY_TO_RECEIVE :
-                // The receiver exists, so the message will be sent as is. However, the sender will
-                // be blocked until the reply is handled, since it's a call operation.
+                // The receiver exists, so the message will be sent as is. However, the
+                // sender will be blocked until the reply is handled, since it's a call
+                // operation.
                 {
                     return pop_ipc_queue()
                         .transform_error(convert_kernel_to_capability_error)
@@ -892,6 +895,17 @@ namespace a9n::kernel
             state = WAIT;
         }
 
+        if (info.message_length() == 0 && info.transfer_count() == 0) [[likely]]
+        {
+            a9n::hal::configure_message_register(receiver, MESSAGE_INFO, info.data);
+            a9n::hal::configure_message_register(
+                receiver,
+                IDENTIFIER_DESTINATION,
+                sender.identifier_when_blocked
+            );
+            return {};
+        }
+
         // copy info and identifier
         // NOTE: unchecked copy
         a9n::hal::configure_message_register(receiver, MESSAGE_INFO, info.data);
@@ -921,6 +935,17 @@ namespace a9n::kernel
     capability_result
         ipc_port::transfer_direct_message(process &receiver, process &sender, message_info info)
     {
+        if (info.message_length() == 0 && info.transfer_count() == 0) [[likely]]
+        {
+            a9n::hal::configure_message_register(receiver, MESSAGE_INFO, info.data);
+            a9n::hal::configure_message_register(
+                receiver,
+                IDENTIFIER_DESTINATION,
+                sender.identifier_when_blocked
+            );
+            return {};
+        }
+
         a9n::hal::configure_message_register(receiver, MESSAGE_INFO, info.data);
         a9n::hal::configure_message_register(
             receiver,
@@ -948,8 +973,8 @@ namespace a9n::kernel
             );
     }
 
-    // message__info for fault message is determined by the kernel, not the sender, so we don't need
-    // to read it from the sender's message register.
+    // message__info for fault message is determined by the kernel, not the sender,
+    // so we don't need to read it from the sender's message register.
     capability_result ipc_port::transfer_fault_message(process &receiver, process &sender)
     {
         using enum ipc_port_state;
@@ -986,7 +1011,8 @@ namespace a9n::kernel
                 {
                     auto info = make_message_info(fault_memory_index::MESSAGE_LENGTH);
                     DEBUG_LOG(
-                        "message_info : block=%d, message_length=%d, transfer_count=%d, source=%u",
+                        "message_info : block=%d, message_length=%d, transfer_count=%d, "
+                        "source=%u",
                         info.is_block(),
                         info.message_length(),
                         info.transfer_count(),
@@ -1155,7 +1181,8 @@ namespace a9n::kernel
                         static_cast<a9n::word>(fault_type::ARCHITECTURE), // fault_reason
                         fault_pc,                                         // fault_program_counter
                         sender.arch_fault_code // architecture_fault_code; for x86, it's the
-                                               // content of the machine check error code register;
+                                               // content of the machine check error code
+                                               // register;
                     );
                     break;
                 }
@@ -1203,7 +1230,8 @@ namespace a9n::kernel
         return true;
     }
 
-    // Perform a pure payload copy without any metadata (e.g., message_info, identifier) copy.
+    // Perform a pure payload copy without any metadata (e.g., message_info,
+    // identifier) copy.
     kernel_result ipc_port::copy_messages(
         process  &destination_process,
         process  &source_process,
@@ -1212,7 +1240,8 @@ namespace a9n::kernel
     {
         auto configure_value_from_register = [&](a9n::word index) -> a9n::hal::hal_result
         {
-            index += (PAYLOAD_START); // skip descriptor, operation_type, message_info, identifier
+            index += (PAYLOAD_START); // skip descriptor, operation_type, message_info,
+                                      // identifier
 
             DEBUG_LOG("get message register");
             return a9n::hal::get_message_register(source_process, index)
@@ -1403,4 +1432,4 @@ namespace a9n::kernel
 
         return liba9n::not_null<process> { *target };
     }
-}
+} // namespace a9n::kernel
