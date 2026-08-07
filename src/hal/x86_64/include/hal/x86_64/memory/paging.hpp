@@ -9,9 +9,27 @@
 namespace a9n::hal::x86_64
 {
     extern "C" uint64_t __kernel_pml4;
-    extern "C" void     _load_cr3(a9n::physical_address cr3_address);
-    extern "C" void     _flush_tlb();
-    extern "C" void     _invalidate_page(a9n::virtual_address target_virtual_address);
+
+    inline void _load_cr3(a9n::physical_address cr3_address)
+    {
+        asm volatile("mov %0, %%cr3" : : "r"(cr3_address) : "memory");
+    }
+
+    inline void _flush_tlb(void)
+    {
+        a9n::physical_address cr3_address;
+        asm volatile(
+            "mov %%cr3, %0; mov %0, %%cr3"
+            : "=&r"(cr3_address)
+            :
+            : "memory"
+        );
+    }
+
+    inline void _invalidate_page(a9n::virtual_address target_virtual_address)
+    {
+        asm volatile("invlpg (%0)" : : "r"(target_virtual_address) : "memory");
+    }
 
     static constexpr uint16_t PAGE_TABLE_COUNT = 512;
 

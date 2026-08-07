@@ -11,7 +11,7 @@ extern _restore_syscall_context
 %define ENTER_SYSCALL    1
 %define ENTER_INTERRUPT  2
 
-align 16
+align 64
 _interrupt_handlers:
 
 %assign i 0

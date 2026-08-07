@@ -14,9 +14,6 @@
 
 namespace a9n::hal::x86_64
 {
-    extern "C" void _vmxon(a9n::physical_address *vmxon_region);
-    extern "C" void _vmlaunch(void);
-
     struct vmx_control_registers
     {
         uint32_t cr0_fixed_0;
@@ -33,6 +30,18 @@ namespace a9n::hal::x86_64
     static hal_result            configure_vmx_control_registers(const vmx_control_registers &crs);
     static hal_result            configure_vmxon_region(vmxon_region &region);
     static vmx_result<>          vmxon(vmxon_region &region);
+
+    inline static vmx_result<> launch_vm(void)
+    {
+        uint64_t rflags;
+        asm volatile(
+            "vmlaunch; pushfq; popq %0"
+            : "=r"(rflags)
+            :
+            : "cc", "memory"
+        );
+        return check_vmx_result(rflags);
+    }
 
     inline static vmx_result<> log_vm_instruction_error(vmx_error error)
     {
@@ -71,16 +80,14 @@ namespace a9n::hal::x86_64
                 // configure VM
                 [](void) -> vmx_result<>
                 {
-                    _vmlaunch();
-                    return check_vmx_result().or_else(log_vm_instruction_error);
+                    return launch_vm().or_else(log_vm_instruction_error);
                 }
             )
             .and_then(
                 // start VM
                 [](void) -> vmx_result<>
                 {
-                    _vmlaunch();
-                    return check_vmx_result().or_else(log_vm_instruction_error);
+                    return launch_vm().or_else(log_vm_instruction_error);
                 }
             )
             .or_else(
@@ -257,7 +264,6 @@ __      _________
         );
     }
 
-    // `vmxon` : call `_vmxon` described by NASM source codes
     static vmx_result<> vmxon(vmxon_region &region)
     {
         a9n::kernel::utility::logger::printh("VMXON [0x%016llx] ...\n", &region);
@@ -270,9 +276,15 @@ __      _________
 
         auto region_physical_address = a9n::kernel::virtual_to_physical_address(region_address);
 
-        _vmxon(&region_physical_address);
+        uint64_t rflags;
+        asm volatile(
+            "vmxon %1; pushfq; popq %0"
+            : "=r"(rflags)
+            : "m"(region_physical_address)
+            : "cc", "memory"
+        );
 
-        return check_vmx_result().or_else(
+        return check_vmx_result(rflags).or_else(
             [](vmx_error e) -> vmx_result<>
             {
                 a9n::kernel::utility::logger::printh("VMXON failed : [%s]\n", vmx_error_to_string(e));

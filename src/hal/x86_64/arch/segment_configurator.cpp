@@ -10,11 +10,6 @@
 
 namespace a9n::hal::x86_64
 {
-    extern "C" void _load_gdt(uint16_t size, uint64_t offset);
-    extern "C" void _load_segment_register(uint16_t code_segment_register);
-    extern "C" void _load_task_register(uint16_t segment_register);
-    extern "C" void _load_idt(uint16_t size, uint64_t *offset);
-
     hal_result segment::init()
     {
         return current_arch_local_variable().and_then(
@@ -42,16 +37,12 @@ namespace a9n::hal::x86_64
         gdt.user_data_segment    = segment_descriptor::USER_DATA;
         gdt.user_code_segment    = segment_descriptor::USER_CODE;
 
-        uint16_t gdt_size        = sizeof(global_descriptor_table) - 1;
-        uint64_t gdt_address     = reinterpret_cast<uint64_t>(&gdt);
-        _load_gdt(gdt_size, gdt_address);
+        load_gdt(gdt);
     }
 
     void segment::configure_idt(interrupt_descriptor_table &idt)
     {
-        constexpr uint64_t idt_size    = sizeof(interrupt_descriptor_table) - 1;
-        uint64_t          *idt_address = reinterpret_cast<uint64_t *>(&idt);
-        _load_idt(idt_size, idt_address);
+        load_idt(idt);
     }
 
     void segment::configure_tss(global_descriptor_table &gdt, task_state_segment &tss)
@@ -69,25 +60,53 @@ namespace a9n::hal::x86_64
 
     void segment::load_gdt(global_descriptor_table &gdt)
     {
-        uint16_t gdt_size    = sizeof(global_descriptor_table) - 1;
-        uint64_t gdt_address = reinterpret_cast<uint64_t>(&gdt);
-        _load_gdt(gdt_size, gdt_address);
+        uint8_t        gdtr[10];
+        const uint16_t size    = sizeof(global_descriptor_table) - 1;
+        const uint64_t address = reinterpret_cast<uint64_t>(&gdt);
+
+        liba9n::std::memcpy(&gdtr[0], &size, sizeof(size));
+        liba9n::std::memcpy(&gdtr[sizeof(size)], &address, sizeof(address));
+
+        asm volatile("lgdt %0" : : "m"(gdtr) : "memory");
     }
 
     void segment::load_segment_register(uint16_t code_segment_register)
     {
-        _load_segment_register(code_segment_register);
+        const uint64_t selector = code_segment_register;
+
+        asm volatile(
+            "pushq %q0\n\t"
+            "leaq 1f(%%rip), %%rax\n\t"
+            "pushq %%rax\n\t"
+            "lretq\n\t"
+            "1:\n\t"
+            "movw %w0, %%ax\n\t"
+            "movw %%ax, %%ds\n\t"
+            "movw %%ax, %%es\n\t"
+            "movw %%ax, %%fs\n\t"
+            "movw %%ax, %%gs\n\t"
+            "xorq %%rax, %%rax\n\t"
+            "movw %%ax, %%ss"
+            :
+            : "r"(selector)
+            : "rax", "memory"
+        );
     }
 
     void segment::load_task_register(uint16_t segment_register)
     {
-        _load_task_register(segment_register);
+        asm volatile("ltr %w0" : : "r"(segment_register) : "memory");
     }
 
     void segment::load_idt(interrupt_descriptor_table &idt)
     {
-        constexpr uint16_t idt_size    = sizeof(idt) - 1;
-        uint64_t          *idt_address = (uint64_t *)&idt;
-        _load_idt(idt_size, idt_address);
+        uint8_t        idtr[10];
+        const uint16_t size    = sizeof(interrupt_descriptor_table) - 1;
+        const uint64_t address = reinterpret_cast<uint64_t>(&idt);
+
+        liba9n::std::memcpy(&idtr[0], &size, sizeof(size));
+        liba9n::std::memcpy(&idtr[sizeof(size)], &address, sizeof(address));
+
+        asm volatile("lidt %0" : : "m"(idtr) : "memory");
     }
 }

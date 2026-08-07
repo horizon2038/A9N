@@ -27,7 +27,12 @@ namespace a9n::hal::x86_64
         inline constexpr uint64_t ID                        = 1 << 21;
     }
 
-    extern "C" uint64_t _read_rflags(void);
+    inline uint64_t _read_rflags(void)
+    {
+        uint64_t rflags;
+        asm volatile("pushfq; popq %0" : "=r"(rflags) : : "memory");
+        return rflags;
+    }
 }
 
 #endif

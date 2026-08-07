@@ -18,11 +18,106 @@ namespace a9n::hal::x86_64
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code);
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code);
 
-    extern "C" void _enable_interrupt_all(void);
-    extern "C" void _disable_interrupt_all(void);
+    inline void _enable_interrupt_all(void)
+    {
+        asm volatile("sti" : : : "memory");
+    }
 
-    extern "C" [[noreturn]] void _restore_kernel_context(void);
-    extern "C" [[noreturn]] void _restore_user_context(void);
+    inline void _disable_interrupt_all(void)
+    {
+        asm volatile("cli" : : : "memory");
+    }
+
+    [[noreturn]] inline void restore_kernel_context(void)
+    {
+        asm volatile(
+            "movq %%gs:0x00, %%rsp\n\t"
+            "addq $0x40, %%rsp\n\t"
+            "popq %%rax\n\t"
+            "popq %%rbx\n\t"
+            "popq %%rcx\n\t"
+            "popq %%rdx\n\t"
+            "popq %%rdi\n\t"
+            "popq %%rsi\n\t"
+            "popq %%rbp\n\t"
+            "popq %%r8\n\t"
+            "popq %%r9\n\t"
+            "popq %%r10\n\t"
+            "popq %%r11\n\t"
+            "popq %%r12\n\t"
+            "popq %%r13\n\t"
+            "popq %%r14\n\t"
+            "popq %%r15\n\t"
+            "addq $0x10, %%rsp\n\t"
+            "iretq"
+            :
+            :
+            : "memory"
+        );
+        for (;;)
+        {
+        }
+    }
+
+    [[noreturn]] inline void restore_user_context(void)
+    {
+        asm volatile(
+            "movq %%gs:0x08, %%rsp\n\t"
+            "cmpq $1, 0xb0(%%rsp)\n\t"
+            "je 1f\n\t"
+
+            // Interrupt exit: restore the general registers and IRET frame.
+            "popq %%rax\n\t"
+            "popq %%rbx\n\t"
+            "popq %%rcx\n\t"
+            "popq %%rdx\n\t"
+            "popq %%rdi\n\t"
+            "popq %%rsi\n\t"
+            "popq %%rbp\n\t"
+            "popq %%r8\n\t"
+            "popq %%r9\n\t"
+            "popq %%r10\n\t"
+            "popq %%r11\n\t"
+            "popq %%r12\n\t"
+            "popq %%r13\n\t"
+            "popq %%r14\n\t"
+            "popq %%r15\n\t"
+            "movq %%gs:0x08, %%rsp\n\t"
+            "addq $0x78, %%rsp\n\t"
+            "swapgs\n\t"
+            "iretq\n\t"
+
+            // Syscall exit: RCX and R11 come from the SYSCALL-specific frame.
+            "1:\n\t"
+            "popq %%rax\n\t"
+            "popq %%rbx\n\t"
+            "addq $0x08, %%rsp\n\t"
+            "popq %%rdx\n\t"
+            "popq %%rdi\n\t"
+            "popq %%rsi\n\t"
+            "popq %%rbp\n\t"
+            "popq %%r8\n\t"
+            "popq %%r9\n\t"
+            "popq %%r10\n\t"
+            "addq $0x08, %%rsp\n\t"
+            "popq %%r12\n\t"
+            "popq %%r13\n\t"
+            "popq %%r14\n\t"
+            "popq %%r15\n\t"
+            "popq %%rcx\n\t"
+            "addq $0x08, %%rsp\n\t"
+            "popq %%r11\n\t"
+            "popq %%rsp\n\t"
+            "swapgs\n\t"
+            "sysretq"
+            :
+            :
+            : "memory"
+        );
+        for (;;)
+        {
+        }
+    }
 
     hal_result init_idt_handler(void);
     hal_result register_idt_handler(a9n::word irq_number, a9n::hal::interrupt_handler target_handler);

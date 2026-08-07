@@ -9,6 +9,7 @@ extern _restore_user_context
 %define CTX_ENTER_FROM   22
 %define ENTER_SYSCALL    1
 
+align 64
 _syscall_handler:
 .handle_syscall:
     ; +----------+--------------------+

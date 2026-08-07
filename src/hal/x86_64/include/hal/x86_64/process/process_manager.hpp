@@ -12,13 +12,6 @@ namespace a9n::hal::x86_64
 {
     inline constexpr a9n::word MESSAGE_REGISTER_SIZE_MAX = 9;
 
-    // unused
-    // TODO: remove this
-    extern "C" void _switch_context(
-        a9n::virtual_address *preview_stack_pointer,
-        a9n::virtual_address *next_stack_pointer
-    );
-
 }
 
 #endif

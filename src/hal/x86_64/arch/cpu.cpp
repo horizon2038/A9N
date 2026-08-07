@@ -5,6 +5,7 @@
 
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/floating_point.hpp>
+#include <hal/x86_64/arch/fsgsbase.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
 
 namespace a9n::hal::x86_64
@@ -102,7 +103,7 @@ namespace a9n::hal
 
         // init kernel-level cpu_local_variable
         auto core_number = target_local_variable->core_number;
-        _write_gs_base(reinterpret_cast<uint64_t>(target_local_variable));
+        x86_64::write_gs_base(reinterpret_cast<uint64_t>(target_local_variable));
 
         // init hal-level cpu_local_variable
         auto     target_arch_cpu_variable = &x86_64::arch_cpu_local_variables[core_number];
@@ -132,7 +133,8 @@ namespace a9n::hal
             return hal_error::INIT_FIRST;
         }
 
-        auto local_variable = reinterpret_cast<a9n::kernel::cpu_local_variable *>(_read_gs_base());
+        auto local_variable
+            = reinterpret_cast<a9n::kernel::cpu_local_variable *>(x86_64::read_gs_base());
         if (!local_variable) [[unlikely]]
         {
             kernel::utility::logger::error("CPU local variable could not be found");

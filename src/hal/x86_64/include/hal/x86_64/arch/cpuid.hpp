@@ -92,13 +92,16 @@ namespace a9n::hal::x86_64
         uint32_t rdx;
     } __attribute__((packed));
 
-    extern "C" void _cpuid(uint32_t leaf, uint32_t subleaf, cpuid_info *info);
-
     inline liba9n::result<cpuid_info, hal_error> try_get_cpuid(cpuid_leaf leaf, uint32_t subleaf)
     {
         cpuid_info info;
 
-        _cpuid(liba9n::enum_cast(leaf), subleaf, &info);
+        asm volatile(
+            "cpuid"
+            : "=a"(info.rax), "=b"(info.rbx), "=c"(info.rcx), "=d"(info.rdx)
+            : "a"(liba9n::enum_cast(leaf)), "c"(subleaf)
+            : "memory"
+        );
 
         return info;
     }

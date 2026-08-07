@@ -139,6 +139,11 @@ namespace a9n::hal::x86_64
         a9n::kernel::floating_context &next
     )
     {
+        if (x_save_mask == 0)
+        {
+            return;
+        }
+
         x_save_opt(&preview, x_save_mask);
         x_restore(&next, x_save_mask);
     }

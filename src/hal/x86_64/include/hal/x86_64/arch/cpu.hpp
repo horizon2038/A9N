@@ -12,12 +12,6 @@
 #include <liba9n/libcxx/array>
 #include <stdint.h>
 
-extern "C" void     _write_gs_base(uint64_t gs_base_address);
-extern "C" uint64_t _read_gs_base();
-
-extern "C" void     _write_fs_base(uint64_t fs_base_address);
-extern "C" uint64_t _read_fs_base();
-
 namespace a9n::hal::x86_64
 {
     struct arch_cpu_local_variable

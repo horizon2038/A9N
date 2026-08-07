@@ -5,8 +5,23 @@
 
 namespace a9n::hal::x86_64
 {
-    extern "C" void     _write_msr(uint32_t msr, uint64_t value);
-    extern "C" uint64_t _read_msr(uint32_t msr);
+    inline void _write_msr(uint32_t msr, uint64_t value)
+    {
+        const uint32_t low  = static_cast<uint32_t>(value);
+        const uint32_t high = static_cast<uint32_t>(value >> 32);
+
+        asm volatile("wrmsr" : : "c"(msr), "a"(low), "d"(high) : "memory");
+    }
+
+    inline uint64_t _read_msr(uint32_t msr)
+    {
+        uint32_t low;
+        uint32_t high;
+
+        asm volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(msr) : "memory");
+
+        return (static_cast<uint64_t>(high) << 32) | low;
+    }
 
     namespace msr
     {

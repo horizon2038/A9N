@@ -154,7 +154,7 @@ namespace a9n::hal::x86_64
         for (;;)
             ;
 
-        _restore_kernel_context();
+        restore_kernel_context();
     }
 
     // called from asm
@@ -255,7 +255,7 @@ namespace a9n::hal::x86_64
             }
         }
 
-        _restore_user_context();
+        restore_user_context();
     }
 
     // register initial IDT handlers; this contains the *common* code of ASM.

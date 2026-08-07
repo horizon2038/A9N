@@ -130,21 +130,23 @@ namespace a9n::hal::x86_64
         }
     }
 
-    // unsafe!
-    extern "C" void     _vmclear(a9n::physical_address *region);
-    extern "C" void     _vmptrld(a9n::physical_address *region);
-    extern "C" uint64_t _vmread(vmcs_field field);
-    extern "C" void     _vmwrite(vmcs_field field, uint64_t value);
-
     inline vmx_result<> vm_clear(const vmcs_region &region);
     inline vmx_result<> vm_pointer_load(const vmcs_region &region);
 
     // speed-critical; inline
     inline vmx_result<uint64_t> vm_read(vmcs_field field)
     {
-        auto value = _vmread(field);
+        uint64_t value;
+        uint64_t rflags;
 
-        return check_vmx_result().and_then(
+        asm volatile(
+            "vmread %2, %0; pushfq; popq %1"
+            : "=r"(value), "=r"(rflags)
+            : "r"(static_cast<uint64_t>(field.all))
+            : "cc", "memory"
+        );
+
+        return check_vmx_result(rflags).and_then(
             [&](void) -> vmx_result<uint64_t>
             {
                 return value;
@@ -154,9 +156,16 @@ namespace a9n::hal::x86_64
 
     inline vmx_result<> vm_write(vmcs_field field, uint64_t value)
     {
-        _vmwrite(field, value);
+        uint64_t rflags;
 
-        return check_vmx_result();
+        asm volatile(
+            "vmwrite %1, %2; pushfq; popq %0"
+            : "=r"(rflags)
+            : "r"(value), "r"(static_cast<uint64_t>(field.all))
+            : "cc", "memory"
+        );
+
+        return check_vmx_result(rflags);
     }
 
     static liba9n::result<uint32_t, hal_error> try_get_vmcs_revision_id(void)
@@ -175,9 +184,15 @@ namespace a9n::hal::x86_64
         auto address = a9n::kernel::virtual_to_physical_address(
             reinterpret_cast<a9n::virtual_address>(&region)
         );
-        _vmclear(&address);
+        uint64_t rflags;
+        asm volatile(
+            "vmclear %1; pushfq; popq %0"
+            : "=r"(rflags)
+            : "m"(address)
+            : "cc", "memory"
+        );
 
-        return check_vmx_result();
+        return check_vmx_result(rflags);
     }
 
     inline vmx_result<> vm_pointer_load(const vmcs_region &region)
@@ -185,9 +200,15 @@ namespace a9n::hal::x86_64
         auto address = a9n::kernel::virtual_to_physical_address(
             reinterpret_cast<a9n::virtual_address>(&region)
         );
-        _vmptrld(&address);
+        uint64_t rflags;
+        asm volatile(
+            "vmptrld %1; pushfq; popq %0"
+            : "=r"(rflags)
+            : "m"(address)
+            : "cc", "memory"
+        );
 
-        return check_vmx_result();
+        return check_vmx_result(rflags);
     }
 
     vmx_result<> init_vmcs(vmcs_region &region, uint32_t revision_id);

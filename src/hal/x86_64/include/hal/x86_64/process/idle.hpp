@@ -3,8 +3,13 @@
 
 namespace a9n::hal::x86_64
 {
-    // asm
-    extern "C" [[noreturn]] void _idle();
+    [[noreturn]] inline void idle_loop(void)
+    {
+        asm volatile("1: jmp 1b" : : : "memory");
+        for (;;)
+        {
+        }
+    }
 }
 
 #endif

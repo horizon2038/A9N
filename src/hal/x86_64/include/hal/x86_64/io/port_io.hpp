@@ -5,17 +5,41 @@
 
 namespace a9n::hal::x86_64
 {
-    extern "C" uint8_t _port_read_8(uint16_t address);
-    extern "C" void    _port_write_8(uint16_t address, uint8_t data);
+    inline uint8_t port_read_8(uint16_t address)
+    {
+        uint8_t data;
+        asm volatile("inb %w1, %0" : "=a"(data) : "Nd"(address) : "memory");
+        return data;
+    }
 
-    extern "C" uint32_t _port_read_32(uint16_t address);
-    extern "C" void     _port_write_32(uint16_t address, uint8_t data);
+    inline void port_write_8(uint16_t address, uint8_t data)
+    {
+        asm volatile("outb %0, %w1" : : "a"(data), "Nd"(address) : "memory");
+    }
 
-    uint8_t port_read_8(uint16_t address);
-    void    port_write_8(uint16_t address, uint8_t data);
+    inline uint16_t port_read_16(uint16_t address)
+    {
+        uint16_t data;
+        asm volatile("inw %w1, %0" : "=a"(data) : "Nd"(address) : "memory");
+        return data;
+    }
 
-    uint32_t port_read_32(uint16_t address);
-    void     port_write_32(uint16_t address, uint32_t data);
+    inline void port_write_16(uint16_t address, uint16_t data)
+    {
+        asm volatile("outw %0, %w1" : : "a"(data), "Nd"(address) : "memory");
+    }
+
+    inline uint32_t port_read_32(uint16_t address)
+    {
+        uint32_t data;
+        asm volatile("inl %w1, %0" : "=a"(data) : "Nd"(address) : "memory");
+        return data;
+    }
+
+    inline void port_write_32(uint16_t address, uint32_t data)
+    {
+        asm volatile("outl %0, %w1" : : "a"(data), "Nd"(address) : "memory");
+    }
 
     inline void port_wait(void)
     {

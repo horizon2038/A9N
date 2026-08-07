@@ -2,6 +2,7 @@
 
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
+#include <hal/x86_64/arch/fsgsbase.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
 #include <hal/x86_64/virtualization/vmx/vmcs_field.hpp>
 
@@ -155,8 +156,8 @@ namespace a9n::hal::x86_64
                 {
                     // clang-format off
                     return vm_write(vmcs_fields::HOST_CR3, _read_cr3())
-                        .and_then(concrete_vm_write(vmcs_fields::HOST_GS_BASE, _read_gs_base()))
-                        .and_then(concrete_vm_write(vmcs_fields::HOST_FS_BASE, _read_fs_base()))
+                        .and_then(concrete_vm_write(vmcs_fields::HOST_GS_BASE, read_gs_base()))
+                        .and_then(concrete_vm_write(vmcs_fields::HOST_FS_BASE, read_fs_base()))
                         .and_then(concrete_vm_write(vmcs_fields::HOST_GDTR_BASE, reinterpret_cast<uint64_t>(&variable->gdt)))
                         .and_then(concrete_vm_write(vmcs_fields::HOST_IDTR_BASE, reinterpret_cast<uint64_t>(&variable->idt)))
                         .and_then(concrete_vm_write(vmcs_fields::HOST_TR_BASE, reinterpret_cast<uint64_t>(&variable->tss)));

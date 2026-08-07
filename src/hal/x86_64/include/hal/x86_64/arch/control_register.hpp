@@ -5,17 +5,53 @@
 
 namespace a9n::hal::x86_64
 {
-    extern "C" void     _write_cr0(uint64_t data);
-    extern "C" uint64_t _read_cr0(void);
+    inline void _write_cr0(uint64_t data)
+    {
+        asm volatile("mov %0, %%cr0" : : "r"(data) : "memory");
+    }
 
-    extern "C" void     _write_cr2(uint64_t data);
-    extern "C" uint64_t _read_cr2(void);
+    inline uint64_t _read_cr0(void)
+    {
+        uint64_t data;
+        asm volatile("mov %%cr0, %0" : "=r"(data) : : "memory");
+        return data;
+    }
 
-    extern "C" void     _write_cr3(uint64_t data);
-    extern "C" uint64_t _read_cr3(void);
+    inline void _write_cr2(uint64_t data)
+    {
+        asm volatile("mov %0, %%cr2" : : "r"(data) : "memory");
+    }
 
-    extern "C" void     _write_cr4(uint64_t data);
-    extern "C" uint64_t _read_cr4(void);
+    inline uint64_t _read_cr2(void)
+    {
+        uint64_t data;
+        asm volatile("mov %%cr2, %0" : "=r"(data) : : "memory");
+        return data;
+    }
+
+    inline void _write_cr3(uint64_t data)
+    {
+        asm volatile("mov %0, %%cr3" : : "r"(data) : "memory");
+    }
+
+    inline uint64_t _read_cr3(void)
+    {
+        uint64_t data;
+        asm volatile("mov %%cr3, %0" : "=r"(data) : : "memory");
+        return data;
+    }
+
+    inline void _write_cr4(uint64_t data)
+    {
+        asm volatile("mov %0, %%cr4" : : "r"(data) : "memory");
+    }
+
+    inline uint64_t _read_cr4(void)
+    {
+        uint64_t data;
+        asm volatile("mov %%cr4, %0" : "=r"(data) : : "memory");
+        return data;
+    }
 
     namespace cr0_flag
     {

@@ -490,7 +490,7 @@ namespace a9n::hal::x86_64
 
         for (;;)
         {
-            _idle();
+            idle_loop();
         }
     }
 

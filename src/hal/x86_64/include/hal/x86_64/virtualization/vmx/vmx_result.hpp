@@ -15,9 +15,8 @@ namespace a9n::hal::x86_64
     template<typename T = void>
     using vmx_result = liba9n::result<T, vmx_error>;
 
-    inline vmx_result<> check_vmx_result(void)
+    inline vmx_result<> check_vmx_result(uint64_t rflags)
     {
-        auto rflags = _read_rflags();
         if ((rflags & rflags_flag::CARRY) != 0)
         {
             return vmx_error::VM_FAIL_INVALID;
