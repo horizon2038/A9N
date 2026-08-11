@@ -1,6 +1,7 @@
 name: build
 
 on:
+  workflow_call:
   push:
     branches: [ main, develop ]
     paths:
@@ -175,5 +176,4 @@ jobs:
           curl -sS -H "Content-Type: application/json" \
                -d "${JSON_PAYLOAD}" \
                "${DISCORD_WEBHOOK_URL}" >/dev/null
-
 

@@ -1,0 +1,79 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate annotated tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" != "tag" ]]; then
+            echo "${GITHUB_REF_NAME} must be an annotated tag."
+            exit 1
+          fi
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: '*-artifacts'
+          path: dist
+
+      - name: Package build artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p release-assets
+
+          while IFS= read -r -d '' artifact_dir; do
+            artifact_name="$(basename "${artifact_dir}")"
+            tar -C "${artifact_dir}" -czf "release-assets/${artifact_name}.tar.gz" .
+          done < <(find dist -mindepth 1 -maxdepth 1 -type d -print0)
+
+          if ! find release-assets -mindepth 1 -maxdepth 1 -type f -name '*.tar.gz' -print -quit | grep -q .; then
+            echo "No build artifacts were found."
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          gh release create "${GITHUB_REF_NAME}" \
+            release-assets/*.tar.gz \
+            --title "Release ${GITHUB_REF_NAME}" \
+            --notes-from-tag \
+            --verify-tag
