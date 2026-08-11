@@ -234,9 +234,11 @@ namespace a9n::kernel
                                 }
 
                                 type = static_cast<capability_type>(type_raw);
-                                [[unlikely]] if (self_info.is_device()
-                                                 && (type != capability_type::FRAME
-                                                     && type != capability_type::GENERIC))
+                                [[unlikely]] if (
+                                    self_info.is_device()
+                                    && (type != capability_type::FRAME
+                                        && type != capability_type::GENERIC)
+                                )
                                 {
                                     a9n::kernel::utility::logger::error(
                                         "device generic cannot be "
@@ -474,8 +476,10 @@ namespace a9n::kernel
     capability_result generic::revoke(capability_slot &self)
     {
         // generic cannot be copied; so it is basically read/write and 1-set
-        [[unlikely]] if (!(self.rights & capability_slot::object_rights::READ)
-                         && !(self.rights & capability_slot::object_rights::WRITE))
+        [[unlikely]] if (
+            !(self.rights & capability_slot::object_rights::READ)
+            && !(self.rights & capability_slot::object_rights::WRITE)
+        )
         {
             return capability_error::ILLEGAL_OPERATION;
         }

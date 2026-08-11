@@ -55,7 +55,7 @@ namespace a9n::kernel
             return a9n::hal::validate_root_address_space(target_root)
                 .transform_error(convert_memory_map_to_capability_error);
 
-            return { };
+            return {};
         }
     }
 

@@ -326,7 +326,7 @@ namespace a9n::kernel
                          start_slot && (start_slot->depth > slot->depth);)
                     {
                         auto next_slot = start_slot->next_slot;
-                        auto result = start_slot->try_remove_and_init();
+                        auto result    = start_slot->try_remove_and_init();
                         if (!result)
                         {
                             return result.transform_error(convert_kernel_to_capability_error);

@@ -25,13 +25,13 @@ namespace a9n::kernel
         return owner.root_slot.component
             ->traverse_slot(destination_node, extract_depth(destination_node), a9n::BYTE_BITS)
             .and_then(
-                [&](capability_slot *slot
-                ) -> liba9n::result<liba9n::not_null<capability_slot>, capability_lookup_error>
+                [&](capability_slot *slot)
+                    -> liba9n::result<liba9n::not_null<capability_slot>, capability_lookup_error>
                 {
                     return slot->component->retrieve_slot(destination_node_index)
                         .and_then(
-                            [&](capability_slot *slot
-                            ) -> liba9n::result<liba9n::not_null<capability_slot>, capability_lookup_error>
+                            [&](capability_slot *slot)
+                                -> liba9n::result<liba9n::not_null<capability_slot>, capability_lookup_error>
                             {
                                 return *slot;
                             }
@@ -61,13 +61,13 @@ namespace a9n::kernel
 
         return get_message(destination_node_descriptor_offset)
             .and_then(
-                [&](a9n::word node_descriptor
-                ) -> liba9n::result<liba9n::not_null<capability_slot>, kernel_error>
+                [&](a9n::word node_descriptor)
+                    -> liba9n::result<liba9n::not_null<capability_slot>, kernel_error>
                 {
                     return get_message(destination_node_index_offset)
                         .and_then(
-                            [&](a9n::word index
-                            ) -> liba9n::result<liba9n::not_null<capability_slot>, kernel_error>
+                            [&](a9n::word index)
+                                -> liba9n::result<liba9n::not_null<capability_slot>, kernel_error>
                             {
                                 return try_get_slot_from_node_and_index(owner, node_descriptor, index);
                             }
