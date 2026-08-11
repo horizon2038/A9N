@@ -13,11 +13,6 @@
 
 namespace a9n::hal::x86_64
 {
-    hal_result result_none()
-    {
-        return hal_result {};
-    }
-
     hal_result local_apic_timer::init()
     {
         a9n::kernel::utility::logger::printh("Initializing Local APIC Timer ...\n");

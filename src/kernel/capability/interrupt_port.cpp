@@ -136,8 +136,6 @@ namespace a9n::kernel
             return convert_kernel_to_capability_error(handler_result.unwrap_error());
         }
 
-        auto &irq_handler = handler_result.unwrap();
-
         return a9n::kernel::interrupt_manager_core.enable_interrupt(port_info.irq_number)
             .transform_error(convert_kernel_to_capability_error);
     }

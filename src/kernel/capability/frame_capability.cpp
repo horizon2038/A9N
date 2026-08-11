@@ -14,7 +14,5 @@ namespace a9n::kernel
         return a9n::hal::configure_message_register(owner, ADDRESS, address)
             .transform_error(convert_hal_to_kernel_error)
             .transform_error(convert_kernel_to_capability_error);
-
-        return {};
     }
 }

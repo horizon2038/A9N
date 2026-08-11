@@ -151,8 +151,6 @@ namespace a9n::hal::x86_64
         {
             print_page_fault_reason(error_code);
         }
-        for (;;)
-            ;
 
         restore_kernel_context();
     }
