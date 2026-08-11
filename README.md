@@ -10,21 +10,20 @@
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
 ![LLVM](https://img.shields.io/badge/llvm-00599C?style=for-the-badge&logo=llvm&logoColor=white)
 
-A9N is a **Capability-Based Microkernel** that supports a variety of hardware platforms through appropriate **HAL**.  
-It is implemented with an object-oriented interface, making it easy to use and extend.  
-It combines high portability, stability, and scalability.
+A9N is a third-generation capability-based microkernel that features high portability achieved through a HAL,
+an object-oriented interface enabled by capabilities, and a high-performance IPC mechanism.
 
 ## A9N Components list
 
 <pre>
 .
-├── src
-│   ├── kernel
-│   ├── hal
-│   │    └── include/hal/interface
-│   │    └── {ARCH}
-│   ├── liba9n
-└── test
+└── src
+    ├── kernel
+    ├── hal
+    │    └── include/hal/interface
+    │    └── {ARCH}
+    └── liba9n
+
 
 </pre>
 
