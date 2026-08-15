@@ -1,11 +1,22 @@
 /* a9n manual entry point */
 
-#import "/components/layout.typ" : template
+#import "/components/template.typ" : template
 
+#show: template.with(
+    title: "A9N Manual",
+    version: "0.1.15",
+    author: "Rekka 'horizon' IGUMI",
+    date: datetime(year: 2026, month: 8, day: 15),
+)
+
+#include "/pages/introduction.typ"
+
+
+/*
 #template(
     title: "A9N Manual",
-    author: "horizon2k38",
-    version: "1.0.0",
+    version: "0.1.15",
+    author: "Rekka 'horizon' IGUMI",
     [
         #include "/pages/introduction.typ"
         #include "/pages/kernel_call.typ"
@@ -29,3 +40,4 @@
         #include "/pages/porting.typ"
     ],
 )
+*/

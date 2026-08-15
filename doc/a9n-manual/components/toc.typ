@@ -1,6 +1,6 @@
 // Definition of chapter outline
 #let toc() = {
-  set text(size: 12pt)
+  set text(font: "A-OTF Gothic MB101 Pr6N", size: 12pt)
   set par(leading: 1.24em, first-line-indent: 0pt)
   context {
     let loc = here()
@@ -23,7 +23,7 @@
         } else {none}
 
         if el.level == 1 {
-          set text(weight: "black")
+          set text(weight: "semibold")
           if chapt_num == none {} else {
             chapt_num
             "  "

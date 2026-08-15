@@ -1,11 +1,36 @@
-#let title_block(title_name: "excellent_title", author: "excellent_author", version: "1.0.0") = {
-    align(center, text(20pt)[
-        #v(1fr)
-        *#title_name* \
-        #text(10pt)[Version #version]
-        #v(0.5fr)
-        #text(10pt)[written by #author]
-
-        #v(2fr)
-    ])
+#let __title_internal(
+  title: [],
+  version: [],
+  author: [],
+  date: datetime(year: 2026, month: 1, day: 1),
+) = {
+      block[#text(font: "A-OTF Gothic MB101 Pr6N", size: 20pt)[
+          #v(1fr)
+          *#title* \
+          #text(14pt, weight: "medium")[v#version] \
+          #v(0.5fr)
+          #text(14pt)[#author] \
+          #text(14pt)[#date.year()-#date.month()-#date.day()] \
+          #v(2fr)
+        ]]
 }
+
+#let title_block(
+  title: [],
+  version: [],
+  author: [],
+  date: datetime(year: 2026, month: 1, day: 1),
+) = {
+  place(
+      top + center,
+      float: true,
+      scope: "parent",
+      __title_internal(
+          title: title,
+          version: version,
+          author: author,
+          date: date,
+      )
+  )
+}
+

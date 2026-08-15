@@ -3,7 +3,7 @@
 == Introduction
 
 A9N Microkernelは3タイプのKernel Callを提供します. 言い換えれば, たった3つのKernel Callを使用することでSystem全体を制御することが可能です.
-呼び出しにはArchitecture固有の ABI (cf., @ABI) を使用します.
+呼び出しにはArchitecture固有の ABIを使用します.
 
 == Capability Call
 
