@@ -19,7 +19,7 @@ User-LevelのKernel Object割当ては, Genericによる`convert()`メカニズ�
 #api_table(
     "capability_descriptor", "generic_descriptor", "対象GenericへのDescriptor",
     "capability_type", "type", "作成するCapabilityのType",
-    "word", "specific_bits", [Capability作成時に使用する固有Bits \ cf., @specific_bits],
+    "word", "specific_bits", [Capability作成時に使用する固有Bits \ cf., specific_bits],
     "word", "count", "作成するCapabilityの個数",
     "capability_descriptor", "node_descriptor", "格納先NodeへのDescriptor",
     "word", "node_index", "格納先NodeのIndex",
