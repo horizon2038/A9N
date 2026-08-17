@@ -83,7 +83,7 @@ namespace a9n::hal
         return hal_error::UNEXPECTED;
     }
 
-    void idle(void)
+    [[noreturn]] void idle(void)
     {
         x86_64::idle_loop();
     }

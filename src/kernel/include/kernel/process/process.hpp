@@ -30,6 +30,7 @@ namespace a9n::kernel
         BLOCKED_WAIT, // for notification
         BLOCKED_SUSPEND,
         BLOCKED_FAULT,
+        IDLE, // kernel-only sentinel; never enters a scheduler ready queue
     };
 
     class process

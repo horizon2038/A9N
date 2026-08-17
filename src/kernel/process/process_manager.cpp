@@ -25,9 +25,8 @@ namespace a9n::kernel
         inline kernel_result configure_idle(process &target)
         {
             alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_address_space;
-            alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_stack;
 
-            return a9n::hal::init_hardware_context(hal::cpu_mode::USER, target.registers)
+            return a9n::hal::init_hardware_context(hal::cpu_mode::KERNEL, target.registers)
                 .and_then(
                     [&](void) -> hal::hal_result
                     {
@@ -60,22 +59,13 @@ namespace a9n::kernel
                     {
                         target.quantum  = QUANTUM_MAX;
                         target.priority = 0; // lowest priority
+                        target.status   = process_status::IDLE;
 
                         return hal::configure_general_register(
                                    target,
                                    hal::register_type::INSTRUCTION_POINTER,
                                    reinterpret_cast<a9n::word>(a9n::hal::idle)
                         )
-                            .and_then(
-                                [&](void) -> hal::hal_result
-                                {
-                                    return hal::configure_general_register(
-                                        target,
-                                        hal::register_type::STACK_POINTER,
-                                        reinterpret_cast<a9n::word>(&idle_stack[sizeof(idle_stack)])
-                                    );
-                                }
-                            )
                             .transform_error(convert_hal_to_kernel_error);
                     }
                 );
@@ -180,16 +170,33 @@ namespace a9n::kernel
                 [&](cpu_local_variable *local_variable) -> kernel_result
                 {
                     DEBUG_LOG("Switching to IDLE ...\n");
-                    local_variable->current_process = &idle_process;
-                    local_variable->is_idle         = true;
+                    if (local_variable->is_idle)
+                    {
+                        // The caller is an interrupt handler and must return so that it can issue
+                        // EOI before restoring the interrupted IDLE context.
+                        return {};
+                    }
 
-                    // IDLE is a kernel thread, but it appears as a User thread to enable
-                    // interrupts, hlt, etc.
-                    /*
-                    return a9n::hal::restore_context(a9n::hal::cpu_mode::USER)
-                        .transform_error(convert_hal_to_kernel_error);
-                    */
-                    return {};
+                    // There may be no current process during early boot. In that case, use IDLE's
+                    // initialized storage while installing its address space and floating state.
+                    auto &previous_process
+                        = local_variable->current_process ?
+                            *local_variable->current_process :
+                            idle_process;
+                    return a9n::hal::switch_context(previous_process, idle_process)
+                        .transform_error(convert_hal_to_kernel_error)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                local_variable->current_process = &idle_process;
+                                local_variable->is_idle         = true;
+
+                                // IDLE runs directly on this CPU's Single Kernel Stack. It never
+                                // returns; an interrupt either resumes it through
+                                // restore_kernel_context or restores a newly selected user thread.
+                                a9n::hal::idle();
+                            }
+                        );
                 }
             );
     }
@@ -343,15 +350,18 @@ namespace a9n::kernel
 
     kernel_result process_manager::mark_scheduled(process &process)
     {
-        process.status  = process_status::READY;
         process.quantum = QUANTUM_MAX;
 
         if (&process == &idle_process)
         {
+            // IDLE is a scheduler fallback, never a member of a ready queue.
+            process.status = process_status::IDLE;
             return {};
         }
 
-        auto result = scheduler_core.add_process(&process);
+        process.status = process_status::READY;
+
+        auto result    = scheduler_core.add_process(&process);
         [[unlikely]] if (!result)
         {
             utility::logger::error("Failed to add the process to the scheduler");

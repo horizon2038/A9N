@@ -14,6 +14,7 @@
 #include <hal/x86_64/io/port_io.hpp>
 #include <hal/x86_64/io/serial.hpp>
 
+#include <kernel/process/cpu.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/types.hpp>
 
@@ -111,6 +112,32 @@ namespace a9n::hal::x86_64
         = { "RAX", "RBX", "RCX", "RDX", "RDI", "RSI", "RBP",    "R8",  "R9", "R10",     "R11",
             "R12", "R13", "R14", "R15", "RIP", "CS",  "RFLAGS", "RSP", "SS", "GS_BASE", "FS_BASE" };
 
+    inline void dispatch_external_interrupt(uint16_t irq_number)
+    {
+        switch (auto type = static_cast<reserved_irq>(irq_number))
+        {
+            case reserved_irq::TIMER :
+                timer_handler();
+                break;
+
+            case reserved_irq::IPI_HALT :
+                DEBUG_LOG("IPI HALT");
+                // TODO
+                break;
+
+            case reserved_irq::IPI_RESCHEDULE :
+                DEBUG_LOG("IPI RESCHEDULE");
+                // TODO
+                break;
+
+            default :
+                auto kernel_irq_number = irq_number - liba9n::enum_cast(reserved_irq::IO_BASE);
+                interrupt_dispatcher(kernel_irq_number);
+
+                break;
+        }
+    }
+
     void print_registers()
     {
         auto context = current_context();
@@ -138,6 +165,20 @@ namespace a9n::hal::x86_64
     // called from asm
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code)
     {
+        auto *local_variable
+            = reinterpret_cast<a9n::kernel::cpu_local_variable *>(read_kernel_gs_base());
+        if (irq_number >= liba9n::enum_cast(reserved_irq::IO_BASE) && local_variable->is_idle)
+        {
+            dispatch_external_interrupt(irq_number);
+
+            if (local_variable->is_idle)
+            {
+                restore_kernel_context();
+            }
+
+            restore_user_context();
+        }
+
         const char *exception_type = get_exception_type_string(irq_number);
 
         a9n::kernel::utility::logger::printh(
@@ -229,28 +270,7 @@ namespace a9n::hal::x86_64
         }
         else
         {
-            switch (auto type = static_cast<reserved_irq>(irq_number))
-            {
-                case reserved_irq::TIMER :
-                    timer_handler();
-                    break;
-
-                case reserved_irq::IPI_HALT :
-                    DEBUG_LOG("IPI HALT");
-                    // TODO
-                    break;
-
-                case reserved_irq::IPI_RESCHEDULE :
-                    DEBUG_LOG("IPI RESCHEDULE");
-                    // TODO
-                    break;
-
-                default :
-                    auto kernel_irq_number = irq_number - liba9n::enum_cast(reserved_irq::IO_BASE);
-                    interrupt_dispatcher(kernel_irq_number);
-
-                    break;
-            }
+            dispatch_external_interrupt(irq_number);
         }
 
         restore_user_context();

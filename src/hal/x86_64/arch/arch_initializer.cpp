@@ -4,6 +4,7 @@
 #include <kernel/types.hpp>
 
 #include <hal/hal_result.hpp>
+#include <hal/interface/cpu.hpp>
 #include <hal/x86_64/arch/arch_types.hpp>
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
@@ -488,10 +489,17 @@ namespace a9n::hal::x86_64
             return;
         }
 
-        for (;;)
+        auto local_variable_result = a9n::hal::current_local_variable();
+        if (!local_variable_result)
         {
-            idle_loop();
+            a9n::kernel::utility::logger::error("Can't retrieve AP local variable");
+            return;
         }
+
+        auto *local_variable            = local_variable_result.unwrap();
+        local_variable->current_process = nullptr;
+        local_variable->is_idle         = true;
+        idle_loop();
     }
 
     hal_result init_sub_core(void)

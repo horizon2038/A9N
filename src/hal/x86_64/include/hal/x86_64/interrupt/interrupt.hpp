@@ -32,7 +32,9 @@ namespace a9n::hal::x86_64
     {
         asm volatile(
             "movq %%gs:0x00, %%rsp\n\t"
-            "addq $0x40, %%rsp\n\t"
+            // Start at the GPR save area below the per-CPU kernel stack top:
+            // 15 GPRs + IRQ/error code + the five-word IRET frame.
+            "subq $0xb0, %%rsp\n\t"
             "popq %%rax\n\t"
             "popq %%rbx\n\t"
             "popq %%rcx\n\t"

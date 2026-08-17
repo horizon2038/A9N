@@ -171,8 +171,9 @@ interrupt_handler_common:
 
 _restore_kernel_context:
     mov rsp, [gs:0x00]
-    ; skip SS, RSP, RFLAGS, CS, RIP, error_code, irq_number
-    add rsp, 0x08 * 8
+    ; move from the per-CPU kernel stack top to the saved GPRs:
+    ; 15 GPRs + irq/error + SS, RSP, RFLAGS, CS, RIP
+    sub rsp, 0x08 * 22
     pop rax
     pop rbx
     pop rcx
