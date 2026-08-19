@@ -1,0 +1,132 @@
+@misc{A9N:online,
+author = {{Rekka 'horizon' IGUMI}},
+  title = {horizon2038/A9N: Capability-based 3rd-generation Microkernel/Microhypervisor with High-speed IPC Mechanism.},
+  url = "https://github.com/horizon2038/A9N",
+  note = "[Online; accessed 2026-08-17]"
+}
+@misc{seL4:online,
+author = {seL4 Foundation},
+  title = {The seL4 Microkernel | seL4},
+  url = "https://sel4.systems/",
+  note = "[Online; accessed 2026-08-17]"
+}
+
+@manual{seL4ReferenceManual:2026,
+author = {{seL4 Foundation}},
+  title = {seL4 Reference Manual},
+  year = {2026},
+  month = jul,
+  edition = {Version 16.0.0},
+  url = {https://sel4.systems/Info/Docs/seL4-manual-16.0.0.pdf},
+  note = {[Online; accessed 2026-08-18]}
+}
+
+@misc{MitouIT:online,
+author = {情報処理推進機構},
+  title = {未踏IT人材発掘・育成事業：2024年度採択プロジェクト概要（伊組PJ） | デジタル人材の育成 | IPA 独立行政法人 情報処理推進機構},
+  url = "https://www.ipa.go.jp/jinzai/mitou/it/2024/gaiyou-sg-2.html",
+  note = "[Online; accessed 2026-08-18]"
+}
+
+@misc{MitouJr:online,
+author = {未踏社団 未踏ジュニア実行委員会},
+  title = {A9N: HALを用いて移植容易性を実現するマイクロカーネル - 未踏ジュニア},
+  url = "https://jr.mitou.org/projects/2023/a9n",
+  note = "[Online; accessed 2026-08-18]"
+}
+
+@inproceedings{ElphinstoneEtAl:2013,
+author = {Elphinstone, Kevin and Heiser, Gernot},
+title = {From L3 to seL4: What Have We Learnt in 20 Years of L4 Microkernels?},
+year = {2013},
+isbn = {9781450323888},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2517349.2522720},
+doi = {10.1145/2517349.2522720},
+booktitle = {Proceedings of the Twenty-Fourth ACM Symposium on Operating Systems Principles},
+pages = {133--150},
+location = {Farmington, Pennsylvania},
+series = {SOSP '13}
+}
+
+@article{DennisEtAl:1966,
+author = {Dennis, Jack B. and Van Horn, Earl C.},
+title = {Programming Semantics for Multiprogrammed Computations},
+year = {1966},
+publisher = {Association for Computing Machinery},
+volume = {9},
+number = {3},
+url = {https://doi.org/10.1145/365230.365252},
+doi = {10.1145/365230.365252},
+journal = {Communications of the ACM},
+month = mar,
+pages = {143--155}
+}
+
+@article{SaltzerEtAl:1973,
+author = {Saltzer, Jerome H.},
+title = {Protection and Control of Information Sharing in Multics},
+year = {1973},
+publisher = {Association for Computing Machinery},
+volume = {7},
+number = {4},
+url = {https://doi.org/10.1145/957195.808059},
+doi = {10.1145/957195.808059},
+journal = {ACM SIGOPS Operating Systems Review},
+pages = {119}
+}
+@inproceedings{LevinEtAl:1975,
+author = {Levin, R. and Cohen, E. and Corwin, W. and Pollack, F. and Wulf, W.},
+title = {Policy/mechanism separation in Hydra},
+year = {1975},
+isbn = {9781450378635},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/800213.806531},
+doi = {10.1145/800213.806531},
+abstract = {The extent to which resource allocation policies are entrusted to user-level software determines in large part the degree of flexibility present in an operating system. In Hydra the determination to separate mechanism and policy is established as a basic design principle and is implemented by the construction of a kernel composed (almost) entirely of mechanisms. This paper presents three such mechanisms (scheduling, paging, protection) and examines how external policies which manipulate them may be constructed. It is shown that the policy decisions which remain embedded in the kernel exist for the sole purpose of arbitrating conflicting requests for physical resources, and then only to the extent of guaranteeing fairness.},
+booktitle = {Proceedings of the Fifth ACM Symposium on Operating Systems Principles},
+pages = {132–140},
+numpages = {9},
+keywords = {Scheduling, Resource allocation, Protection, Policy, Paging, Operating system, Mechanism},
+location = {Austin, Texas, USA},
+series = {SOSP '75}
+}
+
+@article{Hardy:1985,
+author = {Hardy, Norman},
+title = {KeyKOS architecture},
+year = {1985},
+issue_date = {October 1985},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {19},
+number = {4},
+issn = {0163-5980},
+url = {https://doi.org/10.1145/858336.858337},
+doi = {10.1145/858336.858337},
+journal = {SIGOPS Oper. Syst. Rev.},
+month = oct,
+pages = {8–25},
+numpages = {18}
+}
+
+@article{ShapiroEtAl:1999,
+author = {Shapiro, Jonathan S. and Smith, Jonathan M. and Farber, David J.},
+title = {EROS: a fast capability system},
+year = {1999},
+issue_date = {Dec. 1999},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {33},
+number = {5},
+issn = {0163-5980},
+url = {https://doi.org/10.1145/319344.319163},
+doi = {10.1145/319344.319163},
+abstract = {EROS is a capability-based operating system for commodity processors which uses a single level storage model. The single level store's persistence is transparent to applications. The performance consequences of support for transparent persistence and capability-based architectures are generally believed to be negative. Surprisingly, the basic operations of EROS (such as IPC) are generally comparable in cost to similar operations in conventional systems. This is demonstrated with a set of microbenchmark measurements of semantically similar operations in Linux.The EROS system achieves its performance by coupling well-chosen abstract objects with caching techniques for those objects. The objects (processes, nodes, and pages) are well-supported by conventional hardware, reducing the overhead of capabilities. Software-managed caching techniques for these objects reduce the cost of persistence. The resulting performance suggests that composing protected subsystems may be less costly than commonly believed.},
+journal = {SIGOPS Oper. Syst. Rev.},
+month = dec,
+pages = {170–185},
+numpages = {16}
+}

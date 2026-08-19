@@ -1,57 +1,61 @@
+#import "/components/reference.typ" : reference_table, term
+#import "@preview/cetz:0.5.2"
+
 = Introduction
 
-== A9N Microkernel
+== Purpose and Audience
 
-*A9N Microkernel*は第3世代のCapability-Based Microkernelです.
+#term[A9N Microkernel]@A9N:online は，第3世代のCapability-based Microkernelである．A9Nは，Capabilityに基づく権限管理，Processの実行，仮想メモリ，IPC，Notification，割り込み配送の機構をKernelへ置き，Resourceの配布とSystem ServiceのPolicyをUser Modeへ分離する．
 
-高速なIPC機構とObject-Capability Modelに基づくセキュリティ機構を備えており，低レイテンシかつ高信頼性のシステムを実現します．また，アーキテクチャ依存の箇所はHAL（ハードウェア抽象化レイヤ）によって抽象化されており，さまざまなハードウェアプラットフォームへの移植が容易です．
+本書は，A9Nを初めて扱うOS開発者が，標準構成の起動，共通Kernel Interfaceの理解，Kernel Objectの操作，InitとServiceの実装，Architecture固有ABIの確認，HALの移植を行える状態を目標とする．A9NのSource Repositoryは，GitHubの#link("https://github.com/horizon2038/A9N")[horizon2038/A9N]で公開されている．
 
-このマニュアルは, A9N Microkernelの概要とその設計について解説するものです.
+== System Boundary
 
-== Microkernel Architecture
+A9Nは，Kernel，#term[HAL]（Hardware Abstraction Layer），#term[User-level System]の3領域に分かれる．KernelはArchitectureに依存しないObject Modelと実行機構を実装する．HALはCPU，Memory，Interrupt，Timer，I/OをKernel Interfaceへ接続する．User-level Systemは#term[Init]を起点としてCapabilityを配布し，Memory Manager，Driver，File System，System ServiceのPolicyを実装する．
 
-== IPC Mechanism
+#reference_table(
+  (1.1fr, 1.8fr, 2.7fr),
+  ([層], [主なInterface], [責務]),
+  [User-level System], [Capability Call，IPC，Notification], [Init，Resource Manager，Driver，Service，Applicationを構成する．],
+  [Kernel], [Kernel Object，Scheduler], [CapabilityのAuthority，Process，Address Space，IPC，Notification，Faultを管理する．],
+  [HAL], [HAL Interface], [Architecture固有のContext，Memory Mapping，Interrupt，Timer，I/O，Kernel Call Entryを実装する．],
+)
 
-== Capability
+#figure([
+  #set text(size: 8pt)
+  #cetz.canvas({
+    import cetz.draw: *
 
-A9Nにおける特権的な操作はカーネルオブジェクト呼び出しという形に抽象化され，その操作は*Capability*という偽造不可能かつ譲渡可能なトークンによって保護されます．Capabilityは従来のACL（アクセス制御リスト）による認証とは異なり，「Capabilityを所有していること」そのものがオブジェクトに対する操作権限を示します．
+    set-style(
+      stroke: 0.45pt,
+      mark: (transform-shape: false, fill: black),
+    )
 
-// figure: ACL vs Capability
+    content((0, 0), [User-level System], name: "user", frame: "rect", padding: 0.75em, fill: luma(247))
+    content((0, -1.8), [A9N Kernel], name: "kernel", frame: "rect", padding: 0.75em, fill: luma(235))
+    content((0, -3.6), [HAL], name: "hal", frame: "rect", padding: 0.75em, fill: luma(247))
+    content((0, -5.4), [Hardware], name: "hardware", frame: "rect", padding: 0.75em, fill: luma(247))
 
-A9N上のユーザーレベルシステムは，Capabilityをキーとして`capability_call(capability, operation, args...)`という形でカーネルオブジェクトに対する操作を実行可能です．したがって，A9Nはオブジェクト指向プログラミングと同等のインターフェースを持つこととなります．
+    line("user.south", "kernel.north", mark: (end: ">"))
+    line("kernel.south", "hal.north", mark: (end: ">"))
+    line("hal.south", "hardware.north", mark: (end: ">"))
 
-== Kernel Object
+    content((0.35, -0.9), [Capability Call / `YIELD`], anchor: "west")
+    content((0.35, -2.7), [HAL Interface], anchor: "west")
+    content((0.35, -4.5), [Architecture-specific Control], anchor: "west")
+  })
+], caption: [A9NのSystem Boundary])
 
-A9Nにおけるカーネルオブジェクトは，Capabilityを介して操作可能なシステムリソースの抽象化です．カーネルオブジェクトは，ユーザーレベルのシステムが必要とするリソースを表現するために設計されており，その種類は以下の通りです．
+A9Nが通常のUser-level Softwareへ提供するKernel Callは，#term[Capability Call]と`YIELD`の2種類である．Capability Callは，#term[Capability Descriptor]で指定したCapabilityを介してKernel ObjectのOperationを実行する．`YIELD`は実行権をSchedulerへ返す．個別のKernel Object Operationを独立したSystem Callとして公開しない．
 
-=== Capability Node
+== Policy/Mechanism Separation
 
-Capability NodeはCapabilityを格納して管理するためのカーネルオブジェクトです．Capability Nodeは$2^n$個のCapability Slotを持ち，それぞれのSlotへCapabilityを格納・移動・コピー・削除が可能です．また，Capability Node自体もCapabilityであるため，Capability NodeをCapabilityとして他のCapability Nodeに格納することも可能です．
+#term[機構と方針の分離]は，Resourceの操作と保護に必要なMechanismをKernelへ置き，Resourceの配分やServiceの構成を決めるPolicyをUser-level Softwareへ委ねる設計原則である．Hydraは，Scheduling，Paging，ProtectionのMechanismをKernelへ置き，外部のPolicyがMechanismを操作する構成としてこの原則を示した@LevinEtAl:1975．
 
-=== Generic
+A9Nでは，CapabilityによるAuthorityの検査，Kernel ObjectのOperation，Processの実行，Memory Mapping，IPC，Notification，割り込み配送をMechanismとして提供する．InitとUser-level Systemは，CapabilityをどのProcessへ配布するか，MemoryとCPU時間をどのServiceへ割り当てるか，DriverとSystem Serviceをどのように構成するかをPolicyとして決定する．Kernelに残るType検査，Rights検査，Scheduling規則，Resource競合の処理は，保護境界と実行可能性を維持するための共通規則である．
 
-Genericは，カーネルオブジェクトを作成するための抽象メモリ領域です．
+== Manual Structure
 
-=== Process Control Block
+Part Iは，標準構成を起動してUser Payloadの実行を確認する．Part IIは，CapabilityとKernel Callの共通規約を定義する．Part IIIは，Capability Node，Generic，Memory，Process，IPC，Notification，Interrupt，I/OをKernel Objectごとに記載する．Part IVは，Boot後のInitとUser-level Systemの構成を説明する．Part Vは，x86_64固有ABIとHAL移植手順を扱う．Part VIは，A9Nと組み合わせるSoftware Componentを説明する．
 
-=== IPC Port
-
-=== Notification Port
-
-=== Interrupt Region
-
-=== Interrupt Port
-
-=== I/O Port
-
-=== Address Space
-
-=== Page Table 
-
-=== Frame 
-
-=== Virtual CPU
-
-=== Virtual Address Space
-
-=== Virtual Page Table
+最初にA9Nを起動する読者は「Getting Started」へ進む．Kernel Interfaceを実装する読者はPart IIからPart IVまでを順に読む．既存Runtimeを使わずにEntryまたはKernel Call Adapterを実装する読者は，共通Kernel Interfaceを確認した後に「x86_64 ABI」を読む．新しいArchitectureを実装する読者は，既存の具体例として「x86_64 ABI」を確認してから「HAL Porting Guide」へ進む．
