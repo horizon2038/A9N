@@ -1,11 +1,14 @@
+#import "/components/fonts.typ" : HEADING_FONT
+
 #let api_table(..args) = {
+    let values = args.pos().flatten()
+    let row_count = 1 + values.len() / 3
     table(
         stroke: (x, y) => (
-            bottom: if y > 0 {
-                0pt 
-            } else {
-                0.5pt
-            },
+            top: if y == 0 { 0.8pt } else { 0pt },
+            bottom: if y == 0 { 0.45pt }
+                else if y == row_count - 1 { 0.8pt }
+                else { 0pt },
         ),
         gutter: 0.4em,
         columns: 3,
@@ -15,17 +18,12 @@
         ),
         align: (x, y) => ((left + horizon), (left + horizon), left).at(x),
 
-        fill: (col, row) => if row == 0 {
-            luma(360)
-        },
         table.header(
-            [*type*],
-            [*name*],
-            [*description*],
+            text(font: HEADING_FONT, weight: "medium")[type],
+            text(font: HEADING_FONT, weight: "medium")[name],
+            text(font: HEADING_FONT, weight: "medium")[description],
         ),
-        ..args
-            .pos()
-            .flatten()
+        ..values
             .enumerate()
             .map(element => {
                 let (index, value) = element
@@ -41,13 +39,14 @@
 }
 
 #let normal_table(..args) = {
+    let values = args.pos().flatten()
+    let row_count = 1 + values.len() / 2
     table(
         stroke: (x, y) => (
-            bottom: if y > 0 {
-                0pt 
-            } else {
-                0.5pt
-            },
+            top: if y == 0 { 0.8pt } else { 0pt },
+            bottom: if y == 0 { 0.45pt }
+                else if y == row_count - 1 { 0.8pt }
+                else { 0pt },
         ),
         gutter: 0.4em,
         columns: 2,
@@ -57,16 +56,11 @@
         ),
         align: (x, y) => ((left + horizon), (left + horizon), left).at(x),
 
-        fill: (col, row) => if row == 0 {
-            luma(360)
-        },
         table.header(
-            [*name*],
-            [*description*],
+            text(font: HEADING_FONT, weight: "medium")[name],
+            text(font: HEADING_FONT, weight: "medium")[description],
         ),
-        ..args
-            .pos()
-            .flatten()
+        ..values
             .enumerate()
             .map(element => {
                 let (index, value) = element

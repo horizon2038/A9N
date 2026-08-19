@@ -1,0 +1,12 @@
+[package]
+name = "a9n-manual-hello"
+version = "0.1.0"
+edition = "2024"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = true
+
