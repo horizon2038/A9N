@@ -258,6 +258,6 @@ Capabilityの`COPY`と`MINT`はIdentifierを複製する．`IDENTIFY`で一方�
 
 == Concurrency and Revoke
 
-IPC Port QueueとReply Stateに対する共通Lockは存在しない．同じIPC Portを複数Coreから操作する場合は，ユーザ空間で直列化する必要がある．
+SMP BuildではGiant Lockが各IPC Operationを直列化する．IPC Port Queue，Message Transfer，Capability Transfer，Reply Stateは一つのKernel Entry内でCore間同時更新されない．ただし，複数のIPC OperationをまとめるTransactionとProtocol上の順序保証は存在しない．複数Processから同じIPC Portへ同時に要求するServiceは，FIFO Queueの到着順に依存しないProtocolを設計するか，User-levelでSessionを直列化する必要がある．
 
 IPC Portの`revoke()`は空実装であり，Wait Queue内Processを解除しない．IPC Portを破棄する前に，待機中Sender，Receiver，Reply待ちClientを解放する必要がある．PCBの`SUSPEND`とRevokeは，Processが所属するIPC Wait QueueからProcessを外す．

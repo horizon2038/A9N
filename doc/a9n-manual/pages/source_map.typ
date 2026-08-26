@@ -23,6 +23,7 @@
   [Memory], [`address_space.hpp`，`memory_type.hpp`，`page_table_capability.hpp`，`frame_capability.hpp`], [`address_space.cpp`，`x86_64/memory/memory_manager.cpp`．],
   [Interrupt and I/O], [`interrupt_region.hpp`，`interrupt_port.hpp`，`io_port_capability.hpp`], [`interrupt_region.cpp`，`interrupt_port.cpp`，`io_port_capability.cpp`，`interrupt_manager.cpp`．],
   [Boot and Init], [`boot_info.hpp`，`init.hpp`，`version.hpp`], [`main.cpp`，`boot/init.cpp`，`x86_64/arch/arch_initializer.cpp`．],
+  [SMP], [`config.hpp`，`cpu.hpp`，`lock.hpp`，`process_manager.hpp`，HALの`cpu.hpp`と`interrupt.hpp`], [`process_manager.cpp`，`interrupt_manager.cpp`，`x86_64/arch/cpu.cpp`，`arch_initializer.cpp`，`interrupt.cpp`．],
   [Virtualization], [`virtual_cpu_capability.hpp`，`virtual_cpu.hpp`], [`virtual_cpu_capability.cpp`，`x86_64/virtualization/virtual_cpu.cpp`．],
   [HAL Porting], [`src/hal/include/hal/interface/*.hpp`], [`src/hal/x86_64`，Root CMake，HAL CMake．],
   [x86_64 ABI], [`src/hal/x86_64/include/hal/arch`], [`src/hal/x86_64/systemcall`，`process`，`memory`，`io`，`arch`，`virtualization`．],
@@ -53,9 +54,9 @@ Repository内の既存Markdownには，対象Revisionより前の説明が残っ
 #reference_table(
   (1.6fr, 1.4fr, 2.4fr),
   ([*Version domain*], [*Value*], [*Source*]),
-  [Manual], [`0.1.15`], [`doc/a9n-manual/main.typ`．],
+  [Manual], [`0.1.16`], [`doc/a9n-manual/version.txt`．],
   [CMake Project], [`0.1.8`], [Root `CMakeLists.txt`の`project()`．],
-  [Standard Kernel Build], [`0.1.15-develop+...`], [`src/kernel/CMakeLists.txt`がBuild Type，Architecture，Dateを付加する．],
+  [Standard Kernel Build], [`0.1.16-smp-alpha+...`], [`src/kernel/CMakeLists.txt`がArchitecture，Build Type，Dateを付加する．],
   [Kernel Fallback], [`0.1.0-unknown+00000000-UNKNOWN`], [`src/kernel/include/kernel/version.hpp`．],
 )
 

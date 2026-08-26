@@ -493,7 +493,7 @@ Capability Callは，共通Resultを`MR0`と`MR1`へ返す．操作固有のResu
 
 == Concurrency and Lifetime
 
-Capability ObjectとDependency列には，共通のLocking規約がない．SMP用のCPU Affinity FieldとLock Primitiveは存在するが，Capability操作全体のThread Safetyは保証されない．同じObjectやNodeを複数Coreから操作する場合は，User-levelのPolicyで直列化する必要がある．
+SMP Buildでは，Kernel Call EntryがGiant Lockを取得するため，Capability Object，Capability Node，Dependency列に対するCapability CallはCore間で直列化される．SP BuildではGiant Lockが`null_lock`へCompile-time置換される．この直列化は，操作途中のErrorをRollbackして複数Fieldの更新をAtomicにするものではなく，CapabilityのLifetime規則も変更しない．
 
 Capability SlotのLifetimeは，Slotを所有するNode，またはProcess内部SlotのLifetimeに従う．Capability Object用のMemoryはGenericから単調増加で割り当てられ，`REMOVE`を行っても個別には返却されない．GenericをRevokeするとWatermarkが初期値に戻るため，派生Capabilityが残ったまま再割当てを行うとAliasが生じ得る．
 

@@ -46,6 +46,8 @@
 
 #entry([Direct Schedule], [IPCの通信相手を通常のSchedulingを介さずに選択する経路である．Ready Queueに通信相手より高いPriorityのProcessが存在する場合は，通常のSchedulingへ戻る．])
 
+#entry([Giant Lock], [Kernel Entry全体を一つのLockで直列化するSMP構成である．A9NのSMP BuildはKernel Call，Interrupt，Timer，IPI，Fault Handlerの先頭で共通Lockを取得する．])
+
 #entry([Descriptor Payload], [Capability Descriptorの下位$W - 8$ bitである．各Capability NodeのNode Indexを上位側から順に配置する．])
 
 #entry([Encoded Depth], [Capability Descriptorの上位8 bitへ格納する値である．Depthを$D$とすると，Encoded Depthは$D - 8$となる．])
@@ -80,6 +82,8 @@
 
 #entry([Slot-local Identifier], [IPC PortまたはNotification Portを参照するCapability Slotの`data[0]`に保持する1 Word値である．Kernelは，IPCではReceiverの`MR3`へ，NotificationではPending Flagを介して`MR2`または`MR3`へ配送する．])
 
+#entry([Symmetric Multiprocessing], [複数のCPU Coreが同じKernelとMemoryを共有してUser Processを並行実行する構成である．SMPと略記する．A9NではBuild時に有効化する．])
+
 #entry([User-level System], [Initを起点としてユーザ空間に構成するOS部分である．Capabilityの配布，Memory Manager，Driver，File System，System ServiceのPolicyを実装する．])
 
 #entry([User-level Software], [A9NのUser Modeで動作し，Kernel CallによってKernel Objectを操作するSoftwareである．Initと，Initが構成するService Processを含む．])
@@ -91,6 +95,8 @@
 #entry([Address Space], [Root Page Tableを表すCapability Objectである．Page TableとFrameのMappingおよびUnmappingを実行する．])
 
 #entry([A9NLoader-rs], [A9N Boot Protocolに従ってKernel ImageとInit Imageを配置し，`boot_info`をKernelへ渡すUEFI Bootloaderである．])
+
+#entry([Application Processor], [SMP SystemでBootstrap Processor以外のCPU Coreである．APと略記する．BSPからINIT IPIとStartup IPIを受けて起動する．])
 
 #entry([Capability Node], [$2^"radix_bits"$個のCapability Slotを持つRadix Tree Nodeである．別のCapability NodeをSlotへ格納してCapability Spaceを階層化できる．])
 
@@ -125,6 +131,8 @@
 #entry([Process Control Block], [Processの実行文脈と状態を保持するCapability Objectである．PCBと略記する．Priority，Quantum，Address Space，Root Capability Node，IPC Buffer，Notification Port，Fault Resolverを管理する．])
 
 #entry([Root Capability Node], [ProcessがCapability DescriptorによるSlot探索を開始するCapability Nodeである．PCB内部のRoot Slotから参照する．])
+
+#entry([Single Kernel Stack], [ProcessごとのKernel Stackを持たず，Coreごとに一つのKernel Stackを共有する実装方式である．A9Nは各Coreへ8 KiBのKernel Stackを割り当てる．])
 
 #entry([SPENCER], [A9N Kernel，A9NLoader-rs，User PayloadをBuildし，Boot可能なDisk Imageを生成するToolKitである．])
 

@@ -61,7 +61,7 @@ A successful run prints:
 
 ```text
 A9N manual ABI check: OK
-kernel version: 0x0.1.f
+kernel version: 0x0.1.10
 capability call check: OK
 capability error check: OK
 ```

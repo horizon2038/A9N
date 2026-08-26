@@ -90,7 +90,7 @@ Memory HALは，Address Space Rootの検査，Page Table Depth，Frame Size，Ma
 
 `make_address_space()`は，新しいUser Address SpaceへKernel Mappingを組み込む．Kernel MappingをUser Modeから参照できないようにPage EntryのPrivilegeを設定する．`is_valid_user_address()`の判定範囲は，User Mappingを作成できる範囲と一致させる．
 
-SMP PortはRemote TLB Shootdownを追加する必要がある．対象RevisionのKernel共通CodeはRemote Shootdownを要求するInterfaceを持たないため，SMP対応はInterface拡張を伴う．
+SMP Portは，Core列挙と起動，CPU-local Pointer，Core数，Reschedule IPI，TLB Shootdown IPI，CoreごとのTimerとSingle Kernel Stackを実装する必要がある．Kernel共通CodeはGiant LockとCoreごとのSchedulerを提供する．Memory HALのAddress Space Owner APIは，Capability Dependencyをまたいで共有できるArchitecture固有領域へOwner Bitmapを保存し，Bitmap全体の読み書きだけを提供する．Core BitのSet／ClearはArchitecture固有Context Switchが直接行い，IPI Targetの選択と送信はKernelが行う．Context Switchでは，次のAddress Spaceへ現在CoreのBitをSetしてからHardware Rootを切り替え，保存した以前のHardware RootからBitをClearする．
 
 == Interrupt and Timer Port
 

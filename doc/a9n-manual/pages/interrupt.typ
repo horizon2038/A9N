@@ -93,4 +93,4 @@ Bind済みHandlerが存在しないIRQはユーザ空間へ配送されない．
 
 Interrupt PortのRevokeはIRQ予約とNotification Bindingを解除する．
 
-IRQ Handler TableとNotification Bindingに対する共通Lockは存在しない．Interrupt Portの作成とBinding変更は，Initまたは単一のResource Managerで直列化する必要がある．
+SMP Buildでは，Interrupt Port OperationとHardware IRQ HandlerがGiant Lock内でIRQ Handler TableとNotification Bindingを更新する．ただし，Interrupt Portの作成，Binding変更，Driver起動をまとめるTransactionは存在しない．Initまたは単一のResource Managerが，Driverを起動する前にこれらのOperationを順序付ける必要がある．

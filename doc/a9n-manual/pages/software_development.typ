@@ -85,10 +85,9 @@ Initは，全Resourceを自身で使い続けるProcessではない．System構�
 
 == Resource Lifetime and Concurrency
 
-Capability ObjectとWait Queueには，User-level System全体を覆うTransactionや共通Lockが存在しない．同じNode，Generic，IPC Port，Notification Port，PCBを複数Processまたは複数Coreから操作する場合，Resource ManagerはObject単位で直列化する．Operationの完了後に台帳を更新し，台帳更新前のObjectを別のWorkerへ渡さない．
+SMP BuildのGiant Lockは，個々のKernel Callに含まれるCapability ObjectとWait Queueの更新をCore間で直列化する．User-level System全体を覆い，複数Kernel CallをAtomicにまとめるTransactionは存在しない．同じNode，Generic，IPC Port，Notification Port，PCBのLifecycleを複数Processから変更する場合，Resource ManagerはObject単位でOperation列を直列化する．Operationの完了後に台帳を更新し，台帳更新前のObjectを別のWorkerへ渡さない．
 
 Serviceを停止する際のResource依存関係は，受付停止，Waiterの解消，Process停止，Mapping解除，Capability失効，Generic Revokeの順に解消する．具体的な終了手順は「Building Init and Services」に記載する．
 
 
 IPC PortのRevokeはWaiterを自動的に起こさず，GenericのRevokeは派生Object MemoryをClearしない．破棄順序はKernel Callの成功だけでなく，User-level台帳と各ProcessのStateを用いて確認する．
-

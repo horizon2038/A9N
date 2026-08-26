@@ -94,7 +94,7 @@ Page Tableの`UNMAP`は，対象EntryがNot Presentでも成功を返す．Frame
 
 `UNMAP`は，対象EntryのPhysical Addressと，`MR2`のDescriptorによって探索したSlotが参照するPage TableまたはFrameのPhysical Addressを比較しない．対象CapabilityはUnmapするDepthを決めるためだけに使う．同じDepthまたはSizeを持つ別Objectを参照するCapability SlotのDescriptorでも，指定Virtual AddressのEntryをClearできる．Address Space Capabilityは，Address Space内の全Mappingを変更できる権限として扱う必要がある．
 
-Mapping対象Address Spaceが実行中ProcessのRoot Address Spaceと同一である場合，HALは対象Virtual AddressのTLB Entryを無効化する．別のAddress Spaceに対する即時無効化の要否はHALが定める．具体的な命令とAddress Space切替え時の処理はアーキテクチャごとのABIに記載する．
+Mapping対象Address Spaceが現在Coreで実行中なら，HALはLocal TLBを無効化する．Frame操作は対象Virtual AddressのEntryだけを無効化できるが，中間Page Table操作は配下の複数Entryを無効化する必要がある．SMP Buildでは，KernelがHALからAddress Space Owner Bitmapを取得し，別CoreのBitがあればPublic HAL Interfaceを通じてTLB Shootdown IPIを送る．Remote OwnerがなければIPIを送らない．具体的なBitmapの保存場所，無効化命令，IPI，Address Space切替え時の処理はアーキテクチャごとのABIに記載する．
 
 == GET_UNSET_DEPTH
 
@@ -123,4 +123,4 @@ Frameの`revoke()`も空実装である．Frame CapabilityをRemoveしても，M
 
 == Concurrency
 
-Page Table更新に対するAddress Space単位のLockとRemote TLB Shootdownは，対象Revisionに存在しない．同じAddress SpaceへのMapping変更は，ユーザ空間で直列化する必要がある．Single-core以外の実行では，別CoreのTLB整合性が保証されない．
+SMP BuildではGiant LockがPage Table更新，Address Space Owner Bitmapの更新，Shootdown IPIの送信を直列化する．Address Space単位の追加Lockは使用しない．同じAddress Spaceを複数Coreで実行している間にMappingを変更すると，HALはLocal TLBを無効化し，KernelはBitmapに記録されたRemote CoreのTLBを無効化する．

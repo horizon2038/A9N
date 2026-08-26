@@ -56,6 +56,6 @@ A9Nでは，CapabilityによるAuthorityの検査，Kernel ObjectのOperation，
 
 == Manual Structure
 
-Part Iは，標準構成を起動してUser Payloadの実行を確認する．Part IIは，CapabilityとKernel Callの共通規約を定義する．Part IIIは，Capability Node，Generic，Memory，Process，IPC，Notification，Interrupt，I/OをKernel Objectごとに記載する．Part IVは，Boot後のInitとUser-level Systemの構成を説明する．Part Vは，x86_64固有ABIとHAL移植手順を扱う．Part VIは，A9Nと組み合わせるSoftware Componentを説明する．
+Part Iは，標準構成を起動してUser Payloadの実行を確認する．Part IIは，CapabilityとKernel Callの共通規約を定義する．Part IIIは，Capability Node，Generic，Memory，Process，IPC，Notification，Interrupt，I/OをKernel Objectごとに記載する．Part IVは，Boot後のInitとUser-level Systemの構成を説明する．Part Vは，SMPの実行Model，x86_64固有ABI，HAL移植手順を扱う．Part VIは，A9Nと組み合わせるSoftware Componentを説明する．
 
-最初にA9Nを起動する読者は「Getting Started」へ進む．Kernel Interfaceを実装する読者はPart IIからPart IVまでを順に読む．既存Runtimeを使わずにEntryまたはKernel Call Adapterを実装する読者は，共通Kernel Interfaceを確認した後に「x86_64 ABI」を読む．新しいArchitectureを実装する読者は，既存の具体例として「x86_64 ABI」を確認してから「HAL Porting Guide」へ進む．
+最初にA9Nを起動する読者は「Getting Started」へ進む．Kernel Interfaceを実装する読者はPart IIからPart IVまでを順に読む．複数CoreでProcessを構成する読者は「Symmetric Multiprocessing」を読む．既存Runtimeを使わずにEntryまたはKernel Call Adapterを実装する読者は，共通Kernel Interfaceを確認した後に「x86_64 ABI」を読む．新しいArchitectureを実装する読者は，既存の具体例として「x86_64 ABI」を確認してから「HAL Porting Guide」へ進む．

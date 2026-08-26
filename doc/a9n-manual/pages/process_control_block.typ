@@ -18,7 +18,7 @@ PCBに対する操作は，PCB SlotのRightsを検査しない．PCB Capability�
   [`CONFIGURE = 1`], [`MR2 = configuration info` \ `MR3..MR12 = fields`], [Bit Maskで選択したPCB Fieldを順番に設定する．複数Fieldの更新はAtomicではない．], [`INVALID_DESCRIPTOR`，`ILLEGAL_OPERATION`，`INVALID_ARGUMENT`，`FATAL`．],
   [`READ_REGISTER = 2`], [`MR2 = register count`], [Hardware Contextの先頭から`register_count` Wordを`MR3..`へ返す．], [`INVALID_ARGUMENT`，`FATAL`．],
   [`WRITE_REGISTER = 3`], [`MR2 = register count` \ `MR3.. = values`], [Hardware Contextの先頭から`register_count` Wordを書き換える．], [`INVALID_ARGUMENT`，`FATAL`．],
-  [`RESUME = 4`], [追加引数なし．], [Processを`READY`へ設定し，Quantumを10へ設定してReady Queueへ追加する．], [`FATAL`．],
+  [`RESUME = 4`], [追加引数なし．], [Processを`READY`へ設定し，Quantumを10へ設定してAffinity先CoreのReady Queueへ追加する．], [`INVALID_ARGUMENT`，`FATAL`．],
   [`SUSPEND = 5`], [追加引数なし．], [IPC QueueまたはNotification QueueからProcessを外し，Ready Queueから削除して`BLOCKED_SUSPEND`へ設定する．], [`FATAL`．],
 )
 
@@ -40,7 +40,7 @@ Descriptorを受け取るFieldでは，呼出しProcessのRoot Capability Node�
   [`6`], [`stack_pointer`], [`MR9`], [HALがUser Addressとして受理する値をStack Pointerへ設定する．],
   [`7`], [`thread_local_base`], [`MR10`], [HALがUser Addressとして受理する値をThread-local Baseへ設定する．対応するHardware ContextはアーキテクチャごとのABIが定める．],
   [`8`], [`priority`], [`MR11`], [0以上32未満のPriorityを設定する．大きい値ほど高Priorityである．],
-  [`9`], [`affinity`], [`MR12`], [CPU Core Indexを保存する．対象RevisionはRange検査とScheduler適用を行わない．],
+  [`9`], [`affinity`], [`MR12`], [Logical CPU Core Indexを設定する．`core_count()`以上の値，READY Processまたは実行中Processの別Coreへの変更は`INVALID_ARGUMENT`となる．],
 )
 
 #figure(
@@ -231,13 +231,15 @@ NotificationによってProcessがReadyになった場合，`schedule_if_preempt
 
 == Direct Schedule
 
-A9NのDirect Scheduleは，L4系MicrokernelのDirect Process Switchに由来するIPC Optimizationである@ElphinstoneEtAl:2013．`try_direct_schedule(target)`は，IPCの通信相手を通常のSchedulingを介さずに選択する．対象ProcessのPriorityがReady Queue内の最高Priority以上なら，Schedulerは対象ProcessをReady Queueから外して選択する．Ready Queueに対象Processより高いPriorityのProcessが存在する場合，Schedulerは対象ProcessをReady Queueへ追加し，`schedule()`で最高Priority Processを選択する．
+A9NのDirect Scheduleは，L4系MicrokernelのDirect Process Switchに由来するIPC Optimizationである@ElphinstoneEtAl:2013．`try_direct_schedule(target)`は，IPCの通信相手を通常のSchedulingを介さずに選択する．対象ProcessのPriorityがReady Queue内の最高Priority以上なら，Schedulerは対象ProcessをReady Queueから外して選択する．Ready Queueに対象Processより高いPriorityのProcessが存在する場合，Schedulerは対象ProcessをReady Queueへ追加し，`schedule()`で最高Priority Processを選択する．SMP Buildでは，Direct Scheduleは通信相手のAffinityが現在Coreと同じ場合だけ使用する．別Coreの通信相手は，対象CoreのReady QueueとReschedule IPIへRoutingする．
 
 `try_direct_schedule_and_switch()`は，切替元Processに残るQuantumを切替先Processへ加算してからContext Switchを行う．切替先Quantumは10を超え得る．IPC Portは，待機中Receiverへ`CALL`を配送する経路とFaultをResolverへ配送する経路でDirect Scheduleを使用する．`CALL`と`REPLY_RECEIVE`を組み合わせる#term[IPC Fastpath]は「IPC Port」に記載する．
 
 == Scheduling Limitations
 
-CPU AffinityはPCBへ保存されるが，対象RevisionのSchedulerは参照しない．Application Processor Entryも空実装である．Ready Queueと`highest_priority`をCoreごとに分離する実装，Remote Preemption，Queue Lockは存在しない．SchedulingはSingle-coreでのみ有効である．
+各Coreは独立したProcess Manager，Ready Queue，`highest_priority`を持ち，PCBのCPU Affinityに従ってProcessを配置する．別CoreでProcessが実行可能になると，Kernelは対象CoreへReschedule IPIを送る．Giant LockがReady Queue操作を含むKernel Entryを直列化する．
+
+対象Revisionは自動Load BalancingとProcess Migrationを実装しない．READY Processまたは実行中ProcessのAffinityは直接変更できない．Process Managerは対象をSuspendし，Remote CoreがContextを切り替えた後にAffinityを変更してResumeする必要がある．同じAddress Spaceを複数Coreで実行する場合，HALはContext SwitchでAddress SpaceのOwner Bitmapを更新し，KernelはMapping変更時にRemote TLB Shootdownを行う．
 
 == Revoke and Lifetime
 

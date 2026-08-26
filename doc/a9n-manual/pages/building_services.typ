@@ -223,7 +223,7 @@ ResolverからのReplyは，Faultを起こしたProcessのHardware Contextを変
 ], caption: [User-level Serviceを構成するCapability経路])
 == Service Shutdown
 
-Capability ObjectとWait Queueには，User-level System全体を覆うTransactionや共通Lockが存在しない．同じNode，Generic，IPC Port，Notification Port，PCBを複数Processまたは複数Coreから操作する場合，Resource ManagerはObject単位で直列化する．Operationの完了後に台帳を更新し，台帳更新前のObjectを別のWorkerへ渡さない．
+SMP BuildのGiant Lockは，個々のKernel Callに含まれるCapability ObjectとWait Queueの更新をCore間で直列化する．User-level System全体を覆い，複数Kernel CallをAtomicにまとめるTransactionは存在しない．同じNode，Generic，IPC Port，Notification Port，PCBのLifecycleを複数Processから変更する場合，Resource ManagerはObject単位でOperation列を直列化する．Operationの完了後に台帳を更新し，台帳更新前のObjectを別のWorkerへ渡さない．
 
 Serviceを停止する場合は，次の順序でResourceを閉じる．
 

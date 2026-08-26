@@ -14,7 +14,7 @@
   [User Address], [`0 <= address < 0x0000_7fff_ffff_ffff`．上限値は含まれない．],
   [Kernel Direct Map], [物理Addressへ`KERNEL_VIRTUAL_BASE`を加えたVirtual Addressを用いる．],
   [IRQ数], [`IRQ_NUMBER_MAX = 256`．IRQ番号は0から255である．],
-  [実行Model], [Single-core．SMP SchedulingとRemote TLB Shootdownは実装されていない．],
+  [実行Model], [SMPをBuild時に選択できる．最大64 Core．共有Address SpaceのRemote TLB Shootdownを実装する．],
 )
 
 == Kernel Call Register
@@ -85,7 +85,7 @@ PCBの`thread_local_base`は`GS_BASE`へ保存する．`WRITE_REGISTER`はUser A
 
 == Page Table
 
-x86_64のAddress Spaceは，4階層のPage Tableで構成される．Address Spaceを作成すると，HALはKernel Root Page Tableを新しいPML4へCopyする．ユーザ空間のMappingにはLower Halfだけを使用する．
+x86_64のAddress Spaceは，4階層のPage Tableで構成される．Address Spaceを作成すると，HALはKernel Root Page Tableを新しいPML4へCopyする．ユーザ空間のMappingにはLower Halfだけを使用する．PML4[511]は通常のMappingに使用せず，Address Spaceを実行中のCoreを表す64 bit Owner BitmapとしてHALが予約する．
 
 #reference_table(
   (1fr, 0.8fr, 1fr, 2.3fr),
@@ -108,7 +108,9 @@ Frame Size Bitsは12，21，30である．12は常に利用できる．21と30�
 
 4 KiB FrameはPTへ，2 MiB FrameはPDへ，1 GiB FrameはPDPTへMapする．FrameのPhysical Addressは12 bit右ShiftしてPage Entryへ格納する．Virtual AddressとPhysical AddressのAlignmentはAddress Space Callで検査されないため，ユーザ空間がFrame Sizeに合わせる必要がある．
 
-実行中ProcessのAddress Spaceを変更した場合，HALは対象Addressへ`invlpg`を実行する．別のAddress Spaceを変更した場合は即時にTLBを無効化しない．後続のContext Switchで`CR3`が変わると，Address Spaceの切替えによってTLBが更新される．PCIDは使用しない．Remote TLB Shootdownは実装されていない．
+Owner BitmapのBit $n$はCore $n$を表す．Context SwitchでAddress Spaceが変わる場合，HALは次のPML4へ現在CoreのBitをSetし，`CR3`を更新してから，保存した以前の`CR3`が指すPML4から同じBitをClearする．同じAddress Space間では`CR3`とBitmapの更新を省略する．
+
+Mapping変更時，Bitmapが0なら即時のTLB無効化を行わない．現在CoreのBitがあれば，Frame操作では対象Addressへ`invlpg`を実行し，Page Table操作では`CR3`を再Loadして配下を含むTLBをFlushする．別CoreのBitがあれば`IPI_INVALIDATE_TLB`を送る．IPI Handlerは`CR3`を再LoadしてTLBをFlushする．PCIDは使用しない．
 
 == I/O Port HAL
 
@@ -166,4 +168,3 @@ $
 Repositoryには，x86_64 ABI境界を検査する自己完結型Payloadとして`doc/a9n-manual/examples/x86_64-hello`を収録する．検査対象は，Init Entry，Stack，`init_info` Layout，Register-backed MR，IPC Buffer-backed MR，`CAPABILITY_CALL`，Capability Error，`DEBUG`，`YIELD`である．
 
 ABI Conformance Exampleは，Nunと`a9n_abi`を使用する標準User Payloadとは目的が異なる．ABI Conformance ExampleをApplicationまたはSystem Initの雛形として使用してはならない．Build，ELF Layout検査，実行，期待するSerial出力は`doc/a9n-manual/examples/x86_64-hello/README.md`に記載する．本章は，Exampleが検査するABI値と不変条件だけを定義する．
-

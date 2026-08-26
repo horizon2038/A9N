@@ -191,7 +191,7 @@ Kernelは新しいAddress Spaceを作成し，Init ImageのFrameをVirtual Addre
 
 Kernel共通のBoot処理はInstruction Pointerを`entry_point_address`へ設定するが，Stack Pointerを明示的に設定しない．初期Stack PointerはHALが作成するUser Hardware Contextに依存する．Initは，CまたはC++のPrologueを実行する前に，Assembly Entry StubまたはHALの初期Contextで有効なStack Pointerを確立する必要がある．Stack用MemoryはInit Imageに含め，対応するFrame数を`init_image_size`へ加える．
 
-InitのPriorityは31，Quantumは10である．KernelはInitをReady Queueへ追加し，最初のUser Processとして実行する．CPU AffinityはBoot経路で明示設定されない．
+InitのPriorityは31，Quantumは10である．KernelはInitをCore 0のReady Queueへ追加し，最初のUser ProcessとしてBSP上で実行する．CPU AffinityはBoot経路で明示設定されず，PCBの既定値0を使用する．
 
 IPC Buffer Frameは，`loaded_address + init_ipc_buffer_address`と一致するInit Frameから検出される．OffsetがFrame先頭と一致しない場合，KernelはPCBの`process.buffer`とRoot Slot 6を構成しない．Init ImageはIPC Bufferを初期Frameの境界へ配置する必要がある．
 

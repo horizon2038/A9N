@@ -124,4 +124,4 @@ Interrupt PortはNotification Port CapabilityをIRQ Handler SlotへCopyする．
 
 Notification Portの`revoke()`は空実装であり，Wait QueueとBind済みProcessを解除しない．PCB RevokeはPCB側のBindingを解除する．Notification Portを破棄する前に，WaiterをSuspendし，PCB BindingとInterrupt Bindingを解除する必要がある．
 
-Pending Flag，Wait Queue，Bind済みProcess Pointerに対する共通Lockは存在しない．複数Coreからの`NOTIFY`，`WAIT`，`POLL`，Binding変更は，ユーザ空間で直列化する必要がある．
+SMP BuildではGiant Lockが各Notification Operationを直列化する．Pending Flag，Wait Queue，Bind済みProcess Pointerは，一つのKernel Entry内でCore間同時更新されない．Binding変更とPCB停止，Interrupt Binding解除，Port破棄をまとめるTransactionは存在しないため，Lifecycleを変更する複数OperationはUser-level Resource Managerが順序付ける必要がある．

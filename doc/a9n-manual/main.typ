@@ -18,11 +18,12 @@
     title: "A9N Microkernel Manual",
     version: read("version.txt"),
     author: "Rekka 'horizon' IGUMI",
-    date: datetime(year: 2026, month: 8, day: 18),
+    date: datetime(year: 2026, month: 8, day: 26),
     keywords: (
       "A9N",
       "microkernel",
       "capability-based security",
+      "symmetric multiprocessing",
       "operating system",
     ),
     front_matter: document_status(read("version.txt")),
@@ -51,7 +52,8 @@
 #include "/pages/software_development.typ"
 #include "/pages/building_services.typ"
 
-#manual_part([Part V], [Architecture-specific Interface], [本Partは，x86_64固有のABIを定義し，新しいArchitectureへHALを移植する手順を示す．])
+#manual_part([Part V], [Multiprocessing and Architecture-specific Interface], [本Partは，SMPの実行Model，x86_64固有のABI，新しいArchitectureへHALを移植する手順を示す．])
+#include "/pages/smp.typ"
 #include "/pages/abi.typ"
 #include "/pages/porting.typ"
 
