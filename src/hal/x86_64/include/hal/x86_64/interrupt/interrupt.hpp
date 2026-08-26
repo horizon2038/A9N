@@ -3,6 +3,7 @@
 
 #include <hal/interface/interrupt.hpp>
 
+#include <kernel/config.hpp>
 #include <kernel/types.hpp>
 
 namespace a9n::hal::x86_64
@@ -13,6 +14,7 @@ namespace a9n::hal::x86_64
 
     inline a9n::kernel::timer_handler        timer_handler {};
     inline a9n::kernel::interrupt_dispatcher interrupt_dispatcher {};
+    inline a9n::kernel::ipi_reschedule_handler ipi_reschedule_handler {};
     inline a9n::kernel::fault_dispatcher     fault_dispatcher {};
 
     extern "C" void do_irq_from_kernel(uint16_t irq_number, uint64_t error_code);
@@ -282,9 +284,8 @@ namespace a9n::hal::x86_64
     enum class reserved_irq : uint16_t
     {
         IO_BASE = 0x20,
-        // FIXME
-        IPI_HALT       = 0x48,
-        IPI_RESCHEDULE = 0x49,
+        IPI_HALT       = kernel::SMP_ENABLED ? 0xF0 : 0x48,
+        IPI_RESCHEDULE = kernel::SMP_ENABLED ? 0xF1 : 0x49,
 
         CONSOLE_1      = 0x23,
         CONSOLE_0      = 0x24,

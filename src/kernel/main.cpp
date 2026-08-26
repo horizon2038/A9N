@@ -79,7 +79,13 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     a9n::kernel::interrupt_manager_core.ack_interrupt();
 
     logger::printk("Initializing process-management system ...\n");
-    result = a9n::kernel::process_manager_core.init();
+    result = a9n::kernel::init_idle_context().and_then(
+        [](void) -> a9n::kernel::kernel_result
+        {
+            return a9n::kernel::cpu_local_variables[a9n::kernel::BSP_ID]
+                .process_manager_core.init(a9n::kernel::BSP_ID);
+        }
+    );
 
     // create user thread
     logger::printk("Initializing init process ...\n");
@@ -92,7 +98,13 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     }
 
     logger::printk("All initializations completed successfully, Launching init ...\n");
-    a9n::kernel::process_manager_core.switch_to_user();
+    auto start_other_cores_result = a9n::hal::start_other_cores();
+    if (!start_other_cores_result)
+    {
+        logger::error("Failed to start application processors");
+        return 0;
+    }
+    a9n::kernel::cpu_local_variables[a9n::kernel::BSP_ID].process_manager_core.switch_to_user();
 
     for (;;)
         ;

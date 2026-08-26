@@ -72,7 +72,8 @@ namespace a9n::hal::x86_64
 
     void segment::load_segment_register(uint16_t code_segment_register)
     {
-        const uint64_t selector = code_segment_register;
+        const uint64_t code_selector = code_segment_register;
+        const uint16_t data_selector = segment_selector::KERNEL_DS;
 
         asm volatile(
             "pushq %q0\n\t"
@@ -80,15 +81,12 @@ namespace a9n::hal::x86_64
             "pushq %%rax\n\t"
             "lretq\n\t"
             "1:\n\t"
-            "movw %w0, %%ax\n\t"
+            "movw %w1, %%ax\n\t"
             "movw %%ax, %%ds\n\t"
             "movw %%ax, %%es\n\t"
-            "movw %%ax, %%fs\n\t"
-            "movw %%ax, %%gs\n\t"
-            "xorq %%rax, %%rax\n\t"
             "movw %%ax, %%ss"
             :
-            : "r"(selector)
+            : "r"(code_selector), "r"(data_selector)
             : "rax", "memory"
         );
     }

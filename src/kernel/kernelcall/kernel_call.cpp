@@ -5,6 +5,8 @@
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/kernel_result.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/process/cpu.hpp>
+#include <kernel/process/lock.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
@@ -17,14 +19,14 @@ namespace a9n::kernel
     // called from hal's system call handler
     void handle_kernel_call(kernel_call_type type)
     {
-        auto result = process_manager_core.retrieve_current_process().and_then(
+        lock_guard guard(giant_lock);
+        auto result = current_process_on_this_core().and_then(
             [type](process *current_process) -> kernel_result
             {
                 switch (type)
                 {
                     using enum kernel_call_type;
                     [[likely]] case CAPABILITY_CALL :
-                        // DEBUG_LOG("capability call");
                         return handle_capability_call(*current_process);
 
                     case YIELD :
@@ -32,11 +34,9 @@ namespace a9n::kernel
                         return handle_yield(*current_process);
 
                     case DEBUG :
-                        // DEBUG_LOG("debug call");
                         return handle_debug_call(*current_process);
 
                     default :
-                        // usually unreachable
                         return kernel_error::UNEXPECTED;
                 }
             }
@@ -152,7 +152,12 @@ namespace a9n::kernel
 
     kernel_result handle_yield(process &current_process)
     {
-        return process_manager_core.yield();
+        return current_process_manager().and_then(
+            [](process_manager *manager) -> kernel_result
+            {
+                return manager->yield();
+            }
+        );
     }
 
     kernel_result handle_debug_call(process &current_process)

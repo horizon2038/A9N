@@ -379,6 +379,17 @@ namespace a9n::hal::x86_64
         return {};
     }
 
+    liba9n::result<uint8_t, hal_error> local_apic::id(void)
+    {
+        return read(local_apic_offset::ID_REGISTER)
+            .transform(
+                [](uint32_t id_register) -> uint8_t
+                {
+                    return static_cast<uint8_t>((id_register >> 24) & 0xFF);
+                }
+            );
+    }
+
     hal_result local_apic::end_of_interrupt(void)
     {
         return write(local_apic_offset::END_OF_INTERRUPT, 0);

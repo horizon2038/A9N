@@ -19,24 +19,7 @@ namespace a9n::hal::x86_64
         divide_config = 0x03;
 
         return calibrate()
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // TODO : stop using magic number
-                    // TODO: move to kernel (call hal)
-                    return configure_cycle(250);
-                }
-            )
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    // configure irq
-                    return local_apic_core.write(
-                        local_apic_offset::LVT_TIMER,
-                        liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17)
-                    );
-                }
-            )
+            .and_then([this](void) -> hal_result { return init_current_core(); })
             .or_else(
                 [this](hal_error e) -> hal_result
                 {
@@ -47,6 +30,19 @@ namespace a9n::hal::x86_64
                     return e;
                 }
             );
+    }
+
+    hal_result local_apic_timer::init_current_core()
+    {
+        return configure_cycle(250).and_then(
+            [](void) -> hal_result
+            {
+                return local_apic_core.write(
+                    local_apic_offset::LVT_TIMER,
+                    liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17)
+                );
+            }
+        );
     }
 
     hal_result local_apic_timer::calibrate(void)

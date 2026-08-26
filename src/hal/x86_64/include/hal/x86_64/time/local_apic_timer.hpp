@@ -11,6 +11,7 @@ namespace a9n::hal::x86_64
       public:
         hal_result init() override;
         hal_result configure_cycle(uint16_t hz) override;
+        hal_result init_current_core();
 
       private:
         hal_result calibrate();

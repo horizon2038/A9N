@@ -15,16 +15,6 @@
 
 namespace a9n::kernel
 {
-    // helper
-    namespace
-    {
-        inline kernel_result try_schedule_and_switch(void)
-        {
-            return process_manager_core.try_schedule_and_switch();
-        }
-
-    } // namespace
-
     capability_result ipc_port::execute(process &owner, capability_slot &self)
     {
         DEBUG_LOG("ipc_port::execute");
@@ -107,7 +97,12 @@ namespace a9n::kernel
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner);
+                            }
+                        )
                         .transform_error(
                             [](kernel_error e) -> capability_error
                             {
@@ -134,7 +129,7 @@ namespace a9n::kernel
                                         [&](void) -> capability_result
                                         {
                                             // re-queueing
-                                            return process_manager_core.mark_scheduled(target.get())
+                                            return mark_scheduled(owner, target.get())
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -208,7 +203,12 @@ namespace a9n::kernel
                     owner.status = process_status::BLOCKED_RECEIVE;
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner);
+                            }
+                        )
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
@@ -265,7 +265,12 @@ namespace a9n::kernel
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner);
+                            }
+                        )
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
@@ -301,8 +306,7 @@ namespace a9n::kernel
                                         [&, this](void) -> capability_result
                                         {
                                             target->status = process_status::READY;
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(target.get())
+                                            return try_direct_schedule_and_switch(owner, target.get())
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -348,8 +352,7 @@ namespace a9n::kernel
                                 {
                                     owner.status = process_status::READY;
 
-                                    return process_manager_core
-                                        .try_direct_schedule_and_switch(owner)
+                                    return try_direct_schedule_and_switch(owner, owner)
                                         .transform_error(convert_kernel_to_capability_error);
                                 }
                             );
@@ -387,15 +390,14 @@ namespace a9n::kernel
                                     = process::destination_reply_state_object::NONE;
                                 owner.destination_reply_target = nullptr;
 
-                                return process_manager_core.mark_scheduled(*client)
+                                return mark_scheduled(owner, *client)
                                     .transform_error(convert_kernel_to_capability_error)
                                     .and_then(
                                         [&](void) -> capability_result
                                         {
                                             owner.status = process_status::READY;
 
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(owner)
+                                            return try_direct_schedule_and_switch(owner, owner)
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -458,7 +460,12 @@ namespace a9n::kernel
                                 owner.status = process_status::BLOCKED_RECEIVE;
 
                                 return push_ipc_queue(owner)
-                                    .and_then(try_schedule_and_switch)
+                                    .and_then(
+                                        [&](void) -> kernel_result
+                                        {
+                                            return try_schedule_and_switch(owner);
+                                        }
+                                    )
                                     .transform_error(convert_kernel_to_capability_error);
                             }
 
@@ -482,7 +489,7 @@ namespace a9n::kernel
         owner.destination_reply_state  = process::destination_reply_state_object::NONE;
         owner.destination_reply_target = nullptr;
 
-        return process_manager_core.mark_scheduled(client).transform_error(
+        return mark_scheduled(owner, client).transform_error(
             convert_kernel_to_capability_error
         );
     }
@@ -565,7 +572,7 @@ namespace a9n::kernel
                     owner.destination_reply_state  = process::destination_reply_state_object::NONE;
                     owner.destination_reply_target = nullptr;
 
-                    return process_manager_core.mark_scheduled(*client).transform_error(
+                    return mark_scheduled(owner, *client).transform_error(
                         convert_kernel_to_capability_error
                     );
                 }
@@ -639,7 +646,7 @@ namespace a9n::kernel
 
                                 sender->status                    = process_status::READY;
 
-                                return process_manager_core.mark_scheduled(sender.get())
+                                return mark_scheduled(receiver, sender.get())
                                     .transform_error(convert_kernel_to_capability_error);
                             }
                         );
@@ -765,7 +772,12 @@ namespace a9n::kernel
                     );
 
                     return push_ipc_queue(owner)
-                        .and_then(try_schedule_and_switch)
+                        .and_then(
+                            [&](void) -> kernel_result
+                            {
+                                return try_schedule_and_switch(owner);
+                            }
+                        )
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
@@ -794,7 +806,12 @@ namespace a9n::kernel
                                     owner.status = process_status::BLOCKED_FAULT;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
                                     return push_ipc_queue(owner)
-                                        .and_then(try_schedule_and_switch)
+                                        .and_then(
+                                            [&](void) -> kernel_result
+                                            {
+                                                return try_schedule_and_switch(owner);
+                                            }
+                                        )
                                         .transform_error(convert_kernel_to_capability_error);
                                 }
 
@@ -809,8 +826,7 @@ namespace a9n::kernel
                                         [&, this](void) -> capability_result
                                         {
                                             target->status = process_status::READY;
-                                            return process_manager_core
-                                                .try_direct_schedule_and_switch(target.get())
+                                            return try_direct_schedule_and_switch(owner, target.get())
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );

@@ -1,6 +1,7 @@
 #include <kernel/process/process_manager.hpp>
 
 #include <kernel/capability/address_space.hpp>
+#include <kernel/config.hpp>
 #include <kernel/kernel_result.hpp>
 #include <kernel/memory/memory.hpp>
 #include <kernel/process/cpu.hpp>
@@ -20,62 +21,73 @@ namespace a9n::kernel
 {
     namespace
     {
-        process idle_process {};
+        process idle_context {};
+        alignas(a9n::PAGE_SIZE) liba9n::std::array<uint8_t, a9n::PAGE_SIZE>
+            idle_address_space_storage;
 
-        inline kernel_result configure_idle(process &target)
+        inline kernel_result configure_idle(process &target, a9n::word core_number)
         {
-            alignas(a9n::PAGE_SIZE) static liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_address_space;
+            target.registers          = idle_context.registers;
+            target.floating_registers = idle_context.floating_registers;
+            target.quantum            = QUANTUM_MAX;
+            target.priority           = 0;
+            target.core_affinity      = core_number;
+            target.status             = process_status::IDLE;
 
-            return a9n::hal::init_hardware_context(hal::cpu_mode::KERNEL, target.registers)
-                .and_then(
-                    [&](void) -> hal::hal_result
-                    {
-                        return a9n::hal::init_floating_context(target.floating_registers);
-                    }
-                )
-                .transform_error(convert_hal_to_kernel_error)
-                .and_then(
-                    [&](void) -> kernel_result
-                    {
-                        // address space
-                        auto idle_address_space_physical = virtual_to_physical_address(
-                            reinterpret_cast<a9n::virtual_address>(&idle_address_space)
-                        );
-                        return a9n::hal::make_address_space(idle_address_space_physical)
-                            .transform_error(convert_hal_to_kernel_error)
-                            .and_then(
-                                [&](page_table idle_page_table) -> kernel_result
-                                {
-                                    return try_configure_address_space_slot(
-                                        target.root_address_space,
-                                        idle_page_table
-                                    );
-                                }
-                            );
-                    }
-                )
-                .and_then(
-                    [&](void) -> kernel_result
-                    {
-                        target.quantum  = QUANTUM_MAX;
-                        target.priority = 0; // lowest priority
-                        target.status   = process_status::IDLE;
-
-                        return hal::configure_general_register(
-                                   target,
-                                   hal::register_type::INSTRUCTION_POINTER,
-                                   reinterpret_cast<a9n::word>(a9n::hal::idle)
-                        )
-                            .transform_error(convert_hal_to_kernel_error);
-                    }
-                );
+            return try_configure_address_space_slot(
+                target.root_address_space,
+                convert_slot_data_to_page_table(idle_context.root_address_space.data)
+            );
         }
+
     }
 
-    kernel_result process_manager::init(void)
+    kernel_result init_idle_context(void)
+    {
+        return a9n::hal::init_hardware_context(hal::cpu_mode::KERNEL, idle_context.registers)
+            .and_then(
+                [](void) -> hal::hal_result
+                {
+                    return a9n::hal::init_floating_context(idle_context.floating_registers);
+                }
+            )
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [](void) -> kernel_result
+                {
+                    auto physical_address = virtual_to_physical_address(
+                        reinterpret_cast<a9n::virtual_address>(&idle_address_space_storage)
+                    );
+                    return a9n::hal::make_address_space(physical_address)
+                        .transform_error(convert_hal_to_kernel_error)
+                        .and_then(
+                            [](page_table table) -> kernel_result
+                            {
+                                return try_configure_address_space_slot(
+                                    idle_context.root_address_space,
+                                    table
+                                );
+                            }
+                        );
+                }
+            )
+            .and_then(
+                [](void) -> kernel_result
+                {
+                    return hal::configure_general_register(
+                               idle_context,
+                               hal::register_type::INSTRUCTION_POINTER,
+                               reinterpret_cast<a9n::word>(a9n::hal::idle)
+                    )
+                        .transform_error(convert_hal_to_kernel_error);
+                }
+            );
+    }
+
+    kernel_result process_manager::init(a9n::word core_number)
     {
         highest_priority = 0;
-        return configure_idle(idle_process);
+        return configure_idle(idle_process, core_number);
     }
 
     kernel_result process_manager::handle_timer(void)
@@ -103,6 +115,14 @@ namespace a9n::kernel
         return retrieve_current_process().and_then(
             [&](process *current) -> kernel_result
             {
+                if (current->status != process_status::READY
+                    && current->status != process_status::IDLE) [[unlikely]]
+                {
+                    // A remote suspend can change the state before its reschedule IPI wins
+                    // arbitration against this timer interrupt.  Never re-queue that process.
+                    return try_schedule_and_switch();
+                }
+
                 current->quantum--;
                 // the timing when quantum becomes 0 is limited and `[[unlikely]]` is allowed
                 if (current->quantum <= 0) [[unlikely]]
@@ -191,10 +211,9 @@ namespace a9n::kernel
                                 local_variable->current_process = &idle_process;
                                 local_variable->is_idle         = true;
 
-                                // IDLE runs directly on this CPU's Single Kernel Stack. It never
-                                // returns; an interrupt either resumes it through
-                                // restore_kernel_context or restores a newly selected user thread.
-                                a9n::hal::idle();
+                                // The HAL entry path enters IDLE after this returns, after the
+                                // handler-entry lock has been released.
+                                return {};
                             }
                         );
                 }
@@ -204,40 +223,48 @@ namespace a9n::kernel
     kernel_result process_manager::try_schedule_and_switch(void)
     {
         return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
             .and_then(
-                [&](cpu_local_variable *local_variable) -> hal::hal_result
+                [&](cpu_local_variable *local_variable) -> kernel_result
                 {
-                    return scheduler_core.schedule()
-                        .transform_error(
-                            [&](scheduler_error e) -> hal::hal_error
-                            {
-                                DEBUG_LOG("scheduler error : %s", scheduler_error_to_string(e));
-                                return hal::hal_error::TRY_AGAIN;
-                            }
-                        )
-                        .and_then(
-                            [&](process *next_process) -> hal::hal_result
-                            {
-                                process &preview_process        = *local_variable->current_process;
-                                local_variable->current_process = next_process;
-                                local_variable->is_idle         = false;
+                    return try_schedule_and_switch(*local_variable);
+                }
+            );
+    }
 
-                                return a9n::hal::switch_context(preview_process, *next_process);
-                            }
-                        )
-                        .or_else(
-                            [&](hal::hal_error e) -> hal::hal_result
-                            {
-                                DEBUG_LOG("Fallback to IDLE : %s", hal::hal_error_to_string(e));
-                                return switch_to_idle().transform_error(
-                                    [&](kernel_error) -> hal::hal_error
-                                    {
-                                        DEBUG_LOG("Failed to switch to IDLE");
-                                        return hal::hal_error::TRY_AGAIN;
-                                    }
-                                );
-                            }
-                        );
+    kernel_result process_manager::try_schedule_and_switch(
+        cpu_local_variable &local_variable
+    )
+    {
+        return scheduler_core.schedule()
+            .transform_error(
+                [&](scheduler_error e) -> hal::hal_error
+                {
+                    DEBUG_LOG("scheduler error : %s", scheduler_error_to_string(e));
+                    return hal::hal_error::TRY_AGAIN;
+                }
+            )
+            .and_then(
+                [&](process *next_process) -> hal::hal_result
+                {
+                    process &preview_process       = *local_variable.current_process;
+                    local_variable.current_process = next_process;
+                    local_variable.is_idle         = false;
+
+                    return a9n::hal::switch_context(preview_process, *next_process);
+                }
+            )
+            .or_else(
+                [&](hal::hal_error e) -> hal::hal_result
+                {
+                    DEBUG_LOG("Fallback to IDLE : %s", hal::hal_error_to_string(e));
+                    return switch_to_idle().transform_error(
+                        [&](kernel_error) -> hal::hal_error
+                        {
+                            DEBUG_LOG("Failed to switch to IDLE");
+                            return hal::hal_error::TRY_AGAIN;
+                        }
+                    );
                 }
             )
             .transform_error(convert_hal_to_kernel_error);
@@ -246,32 +273,39 @@ namespace a9n::kernel
     kernel_result process_manager::try_direct_schedule_and_switch(process &target_process)
     {
         return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
             .and_then(
-                [&](cpu_local_variable *local_variable) -> hal::hal_result
+                [&](cpu_local_variable *local_variable) -> kernel_result
                 {
-                    return scheduler_core.try_direct_schedule(&target_process)
-                        .transform_error(
-                            [&](scheduler_error e) -> hal::hal_error
-                            {
-                                return hal::hal_error::TRY_AGAIN;
+                    return try_direct_schedule_and_switch(target_process, *local_variable);
+                }
+            );
+    }
 
-                                switch_to_idle();
-                            }
-                        )
-                        .and_then(
-                            [&](process *next_process) -> hal::hal_result
-                            {
-                                // yield quantum to next process
-                                next_process->quantum += local_variable->current_process->quantum;
+    kernel_result process_manager::try_direct_schedule_and_switch(
+        process            &target_process,
+        cpu_local_variable &local_variable
+    )
+    {
+        return scheduler_core.try_direct_schedule(&target_process)
+            .transform_error(
+                [&](scheduler_error e) -> hal::hal_error
+                {
+                    return hal::hal_error::TRY_AGAIN;
+                }
+            )
+            .and_then(
+                [&](process *next_process) -> hal::hal_result
+                {
+                    // yield quantum to next process
+                    next_process->quantum += local_variable.current_process->quantum;
 
-                                process &preview_process        = *local_variable->current_process;
-                                local_variable->current_process = next_process;
-                                local_variable->is_idle         = false;
+                    process &preview_process       = *local_variable.current_process;
+                    local_variable.current_process = next_process;
+                    local_variable.is_idle         = false;
 
-                                DEBUG_LOG("Switching directly to process %p ...", next_process);
-                                return a9n::hal::switch_context(preview_process, *next_process);
-                            }
-                        );
+                    DEBUG_LOG("Switching directly to process %p ...", next_process);
+                    return a9n::hal::switch_context(preview_process, *next_process);
                 }
             )
             .transform_error(convert_hal_to_kernel_error);
@@ -327,25 +361,7 @@ namespace a9n::kernel
 
     liba9n::result<process *, kernel_error> process_manager::retrieve_current_process()
     {
-        auto result = a9n::hal::current_local_variable();
-        if (!result) [[unlikely]]
-        {
-            utility::logger::printk(
-                "HAL error : %s\n",
-                a9n::hal::hal_error_to_string(result.unwrap_error())
-            );
-            utility::logger::error("Failed to retrieve CPU local variable");
-            return kernel_error::HAL_ERROR;
-        }
-
-        auto current_process = result.unwrap()->current_process;
-        if (!current_process) [[unlikely]]
-        {
-            utility::logger::error("Failed to retrieve process : process is empty");
-            return kernel_error::NO_SUCH_ADDRESS;
-        }
-
-        return current_process;
+        return current_process_on_this_core();
     }
 
     kernel_result process_manager::mark_scheduled(process &process)
@@ -381,5 +397,146 @@ namespace a9n::kernel
 
         process.status = process_status::BLOCKED_SUSPEND;
         return {};
+    }
+
+    liba9n::result<process *, kernel_error> current_process_on_this_core(void)
+    {
+        return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [](cpu_local_variable *local_variable)
+                    -> liba9n::result<process *, kernel_error>
+                {
+                    if (!local_variable->current_process) [[unlikely]]
+                    {
+                        return kernel_error::NO_SUCH_ADDRESS;
+                    }
+
+                    return local_variable->current_process;
+                }
+            );
+    }
+
+    liba9n::result<process_manager *, kernel_error> current_process_manager(void)
+    {
+        if constexpr (!SMP_ENABLED)
+        {
+            return &cpu_local_variables[BSP_ID].process_manager_core;
+        }
+
+        return a9n::hal::current_local_variable()
+            .transform_error(convert_hal_to_kernel_error)
+            .and_then(
+                [](cpu_local_variable *local_variable)
+                    -> liba9n::result<process_manager *, kernel_error>
+                {
+                    return &local_variable->process_manager_core;
+                }
+            );
+    }
+
+    kernel_result reschedule_core(a9n::word core_number)
+    {
+        if constexpr (SMP_ENABLED)
+        {
+            return a9n::hal::send_ipi(a9n::hal::ipi_type::RESCHEDULE, core_number)
+                .transform_error(convert_hal_to_kernel_error);
+        }
+
+        return kernel_error::UNEXPECTED;
+    }
+
+    namespace
+    {
+        template<bool PREEMPT_CURRENT>
+        kernel_result route_mark_scheduled(process &current, process &target)
+        {
+            if constexpr (!SMP_ENABLED && !PREEMPT_CURRENT)
+            {
+                return cpu_local_variables[BSP_ID].process_manager_core.mark_scheduled(target);
+            }
+
+            auto &manager = [&]() -> process_manager &
+            {
+                if constexpr (SMP_ENABLED)
+                {
+                    return cpu_local_variables[target.core_affinity].process_manager_core;
+                }
+
+                return cpu_local_variables[BSP_ID].process_manager_core;
+            }();
+
+            return manager.mark_scheduled(target).and_then(
+                [&](void) -> kernel_result
+                {
+                    if constexpr (SMP_ENABLED)
+                    {
+                        if (target.core_affinity != current.core_affinity) [[unlikely]]
+                        {
+                            return reschedule_core(target.core_affinity);
+                        }
+                    }
+
+                    if constexpr (PREEMPT_CURRENT)
+                    {
+                        return manager.schedule_if_preempted_by(target);
+                    }
+
+                    return {};
+                }
+            );
+        }
+    }
+
+    kernel_result try_schedule_and_switch(process &current)
+    {
+        if constexpr (!SMP_ENABLED)
+        {
+            return cpu_local_variables[BSP_ID].process_manager_core.try_schedule_and_switch();
+        }
+
+        auto &local_variable = cpu_local_variables[current.core_affinity];
+        return local_variable.process_manager_core.try_schedule_and_switch(local_variable);
+    }
+
+    kernel_result mark_scheduled(process &current, process &target)
+    {
+        return route_mark_scheduled<false>(current, target);
+    }
+
+    kernel_result mark_scheduled_with_preemption(process &current, process &target)
+    {
+        return route_mark_scheduled<true>(current, target);
+    }
+
+    kernel_result try_direct_schedule_and_switch(process &current, process &target)
+    {
+        if constexpr (!SMP_ENABLED)
+        {
+            return cpu_local_variables[BSP_ID]
+                .process_manager_core.try_direct_schedule_and_switch(target);
+        }
+
+        auto &local_variable = cpu_local_variables[current.core_affinity];
+        auto &current_manager = local_variable.process_manager_core;
+        if (target.core_affinity == current.core_affinity) [[likely]]
+        {
+            return current_manager.try_direct_schedule_and_switch(target, local_variable);
+        }
+
+        return cpu_local_variables[target.core_affinity]
+            .process_manager_core.mark_scheduled(target)
+            .and_then(
+                [&](void) -> kernel_result
+                {
+                    return reschedule_core(target.core_affinity);
+                }
+            )
+            .and_then(
+                [&](void) -> kernel_result
+                {
+                    return current_manager.try_schedule_and_switch(local_variable);
+                }
+            );
     }
 }

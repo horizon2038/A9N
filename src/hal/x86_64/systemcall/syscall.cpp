@@ -7,6 +7,7 @@
 #include <hal/x86_64/arch/msr.hpp>
 #include <hal/x86_64/arch/rflags.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
+#include <hal/x86_64/process/idle.hpp>
 
 #include <kernel/kernelcall/kernel_call.hpp>
 #include <kernel/types.hpp>
@@ -77,6 +78,10 @@ namespace a9n::hal::x86_64
                 {
                     kernel_call_handler(type);
                     auto current_clv = reinterpret_cast<kernel::cpu_local_variable *>(read_gs_base());
+                    if (current_clv->is_idle)
+                    {
+                        idle_loop();
+                    }
                     write_fs_base(
                         current_clv->current_process->registers[x86_64::register_index::FS_BASE]
                     );

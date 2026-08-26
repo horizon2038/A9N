@@ -2,19 +2,22 @@
 #define A9N_KERNEL_PROCESS_CPU_HPP
 
 #include <kernel/process/process.hpp>
+#include <kernel/process/process_manager.hpp>
 #include <kernel/types.hpp>
 #include <kernel/virtualization/virtual_cpu.hpp>
 #include <liba9n/libcxx/array>
 #include <liba9n/result/result.hpp>
+#include <stddef.h>
 
 namespace a9n::kernel
 {
     inline constexpr a9n::word CPU_COUNT_MAX         = 64;
     inline constexpr a9n::word KERNEL_STACK_SIZE_MAX = a9n::PAGE_SIZE * 2;
+    inline constexpr a9n::word BSP_ID                = 0;
 
     using kernel_stack = liba9n::std::array<uint8_t, KERNEL_STACK_SIZE_MAX>;
 
-    struct alignas(sizeof(a9n::word)) cpu_local_variable
+    struct alignas(a9n::WORD_BITS) cpu_local_variable
     {
         // kernel_stack_top is the top address of the stack.
         // NOTE: that the value is pushed downwards.
@@ -31,8 +34,14 @@ namespace a9n::kernel
 
         a9n::word core_number;
         a9n::word scratch; // for temporary use in context switch, etc.
+        alignas(a9n::WORD_BITS) process_manager process_manager_core {};
         alignas(sizeof(a9n::word)) bool is_idle { false };
     } __attribute__((packed));
+
+    // These fields are consumed directly by the x86-64 syscall/interrupt assembly through GS.
+    static_assert(offsetof(cpu_local_variable, kernel_stack_pointer) == 0x00);
+    static_assert(offsetof(cpu_local_variable, current_process) == 0x08);
+    static_assert(offsetof(cpu_local_variable, scratch) == 0x20);
 
     inline cpu_local_variable cpu_local_variables[CPU_COUNT_MAX];
     inline kernel_stack       kernel_stacks[CPU_COUNT_MAX];

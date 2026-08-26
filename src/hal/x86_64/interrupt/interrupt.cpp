@@ -2,6 +2,7 @@
 
 #include <hal/hal_result.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
+#include <hal/x86_64/process/idle.hpp>
 
 #include <hal/x86_64/arch/arch_context.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
@@ -127,7 +128,8 @@ namespace a9n::hal::x86_64
 
             case reserved_irq::IPI_RESCHEDULE :
                 DEBUG_LOG("IPI RESCHEDULE");
-                // TODO
+                ipi_reschedule_handler();
+                ack_interrupt();
                 break;
 
             default :
@@ -273,6 +275,12 @@ namespace a9n::hal::x86_64
             dispatch_external_interrupt(irq_number);
         }
 
+        auto *local_variable
+            = reinterpret_cast<a9n::kernel::cpu_local_variable *>(read_kernel_gs_base());
+        if (local_variable->is_idle)
+        {
+            idle_loop();
+        }
         restore_user_context();
     }
 
@@ -359,24 +367,9 @@ namespace a9n::hal::x86_64
         // Delivery Mode
         icr_low |= (static_cast<uint32_t>(mode) & 0x07) << 8;
 
-        if (mode == ipi_delivery_mode::INIT)
-        {
-            icr_low |= (1 << 14); // Trigger Mode = Level
-        }
-        else if (mode == ipi_delivery_mode::STARTUP)
-        {
-            // SIPI: Trigger Mode = Edge, Level State = Deassert, Vector = Page Number
-            // ICR_LOW = 0x00004600 | page_number
-            icr_low |= (1 << 14); // Trigger Mode = Edge
-            // Level State = 0 (Deassert)
-            icr_low |= (vector & 0xFF); // Vector = Page Number
-        }
-        else
-        {
-            icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 14; // Trigger Mode
-            icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 15;  // Level State
-            icr_low |= (vector & 0xFF);                                    // Vector
-        }
+        icr_low |= (static_cast<uint32_t>(level_state) & 0x01) << 14;  // Level State
+        icr_low |= (static_cast<uint32_t>(trigger_mode) & 0x01) << 15; // Trigger Mode
+        icr_low |= (vector & 0xFF);                                    // Vector
 
         return local_apic_core.write(local_apic_offset::ICR_HIGH, icr_high)
             .and_then(
@@ -495,6 +488,17 @@ namespace a9n::hal
         return {};
     }
 
+    hal_result register_ipi_reschedule_handler(a9n::kernel::ipi_reschedule_handler handler)
+    {
+        if (!handler)
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        x86_64::ipi_reschedule_handler = handler;
+        return {};
+    }
+
     hal_result register_kernel_call_handler(kernel_call_handler handler)
     {
         if (!handler)
@@ -566,5 +570,28 @@ namespace a9n::hal
     hal_result ack_interrupt(void)
     {
         return x86_64::local_apic_core.end_of_interrupt();
+    }
+
+    hal_result send_ipi(ipi_type type, a9n::word core_number)
+    {
+        if (type != ipi_type::RESCHEDULE || core_number >= core_count())
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
+        auto local_apic_id = x86_64::arch_cpu_local_variables[core_number].local_apic_id;
+        if (local_apic_id > UINT8_MAX)
+        {
+            return hal_error::UNSUPPORTED;
+        }
+
+        return x86_64::ipi(
+            static_cast<uint8_t>(x86_64::reserved_irq::IPI_RESCHEDULE),
+            x86_64::ipi_delivery_mode::FIXED,
+            x86_64::ipi_destination_shorthand::NO_SHORTHAND,
+            static_cast<uint8_t>(local_apic_id),
+            x86_64::ipi_trigger_mode::EDGE,
+            x86_64::ipi_level_state::ASSERT
+        );
     }
 }

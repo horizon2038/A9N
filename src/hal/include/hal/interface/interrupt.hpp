@@ -20,6 +20,7 @@ namespace a9n::hal
 
     // register handlers
     hal_result register_system_timer_handler(interrupt_handler handler);
+    hal_result register_ipi_reschedule_handler(a9n::kernel::ipi_reschedule_handler handler);
     hal_result register_kernel_call_handler(kernel_call_handler handler);
     hal_result register_interrupt_dispatcher(a9n::kernel::interrupt_dispatcher dispatcher);
     hal_result register_fault_dispatcher(a9n::kernel::fault_dispatcher dispatcher);
@@ -32,6 +33,13 @@ namespace a9n::hal
 
     // notify
     hal_result ack_interrupt(void);
+
+    enum class ipi_type
+    {
+        RESCHEDULE,
+    };
+
+    hal_result send_ipi(ipi_type type, a9n::word core_number);
 
 }
 #endif

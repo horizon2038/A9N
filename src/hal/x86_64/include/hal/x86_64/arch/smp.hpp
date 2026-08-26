@@ -14,7 +14,7 @@ namespace a9n::hal::x86_64
 {
     struct smp_info
     {
-        // without BSP
+        // Enabled processors, including the BSP.
         a9n::word                                            enabled_ap_count { 0 };
         liba9n::std::array<a9n::word, kernel::CPU_COUNT_MAX> local_apic_ids;
     };
@@ -25,6 +25,7 @@ namespace a9n::hal::x86_64
     {
         using a9n::kernel::utility::logger;
 
+        smp_info_core.enabled_ap_count = 0;
         auto result = acpi_core.current_madt().and_then(
             [&](madt *madt_base) -> hal_result
             {
@@ -49,7 +50,8 @@ namespace a9n::hal::x86_64
                         case madt_entry_type::LOCAL_APIC :
                             {
                                 auto *local_apic_entry = reinterpret_cast<madt_local_apic *>(entry);
-                                if (local_apic_entry->flags & 1)
+                                if ((local_apic_entry->flags & 1)
+                                    && smp_info_core.enabled_ap_count < kernel::CPU_COUNT_MAX)
                                 {
                                     smp_info_core.local_apic_ids[smp_info_core.enabled_ap_count]
                                         = local_apic_entry->apic_id;
@@ -65,7 +67,8 @@ namespace a9n::hal::x86_64
                                 auto *local_x2_apic_entry
                                     = reinterpret_cast<madt_local_x2_apic *>(entry);
 
-                                if (local_x2_apic_entry->flags & 1)
+                                if ((local_x2_apic_entry->flags & 1)
+                                    && smp_info_core.enabled_ap_count < kernel::CPU_COUNT_MAX)
                                 {
                                     smp_info_core.local_apic_ids[smp_info_core.enabled_ap_count]
                                         = local_x2_apic_entry->apic_id;

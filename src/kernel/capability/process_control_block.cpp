@@ -7,12 +7,25 @@
 #include <kernel/memory/memory.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <hal/interface/cpu.hpp>
+#include <hal/interface/interrupt.hpp>
+#include <kernel/process/cpu.hpp>
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
 {
+    namespace
+    {
+        inline bool is_running_on_assigned_core(const process &target)
+        {
+            return cpu_local_variables[target.core_affinity].current_process == &target
+                && !cpu_local_variables[target.core_affinity].is_idle;
+        }
+
+    }
+
     process_control_block::process_control_block()
     {
         // init hardware-specific contexts
@@ -301,9 +314,28 @@ namespace a9n::kernel
                     if (info.is_affinity())
                     {
                         DEBUG_LOG("process_control_block::configure::affinity");
-                        // process_core.core_affinity = self.data[0];
-                        process_core.core_affinity = a9n::hal::get_message_register(owner, AFFINITY)
-                                                         .unwrap_or(static_cast<a9n::word>(0));
+                        auto affinity_result = a9n::hal::get_message_register(owner, AFFINITY)
+                                                   .transform_error(convert_hal_to_kernel_error)
+                                                   .transform_error(convert_kernel_to_capability_error);
+                        if (!affinity_result)
+                        {
+                            return affinity_result.unwrap_error();
+                        }
+
+                        auto new_affinity = affinity_result.unwrap();
+                        if (new_affinity >= a9n::hal::core_count()) [[unlikely]]
+                        {
+                            return capability_error::INVALID_ARGUMENT;
+                        }
+
+                        if (new_affinity != process_core.core_affinity
+                            && (process_core.status == process_status::READY
+                                || is_running_on_assigned_core(process_core))) [[unlikely]]
+                        {
+                            return capability_error::INVALID_ARGUMENT;
+                        }
+
+                        process_core.core_affinity = new_affinity;
                     }
 
                     return {};
@@ -620,19 +652,17 @@ namespace a9n::kernel
 
     capability_result process_control_block::operation_resume(process &owner, capability_slot &self)
     {
+        // A remote suspend is completed by its reschedule IPI. Do not enqueue the process again
+        // until that CPU has actually stopped using its context.
+        if (is_running_on_assigned_core(process_core)) [[unlikely]]
+        {
+            return capability_error::INVALID_ARGUMENT;
+        }
         process_core.status = process_status::READY;
 
-        return process_manager_core
-            .mark_scheduled(process_core)
-            /*
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    return process_manager_core.try_schedule_and_switch();
-                }
-            )
-            */
-            .transform_error(convert_kernel_to_capability_error);
+        return mark_scheduled(owner, process_core).transform_error(
+            convert_kernel_to_capability_error
+        );
     }
 
     capability_result process_control_block::detach_from_wait_queues(void)
@@ -664,7 +694,32 @@ namespace a9n::kernel
         return detach_from_wait_queues().and_then(
             [&](void) -> capability_result
             {
-                return process_manager_core.mark_suspended(process_core)
+                auto &local_variable = cpu_local_variables[process_core.core_affinity];
+                auto  was_running    = is_running_on_assigned_core(process_core);
+                return local_variable.process_manager_core.mark_suspended(process_core)
+                    .and_then(
+                        [&](void) -> kernel_result
+                        {
+                            if (!was_running)
+                            {
+                                return {};
+                            }
+
+                            return a9n::hal::current_core_number()
+                                .transform_error(convert_hal_to_kernel_error)
+                                .and_then(
+                                    [&](a9n::word current_core) -> kernel_result
+                                    {
+                                        if (process_core.core_affinity == current_core)
+                                        {
+                                            return local_variable.process_manager_core
+                                                .try_schedule_and_switch();
+                                        }
+                                        return reschedule_core(process_core.core_affinity);
+                                    }
+                                );
+                        }
+                    )
                     .transform_error(convert_kernel_to_capability_error);
             }
         );
@@ -672,13 +727,26 @@ namespace a9n::kernel
 
     capability_result process_control_block::revoke(capability_slot &self)
     {
+        // Revoking an address space while another CPU can still execute in it is unsafe. A caller
+        // must first suspend the process and retry after the reschedule IPI has switched it out.
+        auto current_core_result = a9n::hal::current_core_number();
+        if (!current_core_result) [[unlikely]]
+        {
+            return capability_error::FATAL;
+        }
+        if (process_core.core_affinity != current_core_result.unwrap()
+            && is_running_on_assigned_core(process_core)) [[unlikely]]
+        {
+            return capability_error::INVALID_ARGUMENT;
+        }
         auto detach_result = detach_from_wait_queues();
         if (!detach_result) [[unlikely]]
         {
             return detach_result;
         }
 
-        auto suspend_result = process_manager_core.mark_suspended(process_core);
+        auto &manager = cpu_local_variables[process_core.core_affinity].process_manager_core;
+        auto  suspend_result = manager.mark_suspended(process_core);
         if (!suspend_result) [[unlikely]]
         {
             return suspend_result.transform_error(convert_kernel_to_capability_error);

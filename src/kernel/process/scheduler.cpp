@@ -54,7 +54,7 @@ namespace a9n::kernel
     // direct context switch to accelerate ipc
     liba9n::result<process *, scheduler_error> scheduler::try_direct_schedule(process *target_process)
     {
-        if (!target_process)
+        if (!target_process) [[unlikely]]
         {
             DEBUG_LOG("invalid process");
             return scheduler_error::INVALID_PROCESS;
@@ -78,29 +78,6 @@ namespace a9n::kernel
 
             return schedule();
         }
-
-        bool has_next    = static_cast<bool>(target_process->next);
-        bool has_preview = static_cast<bool>(target_process->preview);
-
-        // target_process is head
-        if (has_next && !has_preview)
-        {
-            queue[target_priority].head          = target_process->next;
-            queue[target_priority].head->preview = nullptr;
-        }
-        // target_process is tail
-        else if (!has_next && has_preview)
-        {
-            queue[target_priority].tail       = target_process->preview;
-            queue[target_priority].tail->next = nullptr;
-        }
-        // target_process exists at the center of queue
-        else if (has_next && has_preview)
-        {
-            target_process->preview->next = target_process->next;
-            target_process->next->preview = target_process->preview;
-        }
-        // if target_process does not exist in queue, it can be scheduled as it is
 
         // update status
         highest_priority        = target_process->priority;

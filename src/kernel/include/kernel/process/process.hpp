@@ -46,7 +46,7 @@ namespace a9n::kernel
         a9n::sword     quantum;
 
         // for priority-scheduling
-        a9n::word core_affinity;
+        a9n::word core_affinity { 0 };
         process  *preview { nullptr };
         process  *next { nullptr };
 

@@ -234,6 +234,16 @@ namespace a9n::hal
 
                     DEBUG_LOG("target_frame : 0x%016llx", target_frame.address);
 
+                    const a9n::word frame_size = static_cast<a9n::word>(1)
+                                               << target_frame.size_bits;
+                    const a9n::word frame_mask = frame_size - 1;
+                    if ((target_frame.address & frame_mask) != 0
+                        || (target_address & frame_mask) != 0)
+                    {
+                        DEBUG_LOG("frame or target address is not aligned to the frame size");
+                        return kernel::memory_map_error::ILLEGAL_DEPTH;
+                    }
+
                     bool is_writable
                         = (rights & static_cast<a9n::word>(a9n::kernel::rights::WRITE)) != 0;
                     bool is_executable
@@ -288,7 +298,7 @@ namespace a9n::hal
                 {
                     if (!entry->present)
                     {
-                        return kernel::memory_map_error::ALREADY_MAPPED;
+                        return {};
                     }
 
                     entry->init();

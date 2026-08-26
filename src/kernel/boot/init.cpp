@@ -499,7 +499,7 @@ namespace a9n::kernel
         // finalize
         TRY_VOID(try_configure_init_io_ports(pcb.component));
         TRY_VOID(try_configure_init_address_space(pcb.component, boot, info));
-        TRY_VOID(process_manager_core.mark_scheduled(pcb.component.process_core));
+        TRY_VOID(cpu_local_variables[BSP_ID].process_manager_core.mark_scheduled(pcb.component.process_core));
 
         return {};
     }

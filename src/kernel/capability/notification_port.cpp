@@ -50,8 +50,7 @@ namespace a9n::kernel
     }
 
     // non-blocking !
-    capability_result
-        notification_port::operation_notify([[maybe_unused]] process &owner, capability_slot &self)
+    capability_result notification_port::operation_notify(process &owner, capability_slot &self)
     {
         if (!(self.rights & capability_slot::WRITE)) [[unlikely]]
         {
@@ -65,7 +64,7 @@ namespace a9n::kernel
 
         if (binded_process && binded_process->status == process_status::BLOCKED_RECEIVE)
         {
-            return try_wake_binded_process();
+            return try_wake_binded_process(owner);
         }
 
         switch (state)
@@ -100,14 +99,7 @@ namespace a9n::kernel
                                     .and_then(
                                         [&](void) -> capability_result
                                         {
-                                            return process_manager_core.mark_scheduled(target.get())
-                                                .and_then(
-                                                    [&](void) -> kernel_result
-                                                    {
-                                                        return process_manager_core
-                                                            .schedule_if_preempted_by(target.get());
-                                                    }
-                                                )
+                                            return mark_scheduled_with_preemption(owner, target.get())
                                                 .transform_error(convert_kernel_to_capability_error);
                                         }
                                     );
@@ -157,7 +149,7 @@ namespace a9n::kernel
                             [&](void) -> kernel_result
                             {
                                 DEBUG_LOG("notification_port::wait : schedule another process");
-                                return process_manager_core.try_schedule_and_switch();
+                                return try_schedule_and_switch(owner);
                             }
                         )
                         .transform_error(convert_kernel_to_capability_error);
@@ -222,7 +214,7 @@ namespace a9n::kernel
             );
     }
 
-    capability_result notification_port::try_wake_binded_process(void)
+    capability_result notification_port::try_wake_binded_process(process &current)
     {
         if (!binded_process) [[unlikely]]
         {
@@ -277,7 +269,7 @@ namespace a9n::kernel
                                 target_process.current_ipc_port          = nullptr;
                                 target_process.current_notification_port = nullptr;
 
-                                return process_manager_core.mark_scheduled(target_process)
+                                return mark_scheduled(current, target_process)
                                     .transform_error(convert_kernel_to_capability_error);
                             }
                         );

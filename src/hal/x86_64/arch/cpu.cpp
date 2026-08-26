@@ -1,5 +1,6 @@
 #include <hal/x86_64/arch/cpu.hpp>
 
+#include <kernel/config.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/utility/logger.hpp>
 
@@ -7,6 +8,7 @@
 #include <hal/x86_64/arch/floating_point.hpp>
 #include <hal/x86_64/arch/fsgsbase.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
+#include <hal/interface/lock.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -43,6 +45,9 @@ namespace a9n::hal::x86_64
                 segment::configure_tss(local_variable->gdt, local_variable->tss);
 
                 segment::load_gdt(local_variable->gdt);
+                // Reload CS after replacing the GDT.  This is required for an AP, which enters
+                // long mode with the trampoline's code selector, and is harmless on the BSP.
+                segment::load_segment_register(segment_selector::KERNEL_CS);
                 segment::load_task_register(segment_selector::KERNEL_TSS);
                 segment::load_idt(local_variable->idt);
 
@@ -69,15 +74,31 @@ namespace a9n::hal::x86_64
 
     liba9n::result<a9n::word, hal_error> try_allocate_core_number(void)
     {
-        lock.lock();
-        a9n::kernel::utility::logger::printh("Trying to allocate a core number ...\n");
-        if (current_cpu_number++ >= a9n::kernel::CPU_COUNT_MAX)
+        auto lock_result = lock.lock();
+        if (!lock_result)
         {
+            return hal_error::TRY_AGAIN;
+        }
+
+        a9n::kernel::utility::logger::printh("Trying to allocate a core number ...\n");
+        if (current_cpu_number >= a9n::kernel::CPU_COUNT_MAX - 1)
+        {
+            lock.unlock();
             a9n::kernel::utility::logger::error("No such CPU number!");
             return hal_error::NO_SUCH_DEVICE;
         }
+
+        auto allocated_core_number = ++current_cpu_number;
         lock.unlock();
-        return current_cpu_number;
+        return allocated_core_number;
+    }
+
+    void mark_core_booted(void)
+    {
+        lock.lock();
+        auto count = a9n::hal::atomic_load(&booted_core_count);
+        a9n::hal::atomic_store(&booted_core_count, static_cast<uint8_t>(count + 1));
+        lock.unlock();
     }
 }
 
@@ -119,16 +140,7 @@ namespace a9n::hal
     {
         using a9n::kernel::utility::logger;
 
-        auto is_fsgsbase_supported = [](void) -> bool
-        {
-            unsigned long cr4;
-
-            __asm__ __volatile__("mov %%cr4, %0" : "=r"(cr4) : :);
-
-            return (cr4 & (1 << 16)) != 0;
-        };
-
-        if (!is_fsgsbase_supported()) [[unlikely]]
+        if (!(x86_64::_read_cr4() & x86_64::cr4_flag::FS_GS_BASE)) [[unlikely]]
         {
             return hal_error::INIT_FIRST;
         }
@@ -152,6 +164,37 @@ namespace a9n::hal
                 return local_variable->core_number;
             }
         );
+    }
+
+    a9n::word core_count(void)
+    {
+        if constexpr (kernel::SMP_ENABLED)
+        {
+            return x86_64::expected_core_count;
+        }
+
+        return 1;
+    }
+
+    hal_result start_other_cores(void)
+    {
+        if constexpr (!kernel::SMP_ENABLED)
+        {
+            return {};
+        }
+
+        atomic_store(&x86_64::is_ap_runnable, 1);
+
+        while (atomic_load(&x86_64::booted_core_count) < x86_64::expected_core_count)
+        {
+            if (atomic_load(&x86_64::has_ap_boot_failed))
+            {
+                return hal_error::NO_SUCH_DEVICE;
+            }
+            asm volatile("pause" ::: "memory");
+        }
+
+        return {};
     }
 
 }

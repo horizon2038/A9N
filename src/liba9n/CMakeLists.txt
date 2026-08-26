@@ -10,6 +10,10 @@ file(
 
 set(LIBA9N_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 add_library(liba9n STATIC ${LIBA9N_SOURCES})
+
+set(A9N_LIBA9N_CONFIG_OPTIONS)
+a9n_apply_target_config_options(liba9n A9N_LIBA9N_CONFIG_OPTIONS)
+
 target_include_directories(
     liba9n
     PUBLIC

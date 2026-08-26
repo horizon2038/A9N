@@ -23,6 +23,9 @@ target_sources(
     ${ARCH_SOURCES}
 )
 
+set(A9N_HAL_CONFIG_OPTIONS)
+a9n_apply_target_config_options(hal A9N_HAL_CONFIG_OPTIONS)
+
 target_include_directories(
     hal PUBLIC
     "${ARCH_INCLUDE_DIR}"

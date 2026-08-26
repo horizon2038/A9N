@@ -1,10 +1,12 @@
 #include <hal/x86_64/arch/arch_initializer.hpp>
 
 #include <kernel/process/cpu.hpp>
+#include <kernel/config.hpp>
 #include <kernel/types.hpp>
 
 #include <hal/hal_result.hpp>
 #include <hal/interface/cpu.hpp>
+#include <hal/interface/lock.hpp>
 #include <hal/x86_64/arch/arch_types.hpp>
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/cpu.hpp>
@@ -34,7 +36,6 @@
 #include <hal/x86_64/arch/smp.hpp>
 #include <hal/x86_64/process/idle.hpp>
 #include <kernel/process/cpu.hpp>
-#include <kernel/process/lock.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -77,6 +78,11 @@ namespace a9n::hal::x86_64
             .and_then(
                 [&]() -> hal_result
                 {
+                    if constexpr (!kernel::SMP_ENABLED)
+                    {
+                        return {};
+                    }
+
                     return init_sub_cores().or_else(
                         [](hal_error e) -> hal_result
                         {
@@ -137,6 +143,18 @@ namespace a9n::hal::x86_64
                 {
                     logger::printh("Initializing Local APIC ...\n");
                     return local_apic_core.init();
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    return local_apic_core.id().and_then(
+                        [](uint8_t id) -> hal_result
+                        {
+                            arch_cpu_local_variables[kernel::BSP_ID].local_apic_id = id;
+                            return {};
+                        }
+                    );
                 }
             )
             .and_then(
@@ -395,20 +413,39 @@ namespace a9n::hal::x86_64
             return smp_info_result.unwrap_error();
         }
 
-        auto cpu_max = (smp_info_result.unwrap()->enabled_ap_count <= a9n::kernel::CPU_COUNT_MAX) ?
-                           smp_info_result.unwrap()->enabled_ap_count :
-                           a9n::kernel::CPU_COUNT_MAX;
-        if (cpu_max == 1)
+        auto detected_cpu_count = smp_info_result.unwrap()->enabled_ap_count;
+        if (detected_cpu_count <= 1)
         {
             // single core
             return hal_error::UNSUPPORTED;
         }
 
-        // skip bsp
-        for (auto i = 1; i < cpu_max; i++)
+        auto bsp_apic_id_result = local_apic_core.id();
+        if (!bsp_apic_id_result)
+        {
+            return bsp_apic_id_result.unwrap_error();
+        }
+
+        a9n::word activated_cpu_count = 1;
+        for (a9n::word i = 0;
+             i < detected_cpu_count && activated_cpu_count < a9n::kernel::CPU_COUNT_MAX;
+             i++)
         {
             auto local_apic_id = smp_info_result.unwrap()->local_apic_ids[i];
-            logger::printh("Starting core (core=%4d, Local APIC ID=0x%08lx) ...\n", i, local_apic_id);
+            if (local_apic_id == bsp_apic_id_result.unwrap())
+            {
+                continue;
+            }
+            if (local_apic_id > UINT8_MAX)
+            {
+                return hal_error::UNSUPPORTED;
+            }
+
+            logger::printh(
+                "Starting core (core=%4d, Local APIC ID=0x%08lx) ...\n",
+                activated_cpu_count,
+                local_apic_id
+            );
             auto result
                 = ipi_init(local_apic_id)
                       .and_then(
@@ -449,7 +486,11 @@ namespace a9n::hal::x86_64
             {
                 return result.unwrap_error();
             }
+
+            activated_cpu_count++;
         }
+
+        expected_core_count = activated_cpu_count;
 
         logger::printh("AP successfully activated\n");
 
@@ -485,6 +526,7 @@ namespace a9n::hal::x86_64
         // .and_then(enable_vmx);
         if (!result)
         {
+            atomic_store(&has_ap_boot_failed, 1);
             a9n::kernel::utility::logger::error("Can't configure AP");
             return;
         }
@@ -492,13 +534,41 @@ namespace a9n::hal::x86_64
         auto local_variable_result = a9n::hal::current_local_variable();
         if (!local_variable_result)
         {
+            atomic_store(&has_ap_boot_failed, 1);
             a9n::kernel::utility::logger::error("Can't retrieve AP local variable");
             return;
         }
 
-        auto *local_variable            = local_variable_result.unwrap();
-        local_variable->current_process = nullptr;
-        local_variable->is_idle         = true;
+        auto *local_variable = local_variable_result.unwrap();
+
+        while (!atomic_load(&is_ap_runnable))
+        {
+            asm volatile("pause" ::: "memory");
+        }
+
+        auto kernel_result
+            = local_variable->process_manager_core.init(local_variable->core_number).and_then(
+                [](void) -> kernel::kernel_result
+                {
+                    return local_apic_timer_core.init_current_core()
+                        .transform_error(kernel::convert_hal_to_kernel_error);
+                }
+            );
+        if (!kernel_result)
+        {
+            atomic_store(&has_ap_boot_failed, 1);
+            kernel::utility::logger::error("Can't initialize AP process manager");
+            return;
+        }
+
+        auto idle_result = local_variable->process_manager_core.switch_to_idle();
+        if (!idle_result)
+        {
+            atomic_store(&has_ap_boot_failed, 1);
+            kernel::utility::logger::error("Can't switch AP to IDLE");
+            return;
+        }
+        mark_core_booted();
         idle_loop();
     }
 
@@ -529,6 +599,31 @@ namespace a9n::hal::x86_64
                     logger::printh("HAL error: %s\n", hal_error_to_string(e));
                     logger::error("Failed to initialize Local APIC (AP)");
                     return e;
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    return current_local_variable().and_then(
+                        [](kernel::cpu_local_variable *local_variable) -> hal_result
+                        {
+                            return local_apic_core.id().and_then(
+                                [local_variable](uint8_t id) -> hal_result
+                                {
+                                    arch_cpu_local_variables[local_variable->core_number].local_apic_id
+                                        = id;
+                                    return {};
+                                }
+                            );
+                        }
+                    );
+                }
+            )
+            .and_then(
+                [](void) -> hal_result
+                {
+                    logger::printh("Initializing IDT handler (AP) ...\n");
+                    return init_idt_handler();
                 }
             )
             .and_then(

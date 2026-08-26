@@ -61,11 +61,11 @@ namespace a9n::kernel
       public:
         capability_result execute(process &owner, capability_slot &self) override;
 
-        capability_result operation_notify([[maybe_unused]] process &owner, capability_slot &self);
+        capability_result operation_notify(process &owner, capability_slot &self);
         capability_result operation_wait(process &owner, capability_slot &self);
         capability_result operation_poll(process &owner, capability_slot &self);
         capability_result operation_identify(process &owner, capability_slot &self);
-        capability_result try_wake_binded_process(void);
+        capability_result try_wake_binded_process(process &current);
 
         kernel_result bind_process(process &target_process);
         kernel_result unbind_process(process &target_process);

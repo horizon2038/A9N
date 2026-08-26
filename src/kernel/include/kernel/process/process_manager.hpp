@@ -10,10 +10,12 @@
 
 namespace a9n::kernel
 {
+    struct cpu_local_variable;
+
     class process_manager
     {
       public:
-        kernel_result init(void);
+        kernel_result init(a9n::word core_number);
 
         kernel_result handle_timer(void);
 
@@ -21,7 +23,12 @@ namespace a9n::kernel
         kernel_result switch_to_idle(void);
 
         kernel_result try_schedule_and_switch(void);
+        kernel_result try_schedule_and_switch(cpu_local_variable &local_variable);
         kernel_result try_direct_schedule_and_switch(process &target_process);
+        kernel_result try_direct_schedule_and_switch(
+            process            &target_process,
+            cpu_local_variable &local_variable
+        );
 
         kernel_result schedule_if_preempted_by(process &target);
 
@@ -35,10 +42,19 @@ namespace a9n::kernel
         process   *current_process;
         a9n::sword highest_priority;
 
+        process idle_process {};
         alignas(a9n::WORD_BITS) scheduler scheduler_core {};
     };
 
-    alignas(a9n::WORD_BITS) inline process_manager process_manager_core {};
+    kernel_result init_idle_context(void);
+
+    liba9n::result<process *, kernel_error> current_process_on_this_core(void);
+    liba9n::result<process_manager *, kernel_error> current_process_manager(void);
+    kernel_result reschedule_core(a9n::word core_number);
+    kernel_result try_schedule_and_switch(process &current);
+    kernel_result try_direct_schedule_and_switch(process &current, process &target);
+    kernel_result mark_scheduled(process &current, process &target);
+    kernel_result mark_scheduled_with_preemption(process &current, process &target);
 }
 
 #endif
