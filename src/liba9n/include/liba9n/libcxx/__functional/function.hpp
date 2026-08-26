@@ -21,7 +21,7 @@ namespace liba9n::std
     {
       public:
         template<typename F>
-        function(F func) : callable { new(&buffer) callable_impl<F>(liba9n::std::move(func)) }
+        function(F func) : callable { new (&buffer) callable_impl<F>(liba9n::std::move(func)) }
         {
         }
 

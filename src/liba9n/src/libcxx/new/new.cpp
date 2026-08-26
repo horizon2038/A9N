@@ -15,9 +15,6 @@ void operator delete([[maybe_unused]] void *object) throw()
     // delete object.
 }
 
-void operator delete[](
-    [[maybe_unused]] void *object,
-    [[maybe_unused]] void *buffer
-) throw()
+void operator delete[]([[maybe_unused]] void *object, [[maybe_unused]] void *buffer) throw()
 {
 }

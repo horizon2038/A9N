@@ -8,8 +8,7 @@
 namespace liba9n::std
 {
     template<typename T>
-    struct is_arithmetic
-        : integral_constant<bool, is_integral_v<T> || is_floating_point_v<T>>
+    struct is_arithmetic : integral_constant<bool, is_integral_v<T> || is_floating_point_v<T>>
     {
     };
 

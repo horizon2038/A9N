@@ -26,7 +26,7 @@ namespace a9n::hal::x86_64
         using a9n::kernel::utility::logger;
 
         smp_info_core.enabled_ap_count = 0;
-        auto result = acpi_core.current_madt().and_then(
+        auto result                    = acpi_core.current_madt().and_then(
             [&](madt *madt_base) -> hal_result
             {
                 logger::printh("Configuring SMP information from MADT ...\n");

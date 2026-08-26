@@ -29,10 +29,7 @@ namespace a9n::hal
         switch (byte_width)
         {
             case 1 :
-                x86_64::port_write_8(
-                    static_cast<uint16_t>(address),
-                    static_cast<uint8_t>(data & 0xFF)
-                );
+                x86_64::port_write_8(static_cast<uint16_t>(address), static_cast<uint8_t>(data & 0xFF));
                 return {};
             case 2 :
                 x86_64::port_write_16(

@@ -1,15 +1,15 @@
 #include <kernel/capability/process_control_block.hpp>
 
+#include <hal/interface/cpu.hpp>
+#include <hal/interface/interrupt.hpp>
 #include <kernel/capability/capability_component.hpp>
 #include <kernel/capability/frame_capability.hpp>
 #include <kernel/capability/notification_port.hpp>
 #include <kernel/ipc/ipc_buffer.hpp>
 #include <kernel/memory/memory.hpp>
+#include <kernel/process/cpu.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
-#include <hal/interface/cpu.hpp>
-#include <hal/interface/interrupt.hpp>
-#include <kernel/process/cpu.hpp>
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
@@ -314,9 +314,10 @@ namespace a9n::kernel
                     if (info.is_affinity())
                     {
                         DEBUG_LOG("process_control_block::configure::affinity");
-                        auto affinity_result = a9n::hal::get_message_register(owner, AFFINITY)
-                                                   .transform_error(convert_hal_to_kernel_error)
-                                                   .transform_error(convert_kernel_to_capability_error);
+                        auto affinity_result
+                            = a9n::hal::get_message_register(owner, AFFINITY)
+                                  .transform_error(convert_hal_to_kernel_error)
+                                  .transform_error(convert_kernel_to_capability_error);
                         if (!affinity_result)
                         {
                             return affinity_result.unwrap_error();
@@ -660,9 +661,7 @@ namespace a9n::kernel
         }
         process_core.status = process_status::READY;
 
-        return mark_scheduled(owner, process_core).transform_error(
-            convert_kernel_to_capability_error
-        );
+        return mark_scheduled(owner, process_core).transform_error(convert_kernel_to_capability_error);
     }
 
     capability_result process_control_block::detach_from_wait_queues(void)
@@ -745,7 +744,7 @@ namespace a9n::kernel
             return detach_result;
         }
 
-        auto &manager = cpu_local_variables[process_core.core_affinity].process_manager_core;
+        auto &manager        = cpu_local_variables[process_core.core_affinity].process_manager_core;
         auto  suspend_result = manager.mark_suspended(process_core);
         if (!suspend_result) [[unlikely]]
         {

@@ -3,9 +3,9 @@
 #include <kernel/capability/ipc_port.hpp>
 #include <kernel/interrupt/irq_notification_handlers.hpp>
 #include <kernel/kernelcall/kernel_call.hpp>
-#include <kernel/process/process_manager.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/lock.hpp>
+#include <kernel/process/process_manager.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
@@ -98,7 +98,7 @@ namespace a9n::kernel
     extern "C" void handle_timer(void)
     {
         lock_guard guard(giant_lock);
-        auto result = current_process_manager().and_then(
+        auto       result = current_process_manager().and_then(
             [](process_manager *manager) -> kernel_result
             {
                 return manager->handle_timer().and_then(
@@ -114,60 +114,66 @@ namespace a9n::kernel
     extern "C" void handle_interrupt(a9n::word irq_number)
     {
         lock_guard guard(giant_lock);
-        current_process_manager().and_then(
-            [&](process_manager *manager) -> kernel_result
-            {
-                return irq_number_to_irq_notification_handler(irq_number).and_then(
-                    [&](liba9n::not_null<irq_notification_handler> handler) -> kernel_result
-                    {
-                        if (handler->slot.type == capability_type::NONE)
-                        {
-                            DEBUG_LOG("No handler for IRQ number %04llu", handler->irq_number);
-                            return kernel_error::TRY_AGAIN;
-                        }
-
-                        if ((handler->slot.type != capability_type::NOTIFICATION_PORT)
-                            || !(handler->slot.component)) [[unlikely]]
-                        {
-                            DEBUG_LOG("Invalid handler type for IRQ_number %llu", handler->irq_number);
-                            return kernel_error::TRY_AGAIN;
-                        }
-
-                        return manager->retrieve_current_process().and_then(
-                            [&handler](process *current_process) -> kernel_result
+        current_process_manager()
+            .and_then(
+                [&](process_manager *manager) -> kernel_result
+                {
+                    return irq_number_to_irq_notification_handler(irq_number)
+                        .and_then(
+                            [&](liba9n::not_null<irq_notification_handler> handler) -> kernel_result
                             {
-                                auto &port = reinterpret_cast<notification_port &>(
-                                    *(handler->slot.component)
-                                );
+                                if (handler->slot.type == capability_type::NONE)
+                                {
+                                    DEBUG_LOG("No handler for IRQ number %04llu", handler->irq_number);
+                                    return kernel_error::TRY_AGAIN;
+                                }
 
-                                return port.operation_notify(*current_process, handler->slot)
-                                    .transform_error(
-                                        [&handler](capability_error e) -> kernel_error
-                                        {
-                                            return kernel_error::TRY_AGAIN;
-                                        }
-                                    )
-                                    .and_then(
-                                        [](void) -> kernel_result
-                                        {
-                                            return a9n::kernel::interrupt_manager_core
-                                                .ack_interrupt();
-                                        }
-                                    )
-                                    .and_then(
-                                        [&](void) -> kernel_result
-                                        {
-                                            return interrupt_manager_core.disable_interrupt(
-                                                handler->irq_number
-                                            );
-                                        }
+                                if ((handler->slot.type != capability_type::NOTIFICATION_PORT)
+                                    || !(handler->slot.component)) [[unlikely]]
+                                {
+                                    DEBUG_LOG(
+                                        "Invalid handler type for IRQ_number %llu",
+                                        handler->irq_number
                                     );
+                                    return kernel_error::TRY_AGAIN;
+                                }
+
+                                return manager->retrieve_current_process().and_then(
+                                    [&handler](process *current_process) -> kernel_result
+                                    {
+                                        auto &port = reinterpret_cast<notification_port &>(
+                                            *(handler->slot.component)
+                                        );
+
+                                        return port
+                                            .operation_notify(*current_process, handler->slot)
+                                            .transform_error(
+                                                [&handler](capability_error e) -> kernel_error
+                                                {
+                                                    return kernel_error::TRY_AGAIN;
+                                                }
+                                            )
+                                            .and_then(
+                                                [](void) -> kernel_result
+                                                {
+                                                    return a9n::kernel::interrupt_manager_core
+                                                        .ack_interrupt();
+                                                }
+                                            )
+                                            .and_then(
+                                                [&](void) -> kernel_result
+                                                {
+                                                    return interrupt_manager_core.disable_interrupt(
+                                                        handler->irq_number
+                                                    );
+                                                }
+                                            );
+                                    }
+                                );
                             }
                         );
-                    }
-                );
-            }
-        )
+                }
+            )
             .or_else(
                 [irq_number](kernel_error e) -> kernel_result
                 {
@@ -180,7 +186,7 @@ namespace a9n::kernel
     extern "C" void handle_ipi_reschedule(void)
     {
         lock_guard guard(giant_lock);
-        auto result = current_process_manager().and_then(
+        auto       result = current_process_manager().and_then(
             [](process_manager *manager) -> kernel_result
             {
                 return manager->retrieve_current_process().and_then(
@@ -250,19 +256,14 @@ namespace a9n::kernel
                                 return capability_error::INVALID_DESCRIPTOR;
                             }
 
-                            ipc_port &port = static_cast<ipc_port &>(
-                                *current_process->resolver_port.component
-                            );
+                            ipc_port &port
+                                = static_cast<ipc_port &>(*current_process->resolver_port.component);
                             return port
-                                .operation_fault_call(
-                                    *current_process,
-                                    current_process->resolver_port
-                                )
+                                .operation_fault_call(*current_process, current_process->resolver_port)
                                 .or_else(
                                     [current_process](capability_error e) -> capability_result
                                     {
-                                        current_process->status
-                                            = process_status::BLOCKED_SUSPEND;
+                                        current_process->status = process_status::BLOCKED_SUSPEND;
                                         return e;
                                     }
                                 );

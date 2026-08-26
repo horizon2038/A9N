@@ -15,8 +15,8 @@ namespace liba9n::std
     struct is_scalar
         : integral_constant<
               bool,
-              is_arithmetic_v<T> || is_enum_v<T> || is_pointer_v<T>
-                  || is_member_pointer_v<T> || is_null_pointer_v<T>>
+              is_arithmetic_v<T> || is_enum_v<T> || is_pointer_v<T> || is_member_pointer_v<T>
+                  || is_null_pointer_v<T>>
     {
     };
 

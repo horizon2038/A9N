@@ -48,20 +48,19 @@ namespace a9n::hal::x86_64
             return hal_error::INIT_FIRST;
         }
 
-        return configure_cycle(desired_frequency).and_then(
-            [this](void) -> hal_result
-            {
-                return enable_current_core();
-            }
-        );
+        return configure_cycle(desired_frequency)
+            .and_then(
+                [this](void) -> hal_result
+                {
+                    return enable_current_core();
+                }
+            );
     }
 
     hal_result local_apic_timer::enable_current_core()
     {
-        return local_apic_core.write(
-            local_apic_offset::LVT_TIMER,
-            liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17)
-        );
+        return local_apic_core
+            .write(local_apic_offset::LVT_TIMER, liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17));
     }
 
     hal_result local_apic_timer::calibrate(void)

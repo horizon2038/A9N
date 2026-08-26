@@ -489,9 +489,7 @@ namespace a9n::kernel
         owner.destination_reply_state  = process::destination_reply_state_object::NONE;
         owner.destination_reply_target = nullptr;
 
-        return mark_scheduled(owner, client).transform_error(
-            convert_kernel_to_capability_error
-        );
+        return mark_scheduled(owner, client).transform_error(convert_kernel_to_capability_error);
     }
 
     capability_result ipc_port::apply_invalid_kernel_call_reply_context(
@@ -572,9 +570,8 @@ namespace a9n::kernel
                     owner.destination_reply_state  = process::destination_reply_state_object::NONE;
                     owner.destination_reply_target = nullptr;
 
-                    return mark_scheduled(owner, *client).transform_error(
-                        convert_kernel_to_capability_error
-                    );
+                    return mark_scheduled(owner, *client)
+                        .transform_error(convert_kernel_to_capability_error);
                 }
             );
     }

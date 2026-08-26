@@ -14,22 +14,19 @@ namespace a9n::hal::x86_64
     // these memory address translation variables assume that the kernel virtual
     // address is KERNEL_VIRTUAL_ADDRESS + physical_address.
 
-    inline static a9n::virtual_address convert_physical_to_virtual_address(
-        const a9n::physical_address target_physical_address
-    )
+    inline static a9n::virtual_address
+        convert_physical_to_virtual_address(const a9n::physical_address target_physical_address)
     {
         return target_physical_address | KERNEL_VIRTUAL_BASE;
     }
 
-    inline static a9n::physical_address convert_virtual_to_physical_address(
-        const a9n::virtual_address target_virtual_address
-    )
+    inline static a9n::physical_address
+        convert_virtual_to_physical_address(const a9n::virtual_address target_virtual_address)
     {
         return target_virtual_address & ~KERNEL_VIRTUAL_BASE;
     }
 
-    inline static bool
-        is_canonical(const a9n::virtual_address target_virtual_address)
+    inline static bool is_canonical(const a9n::virtual_address target_virtual_address)
     {
         const uint64_t canonical_sign_bit   = target_virtual_address >> 47 & 1;
         const uint64_t canonical_upper_bits = target_virtual_address >> 48;

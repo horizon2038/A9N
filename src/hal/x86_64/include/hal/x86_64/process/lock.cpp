@@ -16,18 +16,12 @@ namespace a9n::hal
         return old_value;
     }
 
-    uint32_t atomic_compare_exchange(
-        volatile uint32_t *address,
-        uint32_t expected,
-        uint32_t desired
-    )
+    uint32_t atomic_compare_exchange(volatile uint32_t *address, uint32_t expected, uint32_t desired)
     {
-        asm volatile(
-            "lock cmpxchgl %2, %1"
-            : "+a"(expected), "+m"(*address)
-            : "r"(desired)
-            : "memory", "cc"
-        );
+        asm volatile("lock cmpxchgl %2, %1"
+                     : "+a"(expected), "+m"(*address)
+                     : "r"(desired)
+                     : "memory", "cc");
         return expected;
     }
 

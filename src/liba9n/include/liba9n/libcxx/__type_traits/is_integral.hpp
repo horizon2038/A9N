@@ -11,7 +11,7 @@ namespace liba9n::std
         reinterpret_cast<T>(t);
         f(0);
         p + t;
-    } > {};
+    }> {};
 
     template<typename T>
     inline constexpr bool is_integral_v = is_integral<T>::value;

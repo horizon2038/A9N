@@ -59,8 +59,9 @@ namespace liba9n::std
             template<typename T, typename... Args, typename MemberTypeOther>
                 requires(is_function_v<MemberTypeOther>)
             static auto call(MemberTypeOther ClassType::*member_function_pointer, T &&t, Args &&...args)
-                -> decltype((invoke_impl::get(forward<T>(t)).*member_function_pointer)(forward<Args>(args
-                )...));
+                -> decltype((invoke_impl::get(forward<T>(t)).*member_function_pointer)(
+                    forward<Args>(args)...
+                ));
 
             template<typename T>
             static auto call(MemberType ClassType::*member_function_pointer, T &&t)

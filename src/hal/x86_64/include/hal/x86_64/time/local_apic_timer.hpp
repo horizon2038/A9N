@@ -18,9 +18,9 @@ namespace a9n::hal::x86_64
         hal_result calibrate();
         hal_result enable_current_core();
 
-        uint32_t frequency         { 0 };
+        uint32_t frequency { 0 };
         uint16_t desired_frequency { 0 };
-        uint8_t  divide_config     { 0 };
+        uint8_t  divide_config { 0 };
     };
 
     inline local_apic_timer local_apic_timer_core {};

@@ -139,12 +139,10 @@ namespace a9n::hal::x86_64
         uint64_t value;
         uint64_t rflags;
 
-        asm volatile(
-            "vmread %2, %0; pushfq; popq %1"
-            : "=r"(value), "=r"(rflags)
-            : "r"(static_cast<uint64_t>(field.all))
-            : "cc", "memory"
-        );
+        asm volatile("vmread %2, %0; pushfq; popq %1"
+                     : "=r"(value), "=r"(rflags)
+                     : "r"(static_cast<uint64_t>(field.all))
+                     : "cc", "memory");
 
         return check_vmx_result(rflags).and_then(
             [&](void) -> vmx_result<uint64_t>
@@ -158,12 +156,10 @@ namespace a9n::hal::x86_64
     {
         uint64_t rflags;
 
-        asm volatile(
-            "vmwrite %1, %2; pushfq; popq %0"
-            : "=r"(rflags)
-            : "r"(value), "r"(static_cast<uint64_t>(field.all))
-            : "cc", "memory"
-        );
+        asm volatile("vmwrite %1, %2; pushfq; popq %0"
+                     : "=r"(rflags)
+                     : "r"(value), "r"(static_cast<uint64_t>(field.all))
+                     : "cc", "memory");
 
         return check_vmx_result(rflags);
     }
@@ -185,12 +181,7 @@ namespace a9n::hal::x86_64
             reinterpret_cast<a9n::virtual_address>(&region)
         );
         uint64_t rflags;
-        asm volatile(
-            "vmclear %1; pushfq; popq %0"
-            : "=r"(rflags)
-            : "m"(address)
-            : "cc", "memory"
-        );
+        asm volatile("vmclear %1; pushfq; popq %0" : "=r"(rflags) : "m"(address) : "cc", "memory");
 
         return check_vmx_result(rflags);
     }
@@ -201,12 +192,7 @@ namespace a9n::hal::x86_64
             reinterpret_cast<a9n::virtual_address>(&region)
         );
         uint64_t rflags;
-        asm volatile(
-            "vmptrld %1; pushfq; popq %0"
-            : "=r"(rflags)
-            : "m"(address)
-            : "cc", "memory"
-        );
+        asm volatile("vmptrld %1; pushfq; popq %0" : "=r"(rflags) : "m"(address) : "cc", "memory");
 
         return check_vmx_result(rflags);
     }

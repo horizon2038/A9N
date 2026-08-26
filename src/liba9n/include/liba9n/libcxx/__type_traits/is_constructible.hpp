@@ -11,8 +11,7 @@ namespace liba9n::std
     // because __is_constructible is a compiler extension
 
     template<typename T, typename... Args>
-    struct is_constructible
-        : public integral_constant<bool, __is_constructible(T, Args...)>
+    struct is_constructible : public integral_constant<bool, __is_constructible(T, Args...)>
     {
     };
 
@@ -21,9 +20,7 @@ namespace liba9n::std
 
     template<typename T>
     struct is_copy_constructible
-        : public integral_constant<
-              bool,
-              is_constructible_v<T, add_lvalue_reference_t<const T>>>
+        : public integral_constant<bool, is_constructible_v<T, add_lvalue_reference_t<const T>>>
     {
     };
 

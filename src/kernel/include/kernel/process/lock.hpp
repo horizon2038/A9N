@@ -190,8 +190,7 @@ namespace a9n::kernel
     }
 
     // kernel giant lock
-    using giant_lock_type
-        = liba9n::std::conditional_t<SMP_ENABLED, spin_lock_no_owner, null_lock>;
+    using giant_lock_type = liba9n::std::conditional_t<SMP_ENABLED, spin_lock_no_owner, null_lock>;
     inline giant_lock_type giant_lock {};
 }
 

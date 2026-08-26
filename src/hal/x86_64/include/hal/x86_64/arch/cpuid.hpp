@@ -96,12 +96,10 @@ namespace a9n::hal::x86_64
     {
         cpuid_info info;
 
-        asm volatile(
-            "cpuid"
-            : "=a"(info.rax), "=b"(info.rbx), "=c"(info.rcx), "=d"(info.rdx)
-            : "a"(liba9n::enum_cast(leaf)), "c"(subleaf)
-            : "memory"
-        );
+        asm volatile("cpuid"
+                     : "=a"(info.rax), "=b"(info.rbx), "=c"(info.rcx), "=d"(info.rdx)
+                     : "a"(liba9n::enum_cast(leaf)), "c"(subleaf)
+                     : "memory");
 
         return info;
     }

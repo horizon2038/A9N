@@ -18,12 +18,7 @@ namespace a9n::hal::x86_64
     inline void _flush_tlb(void)
     {
         a9n::physical_address cr3_address;
-        asm volatile(
-            "mov %%cr3, %0; mov %0, %%cr3"
-            : "=&r"(cr3_address)
-            :
-            : "memory"
-        );
+        asm volatile("mov %%cr3, %0; mov %0, %%cr3" : "=&r"(cr3_address) : : "memory");
     }
 
     inline void _invalidate_page(a9n::virtual_address target_virtual_address)

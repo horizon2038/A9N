@@ -34,12 +34,7 @@ namespace a9n::hal::x86_64
     inline static vmx_result<> launch_vm(void)
     {
         uint64_t rflags;
-        asm volatile(
-            "vmlaunch; pushfq; popq %0"
-            : "=r"(rflags)
-            :
-            : "cc", "memory"
-        );
+        asm volatile("vmlaunch; pushfq; popq %0" : "=r"(rflags) : : "cc", "memory");
         return check_vmx_result(rflags);
     }
 
@@ -277,12 +272,10 @@ __      _________
         auto region_physical_address = a9n::kernel::virtual_to_physical_address(region_address);
 
         uint64_t rflags;
-        asm volatile(
-            "vmxon %1; pushfq; popq %0"
-            : "=r"(rflags)
-            : "m"(region_physical_address)
-            : "cc", "memory"
-        );
+        asm volatile("vmxon %1; pushfq; popq %0"
+                     : "=r"(rflags)
+                     : "m"(region_physical_address)
+                     : "cc", "memory");
 
         return check_vmx_result(rflags).or_else(
             [](vmx_error e) -> vmx_result<>

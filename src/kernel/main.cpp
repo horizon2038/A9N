@@ -83,8 +83,7 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
         "Configuring system clock frequency: %llu Hz ...\n",
         static_cast<a9n::word>(a9n::kernel::SYSTEM_CLOCK_FREQUENCY)
     );
-    auto clock_result
-        = a9n::hal::configure_system_clock_frequency(a9n::kernel::SYSTEM_CLOCK_FREQUENCY);
+    auto clock_result = a9n::hal::configure_system_clock_frequency(a9n::kernel::SYSTEM_CLOCK_FREQUENCY);
     if (!clock_result)
     {
         logger::error("Failed to configure system clock frequency");
@@ -95,8 +94,9 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     result = a9n::kernel::init_idle_context().and_then(
         [](void) -> a9n::kernel::kernel_result
         {
-            return a9n::kernel::cpu_local_variables[a9n::kernel::BSP_ID]
-                .process_manager_core.init(a9n::kernel::BSP_ID);
+            return a9n::kernel::cpu_local_variables[a9n::kernel::BSP_ID].process_manager_core.init(
+                a9n::kernel::BSP_ID
+            );
         }
     );
 

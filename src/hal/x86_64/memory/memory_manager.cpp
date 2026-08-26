@@ -32,7 +32,7 @@ namespace a9n::hal
                         if (!variable->current_process)
                         {
                             DEBUG_LOG("no process");
-                            return { };
+                            return {};
                         }
 
                         if (variable->current_process->root_address_space.type
@@ -52,7 +52,7 @@ namespace a9n::hal
                             x86_64::_invalidate_page(target_address);
                         }
 
-                        return { };
+                        return {};
                     }
                 )
                 .transform_error(
@@ -182,7 +182,7 @@ namespace a9n::hal
                     if (!entry->present)
                     {
                         // already unmapped
-                        return { };
+                        return {};
                     }
 
                     entry->init();
@@ -234,11 +234,9 @@ namespace a9n::hal
 
                     DEBUG_LOG("target_frame : 0x%016llx", target_frame.address);
 
-                    const a9n::word frame_size = static_cast<a9n::word>(1)
-                                               << target_frame.size_bits;
+                    const a9n::word frame_size = static_cast<a9n::word>(1) << target_frame.size_bits;
                     const a9n::word frame_mask = frame_size - 1;
-                    if ((target_frame.address & frame_mask) != 0
-                        || (target_address & frame_mask) != 0)
+                    if ((target_frame.address & frame_mask) != 0 || (target_address & frame_mask) != 0)
                     {
                         DEBUG_LOG("frame or target address is not aligned to the frame size");
                         return kernel::memory_map_error::ILLEGAL_DEPTH;
@@ -402,7 +400,7 @@ namespace a9n::hal
                     x86_64::page *current_table
                         = a9n::kernel::physical_to_virtual_pointer<x86_64::page>(target_root.address);
 
-                    x86_64::page *current_entry { };
+                    x86_64::page *current_entry {};
 
                     for (auto i = x86_64::PAGE_DEPTH::PML4; i > depth; i--)
                     {
@@ -467,7 +465,7 @@ namespace a9n::hal
             return kernel::memory_map_error::INVALID_PAGE_TABLE;
         }
 
-        return { };
+        return {};
     }
 
     kernel::memory_map_result<a9n::word>
@@ -503,7 +501,7 @@ namespace a9n::hal
         switch (size_bits)
         {
             case 12 : // 4KiB
-                return { };
+                return {};
             case 21 : // 2MiB
                 // basically, 2MiB page is supported on all x86_64 CPUs, but we check it just in
                 // case.
@@ -511,7 +509,7 @@ namespace a9n::hal
                 {
                     return kernel::memory_map_error::ILLEGAL_DEPTH;
                 }
-                return { };
+                return {};
             case 30 : // 1GiB
                 // basically, 1GiB page is supported on all x86_64 CPU (since 2010), but we check it
                 // just in case.
@@ -519,7 +517,7 @@ namespace a9n::hal
                 {
                     return kernel::memory_map_error::ILLEGAL_DEPTH;
                 }
-                return { };
+                return {};
 
             default :
                 return kernel::memory_map_error::ILLEGAL_DEPTH;

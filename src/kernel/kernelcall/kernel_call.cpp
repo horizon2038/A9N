@@ -4,9 +4,9 @@
 #include <kernel/capability/capability_result.hpp>
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/kernel_result.hpp>
-#include <kernel/process/process_manager.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/lock.hpp>
+#include <kernel/process/process_manager.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
@@ -20,7 +20,7 @@ namespace a9n::kernel
     void handle_kernel_call(kernel_call_type type)
     {
         lock_guard guard(giant_lock);
-        auto result = current_process_on_this_core().and_then(
+        auto       result = current_process_on_this_core().and_then(
             [type](process *current_process) -> kernel_result
             {
                 switch (type)

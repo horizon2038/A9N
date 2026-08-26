@@ -4,11 +4,11 @@
 #include <kernel/process/cpu.hpp>
 #include <kernel/utility/logger.hpp>
 
+#include <hal/interface/lock.hpp>
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/arch/floating_point.hpp>
 #include <hal/x86_64/arch/fsgsbase.hpp>
 #include <hal/x86_64/arch/segment_configurator.hpp>
-#include <hal/interface/lock.hpp>
 
 namespace a9n::hal::x86_64
 {
@@ -31,7 +31,7 @@ namespace a9n::hal::x86_64
         configure_floating_mode();
         // _write_cr0(_read_cr0() | cr0_flag::WRITE_PROTECT);
 
-        return { };
+        return {};
     }
 
     hal_result init_cpu_core_segments(void)
@@ -51,7 +51,7 @@ namespace a9n::hal::x86_64
                 segment::load_task_register(segment_selector::KERNEL_TSS);
                 segment::load_idt(local_variable->idt);
 
-                return { };
+                return {};
             }
         );
     }
@@ -133,7 +133,7 @@ namespace a9n::hal
         target_arch_cpu_variable->tss.rsp_0 = kernel_stack_address;
         target_arch_cpu_variable->tss.ist_1 = kernel_stack_address;
 
-        return { };
+        return {};
     }
 
     liba9n::result<a9n::kernel::cpu_local_variable *, hal_error> current_local_variable(void)

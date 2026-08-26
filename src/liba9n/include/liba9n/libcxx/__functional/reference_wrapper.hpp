@@ -14,8 +14,7 @@ namespace liba9n::std
         {
         }
 
-        reference_wrapper(const reference_wrapper &other) noexcept
-            : pointer(other.pointer)
+        reference_wrapper(const reference_wrapper &other) noexcept : pointer(other.pointer)
         {
         }
 

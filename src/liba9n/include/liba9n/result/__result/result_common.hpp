@@ -33,9 +33,8 @@ namespace liba9n
     class result;
 
     template<typename T>
-    concept is_result = liba9n::std::is_same_v<
-        liba9n::std::remove_cvref_t<T>,
-        result<typename T::ok_type, typename T::error_type>>;
+    concept is_result = liba9n::std::
+        is_same_v<liba9n::std::remove_cvref_t<T>, result<typename T::ok_type, typename T::error_type>>;
 
     // deduction guide
     template<typename T, typename E>
@@ -59,11 +58,7 @@ namespace liba9n
         requires(!liba9n::std::is_same_v<T, E>)
     constexpr result<T, E> make_result_error(Args... args) noexcept
     {
-        return result<T, E>(
-            result_in_place,
-            result_error,
-            static_cast<Args &&>(args)...
-        );
+        return result<T, E>(result_in_place, result_error, static_cast<Args &&>(args)...);
     }
 }
 

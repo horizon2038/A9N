@@ -30,8 +30,7 @@ namespace liba9n
     option(T) -> option<T>;
 
     template<typename T, typename... Args>
-    constexpr auto make_option_some(Args... args)
-        -> option<liba9n::std::remove_cvref_t<T>>
+    constexpr auto make_option_some(Args... args) -> option<liba9n::std::remove_cvref_t<T>>
     {
         return option<T>(option_in_place, args...);
     }

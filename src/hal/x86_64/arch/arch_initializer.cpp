@@ -1,7 +1,7 @@
 #include <hal/x86_64/arch/arch_initializer.hpp>
 
-#include <kernel/process/cpu.hpp>
 #include <kernel/config.hpp>
+#include <kernel/process/cpu.hpp>
 #include <kernel/types.hpp>
 
 #include <hal/hal_result.hpp>
@@ -547,13 +547,15 @@ namespace a9n::hal::x86_64
         }
 
         auto kernel_result
-            = local_variable->process_manager_core.init(local_variable->core_number).and_then(
-                [](void) -> kernel::kernel_result
-                {
-                    return local_apic_timer_core.init_current_core()
-                        .transform_error(kernel::convert_hal_to_kernel_error);
-                }
-            );
+            = local_variable->process_manager_core.init(local_variable->core_number)
+                  .and_then(
+                      [](void) -> kernel::kernel_result
+                      {
+                          return local_apic_timer_core.init_current_core().transform_error(
+                              kernel::convert_hal_to_kernel_error
+                          );
+                      }
+                  );
         if (!kernel_result)
         {
             atomic_store(&has_ap_boot_failed, 1);

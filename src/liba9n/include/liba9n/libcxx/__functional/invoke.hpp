@@ -13,8 +13,8 @@ namespace liba9n::std
     namespace detail
     {
         template<typename ClassType, typename Pointer, typename Object, typename... Args>
-        constexpr decltype(auto
-        ) invoke_member_pointer(Pointer ClassType::*member, Object &&object, Args &&...args)
+        constexpr decltype(auto)
+            invoke_member_pointer(Pointer ClassType::*member, Object &&object, Args &&...args)
         {
             constexpr bool is_member_function = is_function_v<Pointer>;
             constexpr bool is_wrapped         = is_reference_wrapper_v<remove_cvref_t<Object>>;

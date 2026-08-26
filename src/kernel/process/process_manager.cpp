@@ -22,8 +22,7 @@ namespace a9n::kernel
     namespace
     {
         process idle_context {};
-        alignas(a9n::PAGE_SIZE) liba9n::std::array<uint8_t, a9n::PAGE_SIZE>
-            idle_address_space_storage;
+        alignas(a9n::PAGE_SIZE) liba9n::std::array<uint8_t, a9n::PAGE_SIZE> idle_address_space_storage;
 
         inline kernel_result configure_idle(process &target, a9n::word core_number)
         {
@@ -232,9 +231,7 @@ namespace a9n::kernel
             );
     }
 
-    kernel_result process_manager::try_schedule_and_switch(
-        cpu_local_variable &local_variable
-    )
+    kernel_result process_manager::try_schedule_and_switch(cpu_local_variable &local_variable)
     {
         return scheduler_core.schedule()
             .transform_error(
@@ -298,11 +295,11 @@ namespace a9n::kernel
                 [&](process *next_process) -> hal::hal_result
                 {
                     // yield quantum to next process
-                    next_process->quantum += local_variable.current_process->quantum;
+                    next_process->quantum          += local_variable.current_process->quantum;
 
-                    process &preview_process       = *local_variable.current_process;
-                    local_variable.current_process = next_process;
-                    local_variable.is_idle         = false;
+                    process &preview_process        = *local_variable.current_process;
+                    local_variable.current_process  = next_process;
+                    local_variable.is_idle          = false;
 
                     DEBUG_LOG("Switching directly to process %p ...", next_process);
                     return a9n::hal::switch_context(preview_process, *next_process);
@@ -404,8 +401,7 @@ namespace a9n::kernel
         return a9n::hal::current_local_variable()
             .transform_error(convert_hal_to_kernel_error)
             .and_then(
-                [](cpu_local_variable *local_variable)
-                    -> liba9n::result<process *, kernel_error>
+                [](cpu_local_variable *local_variable) -> liba9n::result<process *, kernel_error>
                 {
                     if (!local_variable->current_process) [[unlikely]]
                     {
@@ -427,8 +423,7 @@ namespace a9n::kernel
         return a9n::hal::current_local_variable()
             .transform_error(convert_hal_to_kernel_error)
             .and_then(
-                [](cpu_local_variable *local_variable)
-                    -> liba9n::result<process_manager *, kernel_error>
+                [](cpu_local_variable *local_variable) -> liba9n::result<process_manager *, kernel_error>
                 {
                     return &local_variable->process_manager_core;
                 }
@@ -513,11 +508,12 @@ namespace a9n::kernel
     {
         if constexpr (!SMP_ENABLED)
         {
-            return cpu_local_variables[BSP_ID]
-                .process_manager_core.try_direct_schedule_and_switch(target);
+            return cpu_local_variables[BSP_ID].process_manager_core.try_direct_schedule_and_switch(
+                target
+            );
         }
 
-        auto &local_variable = cpu_local_variables[current.core_affinity];
+        auto &local_variable  = cpu_local_variables[current.core_affinity];
         auto &current_manager = local_variable.process_manager_core;
         if (target.core_affinity == current.core_affinity) [[likely]]
         {

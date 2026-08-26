@@ -11,9 +11,7 @@ namespace liba9n::std
 {
     template<typename T>
     struct is_object
-        : integral_constant<
-              bool,
-              is_scalar_v<T> || is_array_v<T> || is_union_v<T> || is_class_v<T>>
+        : integral_constant<bool, is_scalar_v<T> || is_array_v<T> || is_union_v<T> || is_class_v<T>>
     {
     };
 
