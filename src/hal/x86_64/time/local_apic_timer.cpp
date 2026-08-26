@@ -18,30 +18,49 @@ namespace a9n::hal::x86_64
         a9n::kernel::utility::logger::printh("Initializing Local APIC Timer ...\n");
         divide_config = 0x03;
 
-        return calibrate()
-            .and_then([this](void) -> hal_result { return init_current_core(); })
-            .or_else(
-                [this](hal_error e) -> hal_result
-                {
-                    a9n::kernel::utility::logger::printh(
-                        "failed to initialize "
-                        "Local APIC Timer\n"
-                    );
-                    return e;
-                }
-            );
+        return calibrate().or_else(
+            [](hal_error e) -> hal_result
+            {
+                a9n::kernel::utility::logger::printh(
+                    "failed to initialize "
+                    "Local APIC Timer\n"
+                );
+                return e;
+            }
+        );
+    }
+
+    hal_result local_apic_timer::configure_system_clock_frequency(uint16_t hz)
+    {
+        return configure_cycle(hz).and_then(
+            [this, hz](void) -> hal_result
+            {
+                desired_frequency = hz;
+                return enable_current_core();
+            }
+        );
     }
 
     hal_result local_apic_timer::init_current_core()
     {
-        return configure_cycle(250).and_then(
-            [](void) -> hal_result
+        if (!desired_frequency)
+        {
+            return hal_error::INIT_FIRST;
+        }
+
+        return configure_cycle(desired_frequency).and_then(
+            [this](void) -> hal_result
             {
-                return local_apic_core.write(
-                    local_apic_offset::LVT_TIMER,
-                    liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17)
-                );
+                return enable_current_core();
             }
+        );
+    }
+
+    hal_result local_apic_timer::enable_current_core()
+    {
+        return local_apic_core.write(
+            local_apic_offset::LVT_TIMER,
+            liba9n::enum_cast(reserved_irq::TIMER) | (1 << 17)
         );
     }
 
@@ -121,7 +140,12 @@ namespace a9n::hal::x86_64
     {
         using a9n::kernel::utility::logger;
 
-        if (frequency == 0 || hz == 0)
+        if (frequency == 0)
+        {
+            return hal_error::INIT_FIRST;
+        }
+
+        if (hz == 0 || frequency / hz == 0)
         {
             return hal_error::ILLEGAL_ARGUMENT;
         }
@@ -143,5 +167,13 @@ namespace a9n::hal::x86_64
                     return e;
                 }
             );
+    }
+}
+
+namespace a9n::hal
+{
+    hal_result configure_system_clock_frequency(uint16_t hz)
+    {
+        return x86_64::local_apic_timer_core.configure_system_clock_frequency(hz);
     }
 }

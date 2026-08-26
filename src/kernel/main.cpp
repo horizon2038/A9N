@@ -11,6 +11,7 @@
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/time/timer.hpp>
 #include <kernel/utility/logger.hpp>
 #include <kernel/version.hpp>
 
@@ -77,6 +78,18 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     logger::printk("Initializing interrupt system ...\n");
     result = a9n::kernel::interrupt_manager_core.init();
     a9n::kernel::interrupt_manager_core.ack_interrupt();
+
+    logger::printk(
+        "Configuring system clock frequency: %llu Hz ...\n",
+        static_cast<a9n::word>(a9n::kernel::SYSTEM_CLOCK_FREQUENCY)
+    );
+    auto clock_result
+        = a9n::hal::configure_system_clock_frequency(a9n::kernel::SYSTEM_CLOCK_FREQUENCY);
+    if (!clock_result)
+    {
+        logger::error("Failed to configure system clock frequency");
+        return 0;
+    }
 
     logger::printk("Initializing process-management system ...\n");
     result = a9n::kernel::init_idle_context().and_then(
