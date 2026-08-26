@@ -40,9 +40,7 @@ namespace a9n::hal
         x86_64::write_user_gs_base(next_process.registers[x86_64::register_index::GS_BASE]);
 
         // address space switch
-        a9n::virtual_address current_cr3;
-        asm volatile("mov %%cr3, %0" : "=r"(current_cr3) : :);
-
+        auto current_cr3 = x86_64::_read_cr3();
         auto next_pml4 = kernel::convert_slot_data_to_page_table(next_process.root_address_space.data);
         if (!next_pml4.address) [[unlikely]]
         {
@@ -56,7 +54,25 @@ namespace a9n::hal
             return {};
         }
 
+        auto current_owner
+            = static_cast<a9n::word>(1) << (next_process.core_affinity & (a9n::WORD_BITS - 1));
+        if constexpr (kernel::SMP_ENABLED)
+        {
+            x86_64::write_address_space_owners(
+                next_pml4.address,
+                x86_64::read_address_space_owners(next_pml4.address) | current_owner
+            );
+        }
+
         x86_64::_load_cr3(next_pml4.address);
+
+        if constexpr (kernel::SMP_ENABLED)
+        {
+            x86_64::write_address_space_owners(
+                current_cr3,
+                x86_64::read_address_space_owners(current_cr3) & ~current_owner
+            );
+        }
 
         return {};
     }

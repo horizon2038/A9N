@@ -1,6 +1,8 @@
 #ifndef X86_64_PAGING_HPP
 #define X86_64_PAGING_HPP
 
+#include <hal/x86_64/arch/arch_types.hpp>
+
 #include <kernel/types.hpp>
 #include <stdint.h>
 
@@ -26,7 +28,25 @@ namespace a9n::hal::x86_64
         asm volatile("invlpg (%0)" : : "r"(target_virtual_address) : "memory");
     }
 
-    static constexpr uint16_t PAGE_TABLE_COUNT = 512;
+    static constexpr uint16_t PAGE_TABLE_COUNT                = 512;
+    static constexpr uint16_t ADDRESS_SPACE_OWNERS_PML4_INDEX = PAGE_TABLE_COUNT - 1;
+    static constexpr uint16_t KERNEL_PML4_INDEX = (KERNEL_VIRTUAL_BASE >> 39) & (PAGE_TABLE_COUNT - 1);
+
+    static_assert(ADDRESS_SPACE_OWNERS_PML4_INDEX != KERNEL_PML4_INDEX);
+
+    // PML4[511] is outside A9N's lower-half user address space and the kernel's
+    // direct-map entry. It is reserved for address-space-local HAL metadata.
+    inline a9n::word read_address_space_owners(a9n::physical_address page_table_address)
+    {
+        auto *pml4 = convert_physical_to_virtual_pointer<a9n::word>(page_table_address);
+        return pml4[ADDRESS_SPACE_OWNERS_PML4_INDEX];
+    }
+
+    inline void write_address_space_owners(a9n::physical_address page_table_address, a9n::word owners)
+    {
+        auto *pml4 = convert_physical_to_virtual_pointer<a9n::word>(page_table_address);
+        pml4[ADDRESS_SPACE_OWNERS_PML4_INDEX] = owners;
+    }
 
     union x86_64_virtual_address
     {

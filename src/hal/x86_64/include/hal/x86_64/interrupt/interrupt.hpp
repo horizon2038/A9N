@@ -283,15 +283,16 @@ namespace a9n::hal::x86_64
 
     enum class reserved_irq : uint16_t
     {
-        IO_BASE        = 0x20,
-        IPI_HALT       = kernel::SMP_ENABLED ? 0xF0 : 0x48,
-        IPI_RESCHEDULE = kernel::SMP_ENABLED ? 0xF1 : 0x49,
+        IO_BASE            = 0x20,
+        IPI_HALT           = kernel::SMP_ENABLED ? 0xF0 : 0x48,
+        IPI_RESCHEDULE     = kernel::SMP_ENABLED ? 0xF1 : 0x49,
+        IPI_INVALIDATE_TLB = kernel::SMP_ENABLED ? 0xF2 : 0x4A,
 
-        CONSOLE_1      = 0x23,
-        CONSOLE_0      = 0x24,
+        CONSOLE_1          = 0x23,
+        CONSOLE_0          = 0x24,
 
-        BASE           = 0x30,
-        TIMER          = BASE,
+        BASE               = 0x30,
+        TIMER              = BASE,
     };
 
     // inline interrupt interrupt_core {};

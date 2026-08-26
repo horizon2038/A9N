@@ -28,6 +28,7 @@
 
 #include <kernel/boot/boot_info.hpp>
 #include <kernel/memory/memory.hpp>
+#include <kernel/process/lock.hpp>
 #include <kernel/utility/logger.hpp>
 
 #include <liba9n/libc/string.hpp>
@@ -563,7 +564,11 @@ namespace a9n::hal::x86_64
             return;
         }
 
-        auto idle_result = local_variable->process_manager_core.switch_to_idle();
+        kernel::kernel_result idle_result;
+        {
+            kernel::lock_guard guard(kernel::giant_lock);
+            idle_result = local_variable->process_manager_core.switch_to_idle();
+        }
         if (!idle_result)
         {
             atomic_store(&has_ap_boot_failed, 1);

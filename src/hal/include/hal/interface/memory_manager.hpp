@@ -13,6 +13,10 @@ namespace a9n::hal
     liba9n::result<a9n::kernel::page_table, hal_error>
         make_address_space(a9n::physical_address address);
 
+    // A word-wide bitmap of cores currently using the address space.
+    a9n::word read_address_space_owners(const a9n::kernel::page_table &page_table);
+    void write_address_space_owners(const a9n::kernel::page_table &page_table, a9n::word owners);
+
     kernel::memory_map_result<>
         validate_root_address_space(const a9n::kernel::page_table &target_root);
 

@@ -37,6 +37,7 @@ namespace a9n::hal
     enum class ipi_type
     {
         RESCHEDULE,
+        INVALIDATE_TLB,
     };
 
     hal_result send_ipi(ipi_type type, a9n::word core_number);

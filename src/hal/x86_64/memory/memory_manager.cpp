@@ -1,14 +1,12 @@
 #include <hal/interface/memory_manager.hpp>
 
-#include <kernel/capability/page_table_capability.hpp>
 #include <kernel/memory/memory.hpp>
 #include <kernel/memory/memory_type.hpp>
-#include <kernel/process/cpu.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
-#include <hal/interface/cpu.hpp>
 #include <hal/x86_64/arch/arch_types.hpp>
+#include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/memory/paging.hpp>
 
 #include <liba9n/libc/string.hpp>
@@ -18,49 +16,25 @@ namespace a9n::hal
     // helper
     namespace
     {
-        kernel::memory_map_result<> try_maybe_invalidate_page(
+        template<bool FLUSH_ADDRESS_SPACE>
+        void invalidate_local_tlb(
             const a9n::kernel::page_table &target_address_space,
             a9n::virtual_address           target_address
         )
         {
-            DEBUG_LOG("try_maybe_invalidate_page");
-            return a9n::hal::current_local_variable()
-                .and_then(
-                    [&](kernel::cpu_local_variable *variable) -> hal_result
-                    {
-                        // TLB flush for CR3 is postponed until process is loaded
-                        if (!variable->current_process)
-                        {
-                            DEBUG_LOG("no process");
-                            return {};
-                        }
+            if (x86_64::_read_cr3() != target_address_space.address)
+            {
+                return;
+            }
 
-                        if (variable->current_process->root_address_space.type
-                            != a9n::kernel::capability_type::ADDRESS_SPACE)
-                        {
-                            DEBUG_LOG("no address space");
-                            return hal_error::ILLEGAL_ARGUMENT;
-                        }
-
-                        auto owner_address_space = a9n::kernel::convert_slot_data_to_page_table(
-                            variable->current_process->root_address_space.data
-                        );
-
-                        if (target_address_space.address == owner_address_space.address)
-                        {
-                            DEBUG_LOG("invalidate page");
-                            x86_64::_invalidate_page(target_address);
-                        }
-
-                        return {};
-                    }
-                )
-                .transform_error(
-                    [&](hal_error e) -> kernel::memory_map_error
-                    {
-                        return kernel::memory_map_error::ILLEGAL_AUTORITY;
-                    }
-                );
+            if constexpr (FLUSH_ADDRESS_SPACE)
+            {
+                x86_64::_flush_tlb();
+            }
+            else
+            {
+                x86_64::_invalidate_page(target_address);
+            }
         }
     }
 
@@ -98,7 +72,19 @@ namespace a9n::hal
             a9n::PAGE_SIZE
         );
 
+        x86_64::write_address_space_owners(root_address, 0);
+
         return a9n::kernel::page_table { root_address, x86_64::PAGE_DEPTH::PML4 };
+    }
+
+    a9n::word read_address_space_owners(const a9n::kernel::page_table &page_table)
+    {
+        return x86_64::read_address_space_owners(page_table.address);
+    }
+
+    void write_address_space_owners(const a9n::kernel::page_table &page_table, a9n::word owners)
+    {
+        x86_64::write_address_space_owners(page_table.address, owners);
     }
 
     kernel::memory_map_result<> map_page_table(
@@ -157,7 +143,8 @@ namespace a9n::hal
                                 entry->page_size       = false;
                                 entry->execute_disable = !is_executable;
 
-                                return try_maybe_invalidate_page(target_root, target_address);
+                                invalidate_local_tlb<true>(target_root, target_address);
+                                return {};
                             }
                         );
                 }
@@ -187,7 +174,8 @@ namespace a9n::hal
 
                     entry->init();
 
-                    return try_maybe_invalidate_page(target_root, target_address);
+                    invalidate_local_tlb<true>(target_root, target_address);
+                    return {};
                 }
             );
     }
@@ -260,7 +248,8 @@ namespace a9n::hal
                     DEBUG_LOG("entry.page_size (is huge-page): %s", entry->page_size ? "true" : "false");
 
                     DEBUG_LOG("invalidate page");
-                    return try_maybe_invalidate_page(target_root, target_address);
+                    invalidate_local_tlb<false>(target_root, target_address);
+                    return {};
                 }
             );
     }
@@ -301,7 +290,8 @@ namespace a9n::hal
 
                     entry->init();
 
-                    return try_maybe_invalidate_page(target_root, target_address);
+                    invalidate_local_tlb<false>(target_root, target_address);
+                    return {};
                 }
             );
     }

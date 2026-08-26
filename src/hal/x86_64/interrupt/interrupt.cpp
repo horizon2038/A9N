@@ -8,6 +8,7 @@
 #include <hal/x86_64/arch/cpu.hpp>
 #include <hal/x86_64/interrupt/apic.hpp>
 #include <hal/x86_64/interrupt/interrupt_descriptor.hpp>
+#include <hal/x86_64/memory/paging.hpp>
 #include <hal/x86_64/systemcall/syscall.hpp>
 #include <hal/x86_64/time/acpi_pm_timer.hpp>
 
@@ -129,6 +130,12 @@ namespace a9n::hal::x86_64
             case reserved_irq::IPI_RESCHEDULE :
                 DEBUG_LOG("IPI RESCHEDULE");
                 ipi_reschedule_handler();
+                ack_interrupt();
+                break;
+
+            case reserved_irq::IPI_INVALIDATE_TLB :
+                DEBUG_LOG("IPI INVALIDATE TLB");
+                _flush_tlb();
                 ack_interrupt();
                 break;
 
@@ -574,22 +581,23 @@ namespace a9n::hal
 
     hal_result send_ipi(ipi_type type, a9n::word core_number)
     {
-        if (type != ipi_type::RESCHEDULE || core_number >= core_count())
-        {
-            return hal_error::ILLEGAL_ARGUMENT;
-        }
+        static_assert(
+            static_cast<uint8_t>(ipi_type::INVALIDATE_TLB)
+                == static_cast<uint8_t>(ipi_type::RESCHEDULE) + 1
+            && static_cast<uint16_t>(x86_64::reserved_irq::IPI_INVALIDATE_TLB)
+                   == static_cast<uint16_t>(x86_64::reserved_irq::IPI_RESCHEDULE) + 1
+        );
 
-        auto local_apic_id = x86_64::arch_cpu_local_variables[core_number].local_apic_id;
-        if (local_apic_id > UINT8_MAX)
-        {
-            return hal_error::UNSUPPORTED;
-        }
+        auto raw_type = static_cast<uint8_t>(type);
+        const uint8_t vector = static_cast<uint8_t>(x86_64::reserved_irq::IPI_RESCHEDULE) + raw_type;
+        const auto local_apic_id
+            = static_cast<uint8_t>(x86_64::arch_cpu_local_variables[core_number].local_apic_id);
 
         return x86_64::ipi(
-            static_cast<uint8_t>(x86_64::reserved_irq::IPI_RESCHEDULE),
+            vector,
             x86_64::ipi_delivery_mode::FIXED,
             x86_64::ipi_destination_shorthand::NO_SHORTHAND,
-            static_cast<uint8_t>(local_apic_id),
+            local_apic_id,
             x86_64::ipi_trigger_mode::EDGE,
             x86_64::ipi_level_state::ASSERT
         );

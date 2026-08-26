@@ -1,9 +1,11 @@
 #include <kernel/capability/address_space.hpp>
 
 #include <kernel/capability/capability_result.hpp>
+#include <kernel/config.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
+#include <hal/interface/interrupt.hpp>
 #include <hal/interface/memory_manager.hpp>
 
 namespace a9n::kernel
@@ -54,8 +56,48 @@ namespace a9n::kernel
         {
             return a9n::hal::validate_root_address_space(target_root)
                 .transform_error(convert_memory_map_to_capability_error);
+        }
+
+        inline capability_result shootdown_remote_tlb(process &owner, const page_table &address_space)
+        {
+            if constexpr (SMP_ENABLED)
+            {
+                auto owners = a9n::hal::read_address_space_owners(address_space);
+                auto current_owner
+                    = static_cast<a9n::word>(1) << (owner.core_affinity & (a9n::WORD_BITS - 1));
+                owners &= ~current_owner;
+
+                for (a9n::word core_number = 0; owners; core_number++, owners >>= 1)
+                {
+                    if (!(owners & 1))
+                    {
+                        continue;
+                    }
+
+                    auto result = a9n::hal::send_ipi(a9n::hal::ipi_type::INVALIDATE_TLB, core_number);
+                    if (!result)
+                    {
+                        return capability_error::FATAL;
+                    }
+                }
+            }
 
             return {};
+        }
+
+        inline capability_result complete_address_space_update(
+            process            &owner,
+            const page_table   &address_space,
+            memory_map_result<> update_result
+        )
+        {
+            return update_result.transform_error(convert_memory_map_to_capability_error)
+                .and_then(
+                    [&](void) -> capability_result
+                    {
+                        return shootdown_remote_tlb(owner, address_space);
+                    }
+                );
         }
     }
 
@@ -149,15 +191,16 @@ namespace a9n::kernel
                                                         );
 
                                                         DEBUG_LOG("hal::map_page_table");
-                                                        return a9n::hal::map_page_table(
-                                                                   root_table,
-                                                                   target_table,
-                                                                   address,
-                                                                   attr
-                                                        )
-                                                            .transform_error(
-                                                                convert_memory_map_to_capability_error
-                                                            );
+                                                        return complete_address_space_update(
+                                                            owner,
+                                                            root_table,
+                                                            a9n::hal::map_page_table(
+                                                                root_table,
+                                                                target_table,
+                                                                address,
+                                                                attr
+                                                            )
+                                                        );
                                                     }
                                                 );
                                         }
@@ -193,15 +236,16 @@ namespace a9n::kernel
                                                         );
 
                                                         DEBUG_LOG("hal::map_frame");
-                                                        return a9n::hal::map_frame(
-                                                                   root_table,
-                                                                   target_frame,
-                                                                   address,
-                                                                   attr
-                                                        )
-                                                            .transform_error(
-                                                                convert_memory_map_to_capability_error
-                                                            );
+                                                        return complete_address_space_update(
+                                                            owner,
+                                                            root_table,
+                                                            a9n::hal::map_frame(
+                                                                root_table,
+                                                                target_frame,
+                                                                address,
+                                                                attr
+                                                            )
+                                                        );
                                                     }
                                                 );
                                         }
@@ -260,14 +304,15 @@ namespace a9n::kernel
                                                             target_table.address
                                                         );
 
-                                                        return a9n::hal::unmap_page_table(
-                                                                   root_table,
-                                                                   target_table,
-                                                                   address
-                                                        )
-                                                            .transform_error(
-                                                                convert_memory_map_to_capability_error
-                                                            );
+                                                        return complete_address_space_update(
+                                                            owner,
+                                                            root_table,
+                                                            a9n::hal::unmap_page_table(
+                                                                root_table,
+                                                                target_table,
+                                                                address
+                                                            )
+                                                        );
                                                     }
                                                 );
                                         }
@@ -293,14 +338,15 @@ namespace a9n::kernel
                                                             target_frame.address
                                                         );
 
-                                                        return a9n::hal::unmap_frame(
-                                                                   root_table,
-                                                                   target_frame,
-                                                                   address
-                                                        )
-                                                            .transform_error(
-                                                                convert_memory_map_to_capability_error
-                                                            );
+                                                        return complete_address_space_update(
+                                                            owner,
+                                                            root_table,
+                                                            a9n::hal::unmap_frame(
+                                                                root_table,
+                                                                target_frame,
+                                                                address
+                                                            )
+                                                        );
                                                     }
                                                 );
                                         }
