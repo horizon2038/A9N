@@ -52,9 +52,10 @@
 #include "/pages/software_development.typ"
 #include "/pages/building_services.typ"
 
-#manual_part([Part V], [Multiprocessing and Architecture-specific Interface], [本Partは，SMPの実行Model，x86_64固有のABI，新しいArchitectureへHALを移植する手順を示す．])
+#manual_part([Part V], [Multiprocessing and Architecture-specific Interface], [本Partは，SMPの実行Model，x86_64とAArch64固有のABI，新しいArchitectureとPlatformへHALを移植する手順を示す．])
 #include "/pages/smp.typ"
 #include "/pages/abi.typ"
+#include "/pages/aarch64_abi.typ"
 #include "/pages/porting.typ"
 
 #manual_part([Part VI], [Ecosystem], [本Partは，A9N Microkernelと組み合わせるSoftware Componentの責務と選択基準を示す．])

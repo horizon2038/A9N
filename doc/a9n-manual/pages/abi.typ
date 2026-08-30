@@ -4,7 +4,7 @@
 
 == Scope
 
-#term[x86_64 ABI]は，A9Nの共通インターフェースをx86_64 Long Modeへ対応させる規約である．対象Revisionで実装されているHardware Architectureはx86_64だけである．本章では，Register，Page Table，I/O PortのHAL実装，Boot情報，割り込み，VMXの順に固有の規約を示す．
+#term[x86_64 ABI]は，A9Nの共通インターフェースをx86_64 Long Modeへ対応させる規約である．本章では，Register，Page Table，I/O PortのHAL実装，Boot情報，割り込み，VMXの順にx86_64固有の規約を示す．AArch64固有の規約は「AArch64 ABI」に記載する．
 
 #reference_table(
   (1.5fr, 2.8fr),

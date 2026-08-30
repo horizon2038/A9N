@@ -124,7 +124,7 @@ Virtual Message Registerは型情報を持たない．Capability Descriptor，Op
   [`MR2..`], [Operation固有の出力．],
 )
 
-カーネルは，実行中ProcessのRoot Nodeを起点として，`MR0`のCapability Descriptorによって対象Capability Slotを探索する．空のSlot，探索途中のLeaf Object，Depthの不一致により対象Slotへ到達できない場合，`MR0 = 0`と`MR1 = INVALID_DESCRIPTOR`を返す．Message Registerとレジスタの対応は「x86_64 ABI」に記載する．
+カーネルは，実行中ProcessのRoot Nodeを起点として，`MR0`のCapability Descriptorによって対象Capability Slotを探索する．空のSlot，探索途中のLeaf Object，Depthの不一致により対象Slotへ到達できない場合，`MR0 = 0`と`MR1 = INVALID_DESCRIPTOR`を返す．Message RegisterとHardware Registerの対応は，対象Architectureの「x86_64 ABI」または「AArch64 ABI」に記載する．
 
 == IPC Buffer
 

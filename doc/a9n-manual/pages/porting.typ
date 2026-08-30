@@ -4,7 +4,7 @@
 
 == Scope and Starting State
 
-HALを移植するには，新しいArchitecture用のBoot，Context，Memory Mapping，Interrupt，Timer，I/O，Kernel Call Entryを実装し，共通のKernel Interfaceへ接続する．対象Revisionで起動まで実装されているArchitecture Directoryは`src/hal/x86_64`だけである．
+HALを移植するには，新しいArchitecture用のBoot，Context，Memory Mapping，Interrupt，Timer，I/O，Kernel Call Entryを実装し，共通のKernel Interfaceへ接続する．対象Revisionでは`src/hal/x86_64`と`src/hal/aarch64`がBuild対象であり，AArch64の実装済みPlatformは`qemu`である．
 
 移植には，Freestanding C++20 Toolchain，Target用AssemblerとLinker，Boot環境，Architecture Manual，Interrupt ControllerとTimerの仕様が必要となる．Kernelの初期化，Initの起動，Capability Call，Timer Preemption，IPC，Fault配送がTarget HardwareまたはEmulator上で動作すれば，最小のPortが成立する．
 
@@ -16,25 +16,21 @@ HALを移植するには，新しいArchitecture用のBoot，Context，Memory Ma
 src/hal/{ARCH}/
 ├── CMakeLists.txt
 ├── toolchain.cmake
-├── kernel.ld
 ├── include/hal/arch/arch_types.hpp
 ├── boot/
 ├── arch/
 ├── process/
-├── systemcall/
 ├── memory/
 ├── interrupt/
-├── time/
 ├── io/
-└── factory/
+├── virtualization/
+└── platform/
+    └── {PLATFORM}/
 ```
 
-Directory名はCMakeの`ARCH`値と一致させる．Root CMakeが`src/hal/${ARCH}`の存在を確認し，`src/hal/CMakeLists.txt`がSubdirectoryを追加する．Kernel Targetには`src/hal/${ARCH}/include`をInclude Pathとして渡す．
+Directory名はCMakeの`ARCH`値と一致させる．Board固有Directory名は`PLATFORM`値と一致させる．Root CMakeが`src/hal/${ARCH}`の存在を確認し，Architecture CMakeが`platform/${PLATFORM}`を選択する．Kernel Targetには共通HAL Interface，Architecture Header，Platform HeaderをInclude Pathとして渡す．
 
-#notice(
-  [CAUTION],
-  [`src/hal/CMakeLists.txt`の一つのInclude Pathは`${arch}`というLowercase変数を参照する．標準入力変数は`${ARCH}`である．新しいPortでArchitecture Headerが見つからない場合，Lowercase参照を修正する必要がある．],
-)
+`main.cpp`は`hal/interface/hal.hpp`だけをIncludeする．ほかのKernel共通実装は必要な`hal/interface/*.hpp`を直接Includeしてよいが，Architecture／Platform固有Headerや条件分岐を持たない．HAL Interfaceはfree functionであり，Runtime FactoryとVirtual Classを使用しない．各Architecture／Platformは同じSymbolを実装し，Build時に選択されたObjectだけをLinkする．
 
 == Architecture Constants
 
@@ -62,7 +58,7 @@ Kernel共通Codeには，Page Size，Word幅，DescriptorのDepth幅，Kernel Di
 #reference_table(
   (1.5fr, 1.8fr, 2fr),
   ([*Area*], [*Interface Header*], [*Required responsibility*]),
-  [Architecture Init], [`arch_initializer.hpp`], [`arch_info[]`をDecodeし，CPU，Interrupt，Timer，Platformを初期化する．],
+  [Architecture Init], [`arch_initializer.hpp`], [`init_architecture()`で`arch_info[]`をDecodeし，CPU，Interrupt，Timer，Platformを初期化する．],
   [CPU-local State], [`cpu.hpp`，`lock.hpp`], [Core番号，CPU-local Pointer，Kernel Lockを提供する．],
   [Process Context], [`process_manager.hpp`], [Context初期化，Context Switch，Restore，Message Register，General Register，User Address検査を実装する．],
   [Memory], [`memory_manager.hpp`], [Address Space作成，Page TableとFrameのMap／Unmap，Depth探索，Frame Size検査を実装する．],
@@ -70,7 +66,6 @@ Kernel共通Codeには，Page Size，Word幅，DescriptorのDepth幅，Kernel Di
   [Timer], [`timer.hpp`], [System Clock Frequency設定を実装する．],
   [Port I/O], [`port_io.hpp`], [Architectureが持つI/O SpaceのRead／Writeを実装する．MMIO ArchitectureはCompatibility方針を定義する．],
   [Serial], [`serial.hpp`], [Early Boot Logger用Serial Driverを実装する．],
-  [Factory], [`hal_factory.hpp`], [Architecture固有HAL Objectを生成する．],
   [Virtualization], [`virtualize.hpp`], [Buildに必要なStubまたはHardware Virtualization実装を提供する．],
 )
 
@@ -119,6 +114,7 @@ Local CMake Buildの実行例は次の通りである．
 ```sh
 cmake -S . -B build-{ARCH} \
   -DARCH={ARCH} \
+  -DPLATFORM={PLATFORM} \
   -DCMAKE_TOOLCHAIN_FILE=./src/hal/{ARCH}/toolchain.cmake \
   -DCMAKE_BUILD_TYPE=Debug
 cmake --build build-{ARCH}

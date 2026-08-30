@@ -14,6 +14,7 @@ services:
       CCACHE_DIR: /workspace/.ccache
       CCACHE_MAXSIZE: 2G
       ARCH: ${ARCH:-x86_64}
+      PLATFORM: ${PLATFORM:-qemu}
       BUILD_TYPE: ${BUILD_TYPE:-Release}
 
     command:
@@ -21,9 +22,10 @@ services:
       - -lc
       - |
         set -eux
-        build_dir="build-${ARCH}-${BUILD_TYPE}"
+        build_dir="build-${ARCH}-${PLATFORM}-${BUILD_TYPE}"
         cmake -S . -B "$${build_dir}" \
           -DARCH="${ARCH}" \
+          -DPLATFORM="${PLATFORM}" \
           -DCMAKE_TOOLCHAIN_FILE="./src/hal/${ARCH}/toolchain.cmake" \
           -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
           -G Ninja

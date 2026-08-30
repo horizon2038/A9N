@@ -20,8 +20,11 @@ an object-oriented interface enabled by capabilities, and a high-performance IPC
 └── src
     ├── kernel
     ├── hal
-    │    └── include/hal/interface
-    │    └── {ARCH}
+    │   ├── include/hal/interface
+    │   ├── x86_64
+    │   └── aarch64
+    │       └── platform
+    │           └── {PLATFORM}
     └── liba9n
 
 
@@ -35,7 +38,8 @@ The main hardware-independent part of the A9N microkernel.
 
 A Hardware Abstraction Layer (HAL) is implemented to provide a portable interface
 to the underlying hardware.  
-The {ARCH} directory is referenced during the `make` process.  
+The `{ARCH}` directory is selected by `-DARCH`. AArch64 platform code lives in
+`aarch64/platform/{PLATFORM}` and is selected by `-DPLATFORM`.
 
 ### `src/liba9n`
 
@@ -47,6 +51,7 @@ Used by the kernel, and HAL.
 Currently supported architectures:
 
 - x86_64 (Long Mode)
+- aarch64 (ARMv8-A, QEMU `virt` with GICv2)
 
 ## Requirements
 
@@ -68,24 +73,26 @@ Currently supported architectures:
 ### Syntax
 
 ```bash
-ARCH={target_arch} BUILD_TYPE={Debug|Release} docker compose run --rm a9n-build
+ARCH={target_arch} PLATFORM={target_platform} BUILD_TYPE={Debug|Release} docker compose run --rm a9n-build
 ```
 
 ### Example (x86_64, Release)
 
 ```bash
-ARCH=x86_64 BUILD_TYPE=Release docker compose run --rm a9n-build
+ARCH=x86_64 PLATFORM=qemu BUILD_TYPE=Release docker compose run --rm a9n-build
 ```
 
 ## Build (with CMake)
 
 ```bash
 mkdir build
-cmake -B build -DARCH={target_arch} -DCMAKE_TOOLCHAIN_FILE=./src/hal/{target_arch}/toolchain.cmake -DCMAKE_BUILD_TYPE={Debug|Release}
+cmake -B build \
+  -DARCH={target_arch} \
+  -DPLATFORM={target_platform} \
+  -DCMAKE_TOOLCHAIN_FILE=./src/hal/{target_arch}/toolchain.cmake \
+  -DCMAKE_BUILD_TYPE={Debug|Release}
 cmake --build build
 ```
-> [!NOTE]
-> Currently, the CMake build supports only the kernel binary. 
 
 ## How to Use
 

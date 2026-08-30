@@ -4,7 +4,7 @@
 
 == Scope
 
-A9N 0.1.16は，Build時に選択する#term[Symmetric Multiprocessing]（SMP）を実装する．SMPを有効にすると，x86_64 HALはBoot時に複数のCPU Coreを起動し，KernelはCoreごとのScheduler，CPU Affinity，Local APIC Timer，IDLE Processを使用する．User Processは異なるCoreで並行実行でき，IPCとNotificationはCore境界を越えてProcessをWakeupできる．
+A9N 0.2.0は，Build時に選択する#term[Symmetric Multiprocessing]（SMP）を実装する．SMPを有効にすると，x86_64 HALはBoot時に複数のCPU Coreを起動し，KernelはCoreごとのScheduler，CPU Affinity，Local APIC Timer，IDLE Processを使用する．User Processは異なるCoreで並行実行でき，IPCとNotificationはCore境界を越えてProcessをWakeupできる．
 
 SMPは既定で無効である．A9N Repository RootでCMakeをConfigureするとき，`A9N_CONFIG_ENABLE_SMP`を`ON`にする．このOptionはRuntime設定ではなくCompile-time設定であり，変更後は対象Build DirectoryのKernelを再Buildする必要がある．
 
@@ -21,7 +21,7 @@ SMPを無効にする場合はOptionを省略するか，明示的に`-DA9N_CONF
 
 #reference_table(
   (1.6fr, 3.4fr),
-  ([項目], [v0.1.16の規約]),
+  ([項目], [v0.2.0の規約]),
   [Build Option], [`A9N_CONFIG_ENABLE_SMP`．既定値は`OFF`．],
   [最大Core数], [`CPU_COUNT_MAX = 64`．BSPを含む．],
   [Logical Core 0], [Bootstrap Processor（BSP）．InitもCore 0から開始する．],
@@ -68,7 +68,7 @@ BSPは次の順序で#term[Application Processor]（AP）を起動する．
 + BSPが全APをReleaseする．各APはProcess ManagerとLocal APIC Timerを初期化し，自CoreのIDLEへ移る．
 + BSPは起動対象の全CoreがIDLEへ到達したことを確認してからInitへ切り替える．
 
-v0.1.16はBoot段階ですべてのCoreを起動することを前提とする．CoreごとのOnline FlagをRuntime Schedulingに使用せず，Affinityの有効範囲には`core_count()`が返すBoot時の起動Core数を用いる．Enabled Processorが一つだけの場合，SMP BuildでもCore 0だけで実行を継続する．
+v0.2.0はBoot段階ですべてのCoreを起動することを前提とする．CoreごとのOnline FlagをRuntime Schedulingに使用せず，Affinityの有効範囲には`core_count()`が返すBoot時の起動Core数を用いる．Enabled Processorが一つだけの場合，SMP BuildでもCore 0だけで実行を継続する．
 
 x86_64のIPI送信経路は8 bitのDestination APIC IDを用いる．MADTが255より大きいAPIC IDを要求する構成はSMP起動対象として扱えない．また，起動数は`CPU_COUNT_MAX`の64 Coreで打ち切る．
 
@@ -98,7 +98,7 @@ x86_64固有のCPU-local領域は，Logical CoreごとのLocal APIC ID，GDT，I
 
 PCBの`CONFIGURE`は，`configuration_info`のBit 9と`MR12`を使用してCPU Affinityを設定する．AffinityはLogical Core番号であり，`core_count()`以上の値は`INVALID_ARGUMENT`となる．新しいPCBとInitの既定Affinityは0である．
 
-READY Processまたは割当て先Coreで実行中のProcessに対して，別CoreへのAffinity変更はできない．Process Managerは対象をSuspendし，Remote Reschedule IPIによって対象Coreが実際にContextを切り替えた後にAffinityを変更してResumeする必要がある．v0.1.16は自動Migration，Work Stealing，Ready Queue間のLoad Balancingを実装しない．
+READY Processまたは割当て先Coreで実行中のProcessに対して，別CoreへのAffinity変更はできない．Process Managerは対象をSuspendし，Remote Reschedule IPIによって対象Coreが実際にContextを切り替えた後にAffinityを変更してResumeする必要がある．v0.2.0は自動Migration，Work Stealing，Ready Queue間のLoad Balancingを実装しない．
 
 Local APIC TimerはCoreごとにQuantumを更新する．BSPがSystem Clock Frequencyを指定し，APはRelease後に同じ周波数で各Local APIC Timerを開始する．Timer Tickは現在CoreのProcess Managerだけを操作する．
 
@@ -134,7 +134,7 @@ Giant LockはPage Table Capability，Address Space Capability，Address Space Ow
 
 同じAddress Spaceを複数CoreのProcessで使用している間にMappingを変更すると，HALは`CR3`と対象PML4を直接比較してLocal TLBを無効化し，KernelはOwner Bitmapに記録されたRemote CoreへTLB Shootdown IPIを送る．Remote Handlerは現在の`CR3`を再LoadしてTLBをFlushする．Remote OwnerがないAddress SpaceにはIPIを送らない．
 
-v0.1.16には，次の機能が含まれない．
+v0.2.0には，次の機能が含まれない．
 
 - CPU Hotplug，Hot-unplug，RuntimeのOnline／Offline管理．
 - Processの自動MigrationとLoad Balancing．
