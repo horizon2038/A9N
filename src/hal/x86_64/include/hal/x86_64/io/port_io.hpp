@@ -46,11 +46,11 @@ namespace a9n::hal::x86_64
         asm volatile("outb %%al, $0x80" : : "a"(0));
     }
 
-    class port_io final : public a9n::hal::port_io
+    class port_io final
     {
       public:
-        uint8_t read(uint16_t address) override;
-        void    write(uint16_t address, uint8_t data) override;
+        uint8_t read(uint16_t address);
+        void    write(uint16_t address, uint8_t data);
 
         inline static void io_wait()
         {

@@ -42,7 +42,7 @@ target_include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     "${CMAKE_SOURCE_DIR}/src/kernel/include"
     "${CMAKE_SOURCE_DIR}/src/hal/include"
-    "${CMAKE_SOURCE_DIR}/src/hal/${arch}/include"
+    "${CMAKE_SOURCE_DIR}/src/hal/${ARCH}/include"
 )
 
 target_link_libraries(

@@ -11,9 +11,6 @@ namespace a9n::kernel
     class timer
     {
       public:
-        timer(a9n::hal::timer &timer);
-        ~timer();
-
         void clock();
     };
 }

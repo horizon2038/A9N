@@ -6,14 +6,10 @@
 
 namespace a9n::hal
 {
-    class serial
-    {
-      public:
-        virtual void    init_serial(a9n::word baud_rate) = 0;
-        virtual uint8_t read_serial()                    = 0;
-        virtual void    write_serial(char data)          = 0;
-        virtual void    write_string_serial(char *out)   = 0;
-    };
+    void    init_serial(a9n::word baud_rate);
+    uint8_t read_serial();
+    void    write_serial(char data);
+    void    write_string_serial(const char *out);
 }
 
 #endif

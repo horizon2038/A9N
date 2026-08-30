@@ -15,18 +15,4 @@
 #include <hal/interface/serial.hpp>
 #include <hal/interface/timer.hpp>
 
-namespace a9n::hal
-{
-    struct hal
-    {
-        // platform services
-        arch_initializer *_arch_initializer;
-
-        // peripheral drivers
-        port_io *_port_io;
-        serial  *_serial;
-        timer   *_timer;
-    };
-}
-
 #endif

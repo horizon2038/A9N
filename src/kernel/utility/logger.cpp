@@ -12,7 +12,7 @@ namespace a9n::kernel::utility
 
     using guard                  = lock_guard<spin_lock_no_owner>;
 
-    logger::logger(a9n::hal::serial &target_serial) : _print(target_serial)
+    logger::logger()
     {
         this_logger = this;
         this_logger->_print.printf("\e[0m");

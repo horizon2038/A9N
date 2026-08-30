@@ -1,21 +1,9 @@
-#include <hal/x86_64/io/serial.hpp>
-
-#include <hal/interface/interrupt.hpp>
-#include <hal/interface/port_io.hpp>
-#include <hal/x86_64/interrupt/pic.hpp>
-#include <kernel/types.hpp>
-
-// for debug
-#include <hal/x86_64/interrupt/apic.hpp>
+#include <hal/interface/serial.hpp>
 #include <hal/x86_64/io/port_io.hpp>
 
 namespace a9n::hal::x86_64
 {
     inline constexpr uint16_t COM_1 = 0x3f8;
-    inline constexpr uint16_t COM_2 = 0x2f8;
-    inline constexpr uint16_t COM_3 = 0x3e8;
-    inline constexpr uint16_t COM_4 = 0x2e8;
-
     inline constexpr uint16_t RBR   = 0;
     inline constexpr uint16_t DLL   = 0;
     inline constexpr uint16_t DLH   = 1;
@@ -25,112 +13,67 @@ namespace a9n::hal::x86_64
     inline constexpr uint16_t MCR   = 4;
     inline constexpr uint16_t LSR   = 5;
 
-    serial::serial(a9n::hal::port_io &injected_port_io) : _port_io(injected_port_io)
+    void reconfigure_serial()
     {
+        port_write_8(COM_1 + MCR, 0x0b);
+        port_write_8(COM_1 + FCR, 0x07);
+        port_write_8(COM_1 + IER, 0x01);
     }
+}
 
-    serial::~serial()
+namespace a9n::hal
+{
+    void init_serial(a9n::word baud_rate)
     {
-    }
-
-    void serial::init_serial(a9n::word baud_rate)
-    {
-        // TODO: return hal_error::ILLEGAL_ARGUMENT
-        if (baud_rate == 0)
+        using namespace x86_64;
+        if (!baud_rate)
         {
-            return;
+            baud_rate = 115200;
         }
 
-        // // disable fifo
-        // port_write_8(COM_1 + FCR, 0x00);
-        // enable fifo
         port_write_8(COM_1 + FCR, 0xc7);
         port_wait();
-        // disable interrupts
         port_write_8(COM_1 + IER, 0x00);
         port_wait();
-
-        // configure 8bits, no parity, one stop bit
-        port_write_8(COM_1 + LCR, 0x80); // 0ld: 0x03
+        port_write_8(COM_1 + LCR, 1U << 7);
         port_wait();
 
-        // lock divisor
-        port_write_8(COM_1 + LCR, 1 << 7);
+        const auto divisor = static_cast<uint16_t>(115200 / baud_rate);
+        port_write_8(COM_1 + DLL, static_cast<uint8_t>(divisor & 0xff));
         port_wait();
-
-        // configure divisor
-        int divisor = 115200 / baud_rate;
-        port_write_8(COM_1 + DLL, divisor & 0xff);
+        port_write_8(COM_1 + DLH, static_cast<uint8_t>(divisor >> 8));
         port_wait();
-        port_write_8(COM_1 + DLH, (divisor >> 8) & 0xff);
-        port_wait();
-
-        // disable dlab
         port_write_8(COM_1 + LCR, 0x03);
         port_wait();
     }
 
-    uint8_t serial::read_serial()
+    uint8_t read_serial()
     {
-        while (is_received() == 0)
-            ;
-        return this->_port_io.read(COM_1);
-    }
-
-    int serial::is_received()
-    {
-        return this->_port_io.read(COM_1 + 5) & 0x01;
-    }
-
-    void serial::write_serial(char data)
-    {
-        while (is_empty() == 0)
-            ;
-        this->_port_io.write(COM_1, data);
-    }
-
-    int serial::is_empty()
-    {
-        return this->_port_io.read(COM_1 + 5) & 0x20;
-    }
-
-    void serial::write_string_serial(char *words)
-    {
-        for (uint32_t i = 0; i < strlen(words); ++i)
+        while ((x86_64::port_read_8(x86_64::COM_1 + x86_64::LSR) & 0x01) == 0)
         {
-            write_serial(words[i]);
+            asm volatile("pause");
+        }
+        return x86_64::port_read_8(x86_64::COM_1 + x86_64::RBR);
+    }
+
+    void write_serial(char data)
+    {
+        while ((x86_64::port_read_8(x86_64::COM_1 + x86_64::LSR) & 0x20) == 0)
+        {
+            asm volatile("pause");
+        }
+        x86_64::port_write_8(x86_64::COM_1, static_cast<uint8_t>(data));
+    }
+
+    void write_string_serial(const char *out)
+    {
+        if (!out)
+        {
+            return;
+        }
+        while (*out)
+        {
+            write_serial(*out++);
         }
     }
-
-    uint32_t serial::strlen(const char *s)
-    {
-        const char *ss;
-        for (ss = s; *ss != '\0'; ss++)
-            ;
-        return ss - s;
-    }
-
-    int is_received(void)
-    {
-        return port_read_8(COM_1 + 5) & 0x01;
-    }
-
-    uint8_t read_serial(void)
-    {
-        return port_read_8(COM_1);
-    }
-
-    void reconfigure_serial(void)
-    {
-        // UART re-configuration
-
-        // enable out2 in mcr
-        port_write_8(COM_1 + MCR, 0x0B);
-
-        // test: fifo : 1-byte trigger, clear rx/tx fifo
-        port_write_8(COM_1 + FCR, 0x07);
-
-        // enable receive interrupt
-        port_write_8(COM_1 + IER, 0x01);
-    }
-};
+}

@@ -62,7 +62,7 @@ namespace a9n::hal::x86_64
     hal_result init_sub_core(void);
     void       init_global_constructors(void);
 
-    hal_result arch_initializer::init_architecture(a9n::word arch_info[])
+    hal_result init_architecture_impl(a9n::word arch_info[])
     {
         init_global_constructors();
 
@@ -672,4 +672,12 @@ namespace a9n::hal::x86_64
                 }
             );
     };
+}
+
+namespace a9n::hal
+{
+    hal_result init_architecture(a9n::word arch_info[])
+    {
+        return x86_64::init_architecture_impl(arch_info);
+    }
 }

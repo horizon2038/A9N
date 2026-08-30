@@ -45,7 +45,7 @@ namespace a9n::kernel::utility
     class logger
     {
       public:
-        logger(a9n::hal::serial &target_serial);
+        logger();
         ~logger();
 
         static void log(const char *sender, const char *message);

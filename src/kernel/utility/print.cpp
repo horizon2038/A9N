@@ -6,20 +6,16 @@
 
 namespace a9n::kernel::utility
 {
-    print::print(a9n::hal::serial &injected_serial) : _serial(injected_serial)
-    {
-    }
-
     void print::printf(const char *format, ...)
     {
         __builtin_va_list args;
         __builtin_va_start(args, format);
         vsprintf(print_buffer, format, args);
         __builtin_va_end(args);
-        _serial.write_string_serial(print_buffer);
+        a9n::hal::write_string_serial(print_buffer);
     }
 
-    void print::vprintf(const char *format, __builtin_va_list args)
+    void print::vprintf(const char *format, __builtin_va_list &args)
     {
         vsprintf(print_buffer, format, args);
         printf("%s", print_buffer);
@@ -33,7 +29,7 @@ namespace a9n::kernel::utility
         __builtin_va_end(args);
     }
 
-    void print::vsprintf(char *buffer, const char *format, __builtin_va_list args)
+    void print::vsprintf(char *buffer, const char *format, __builtin_va_list &args)
     {
         char *destination = buffer;
 
@@ -54,10 +50,10 @@ namespace a9n::kernel::utility
 
     void print::put_char(char target)
     {
-        _serial.write_serial(target);
+        a9n::hal::write_serial(target);
     }
 
-    void print::process_format(char **destination, const char **format_pointer, __builtin_va_list args)
+    void print::process_format(char **destination, const char **format_pointer, __builtin_va_list &args)
     {
         int  width              = 0;
         bool zero_pad           = false;

@@ -8,20 +8,18 @@ namespace a9n::kernel::utility
     class print
     {
       public:
-        print(a9n::hal::serial &injected_serial);
+        print() = default;
 
         void printf(const char *format, ...);
-        void vprintf(const char *format, __builtin_va_list args);
+        void vprintf(const char *format, __builtin_va_list &args);
 
         void sprintf(char *buffer, const char *format, ...);
-        void vsprintf(char *buffer, const char *format, __builtin_va_list args);
+        void vsprintf(char *buffer, const char *format, __builtin_va_list &args);
 
         void put_char(char target);
 
       private:
-        a9n::hal::serial &_serial;
-
-        void process_format(char **destination, const char **format_pointer, __builtin_va_list args);
+        void process_format(char **destination, const char **format_pointer, __builtin_va_list &args);
         void write_char(char **destination, char target_char);
         void write_string(char **destination, char *target_string, int width = 0);
         void write_int(char **destination, int count, int width = 0, bool zero_pad = false);

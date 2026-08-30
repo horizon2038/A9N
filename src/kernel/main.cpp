@@ -16,14 +16,6 @@
 #include <kernel/version.hpp>
 
 #include <hal/interface/hal.hpp>
-#include <hal/interface/hal_factory.hpp>
-#include <hal/interface/interrupt.hpp>
-#include <hal/interface/memory_manager.hpp>
-#include <hal/interface/port_io.hpp>
-#include <hal/interface/timer.hpp>
-
-// TODO: devirtualize and remove hal_factory
-#include <hal/x86_64/factory/hal_factory.hpp>
 
 #include <liba9n/common/allocator.hpp>
 #include <liba9n/common/calculate.hpp>
@@ -34,27 +26,17 @@
 
 void kernel_main(void);
 
-a9n::hal::hal *hal_instance;
-
-constexpr uint32_t hal_factory_size = sizeof(a9n::hal::x86_64::hal_factory);
-alignas(a9n::hal::x86_64::hal_factory) static char hal_factory_buffer[hal_factory_size];
-
 extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
 {
     a9n::kernel::kernel_result result = {};
 
     using logger                      = a9n::kernel::utility::logger;
-    // make HAL and kernel objects.
-    a9n::hal::hal_factory *hal_factory_instance = new (hal_factory_buffer)
-        a9n::hal::x86_64::hal_factory();
-    hal_instance = hal_factory_instance->make();
-
-    hal_instance->_serial->init_serial(115200);
+    a9n::hal::init_serial(115200);
 
     constexpr uint16_t                         logger_size = sizeof(a9n::kernel::utility::logger);
     alignas(a9n::kernel::utility::logger) char logger_buf[logger_size];
-    a9n::kernel::utility::logger              *my_logger = new ((void *)logger_buf)
-        a9n::kernel::utility::logger { *hal_instance->_serial };
+    [[maybe_unused]] a9n::kernel::utility::logger *my_logger = new ((void *)logger_buf)
+        a9n::kernel::utility::logger {};
 
     // reset terminal and print boot information
     logger::printn("\e[0m\e[2J\e[H");
@@ -68,7 +50,7 @@ extern "C" int kernel_entry(a9n::kernel::boot_info *target_boot_info)
     a9n::kernel::init_cpu_local_variable();
 
     logger::printk("Initializing architecture (HAL) ...\n");
-    auto arch_res = hal_instance->_arch_initializer->init_architecture(target_boot_info->arch_info);
+    auto arch_res = a9n::hal::init_architecture(target_boot_info->arch_info);
     if (!arch_res)
     {
         logger::error("Failed to initialize architecture!");
