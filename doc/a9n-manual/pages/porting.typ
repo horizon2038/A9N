@@ -4,7 +4,7 @@
 
 == Scope and Starting State
 
-HALを移植するには，新しいArchitecture用のBoot，Context，Memory Mapping，Interrupt，Timer，I/O，Kernel Call Entryを実装し，共通のKernel Interfaceへ接続する．対象Revisionでは`src/hal/x86_64`と`src/hal/aarch64`がBuild対象であり，AArch64の実装済みPlatformは`qemu`である．
+HALを移植するには，新しいArchitecture用のBoot，Context，Memory Mapping，Interrupt，Timer，I/O，Kernel Call Entryを実装し，共通のKernel Interfaceへ接続する．対象Revisionでは`src/hal/x86_64`と`src/hal/aarch64`がBuild対象であり，AArch64の実装済みPlatformは`qemu`と`rpi4b`である．
 
 移植には，Freestanding C++20 Toolchain，Target用AssemblerとLinker，Boot環境，Architecture Manual，Interrupt ControllerとTimerの仕様が必要となる．Kernelの初期化，Initの起動，Capability Call，Timer Preemption，IPC，Fault配送がTarget HardwareまたはEmulator上で動作すれば，最小のPortが成立する．
 

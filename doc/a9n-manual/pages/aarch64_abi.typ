@@ -18,7 +18,7 @@
   [IRQ数], [`IRQ_NUMBER_MAX = 256`．A9Nが公開するIRQ番号は0から255である．],
 )
 
-BoardまたはEmulator固有実装は`-DPLATFORM={PLATFORM}`で選択し，`src/hal/aarch64/platform/{PLATFORM}`へ配置する．対象Revisionで実装されているPlatformは`qemu`である．Architecture共通部はEL Transition，Page Table，Context，A9N Boot Protocol構築を担当する．Platform部はEntry，Serial，Interrupt Controller，TimerなどHardware依存処理を担当する．
+BoardまたはEmulator固有実装は`-DPLATFORM={PLATFORM}`で選択し，`src/hal/aarch64/platform/{PLATFORM}`へ配置する．対象Revisionで実装されているPlatformは`qemu`と`rpi4b`である．Architecture共通部はEL Transition，Page Table，Context，A9N Boot Protocol構築を担当する．Platform部はEntry，Serial，Interrupt Controller，TimerなどHardware依存処理を担当する．
 
 `main.cpp`は`hal/interface/hal.hpp`だけをHALの入口として使用する．HALはRuntime FactoryやVirtual Dispatchを持たず，`ARCH`と`PLATFORM`によってLink時に実装を選択する．
 
@@ -32,7 +32,12 @@ src/hal/aarch64/
 ├── process/
 ├── virtualization/
 └── platform/
-    └── qemu/
+    ├── qemu/
+    │   ├── boot/
+    │   ├── interrupt/
+    │   ├── io/
+    │   └── time/
+    └── rpi4b/
         ├── boot/
         ├── interrupt/
         ├── io/
@@ -225,11 +230,73 @@ Script bootmethはScript実行前に`devtype`，`devnum`，`distro_bootpart`を�
 load ${devtype} ${devnum}:${distro_bootpart} <address> <path>
 ```
 
-`kernel_addr_r`，`ramdisk_addr_r`，`fdt_addr_r`はBoardのU-Boot Environmentに定義された値を優先する．未定義の場合だけQEMU `virt`用の既定値を設定する．Boot ScriptはAArch64 Image HeaderのOffset `0x10`から`image_size`を読み，Initrd AddressがKernel占有範囲と重なる場合はKernel終端より2 MiB後方へ移動する．
+QEMU用Scriptは`kernel_addr_r`，`ramdisk_addr_r`，`fdt_addr_r`についてBoardのU-Boot Environmentに定義された値を優先し，未定義の場合だけQEMU `virt`用の既定値を設定する．Raspberry Pi 4用ScriptはA9NのLink Addressに合わせて`kernel_addr_r = 0x0008_0000`を設定する．どちらもAArch64 Image HeaderのOffset `0x10`から`image_size`を読み，Initrd AddressがKernel占有範囲と重ならない位置へ配置する．Raspberry Pi 4用ScriptはさらにInitrd終端より後方へDTBを移動し，低AddressにあるFirmware DTBがKernel BSSで上書きされることを防ぐ．
 
 DTB Sourceは`fdt_addr`を優先する．これが未定義の場合は`fdtcontroladdr`を使用する．Source DTBの`totalsize`に更新用余白を加えて`fdt_addr_r`へCopyし，そのAddressを`booti`へ渡す．したがって，FirmwareまたはBoard Portは実行対象Hardwareを記述するDTBをU-Bootへ提供する必要がある．
 
 U-Bootにはlegacy script image，filesystem `load`，`setexpr`，`itest`，`fdt`，`booti`が必要である．自動探索を用いるBuildでは，Standard BootとScript bootmethも有効にする．自動探索を持たないBoardでも，Partition 1から`boot.scr`をLoadして`source`を実行すれば同じBoot ABIを使用できる．
+
+=== Raspberry Pi 4 Model B Platform
+
+Raspberry Pi 4 Model Bは`-DARCH=aarch64 -DPLATFORM=rpi4b`で選択する．Boot Chainは，Raspberry Pi EEPROM Bootloader，VideoCore Firmware，U-Boot，A9N Pre-entry，A9N Kernel Entryの順である．VideoCore Firmwareは第1 FAT32 Partitionの`config.txt`を読み，`start4.elf`と`fixup4.dat`を用いてBCM2711を初期化し，U-Bootを`kernel8.img`としてPhysical Address `0x0008_0000`へLoadする．Firmware DTBのAddressはU-Boot Entryの`x0`へ渡される．U-BootのRaspberry Pi Board PortはこのAddressを`fdt_addr`として公開し，A9N Boot Scriptは更新可能な領域へCopyして`booti`へ渡す．
+
+Raspberry Pi用Boot Partitionには，共通の`boot.scr`，`kernel/kernel.img`，`kernel/init.elf`に加えて次のFileを配置する．
+
+#reference_table(
+  (1.8fr, 2.8fr),
+  ([*Location*], [*Purpose*]),
+  [`/config.txt`], [64 bit Entry，`kernel_address = 0x0008_0000`，PL011 UART，Firmware UART Log，GIC-400，`kernel8.img`を選択するFirmware設定．],
+  [`/kernel8.img`], [`rpi_4_defconfig`でBuildしたAArch64 U-Boot．],
+  [`/start4.elf`，`/fixup4.dat`], [Raspberry Pi 4 VideoCore Firmware．],
+  [`/bcm2711-rpi-4-b.dtb`], [FirmwareからU-Boot，A9Nへ引き継ぐBoard DTB．],
+  [`/overlays/disable-bt.dtbo`], [Bluetoothを無効化し，PL011をGPIO14/15へ割り当てるFirmware DT Overlay．],
+  [`/bootcode.bin`], [互換性のため同梱するRaspberry Pi Boot Code．通常のPi 4 EEPROM Bootでは使用しない．],
+)
+
+Kernel ImageのPhysical Link AddressとEntryは`0x0008_0000`である．Early Direct Mapは16 GiBを2 MiB BlockでMapし，`0xfc00_0000 <= address < 0x1_0000_0000`をDevice-nGnRE，それ以外をNormal WBWAとする．対象RevisionがKernel自身で使用するBCM2711 Resourceは次の通りである．
+
+#reference_table(
+  (1.9fr, 1.2fr, 1.7fr),
+  ([*Resource*], [*Physical Address / ID*], [*用途*]),
+  [BCM2711 PL011], [`0xfe20_1000`], [GPIO14 TX，GPIO15 RX，115200 8N1．`disable-bt`でHeaderへ割り当て，入力Clockを48 MHzに固定する．],
+  [GIC-400 Distributor], [`0xff84_1000`], [SPI，PPI，SGIの設定．],
+  [GIC-400 CPU Interface], [`0xff84_2000`], [IRQ AcknowledgeとEnd-of-interrupt．],
+  [Non-secure Physical Timer], [PPI 30], [`CNTP_CTL_EL0`と`CNTP_TVAL_EL0`を使用する．],
+)
+
+SPENCERから実機用ImageをBuildするCommandは次の通りである．U-BootはSPENCERが生成するLinux Docker Container内でBuildされるため，Host側のCross Compiler，GNU Make，OpenSSL，GnuTLSは不要である．
+
+```sh
+cargo xtask build \
+  --arch aarch64 \
+  --platform rpi4b \
+  --release
+```
+
+SPENCERはU-Boot `v2025.10`の`rpi_4_defconfig`を使用する．Docker互換Commandは`UBOOT_DOCKER`，既存Builder Imageは`UBOOT_DOCKER_IMAGE`で指定できる．Raspberry Pi Firmwareは公式`raspberrypi/firmware`の固定Releaseから必要なBoot FileだけをSparse Checkoutし，`build/raspberrypi-firmware`へCacheする．既存Checkoutを使用する場合は`RPI_FIRMWARE_DIR`へRepository Rootまたは`boot` Directoryを指定する．生成物`out/aarch64-rpi4b-release/spencer.img`はSD Card全体へRaw Disk Imageとして書き込む．通常のFile CopyではBoot Mediaにならない．Serial Consoleは3.3 V Levelであり，5 VのUART信号をGPIOへ接続してはならない．
+
+==== Serial Console and Physical Wiring
+
+Raspberry Pi 4 Model BのSerial Consoleは115200 baud，8 data bits，parityなし，1 stop bit，Hardware/Software Flow Controlなしで使用する．USB-UART Adapterは3.3 V Logic Levelのものを使用し，TXとRXを交差して接続する．
+
+#reference_table(
+  (1.6fr, 1.6fr, 2.0fr),
+  ([*Raspberry Pi Header*], [*BCM2711 Signal*], [*USB-UART Adapter*]),
+  [Physical Pin 8], [`GPIO14 / TXD0`], [`RXD`へ接続．],
+  [Physical Pin 10], [`GPIO15 / RXD0`], [`TXD`へ接続．],
+  [Physical Pin 6], [`GND`], [`GND`へ接続．],
+)
+
+`config.txt`は`enable_uart = 1`と`uart_2ndstage = 1`を設定する．したがって，正常な実機BootではVideoCore Firmware Log，U-Boot Early DebugとBanner，A9Nの`[KERNEL]`および`[HAL]` Log，Nunの順に同一PL011 Consoleへ出力される．Firmware Logが`disable-bt.dtbo`のLoadと`kernel8.img`のPhysical Address `0x0008_0000`へのLoadを示した場合，VideoCore FirmwareによるBoot Partition，DTB，Overlay，ARM Payloadの読込みは完了している．
+
+==== Hardware Validation
+
+対象RevisionはRaspberry Pi 4 Model B実機で，VideoCore FirmwareからU-Boot，A9N Pre-entry，A9N Kernel，NunまでのBootを確認している．実機LogではFirmwareによる`config.txt`，BCM2711 DTB，`disable-bt.dtbo`，`kernel8.img`のLoad，U-BootによるA9NとNunのLoad，A9NのArchitectureおよびProcess Management初期化，NunへのUser Context Switchが順に確認できる．
+
+#notice(
+  [NOTE],
+  [対象RevisionのAArch64共通HALは`core_count() = 1`であり，Raspberry Pi 4のApplication Processor起動は未実装である．`rpi4b` PlatformはBoot Core上の単一Core実行を対象とする．],
+)
 
 === Adding an AArch64 Board Platform
 

@@ -54,9 +54,9 @@ Repository内の既存Markdownには，対象Revisionより前の説明が残っ
 #reference_table(
   (1.6fr, 1.4fr, 2.4fr),
   ([*Version domain*], [*Value*], [*Source*]),
-  [Manual], [`0.2.0`], [`doc/a9n-manual/version.txt`．],
+  [Manual], [#raw(read("/version.txt").trim())], [`doc/a9n-manual/version.txt`．],
   [CMake Project], [`0.1.8`], [Root `CMakeLists.txt`の`project()`．],
-  [Standard Kernel Build], [`0.2.0-smp+...`], [`src/kernel/CMakeLists.txt`がArchitecture，Build Type，Dateを付加する．],
+  [Standard Kernel Build], [`0.2.1-smp+...`], [`src/kernel/CMakeLists.txt`がArchitecture，Build Type，Dateを付加する．],
   [Kernel Fallback], [`0.1.0-unknown+00000000-UNKNOWN`], [`src/kernel/include/kernel/version.hpp`．],
 )
 

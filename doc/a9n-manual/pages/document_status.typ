@@ -9,8 +9,9 @@
     (1.35fr, 3.5fr),
     ([項目], [説明]),
     [Manual Version], [#raw(version.trim())．],
-    [実装Architecture], [x86_64．Architectureに依存しないInterfaceを先に説明し，固有のRegister，Page Table，Boot，I/Oを「#term[x86_64 ABI]」にまとめる．],
-    [Multiprocessing], [`A9N_CONFIG_ENABLE_SMP`でBuild時に選択する．x86_64は最大64 Coreを起動し，Kernel EntryをGiant Lockで直列化する．],
+    [実装Architecture], [x86_64とaarch64．Architectureに依存しないInterfaceを先に説明し，Architecture固有のRegister，Page Table，Boot，Kernel Call ABI，I/Oを「#term[x86_64 ABI]」と「#term[AArch64 ABI]」にまとめる．],
+    [実装Platform], [`x86_64/qemu`（PC99），`aarch64/qemu`（QEMU `virt`），`aarch64/rpi4b`（Raspberry Pi 4 Model B）．`rpi4b`はVideoCore FirmwareとU-Bootを経由する実機Bootを確認している．],
+    [Multiprocessing], [`A9N_CONFIG_ENABLE_SMP`でBuild時に選択する．x86_64は最大64 Coreを起動し，Kernel EntryをGiant Lockで直列化する．aarch64は対象RevisionではBoot Coreだけを使用し，Secondary Processor Bootは未実装である．],
     [Source of Truth], [#term[SPENCER]がSubmoduleとして取得するA9Nの公開Headerと実装を基準とする．User-level Rust Interfaceは#term[a9n_abi]と#term[a9n_types]を基準とする．],
     [互換性], [Stable ABIの保証期間とBackward Compatibilityの期間は定義されていない．Componentの組合せはSPENCERとUser Payloadの`Cargo.lock`が固定するVersionを基準とする．],
   )

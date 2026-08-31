@@ -8,7 +8,7 @@
 本章では，#term[SPENCER]が用意する標準構成をBuildし，A9N Microkernel上でUser Payloadが動作するところまでを確認する．標準構成は，#term[A9NLoader-rs]をBootloader，#term[Nun]をUser-level Runtime，SPENCERの`core` PackageをUser Payloadとして用いる．Nunは#term[`a9n_abi`]を介してKernel Interfaceを利用し，`a9n_abi`は共有型を定義する#term[`a9n_types`]へ依存する．
 
 // TODO: `--platform qemu`は，生成したDisk Imageがx86_64 UEFI実機でも起動できるという実態と一致しない．SPENCER側でplatform名を修正した後，本章のCommand，Path，説明を更新する．
-Version 0.2.0のSPENCER CLIは，x86_64とaarch64 Architectureに対して`--platform qemu`を受理する．Getting Startedでは各Interfaceの内部を変更せず，標準構成のBootを先に確認する．生成したx86_64 Disk ImageはQEMUだけでなくUEFI実機でも起動できる．aarch64のKernel Call，Context，Page Table，U-Boot経路は「AArch64 ABI」に記載する．Capabilityを用いたServiceの構成は「Building Init and Services」，複数Coreの構成は「Symmetric Multiprocessing」，x86_64のRegister配置や独自Entryの実装は「x86_64 ABI」に記載する．
+Version #(read("/version.txt").trim())のSPENCER CLIは，x86_64では`--platform qemu`，aarch64では`--platform qemu`または`--platform rpi4b`を受理する．Getting Startedでは各Interfaceの内部を変更せず，標準構成のBootを先に確認する．生成したx86_64 Disk ImageはQEMUだけでなくUEFI実機でも起動できる．aarch64のKernel Call，Context，Page Table，U-Boot経路とRaspberry Pi 4 Model B実機Bootは「AArch64 ABI」に記載する．Capabilityを用いたServiceの構成は「Building Init and Services」，複数Coreの構成は「Symmetric Multiprocessing」，x86_64のRegister配置や独自Entryの実装は「x86_64 ABI」に記載する．
 
 == Execution Path
 
