@@ -6,7 +6,7 @@
 
 .extern __bss_start
 .extern __bss_end
-.extern __boot_stack_end
+.extern __boot_stack_start
 .extern __kernel_l0
 .extern __kernel_l1
 .extern __kernel_l2
@@ -30,7 +30,8 @@ _boot_kernel_gateway:
     msr daifset, #0xf
     mov x19, x0
 
-    ldr x20, =__boot_stack_end
+    ldr x20, =__boot_stack_start
+    add x20, x20, #0x2000
     mov sp, x20
 
     mrs x1, CurrentEL
@@ -148,7 +149,8 @@ _boot_kernel_gateway:
 .align 4
 .Lboot_higher_half:
     ldr x1, =0xFFFF800000000000
-    ldr x2, =__boot_stack_end
+    ldr x2, =__boot_stack_start
+    add x2, x2, #0x2000
     orr x2, x2, x1
     mov sp, x2
 

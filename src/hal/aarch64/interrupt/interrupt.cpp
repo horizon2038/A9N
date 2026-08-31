@@ -13,7 +13,23 @@ namespace a9n::hal::aarch64
 {
     namespace
     {
-        inline a9n::word active_irq = 1023;
+        inline a9n::word active_irqs[a9n::kernel::CPU_COUNT_MAX];
+        inline bool      active_irq_valid[a9n::kernel::CPU_COUNT_MAX];
+
+        a9n::word current_irq_slot()
+        {
+            auto core_result = a9n::hal::current_core_number();
+            if (!core_result || core_result.unwrap() >= a9n::kernel::CPU_COUNT_MAX)
+            {
+                return a9n::kernel::BSP_ID;
+            }
+            return core_result.unwrap();
+        }
+
+        void clear_active_irq()
+        {
+            active_irq_valid[current_irq_slot()] = false;
+        }
 
         [[noreturn]] void fatal_exception(const exception_frame &frame)
         {
@@ -72,7 +88,7 @@ namespace a9n::hal::aarch64
                 else
                 {
                     platform::end_of_interrupt(irq);
-                    active_irq = 1023;
+                    clear_active_irq();
                 }
                 return;
             }
@@ -84,7 +100,7 @@ namespace a9n::hal::aarch64
                     ipi_reschedule_handler();
                 }
                 platform::end_of_interrupt(irq);
-                active_irq = 1023;
+                clear_active_irq();
                 return;
             }
 
@@ -92,7 +108,7 @@ namespace a9n::hal::aarch64
             {
                 invalidate_tlb_all();
                 platform::end_of_interrupt(irq);
-                active_irq = 1023;
+                clear_active_irq();
                 return;
             }
 
@@ -103,7 +119,7 @@ namespace a9n::hal::aarch64
             else
             {
                 platform::end_of_interrupt(irq);
-                active_irq = 1023;
+                clear_active_irq();
             }
         }
 
@@ -170,12 +186,16 @@ namespace a9n::hal::aarch64
                 break;
             case 1 : // IRQ while executing EL1 (normally IDLE).
             case 3 : // IRQ from EL0.
-                active_irq = platform::acknowledge_irq();
-                if (active_irq < 1020)
+            {
+                const auto slot     = current_irq_slot();
+                active_irqs[slot]   = platform::acknowledge_irq();
+                active_irq_valid[slot] = active_irqs[slot] < 1020;
+                if (active_irq_valid[slot])
                 {
-                    dispatch_irq(active_irq);
+                    dispatch_irq(active_irqs[slot]);
                 }
                 break;
+            }
             default :
                 fatal_exception(*frame);
         }
@@ -265,12 +285,13 @@ namespace a9n::hal
 
     hal_result ack_interrupt()
     {
-        if (aarch64::active_irq >= 1020)
+        const auto slot = aarch64::current_irq_slot();
+        if (!aarch64::active_irq_valid[slot])
         {
             return hal_error::TRY_AGAIN;
         }
-        aarch64::platform::end_of_interrupt(aarch64::active_irq);
-        aarch64::active_irq = 1023;
+        aarch64::platform::end_of_interrupt(aarch64::active_irqs[slot]);
+        aarch64::active_irq_valid[slot] = false;
         return {};
     }
 

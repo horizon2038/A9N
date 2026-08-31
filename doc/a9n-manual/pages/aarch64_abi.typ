@@ -236,6 +236,42 @@ DTB Sourceは`fdt_addr`を優先する．これが未定義の場合は`fdtcontr
 
 U-Bootにはlegacy script image，filesystem `load`，`setexpr`，`itest`，`fdt`，`booti`が必要である．自動探索を用いるBuildでは，Standard BootとScript bootmethも有効にする．自動探索を持たないBoardでも，Partition 1から`boot.scr`をLoadして`source`を実行すれば同じBoot ABIを使用できる．
 
+=== Symmetric Multiprocessing
+
+AArch64 SMPは`A9N_CONFIG_ENABLE_SMP=ON`でBuildした場合に有効になる．HALは`arch_info[0]`のDTBから`/cpus`直下の有効なCPU Nodeを列挙し，Boot時の`MPIDR_EL1`と一致するCPUをLogical Core 0へ配置する．残りのCPUにはDTBの列挙順でLogical Core番号を割り当てる．SP BuildはCPU Topologyを列挙せず，`core_count() = 1`を返す．
+
+#reference_table(
+  (1.2fr, 1.5fr, 2.4fr),
+  ([*Platform*], [*Secondary Boot Method*], [*DTB Contract*]),
+  [`qemu`], [PSCI `CPU_ON`], [`/cpus/cpu@*/enable-method = "psci"`と`/psci/method`を使用する．`hvc`と`smc` Conduitに対応し，QEMU `virt`の標準構成は`hvc`である．],
+  [`rpi4b`], [Spin Table], [`/cpus/cpu@*/enable-method = "spin-table"`と64 bitの`cpu-release-addr`を使用する．BCM2711ではCore 1から3を起動する．],
+)
+
+Boot CoreはSecondary EntryのPhysical Addressを各Platformの起動Interfaceへ渡す．QEMUではPSCI `CPU_ON`を呼び，Raspberry Pi 4ではRelease AddressへEntryを書き込んで対象Cache LineをPoint of CoherencyまでCleanし，`dsb sy; sev`を実行する．Secondary CPUはEL2またはEL1から開始し，Core固有の8 KiB Boot Stack，Boot Coreが構築したKernel Page Table，`TPIDR_EL1`，`VBAR_EL1`，GICv2 CPU Interface，Non-secure Physical Timerを初期化する．
+
+Secondary CPUはBoot CoreがShared Interrupt Handler，System Clock，BSP Process Manager，Shared IDLE Context，Init Processを構築するまでRelease Barrierで待つ．Release後はCore固有Process ManagerとIDLE Processを初期化し，Generic Timerを開始する．Boot Coreは対象CPUがすべてIDLEへ到達したことを確認してからInitへ切り替え，5秒以内に到達しない場合はBoot Errorとする．IRQ Acknowledge State，Kernel Stack，Process Manager，Timer PPIはCoreごとに独立し，RescheduleはSGI 0，TLB ShootdownはSGI 1を用いる．
+
+QEMU `virt`で4 Coreを検証するSPENCER Commandは次の通りである．`--enable-smp`はKernelのCompile-time Pathを選び，`--smp`はQEMUがDTBへ公開するCPU数を選ぶため，複数Core実行には両方が必要である．
+
+```sh
+cargo xtask run \
+  --arch aarch64 \
+  --platform qemu \
+  --release \
+  --enable-smp \
+  --smp 4
+```
+
+Raspberry Pi 4 Model B用SMP Imageは次のCommandで生成する．HardwareのCPU数はDTBが定義するため，`build` Commandに`--smp`は指定しない．
+
+```sh
+cargo xtask build \
+  --arch aarch64 \
+  --platform rpi4b \
+  --release \
+  --enable-smp
+```
+
 === Raspberry Pi 4 Model B Platform
 
 Raspberry Pi 4 Model Bは`-DARCH=aarch64 -DPLATFORM=rpi4b`で選択する．Boot Chainは，Raspberry Pi EEPROM Bootloader，VideoCore Firmware，U-Boot，A9N Pre-entry，A9N Kernel Entryの順である．VideoCore Firmwareは第1 FAT32 Partitionの`config.txt`を読み，`start4.elf`と`fixup4.dat`を用いてBCM2711を初期化し，U-Bootを`kernel8.img`としてPhysical Address `0x0008_0000`へLoadする．Firmware DTBのAddressはU-Boot Entryの`x0`へ渡される．U-BootのRaspberry Pi Board PortはこのAddressを`fdt_addr`として公開し，A9N Boot Scriptは更新可能な領域へCopyして`booti`へ渡す．
@@ -293,9 +329,11 @@ Raspberry Pi 4 Model BのSerial Consoleは115200 baud，8 data bits，parityな�
 
 対象RevisionはRaspberry Pi 4 Model B実機で，VideoCore FirmwareからU-Boot，A9N Pre-entry，A9N Kernel，NunまでのBootを確認している．実機LogではFirmwareによる`config.txt`，BCM2711 DTB，`disable-bt.dtbo`，`kernel8.img`のLoad，U-BootによるA9NとNunのLoad，A9NのArchitectureおよびProcess Management初期化，NunへのUser Context Switchが順に確認できる．
 
+`A9N_CONFIG_ENABLE_SMP=ON`の実機検証では，Firmware DTBから4 Coreを検出し，Spin TableによってCore 1から3を起動する．各CoreのGICv2 CPU Interface，Generic Timer，Process Manager，IDLE Processの初期化，4 CoreすべてのOnline到達，およびNunへのUser Context Switchを確認している．
+
 #notice(
   [NOTE],
-  [対象RevisionのAArch64共通HALは`core_count() = 1`であり，Raspberry Pi 4のApplication Processor起動は未実装である．`rpi4b` PlatformはBoot Core上の単一Core実行を対象とする．],
+  [Raspberry Pi 4 Model Bの通常ImageとSMP Imageは，いずれも実機でVideoCore FirmwareからNunまでのBootを確認している．SMP ImageはFirmware DTBのSpin Tableを用いた4 Core起動を検証済みである．],
 )
 
 === Adding an AArch64 Board Platform

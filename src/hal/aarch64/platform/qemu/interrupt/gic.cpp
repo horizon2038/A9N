@@ -2,6 +2,7 @@
 
 #include <hal/arch/arch_types.hpp>
 #include <kernel/memory/memory.hpp>
+#include <kernel/utility/logger.hpp>
 
 namespace a9n::hal::aarch64::platform
 {
@@ -26,6 +27,11 @@ namespace a9n::hal::aarch64::platform
 
     hal_result init_interrupt_controller()
     {
+        a9n::kernel::utility::logger::printh(
+            "GICv2: distributor=0x%016llx, CPU-interface=0x%016llx\n",
+            GIC_DISTRIBUTOR_BASE,
+            GIC_CPU_INTERFACE_BASE
+        );
         gicd(0x000)     = 0;
         gicc(0x000)     = 0;
 
@@ -34,6 +40,10 @@ namespace a9n::hal::aarch64::platform
         {
             interrupt_count = a9n::hal::IRQ_NUMBER_MAX;
         }
+        a9n::kernel::utility::logger::printh(
+            "GICv2: configuring %llu interrupt IDs.\n",
+            interrupt_count
+        );
 
         for (a9n::word irq = 0; irq < interrupt_count; irq += 32)
         {
@@ -52,11 +62,33 @@ namespace a9n::hal::aarch64::platform
             }
         }
 
+        gicd(0x000) = 1;
+        asm volatile("dsb sy; isb" ::: "memory");
+        return init_current_core_interrupt_controller();
+    }
+
+    hal_result init_current_core_interrupt_controller()
+    {
+        // SGI and PPI state is banked per GICv2 CPU interface.
+        gicd(0x080) = 0xffffffff;
+        gicd(0x180) = 0xffffffff;
+        gicd(0x280) = 0xffffffff;
+        for (a9n::word irq = 0; irq < 32; irq += 4)
+        {
+            gicd(0x400 + irq) = 0xa0a0a0a0;
+        }
+
+        gicc(0x000) = 0;
         gicc(0x004) = 0xff; // Priority mask.
         gicc(0x008) = 0x3;  // No priority grouping.
         gicc(0x000) = 1;
-        gicd(0x000) = 1;
         asm volatile("dsb sy; isb" ::: "memory");
+        a9n::word mpidr {};
+        asm volatile("mrs %0, mpidr_el1" : "=r"(mpidr));
+        a9n::kernel::utility::logger::printh(
+            "GICv2 CPU interface enabled: MPIDR=0x%016llx, priority-mask=0xff\n",
+            mpidr
+        );
         return {};
     }
 

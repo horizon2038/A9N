@@ -77,7 +77,7 @@ aarch64_exception_vectors:
     mov x0, sp
     mov x1, #\kind
     bl aarch64_handle_exception
-    b aarch64_restore_context
+    b aarch64_restore_exception_context
 .endm
 
 aarch64_sync_current:
@@ -92,6 +92,13 @@ aarch64_fatal_current:
     SAVE_FRAME 4
 aarch64_fatal_lower:
     SAVE_FRAME 5
+
+.type aarch64_restore_exception_context, %function
+aarch64_restore_exception_context:
+    // The returned context may belong to a different process, but SP still
+    // points at this core's exception frame.
+    add sp, sp, #304
+    b aarch64_restore_context
 
 .global aarch64_restore_context
 .type aarch64_restore_context, %function

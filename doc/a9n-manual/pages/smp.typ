@@ -4,7 +4,7 @@
 
 == Scope
 
-A9N 0.2.0は，Build時に選択する#term[Symmetric Multiprocessing]（SMP）を実装する．SMPを有効にすると，x86_64 HALはBoot時に複数のCPU Coreを起動し，KernelはCoreごとのScheduler，CPU Affinity，Local APIC Timer，IDLE Processを使用する．User Processは異なるCoreで並行実行でき，IPCとNotificationはCore境界を越えてProcessをWakeupできる．
+A9Nは，Build時に選択する#term[Symmetric Multiprocessing]（SMP）をx86_64とAArch64に実装する．SMPを有効にすると，HALはBoot時に複数のCPU Coreを起動し，KernelはCoreごとのScheduler，CPU Affinity，Timer，IDLE Processを使用する．User Processは異なるCoreで並行実行でき，IPCとNotificationはCore境界を越えてProcessをWakeupできる．
 
 SMPは既定で無効である．A9N Repository RootでCMakeをConfigureするとき，`A9N_CONFIG_ENABLE_SMP`を`ON`にする．このOptionはRuntime設定ではなくCompile-time設定であり，変更後は対象Build DirectoryのKernelを再Buildする必要がある．
 
@@ -21,7 +21,7 @@ SMPを無効にする場合はOptionを省略するか，明示的に`-DA9N_CONF
 
 #reference_table(
   (1.6fr, 3.4fr),
-  ([項目], [v0.2.0の規約]),
+  ([項目], [対象Revisionの規約]),
   [Build Option], [`A9N_CONFIG_ENABLE_SMP`．既定値は`OFF`．],
   [最大Core数], [`CPU_COUNT_MAX = 64`．BSPを含む．],
   [Logical Core 0], [Bootstrap Processor（BSP）．InitもCore 0から開始する．],
@@ -68,13 +68,17 @@ BSPは次の順序で#term[Application Processor]（AP）を起動する．
 + BSPが全APをReleaseする．各APはProcess ManagerとLocal APIC Timerを初期化し，自CoreのIDLEへ移る．
 + BSPは起動対象の全CoreがIDLEへ到達したことを確認してからInitへ切り替える．
 
+AArch64 HALはU-Bootが渡したDTBの`/cpus`を列挙し，`MPIDR_EL1`と一致するBoot CPUをLogical Core 0とする．QEMU `virt`は`/psci`のConduitを用いたPSCI `CPU_ON`，Raspberry Pi 4 Model Bは`cpu-release-addr`を用いたSpin TableでAPを起動する．APはEL2またはEL1から共通Secondary Entryへ入り，Kernel Page Table，8 KiBのCore固有Boot Stack，`TPIDR_EL1`，Exception Vector，GICv2 CPU Interface，Generic Timerを初期化する．Release Barrier以降のProcess Manager，IDLE，起動完了確認はx86_64と同じである．
+
+対象Revisionでは，QEMU `virt`のPSCIによる4 Core起動と，Raspberry Pi 4 Model B実機のSpin Tableによる4 Core起動を検証済みである．Raspberry Pi 4 Model BではCore 1から3の起動，各CoreのGICv2 CPU Interface，Generic Timer，Process Manager，IDLE Processの初期化，および全CoreのOnline到達を実機Logで確認している．
+
 v0.2.0はBoot段階ですべてのCoreを起動することを前提とする．CoreごとのOnline FlagをRuntime Schedulingに使用せず，Affinityの有効範囲には`core_count()`が返すBoot時の起動Core数を用いる．Enabled Processorが一つだけの場合，SMP BuildでもCore 0だけで実行を継続する．
 
 x86_64のIPI送信経路は8 bitのDestination APIC IDを用いる．MADTが255より大きいAPIC IDを要求する構成はSMP起動対象として扱えない．また，起動数は`CPU_COUNT_MAX`の64 Coreで打ち切る．
 
 == CPU-local State and Single Kernel Stack
 
-Kernelは最大64個の`cpu_local_variable`とKernel Stackを静的に確保する．x86_64 HALはKernel ModeのGS Baseへ現在Coreの`cpu_local_variable` Pointerを設定する．Kernel Call EntryとInterrupt EntryはGS経由で現在Process，Scratch領域，Kernel Stack Pointerを参照する．
+Kernelは最大64個の`cpu_local_variable`とKernel Stackを静的に確保する．x86_64 HALはKernel ModeのGS Base，AArch64 HALは`TPIDR_EL1`へ現在Coreの`cpu_local_variable` Pointerを設定する．Kernel Call EntryとInterrupt EntryはArchitecture固有のCPU-local Pointerから現在Process，Scratch領域，Kernel Stack Pointerを参照する．
 
 #reference_table(
   (1.7fr, 3.3fr),
@@ -100,7 +104,7 @@ PCBの`CONFIGURE`は，`configuration_info`のBit 9と`MR12`を使用してCPU A
 
 READY Processまたは割当て先Coreで実行中のProcessに対して，別CoreへのAffinity変更はできない．Process Managerは対象をSuspendし，Remote Reschedule IPIによって対象Coreが実際にContextを切り替えた後にAffinityを変更してResumeする必要がある．v0.2.0は自動Migration，Work Stealing，Ready Queue間のLoad Balancingを実装しない．
 
-Local APIC TimerはCoreごとにQuantumを更新する．BSPがSystem Clock Frequencyを指定し，APはRelease後に同じ周波数で各Local APIC Timerを開始する．Timer Tickは現在CoreのProcess Managerだけを操作する．
+Local APIC TimerまたはAArch64 Generic TimerはCoreごとにQuantumを更新する．BSPがSystem Clock Frequencyを指定し，APはRelease後に同じ周波数で各CoreのTimerを開始する．Timer Tickは現在CoreのProcess Managerだけを操作する．
 
 == Inter-core IPC and Notification
 
@@ -111,7 +115,7 @@ IPC PortとNotification Portは，通信相手のAffinityに関係なく同じKe
 通信相手が別Coreの場合，一つのCoreから別Coreへ直接Context Switchすることはできない．Kernelは次のRemote Pathを使用する．
 
 + Wakeup対象をAffinity先CoreのReady Queueへ追加する．
-+ Logical Core番号をLocal APIC IDへ変換し，Reschedule IPIを送る．
++ Logical Core番号をx86_64ではLocal APIC ID，AArch64 GICv2ではCPU Target Bitへ変換し，Reschedule IPIを送る．
 + 送信元ProcessがBlockした場合，送信元Coreで別のProcessまたはIDLEを選択する．
 + 対象CoreのIPI Handlerが現在Processを必要に応じてReady Queueへ戻し，そのCoreの最高Priority Processを選択する．
 
@@ -128,11 +132,15 @@ BSPはShared IDLE Hardware Contextと一つのKernel Address Spaceを一度だ�
 
 x86_64 IDLEは，現在CoreのSingle Kernel Stack上端へ`RSP`を戻し，`sti`と`hlt`を隣接して実行する．Interruptが到着すると同じCoreのInterrupt Entryへ入り，TimerまたはReschedule IPIがUser Processを選択できる．Busy LoopによるPollingは行わない．
 
+AArch64 IDLEはCore固有のEL1 Stackを保持したまま`wfi`を実行する．Exception Entryは304 byteのFrameをCore固有Stackへ確保し，Context復帰前にFrameを解放する．GICv2 Timer PPIまたはSGIが到着すると同じCoreのException Vectorへ入る．
+
 == Memory Consistency and Limitations
 
 Giant LockはPage Table Capability，Address Space Capability，Address Space Owner Bitmapの更新を直列化する．Memory HAL Interfaceは`read_address_space_owners()`と`write_address_space_owners()`によりBitmap全体の読み書きだけを提供する．x86_64 HAL内部のContext SwitchとAddress Space作成はArchitecture固有Helperを直接使用する．Remote Coreの選択とShootdown IPIの送信はKernelのAddress Space Capabilityが行う．x86_64ではLower-half User MappingとKernel Direct Mapのどちらにも使わないPML4[511]を予約するため，Address Spaceごとの追加ObjectやGlobal Arrayを必要としない．
 
 同じAddress Spaceを複数CoreのProcessで使用している間にMappingを変更すると，HALは`CR3`と対象PML4を直接比較してLocal TLBを無効化し，KernelはOwner Bitmapに記録されたRemote CoreへTLB Shootdown IPIを送る．Remote Handlerは現在の`CR3`を再LoadしてTLBをFlushする．Remote OwnerがないAddress SpaceにはIPIを送らない．
+
+AArch64では`TTBR0_EL1`と対象L0 Tableを比較し，L0 Tableの予約EntryへOwner Bitmapを保持する．Remote ShootdownはGICv2 SGI 1を使用し，Handlerは`vmalle1is`で現在CoreのEL1 TLBを無効化する．
 
 v0.2.0には，次の機能が含まれない．
 
