@@ -17,17 +17,29 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.arch }} • ${{ matrix.build_type }}
+    name: ${{ matrix.target.name }} • ${{ matrix.build_type }}
     runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x86_64 ] # Add more architectures as needed
         build_type: [ Debug, Release ]
-        include:
-          - arch: x86_64
+        target:
+          - name: x86_64
+            id: x86_64
+            arch: x86_64
+            platform: ''
             extra_pkgs: "nasm"
+          - name: aarch64/qemu
+            id: aarch64-qemu
+            arch: aarch64
+            platform: qemu
+            extra_pkgs: ''
+          - name: aarch64/rpi4b
+            id: aarch64-rpi4b
+            arch: aarch64
+            platform: rpi4b
+            extra_pkgs: ''
 
     env:
       BUILD_DIR: build
@@ -51,7 +63,7 @@ jobs:
           curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh
           chmod +x /tmp/llvm.sh
           sudo /tmp/llvm.sh 19 all
-          sudo apt-get install -y llvm-19-dev clang-19 lld-19 ${{ matrix.extra_pkgs }} ninja-build ccache
+          sudo apt-get install -y llvm-19-dev clang-19 lld-19 ${{ matrix.target.extra_pkgs }} ninja-build ccache
           if ! command -v llvm-config >/dev/null 2>&1; then
             sudo ln -sf /usr/bin/llvm-config-19 /usr/local/bin/llvm-config
           fi
@@ -69,7 +81,7 @@ jobs:
               | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
           echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
           sudo apt-get update
-          sudo apt-get install -y cmake ${{ matrix.extra_pkgs }} ninja-build ccache
+          sudo apt-get install -y cmake ${{ matrix.target.extra_pkgs }} ninja-build ccache
 
 
       - name: Show versions
@@ -84,16 +96,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.build_type }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake', '**/*.[chsS]', '**/*.cpp', '**/*.hpp', '**/*.asm') }}
+          key: ccache-${{ runner.os }}-${{ matrix.target.id }}-${{ matrix.build_type }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake', '**/*.[chsS]', '**/*.cpp', '**/*.hpp', '**/*.asm') }}
           restore-keys: |
-            ccache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.build_type }}-
+            ccache-${{ runner.os }}-${{ matrix.target.id }}-${{ matrix.build_type }}-
 
       - name: Configure (CMake)
         run: |
           set -eux
+          platform_args=()
+          if [[ -n "${{ matrix.target.platform }}" ]]; then
+            platform_args+=("-DPLATFORM=${{ matrix.target.platform }}")
+          fi
           cmake -S "${SRC_DIR}" -B "${BUILD_DIR}" \
-            -DARCH=${{ matrix.arch }} \
-            -DCMAKE_TOOLCHAIN_FILE=./src/hal/${{ matrix.arch }}/toolchain.cmake \
+            -DARCH=${{ matrix.target.arch }} \
+            "${platform_args[@]}" \
+            -DCMAKE_TOOLCHAIN_FILE=./src/hal/${{ matrix.target.arch }}/toolchain.cmake \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -G Ninja
 
@@ -112,10 +129,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.arch }}-${{ matrix.build_type }}-artifacts
+          name: ${{ matrix.target.id }}-${{ matrix.build_type }}-artifacts
           path: |
             ${{ env.BUILD_DIR }}/**/*.elf
             ${{ env.BUILD_DIR }}/**/*.ELF
+            ${{ env.BUILD_DIR }}/**/*.img
           if-no-files-found: ignore
 
       - name: Notify Discord
@@ -130,7 +148,7 @@ jobs:
           REF: ${{ github.ref }}
           SHA: ${{ github.sha }}
           ACTOR: ${{ github.actor }}
-          ARCH: ${{ matrix.arch }}
+          TARGET: ${{ matrix.target.name }}
           BUILD_TYPE: ${{ matrix.build_type }}
           EVENT_NAME: ${{ github.event_name }}
           SERVER_URL: ${{ github.server_url }}
@@ -154,7 +172,7 @@ jobs:
             "username": "GitHub Actions",
             "embeds": [
               {
-                "title": "${VERB}: ${WORKFLOW} • ${ARCH} • ${BUILD_TYPE}",
+                "title": "${VERB}: ${WORKFLOW} • ${TARGET} • ${BUILD_TYPE}",
                 "url": "${RUN_URL}",
                 "color": ${COLOR},
                 "description": "${DESC}",
@@ -176,4 +194,3 @@ jobs:
           curl -sS -H "Content-Type: application/json" \
                -d "${JSON_PAYLOAD}" \
                "${DISCORD_WEBHOOK_URL}" >/dev/null
-
