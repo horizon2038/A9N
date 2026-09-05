@@ -81,6 +81,12 @@ namespace a9n::kernel
         switch (state)
         {
             case WAIT :
+                if (!info.is_block()) [[unlikely]]
+                {
+                    // A non-blocking sender did not enter the wait queue, so the port must
+                    // remain idle as well.
+                    return {};
+                }
                 state = READY_TO_SEND;
                 [[fallthrough]];
             case READY_TO_SEND :
@@ -187,6 +193,11 @@ namespace a9n::kernel
         {
             case WAIT :
                 DEBUG_LOG("WAIT");
+                if (!info.is_block()) [[unlikely]]
+                {
+                    // Do not advertise a receiver that was never queued.
+                    return {};
+                }
                 state = READY_TO_RECEIVE;
                 [[fallthrough]];
             case READY_TO_RECEIVE :
@@ -234,10 +245,9 @@ namespace a9n::kernel
         // send message
         switch (state)
         {
-            case WAIT :
-                state = READY_TO_SEND;
+            [[unlikely]] case WAIT :
                 [[fallthrough]];
-            case READY_TO_SEND :
+            [[unlikely]] case READY_TO_SEND :
                 // The sender is ready, but there is no recipient. Waiting until a recipient
                 // appears.
                 {
@@ -260,6 +270,7 @@ namespace a9n::kernel
                         return {};
                     }
 
+                    state                         = READY_TO_SEND;
                     owner.status                  = process_status::BLOCKED_SEND;
                     owner.source_reply_state      = process::source_reply_state_object::WAIT;
                     owner.identifier_when_blocked = convert_slot_data_to_identifier(self.data);
@@ -274,6 +285,7 @@ namespace a9n::kernel
                         .transform_error(convert_kernel_to_capability_error);
                 }
 
+            // fastpath
             [[likely]] case READY_TO_RECEIVE :
                 // The receiver exists, so the message will be sent as is. However, the
                 // sender will be blocked until the reply is handled, since it's a call
@@ -427,17 +439,14 @@ namespace a9n::kernel
                 {
                     switch (state)
                     {
+                        // fastpath
                         [[likely]] case READY_TO_SEND :
                             {
                                 return try_receive_from_ready_sender(owner);
                             }
 
                         [[unlikely]] case WAIT :
-                            {
-                                state = READY_TO_RECEIVE;
-                                [[fallthrough]];
-                            }
-
+                            [[fallthrough]];
                         [[unlikely]] case READY_TO_RECEIVE :
                             {
                                 bool delivered_notification = false;
@@ -457,6 +466,7 @@ namespace a9n::kernel
                                     return {};
                                 }
 
+                                state        = READY_TO_RECEIVE;
                                 owner.status = process_status::BLOCKED_RECEIVE;
 
                                 return push_ipc_queue(owner)
