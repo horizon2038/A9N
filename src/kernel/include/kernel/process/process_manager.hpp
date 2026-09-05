@@ -24,6 +24,10 @@ namespace a9n::kernel
 
         kernel_result try_schedule_and_switch(void);
         kernel_result try_schedule_and_switch(cpu_local_variable &local_variable);
+        kernel_result try_remote_target_and_switch(
+            process            &target_process,
+            cpu_local_variable &local_variable
+        );
         kernel_result try_direct_schedule_and_switch(process &target_process);
         kernel_result
             try_direct_schedule_and_switch(process &target_process, cpu_local_variable &local_variable);

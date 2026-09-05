@@ -27,4 +27,9 @@ namespace a9n::hal
     {
         __atomic_store_n(address, new_value, __ATOMIC_RELEASE);
     }
+
+    void spin_wait(void)
+    {
+        asm volatile("yield" ::: "memory");
+    }
 }

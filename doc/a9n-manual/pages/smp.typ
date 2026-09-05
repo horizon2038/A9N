@@ -74,7 +74,7 @@ AArch64 HALはU-Bootが渡したDTBの`/cpus`を列挙し，`MPIDR_EL1`と一致
 
 v0.2.0はBoot段階ですべてのCoreを起動することを前提とする．CoreごとのOnline FlagをRuntime Schedulingに使用せず，Affinityの有効範囲には`core_count()`が返すBoot時の起動Core数を用いる．Enabled Processorが一つだけの場合，SMP BuildでもCore 0だけで実行を継続する．
 
-x86_64のIPI送信経路は8 bitのDestination APIC IDを用いる．MADTが255より大きいAPIC IDを要求する構成はSMP起動対象として扱えない．また，起動数は`CPU_COUNT_MAX`の64 Coreで打ち切る．
+x86_64のIPI送信経路は8 bitのDestination APIC IDを用いる．APの一時Boot StackはLocal APIC IDで選択するため，Local APIC IDが`CPU_COUNT_MAX`（64）以上のAPはSMP起動対象として扱えない．また，起動数はBSPを含めて64 Coreで打ち切る．
 
 == CPU-local State and Single Kernel Stack
 

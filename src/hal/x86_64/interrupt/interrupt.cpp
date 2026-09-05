@@ -85,7 +85,7 @@ namespace a9n::hal::x86_64
         return context;
     }
 
-    void print_page_fault_reason(uint64_t error_code)
+    void print_page_fault_reason(uint64_t error_code, a9n::virtual_address fault_address)
     {
         using a9n::kernel::utility::logger;
 
@@ -99,7 +99,7 @@ namespace a9n::hal::x86_64
         bool is_sgx               = error_code >> 7 & 1;
 
         logger::printh("===== PAGE FAULT HAS OCCURED =====\n");
-        logger::printh("fault address : 0x%016llx\n", read_cr2());
+        logger::printh("fault address : 0x%016llx\n", fault_address);
         logger::printh("- present           : %s\n", is_present ? "Y" : "N");
         logger::printh("- write             : %s\n", is_write ? "Y" : "N");
         logger::printh("- user              : %s\n", is_user ? "Y" : "N");
@@ -188,6 +188,7 @@ namespace a9n::hal::x86_64
             restore_user_context();
         }
 
+        const auto fault_address = read_cr2();
         const char *exception_type = get_exception_type_string(irq_number);
 
         a9n::kernel::utility::logger::printh(
@@ -196,13 +197,17 @@ namespace a9n::hal::x86_64
             exception_type,
             error_code
         );
-        print_registers();
         if (irq_number == liba9n::enum_cast(exception_type::PAGE_FAULT))
         {
-            print_page_fault_reason(error_code);
+            print_page_fault_reason(error_code, fault_address);
         }
 
-        restore_kernel_context();
+        // A kernel exception is fatal. Returning to the faulting instruction only repeats the
+        // exception and can overwrite the original CR2/IRET frame with a diagnostic fault.
+        for (;;)
+        {
+            asm volatile("cli; hlt" ::: "memory");
+        }
     }
 
     // called from asm
@@ -228,7 +233,7 @@ namespace a9n::hal::x86_64
                                         a9n::kernel::fault_type::MEMORY;
                     fault_address = read_cr2(); // overwrite
                     print_registers();          // TEST
-                    print_page_fault_reason(error_code);
+                    print_page_fault_reason(error_code, fault_address);
                     break;
 
                 case exception_type::INVALID_OPCODE :

@@ -60,6 +60,7 @@ namespace a9n::kernel
                 {
                     break;
                 }
+                a9n::hal::spin_wait();
             }
 
             return {};
@@ -118,6 +119,7 @@ namespace a9n::kernel
                 {
                     break;
                 }
+                a9n::hal::spin_wait();
             }
 
             return {};

@@ -10,6 +10,7 @@ namespace a9n::hal
     uint8_t atomic_load(const volatile uint8_t *address);
     void    atomic_store(volatile uint8_t *address, uint8_t new_value);
     void    atomic_store(volatile uint32_t *address, uint32_t new_value);
+    void    spin_wait(void);
 }
 
 #endif

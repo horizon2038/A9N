@@ -192,10 +192,26 @@ namespace a9n::kernel
                 return manager->retrieve_current_process().and_then(
                     [&](process *current_process) -> kernel_result
                     {
+                        auto local_result = a9n::hal::current_local_variable();
+                        if (!local_result) [[unlikely]]
+                        {
+                            return convert_hal_to_kernel_error(local_result.unwrap_error());
+                        }
+                        auto *local = local_result.unwrap();
+                        auto *target = local->pending_reschedule_target;
+                        local->pending_reschedule_target = nullptr;
+
                         if (current_process->status == process_status::READY
                             || current_process->status == process_status::IDLE)
                         {
                             TRY_VOID(manager->mark_scheduled(*current_process));
+                        }
+
+                        if (target && target->core_affinity == local->core_number
+                            && target->status == process_status::READY
+                            && target->is_in_ready_queue)
+                        {
+                            return manager->try_remote_target_and_switch(*target, *local);
                         }
 
                         return manager->try_schedule_and_switch();

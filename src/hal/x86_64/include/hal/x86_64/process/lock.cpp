@@ -41,4 +41,9 @@ namespace a9n::hal
     {
         asm volatile("movl %1, %0" : "=m"(*address) : "r"(new_value) : "memory");
     }
+
+    void spin_wait(void)
+    {
+        asm volatile("pause" ::: "memory");
+    }
 }

@@ -65,4 +65,24 @@ namespace a9n::kernel
         ASSERT_FALSE(result);
         EXPECT_EQ(result.unwrap_error(), scheduler_error::PROCESS_NOT_IN_QUEUE);
     }
+
+    TEST(scheduler_test, reject_duplicate_only_process)
+    {
+        scheduler scheduler_core {};
+        auto      target = ready_process(4);
+
+        ASSERT_TRUE(scheduler_core.add_process(&target));
+        auto duplicate = scheduler_core.add_process(&target);
+        ASSERT_FALSE(duplicate);
+        EXPECT_EQ(duplicate.unwrap_error(), scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE);
+
+        auto result = scheduler_core.schedule();
+        ASSERT_TRUE(result);
+        EXPECT_EQ(result.unwrap(), &target);
+        EXPECT_FALSE(target.is_in_ready_queue);
+
+        auto empty_result = scheduler_core.schedule();
+        ASSERT_FALSE(empty_result);
+        EXPECT_EQ(empty_result.unwrap_error(), scheduler_error::PROCESS_NOT_IN_QUEUE);
+    }
 }

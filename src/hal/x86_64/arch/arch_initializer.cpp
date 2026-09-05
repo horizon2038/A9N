@@ -437,7 +437,9 @@ namespace a9n::hal::x86_64
             {
                 continue;
             }
-            if (local_apic_id > UINT8_MAX)
+            // The real-mode AP trampoline indexes its temporary boot stack directly with the
+            // Local APIC ID. kernel.ld reserves CPU_COUNT_MAX AP slots plus a BSP-only slot.
+            if (local_apic_id >= a9n::kernel::CPU_COUNT_MAX)
             {
                 return hal_error::UNSUPPORTED;
             }

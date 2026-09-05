@@ -231,7 +231,11 @@ _restore_user_context:
     ; [rax + 0x08 * 16] ; CS
     ; [rax + 0x08 * 15] ; RIP
 
-    ; since we are going back to user from kernel, it is necessary to re-swap the swapped GS back.  
+    ; IDLE has a kernel-mode hardware context and can reach this common restore path when it is
+    ; selected by the scheduler. Keep the kernel GS base in that case; swap only for a CPL3 target.
+    test qword [rsp + 0x08], 3 ; CS is immediately above RIP
+    jz .restore_context
     swapgs
 
+.restore_context:
     o64 iret

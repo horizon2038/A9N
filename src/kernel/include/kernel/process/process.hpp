@@ -49,6 +49,7 @@ namespace a9n::kernel
         a9n::word core_affinity { 0 };
         process  *preview { nullptr };
         process  *next { nullptr };
+        bool      is_in_ready_queue { false };
 
         // for fault handling
         fault_type           fault_reason { fault_type::NONE };

@@ -104,7 +104,13 @@ SECTIONS
 
         . = ALIGN(0x1000);
         __boot_stack_start = . - KERNEL_VMA_BASE;
-        . += 0x1000 * CPU_COUNT_MAX;
+        /*
+         * The AP trampoline selects its temporary stack with the 8-bit Local APIC ID, not the
+         * logical core number. Reserve every supported APIC-ID slot and one additional BSP-only
+         * slot. In particular, the BSP must not share APIC-ID slot 63 when all 64 logical cores
+         * are enabled.
+         */
+        . += 0x1000 * (CPU_COUNT_MAX + 1);
         __boot_stack_end = . - KERNEL_VMA_BASE; 
 
         . = ALIGN(0x1000);

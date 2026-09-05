@@ -36,6 +36,7 @@ namespace a9n::kernel
         a9n::word scratch; // for temporary use in context switch, etc.
         alignas(a9n::WORD_BITS) process_manager process_manager_core {};
         alignas(sizeof(a9n::word)) bool is_idle { false };
+        process *pending_reschedule_target { nullptr };
     } __attribute__((packed));
 
     // These fields are consumed directly by the x86-64 syscall/interrupt assembly through GS.

@@ -43,6 +43,7 @@ namespace a9n::kernel
 
             next_process->next    = nullptr;
             next_process->preview = nullptr;
+            next_process->is_in_ready_queue = false;
 
             return next_process;
         }
@@ -79,6 +80,11 @@ namespace a9n::kernel
             return schedule();
         }
 
+        if (target_process->is_in_ready_queue) [[unlikely]]
+        {
+            return scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE;
+        }
+
         // update status
         highest_priority        = target_process->priority;
 
@@ -110,7 +116,8 @@ namespace a9n::kernel
             return scheduler_error::INVALID_PRIORITY;
         }
 
-        if (target_process->next || target_process->preview) [[unlikely]]
+        if (target_process->is_in_ready_queue || target_process->next || target_process->preview)
+            [[unlikely]]
         {
             DEBUG_LOG("process already exists in queue");
             return scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE;
@@ -125,6 +132,7 @@ namespace a9n::kernel
         {
             queue[target_priority].head = target_process;
             queue[target_priority].tail = target_process;
+            target_process->is_in_ready_queue = true;
 
             return {};
         }
@@ -133,6 +141,7 @@ namespace a9n::kernel
         target_process->preview           = queue[target_priority].tail;
         queue[target_priority].tail       = target_process;
         target_process->next              = nullptr;
+        target_process->is_in_ready_queue = true;
 
         return {};
     }
@@ -174,6 +183,7 @@ namespace a9n::kernel
 
                     current->next    = nullptr;
                     current->preview = nullptr;
+                    current->is_in_ready_queue = false;
 
                     while (highest_priority > 0 && !queue[highest_priority].head)
                     {

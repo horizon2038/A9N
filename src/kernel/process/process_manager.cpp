@@ -267,6 +267,31 @@ namespace a9n::kernel
             .transform_error(convert_hal_to_kernel_error);
     }
 
+    kernel_result process_manager::try_remote_target_and_switch(
+        process            &target_process,
+        cpu_local_variable &local_variable
+    )
+    {
+        if (target_process.status != process_status::READY
+            || !target_process.is_in_ready_queue) [[unlikely]]
+        {
+            return kernel_error::TRY_AGAIN;
+        }
+
+        auto remove_result = scheduler_core.remove_process(&target_process);
+        if (!remove_result) [[unlikely]]
+        {
+            return kernel_error::UNEXPECTED;
+        }
+
+        process &preview_process        = *local_variable.current_process;
+        local_variable.current_process  = &target_process;
+        local_variable.is_idle          = false;
+
+        return a9n::hal::switch_context(preview_process, target_process)
+            .transform_error(convert_hal_to_kernel_error);
+    }
+
     kernel_result process_manager::try_direct_schedule_and_switch(process &target_process)
     {
         return a9n::hal::current_local_variable()
@@ -374,9 +399,13 @@ namespace a9n::kernel
 
         process.status = process_status::READY;
 
-        auto result    = scheduler_core.add_process(&process);
+        auto result = scheduler_core.add_process(&process);
         [[unlikely]] if (!result)
         {
+            if (result.unwrap_error() == scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE)
+            {
+                return {};
+            }
             utility::logger::error("Failed to add the process to the scheduler");
             return kernel_error::UNEXPECTED;
         }
@@ -468,6 +497,11 @@ namespace a9n::kernel
                     {
                         if (target.core_affinity != current.core_affinity) [[unlikely]]
                         {
+                            auto &target_local = cpu_local_variables[target.core_affinity];
+                            if (!target_local.pending_reschedule_target)
+                            {
+                                target_local.pending_reschedule_target = &target;
+                            }
                             return reschedule_core(target.core_affinity);
                         }
                     }
@@ -525,6 +559,11 @@ namespace a9n::kernel
             .and_then(
                 [&](void) -> kernel_result
                 {
+                    auto &target_local = cpu_local_variables[target.core_affinity];
+                    if (!target_local.pending_reschedule_target)
+                    {
+                        target_local.pending_reschedule_target = &target;
+                    }
                     return reschedule_core(target.core_affinity);
                 }
             )
