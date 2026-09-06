@@ -76,6 +76,13 @@ namespace a9n::kernel
         a9n::word flags;
     };
 
+    inline constexpr a9n::word FRAME_FLAG_DEVICE = 1ULL << 16;
+
+    inline constexpr bool frame_is_device(const frame &target)
+    {
+        return (target.flags & FRAME_FLAG_DEVICE) != 0;
+    }
+
     enum class memory_map_error
     {
         ILLEGAL_DEPTH,

@@ -26,9 +26,11 @@ namespace a9n::hal::aarch64
             return core_result.unwrap();
         }
 
-        void clear_active_irq()
+        void end_active_irq()
         {
-            active_irq_valid[current_irq_slot()] = false;
+            const auto slot = current_irq_slot();
+            platform::end_of_interrupt(active_irqs[slot]);
+            active_irq_valid[slot] = false;
         }
 
         [[noreturn]] void fatal_exception(const exception_frame &frame)
@@ -87,8 +89,7 @@ namespace a9n::hal::aarch64
                 }
                 else
                 {
-                    platform::end_of_interrupt(irq);
-                    clear_active_irq();
+                    end_active_irq();
                 }
                 return;
             }
@@ -99,16 +100,14 @@ namespace a9n::hal::aarch64
                 {
                     ipi_reschedule_handler();
                 }
-                platform::end_of_interrupt(irq);
-                clear_active_irq();
+                end_active_irq();
                 return;
             }
 
             if (irq == IPI_INVALIDATE_TLB_ID)
             {
                 invalidate_tlb_all();
-                platform::end_of_interrupt(irq);
-                clear_active_irq();
+                end_active_irq();
                 return;
             }
 
@@ -118,8 +117,7 @@ namespace a9n::hal::aarch64
             }
             else
             {
-                platform::end_of_interrupt(irq);
-                clear_active_irq();
+                end_active_irq();
             }
         }
 
@@ -132,11 +130,32 @@ namespace a9n::hal::aarch64
                 {
                     fatal_exception(frame);
                 }
-                kernel_call_handler(
-                    static_cast<a9n::kernel::kernel_call_type>(
-                        static_cast<a9n::sword>(frame.registers[register_index::X8])
-                    )
-                );
+
+                const auto kernel_call_number
+                    = static_cast<a9n::sword>(frame.registers[register_index::X8]);
+                const auto type
+                    = static_cast<a9n::kernel::kernel_call_type>(kernel_call_number);
+                switch (type)
+                {
+                    using enum a9n::kernel::kernel_call_type;
+                    case CAPABILITY_CALL :
+                    case YIELD :
+                    case DEBUG :
+                        kernel_call_handler(type);
+                        break;
+                    default :
+                        if (!fault_dispatcher)
+                        {
+                            fatal_exception(frame);
+                        }
+                        fault_dispatcher(
+                            a9n::kernel::fault_type::INVALID_KERNEL_CALL,
+                            kernel_call_number,
+                            0,
+                            frame.registers[register_index::ELR_EL1]
+                        );
+                        break;
+                }
                 return;
             }
 
@@ -189,10 +208,11 @@ namespace a9n::hal::aarch64
             {
                 const auto slot     = current_irq_slot();
                 active_irqs[slot]   = platform::acknowledge_irq();
-                active_irq_valid[slot] = active_irqs[slot] < 1020;
+                const auto irq      = active_irqs[slot] & 0x3ff;
+                active_irq_valid[slot] = irq < 1020;
                 if (active_irq_valid[slot])
                 {
-                    dispatch_irq(active_irqs[slot]);
+                    dispatch_irq(irq);
                 }
                 break;
             }
@@ -290,8 +310,7 @@ namespace a9n::hal
         {
             return hal_error::TRY_AGAIN;
         }
-        aarch64::platform::end_of_interrupt(aarch64::active_irqs[slot]);
-        aarch64::active_irq_valid[slot] = false;
+        aarch64::end_active_irq();
         return {};
     }
 

@@ -22,6 +22,7 @@ namespace a9n::hal::aarch64
     inline constexpr a9n::word descriptor_valid           = 1ULL << 0;
     inline constexpr a9n::word descriptor_table_page      = 1ULL << 1;
     inline constexpr a9n::word descriptor_attr_normal     = 0ULL << 2;
+    inline constexpr a9n::word descriptor_attr_device     = 1ULL << 2;
     inline constexpr a9n::word descriptor_access          = 1ULL << 10;
     inline constexpr a9n::word descriptor_inner_shareable = 3ULL << 8;
     inline constexpr a9n::word descriptor_user            = 1ULL << 6;

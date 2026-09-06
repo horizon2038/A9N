@@ -62,7 +62,10 @@ namespace a9n::hal::aarch64::platform
             }
         }
 
-        gicd(0x000) = 1;
+        // Interrupts are assigned to Group 1 above. Enable both groups so the
+        // same setup works whether firmware leaves us in the secure or the
+        // non-secure GICv2 register view.
+        gicd(0x000) = 3;
         asm volatile("dsb sy; isb" ::: "memory");
         return init_current_core_interrupt_controller();
     }
@@ -81,7 +84,9 @@ namespace a9n::hal::aarch64::platform
         gicc(0x000) = 0;
         gicc(0x004) = 0xff;
         gicc(0x008) = 0x3;
-        gicc(0x000) = 1;
+        // AckCtl lets a Secure GICC_IAR access acknowledge Group 1. It is
+        // ignored in the Non-secure view, where IAR already aliases Group 1.
+        gicc(0x000) = 7;
         asm volatile("dsb sy; isb" ::: "memory");
         a9n::word mpidr {};
         asm volatile("mrs %0, mpidr_el1" : "=r"(mpidr));
@@ -116,7 +121,9 @@ namespace a9n::hal::aarch64::platform
 
     a9n::word acknowledge_irq()
     {
-        return gicc(0x00c) & 0x3ff;
+        // Preserve the source CPU bits carried by an SGI acknowledgement;
+        // GICC_EOIR requires the complete value returned by GICC_IAR.
+        return gicc(0x00c);
     }
 
     void end_of_interrupt(a9n::word irq_number)

@@ -649,8 +649,11 @@ namespace a9n::kernel
                         .and_then(
                             [&](a9n::physical_address new_watermark) -> capability_result
                             {
-                                auto target_frame = frame { .address   = new_watermark,
-                                                            .size_bits = memory_size_bits };
+                                auto target_frame = frame {
+                                    .address   = new_watermark,
+                                    .size_bits = memory_size_bits,
+                                    .flags     = info.is_device() ? FRAME_FLAG_DEVICE : 0,
+                                };
 
                                 return try_configure_frame_slot(target_slot, target_frame)
                                     .transform_error(

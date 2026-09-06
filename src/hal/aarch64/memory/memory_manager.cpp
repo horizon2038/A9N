@@ -190,10 +190,13 @@ namespace a9n::hal
             return kernel::memory_map_error::ALREADY_MAPPED;
         }
 
+        const auto memory_attribute = kernel::frame_is_device(target_frame) ?
+                                          aarch64::descriptor_attr_device :
+                                          aarch64::descriptor_attr_normal;
         a9n::word descriptor
             = (target_frame.address & descriptor_address_mask) | aarch64::descriptor_valid
-            | aarch64::descriptor_access | aarch64::descriptor_inner_shareable
-            | aarch64::descriptor_attr_normal | aarch64::descriptor_user | aarch64::descriptor_pxn;
+            | aarch64::descriptor_access | aarch64::descriptor_inner_shareable | memory_attribute
+            | aarch64::descriptor_user | aarch64::descriptor_pxn;
         if (depth_result.unwrap() == aarch64::page_depth::L3)
         {
             descriptor |= aarch64::descriptor_table_page;
