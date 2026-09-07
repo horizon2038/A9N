@@ -5,7 +5,7 @@
 
 namespace a9n::hal::x86_64
 {
-    inline static uint64_t x_save_mask = 0;
+    inline uint64_t x_save_mask = 0;
 
     inline namespace x_cr0_flag
     {
