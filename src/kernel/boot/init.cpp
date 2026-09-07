@@ -23,6 +23,7 @@
 #include <kernel/utility/logger.hpp>
 #include <kernel/version.hpp>
 
+#include <hal/interface/cpu.hpp>
 #include <hal/interface/memory_manager.hpp>
 #include <hal/interface/process_manager.hpp>
 
@@ -33,6 +34,26 @@
 
 namespace a9n::kernel
 {
+    namespace
+    {
+        static_assert(sizeof(A9N_ARCHITECTURE_NAME) <= 32, "architecture name is too long");
+        static_assert(sizeof(A9N_PLATFORM_NAME) <= 32, "platform name is too long");
+
+        template<size_t size>
+        void copy_init_name(char (&destination)[size], const char *source)
+        {
+            size_t index = 0;
+            for (; index + 1 < size && source[index]; ++index)
+            {
+                destination[index] = source[index];
+            }
+            for (; index < size; ++index)
+            {
+                destination[index] = '\0';
+            }
+        }
+    }
+
     using page_size_memory = liba9n::std::array<uint8_t, a9n::PAGE_SIZE>;
 
     // assign only once; no memory freed
@@ -300,6 +321,17 @@ namespace a9n::kernel
         info.kernel_patch_version = version.current_patch();
         liba9n::std::memcpy(info.kernel_pre_release, version.current_pre_release(), 32);
         liba9n::std::memcpy(info.kernel_build_meta_data, version.current_build_meta_data(), 32);
+
+        // configure execution environment
+        copy_init_name(info.architecture_name, A9N_ARCHITECTURE_NAME);
+        copy_init_name(info.platform_name, A9N_PLATFORM_NAME);
+        info.core_count = a9n::hal::core_count();
+        logger::printk(
+            "Init environment: architecture=%s, platform=%s, cores=%llu\n",
+            info.architecture_name,
+            info.platform_name,
+            info.core_count
+        );
 
         // copy architectural information
         liba9n::std::memcpy(info.arch_info, boot.arch_info, sizeof(info.arch_info));

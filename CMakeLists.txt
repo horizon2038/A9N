@@ -56,9 +56,10 @@ if (NOT EXISTS "${HAL_ARCH_DIR}")
     message(FATAL_ERROR "the source directory for the specified ${ARCH} does not exist")
 endif()
 
-if(DEFINED PLATFORM)
-    message(STATUS "platform : ${PLATFORM}")
+if(NOT DEFINED PLATFORM OR PLATFORM STREQUAL "")
+    message(FATAL_ERROR "{PLATFORM} variable is not set")
 endif()
+message(STATUS "platform : ${PLATFORM}")
 
 add_subdirectory(src)
 

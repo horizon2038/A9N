@@ -11,6 +11,7 @@ SMPは既定で無効である．A9N Repository RootでCMakeをConfigureする�
 ```sh
 cmake -S . -B build/x86_64-smp \
   -DARCH=x86_64 \
+  -DPLATFORM=pc99 \
   -DCMAKE_TOOLCHAIN_FILE=./src/hal/x86_64/toolchain.cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DA9N_CONFIG_ENABLE_SMP=ON

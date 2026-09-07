@@ -77,7 +77,7 @@ EL0からのKernel Callには`svc #0`を用いる．`x8`へSigned 64 bitのCall 
   )
 ]
 
-`MESSAGE_BUFFER_SIZE_MAX`は494である．HALはMR Indexの範囲を検査しないため，呼出し側は$i < 494$を満たすことを確認する必要がある．`MR10`以降を使用するCallには，PCBへ設定済みのIPC Bufferが必要である．ユーザ空間の`a9n_abi`は`TPIDR_EL0`をIPC Buffer Pointerとして読み出すため，通常のWrapperを使う前にThread Local Baseも設定する．Initが最初に設定するときは，現在のIPC Bufferの`MR10`へPointerを書き，`a9n_abi 0.6.0`の`early_configure_to_tls`相当のPCB `CONFIGURE`を直接実行する．
+`MESSAGE_BUFFER_SIZE_MAX`は494である．HALはMR Indexの範囲を検査しないため，呼出し側は$i < 494$を満たすことを確認する必要がある．`MR10`以降を使用するCallには，PCBへ設定済みのIPC Bufferが必要である．ユーザ空間の`a9n_abi`は`TPIDR_EL0`をIPC Buffer Pointerとして読み出すため，通常のWrapperを使う前にThread Local Baseも設定する．Initが最初に設定するときは，現在のIPC Bufferの`MR10`へPointerを書き，`a9n_abi`の`early_configure_to_tls`相当のPCB `CONFIGURE`を直接実行する．
 
 `CAPABILITY_CALL`の共通Register Layoutは次の通りである．Operation固有のLayoutは各Kernel Objectの章に記載する．
 

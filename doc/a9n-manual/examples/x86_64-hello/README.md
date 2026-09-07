@@ -15,19 +15,19 @@ ABI_EXAMPLE=A9N/doc/a9n-manual/examples/x86_64-hello
 
 cargo xtask build \
   --arch x86-64 \
-  --platform qemu \
+  --platform pc99 \
   --release \
   --os-manifest "$ABI_EXAMPLE/Cargo.toml" \
   --os-target-json "$ABI_EXAMPLE/x86_64-unknown-a9n.json" \
   --os-binary a9n-manual-hello
 ```
 
-SPENCER places the payload at `out/x86_64-qemu-release/nun_os_target_dir/x86_64-unknown-a9n/release/a9n-manual-hello` and stores it as `/kernel/init.elf` in the disk image.
+SPENCER places the payload at `out/x86_64-pc99-release/nun_os_target_dir/x86_64-unknown-a9n/release/a9n-manual-hello` and stores it as `/kernel/init.elf` in the disk image.
 
 ## Inspect the ELF layout
 
 ```sh
-INIT_ROOT=out/x86_64-qemu-release/nun_os_target_dir
+INIT_ROOT=out/x86_64-pc99-release/nun_os_target_dir
 INIT_ELF="$INIT_ROOT/x86_64-unknown-a9n/release/a9n-manual-hello"
 llvm-readelf -h -l -s "$INIT_ELF"
 ```
@@ -50,7 +50,7 @@ ABI_EXAMPLE=A9N/doc/a9n-manual/examples/x86_64-hello
 
 cargo xtask run \
   --arch x86-64 \
-  --platform qemu \
+  --platform pc99 \
   --release \
   --os-manifest "$ABI_EXAMPLE/Cargo.toml" \
   --os-target-json "$ABI_EXAMPLE/x86_64-unknown-a9n.json" \

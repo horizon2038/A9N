@@ -14,7 +14,7 @@ services:
       CCACHE_DIR: /workspace/.ccache
       CCACHE_MAXSIZE: 2G
       ARCH: ${ARCH:-x86_64}
-      PLATFORM: ${PLATFORM:-qemu}
+      PLATFORM: ${PLATFORM:-pc99}
       BUILD_TYPE: ${BUILD_TYPE:-Release}
 
     command:

@@ -152,15 +152,28 @@ Kernelは，Init Image内の予約領域へ`init_info`を書き込む．`init_in
   [`kernel_patch_version`], [Word 2], [1 Word], [Word 2], [1 Word],
   [`kernel_pre_release[32]`], [Word 3], [8 Words], [Word 3], [4 Words],
   [`kernel_build_meta_data[32]`], [Word 11], [8 Words], [Word 7], [4 Words],
-  [`arch_info[128]`], [Word 19], [128 Words], [Word 11], [128 Words],
-  [`ipc_buffer`], [Word 147], [1 Word], [Word 139], [1 Word],
-  [`generic_list[128]`], [Word 148], [256 Words], [Word 140], [256 Words],
-  [`generic_list_count`], [Word 404], [1 Word], [Word 396], [1 Word],
+  [`architecture_name[32]`], [Word 19], [8 Words], [Word 11], [4 Words],
+  [`platform_name[32]`], [Word 27], [8 Words], [Word 15], [4 Words],
+  [`core_count`], [Word 35], [1 Word], [Word 19], [1 Word],
+  [`arch_info[128]`], [Word 36], [128 Words], [Word 20], [128 Words],
+  [`ipc_buffer`], [Word 164], [1 Word], [Word 148], [1 Word],
+  [`generic_list[128]`], [Word 165], [256 Words], [Word 149], [256 Words],
+  [`generic_list_count`], [Word 421], [1 Word], [Word 405], [1 Word],
 )
 
-Version FieldはKernel Versionを，`kernel_pre_release`と`kernel_build_meta_data`はVersion文字列を保持する．`arch_info`は`boot_info.arch_info`のCopyである．`ipc_buffer`は`init_ipc_buffer_address`と同じUser Virtual Addressを保持する．`generic_list`はMemory Mapから生成したDescriptorであり，`generic_list_count`は有効なElement数を表す．
+Version FieldはKernel Versionを，`kernel_pre_release`と`kernel_build_meta_data`はVersion文字列を保持する．`architecture_name`と`platform_name`は32 ByteのNUL終端文字列であり，終端以降をZeroで埋める．これらの値はBuild時に選択した`ARCH`と`PLATFORM`からKernelへ埋め込む．`core_count`はBSPを含むBoot時の利用可能Logical Core数であり，HALの`core_count()`と同じ値である．`arch_info`は`boot_info.arch_info`のCopyである．`ipc_buffer`は`init_ipc_buffer_address`と同じUser Virtual Addressを保持する．`generic_list`はMemory Mapから生成したDescriptorであり，`generic_list_count`は有効なElement数を表す．
 
-`init_info`全体のSizeは，32-bit Wordでは405 Words，64-bit Wordでは397 Wordsである．
+#reference_table(
+  (1.4fr, 1.3fr, 2.3fr),
+  ([*Architecture*], [*Platform*], [*Field Value*]),
+  [`x86_64`], [PC99], [`architecture_name = "x86_64"`，`platform_name = "pc99"`．],
+  [`aarch64`], [QEMU `virt`], [`architecture_name = "aarch64"`，`platform_name = "qemu"`．],
+  [`aarch64`], [Raspberry Pi 4 Model B], [`architecture_name = "aarch64"`，`platform_name = "rpi4b"`．],
+)
+
+Spencerはx86_64/PC99を`--arch x86-64 --platform pc99`で選択し，`run`では生成したDisk ImageをQEMU上で実行する．
+
+`init_info`全体のSizeは，32-bit Wordでは422 Words，64-bit Wordでは406 Wordsである．
 
 Generic Descriptorが表す範囲は$["address", "address" + 2^"size_radix")$である．`generic_list_count`は，有効な`generic_list` Element数を表す．実装上のCount制約は「Generic Descriptor Generation」に記載する．
 

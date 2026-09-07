@@ -18,7 +18,7 @@
     title: "A9N Microkernel Manual",
     version: read("version.txt"),
     author: "Rekka 'horizon' IGUMI",
-    date: datetime(year: 2026, month: 8, day: 31),
+    date: datetime(year: 2026, month: 9, day: 7),
     keywords: (
       "A9N",
       "microkernel",
