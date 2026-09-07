@@ -106,7 +106,7 @@ Kernel Linker ScriptはKernel Virtual Address，Physical Load Address，Boot Sec
 Docker Buildの実行例は次の通りである．`{ARCH}`はArchitecture Directory名へ置き換える．
 
 ```sh
-ARCH={ARCH} BUILD_TYPE=Release docker compose run --rm a9n-build
+ARCH={ARCH} PLATFORM={PLATFORM} BUILD_TYPE=Release docker compose run --rm a9n-build
 ```
 
 Local CMake Buildの実行例は次の通りである．

@@ -25,10 +25,10 @@ jobs:
       matrix:
         build_type: [ Debug, Release ]
         target:
-          - name: x86_64
-            id: x86_64
+          - name: x86_64/pc99
+            id: x86_64-pc99
             arch: x86_64
-            platform: ''
+            platform: pc99
             extra_pkgs: "nasm"
           - name: aarch64/qemu
             id: aarch64-qemu

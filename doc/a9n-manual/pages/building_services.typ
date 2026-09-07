@@ -107,7 +107,7 @@ Genericから複数Objectを作成してProcessを起動する処理は，単一
 
 Initは，受け取ったGenericとInitial Capability Spaceから，後続Processに必要なObjectを構成する．Executable LoaderとResource ManagerはUser-level Softwareとして実装する．最初のService Processを起動する順序は次の通りである．
 
-+ `init_info`のVersion，`generic_list_count`，IPC Buffer Pointerを検査し，Root Slot 1から9をResource台帳へ登録する．
++ `init_info`のVersion，Architecture名，Platform名，Core数，`generic_list_count`，IPC Buffer Pointerを検査し，Root Slot 1から9をResource台帳へ登録する．
 + Genericを`CONVERT`し，Child用Capability Node，Address Space，Page Table，Frame，PCB，IPC Portを作成する．
 + Child用FrameをInit Address Spaceの一時領域へMapし，ExecutableのProgram Segmentと初期Dataを書き込む．
 + Child Address SpaceへPage TableとFrameをMapし，Entry Point，Stack，IPC BufferのUser Virtual Addressを確定する．

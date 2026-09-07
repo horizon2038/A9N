@@ -79,7 +79,7 @@ ARCH={target_arch} PLATFORM={target_platform} BUILD_TYPE={Debug|Release} docker 
 ### Example (x86_64, Release)
 
 ```bash
-ARCH=x86_64 PLATFORM=qemu BUILD_TYPE=Release docker compose run --rm a9n-build
+ARCH=x86_64 PLATFORM=pc99 BUILD_TYPE=Release docker compose run --rm a9n-build
 ```
 
 ## Build (with CMake)

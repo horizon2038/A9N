@@ -84,4 +84,6 @@ target_compile_definitions(
     ${KERNEL_BINARY}
     PRIVATE
     KERNEL_VERSION="${KERNEL_VERSION}"
+    A9N_ARCHITECTURE_NAME="${ARCH}"
+    A9N_PLATFORM_NAME="${PLATFORM}"
 )

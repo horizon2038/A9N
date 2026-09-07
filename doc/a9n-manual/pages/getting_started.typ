@@ -7,8 +7,7 @@
 
 本章では，#term[SPENCER]が用意する標準構成をBuildし，A9N Microkernel上でUser Payloadが動作するところまでを確認する．標準構成は，#term[A9NLoader-rs]をBootloader，#term[Nun]をUser-level Runtime，SPENCERの`core` PackageをUser Payloadとして用いる．Nunは#term[`a9n_abi`]を介してKernel Interfaceを利用し，`a9n_abi`は共有型を定義する#term[`a9n_types`]へ依存する．
 
-// TODO: `--platform qemu`は，生成したDisk Imageがx86_64 UEFI実機でも起動できるという実態と一致しない．SPENCER側でplatform名を修正した後，本章のCommand，Path，説明を更新する．
-Version #(read("/version.txt").trim())のSPENCER CLIは，x86_64では`--platform qemu`，aarch64では`--platform qemu`または`--platform rpi4b`を受理する．Getting Startedでは各Interfaceの内部を変更せず，標準構成のBootを先に確認する．生成したx86_64 Disk ImageはQEMUだけでなくUEFI実機でも起動できる．aarch64のKernel Call，Context，Page Table，U-Boot経路とRaspberry Pi 4 Model B実機Bootは「AArch64 ABI」に記載する．Capabilityを用いたServiceの構成は「Building Init and Services」，複数Coreの構成は「Symmetric Multiprocessing」，x86_64のRegister配置や独自Entryの実装は「x86_64 ABI」に記載する．
+Version #(read("/version.txt").trim())のSPENCER CLIは，x86_64では`--platform pc99`，aarch64では`--platform qemu`または`--platform rpi4b`を受理する．`run`はx86_64/PC99とaarch64/QEMUをQEMU上で実行する．Getting Startedでは各Interfaceの内部を変更せず，標準構成のBootを先に確認する．生成したx86_64 Disk ImageはQEMUだけでなくUEFI実機でも起動できる．aarch64のKernel Call，Context，Page Table，U-Boot経路とRaspberry Pi 4 Model B実機Bootは「AArch64 ABI」に記載する．Capabilityを用いたServiceの構成は「Building Init and Services」，複数Coreの構成は「Symmetric Multiprocessing」，x86_64のRegister配置や独自Entryの実装は「x86_64 ABI」に記載する．
 
 == Execution Path
 
@@ -105,7 +104,7 @@ SPENCER Directoryで次を実行する．`--os-manifest`を省略すると`core/
 ```sh
 cargo xtask build \
   --arch x86-64 \
-  --platform qemu \
+  --platform pc99 \
   --release
 ```
 
@@ -114,15 +113,15 @@ cargo xtask build \
 #reference_table(
   (1.2fr, 3.5fr),
   ([Artifact], [Path]),
-  [Kernel], [`out/x86_64-qemu-release/a9n/kernel.elf`],
-  [Init], [`out/x86_64-qemu-release/nun_os_target_dir/x86_64-unknown-a9n/release/core`],
-  [Loader], [`out/x86_64-qemu-release/a9nloader/a9nloader-rs.efi`],
-  [Disk Image], [`out/x86_64-qemu-release/spencer.img`],
+  [Kernel], [`out/x86_64-pc99-release/a9n/kernel.elf`],
+  [Init], [`out/x86_64-pc99-release/nun_os_target_dir/x86_64-unknown-a9n/release/core`],
+  [Loader], [`out/x86_64-pc99-release/a9nloader/a9nloader-rs.efi`],
+  [Disk Image], [`out/x86_64-pc99-release/spencer.img`],
 )
 
 Disk Image内では，A9NLoader-rsを`/EFI/BOOT/BOOTX64.EFI`，A9N Kernelを`/kernel/kernel.elf`，`core`を`/kernel/init.elf`として配置する．Host上のArtifact名とDisk Image内のFile名を区別する必要がある．
 
-`cargo xtask build`の再実行は，`out/x86_64-qemu-release`以下のArtifactを更新し，`spencer.img`を再生成する．SourceとSubmoduleのRevisionは変更しない．
+`cargo xtask build`の再実行は，`out/x86_64-pc99-release`以下のArtifactを更新し，`spencer.img`を再生成する．SourceとSubmoduleのRevisionは変更しない．
 
 == Run
 
@@ -131,7 +130,7 @@ Buildと同じSPENCER Directoryで次を実行する．`run`はBuild Pipelineを
 ```sh
 cargo xtask run \
   --arch x86-64 \
-  --platform qemu \
+  --platform pc99 \
   --release
 ```
 
@@ -149,13 +148,13 @@ Serial出力には，各Componentの境界が実行順に現れる．A9NLoader-r
 
 == Run on x86_64 Hardware
 
-`out/x86_64-qemu-release/spencer.img`は，x86_64 UEFI FirmwareがRemovable Mediaとして読み込めるRaw Disk Imageである．Disk Imageは`/EFI/BOOT/BOOTX64.EFI`にA9NLoader-rsを保持する．USBメモリー等のBlock Device全体へDisk ImageをByte単位で書き込むことで，生成物をx86_64実機から起動できる．File System上へ`spencer.img`を通常のFileとしてコピーする操作では，Boot Mediaを構成できない．
+`out/x86_64-pc99-release/spencer.img`は，x86_64 UEFI FirmwareがRemovable Mediaとして読み込めるRaw Disk Imageである．Disk Imageは`/EFI/BOOT/BOOTX64.EFI`にA9NLoader-rsを保持する．USBメモリー等のBlock Device全体へDisk ImageをByte単位で書き込むことで，生成物をx86_64実機から起動できる．File System上へ`spencer.img`を通常のFileとしてコピーする操作では，Boot Mediaを構成できない．
 
 #notice([WARNING], [
   Raw Disk Imageの書込みは，指定したBlock Deviceの既存PartitionとDataを上書きする．書込み前に，対象がUSBメモリー等の交換可能Device全体であることをDevice名，容量，接続状態から確認する必要がある．対象Deviceを一意に識別できない場合は，書込みを実行してはならない．
 ])
 
-Host OSが提供するDisk Image WriterまたはRaw Device Write Toolへ，Imageとして`out/x86_64-qemu-release/spencer.img`，DestinationとしてUSBメモリー等のBlock Device全体を指定する．書込み完了後にHost OSのFlushとDeviceの取外し処理を実行し，x86_64実機のUEFI Boot MenuからUSB Deviceを選択する．Legacy BIOS Bootは対象外である．Secure Bootを有効にしたFirmwareは，署名されていないA9NLoader-rsの実行を拒否し得るため，Firmwareが未署名のUEFI Applicationを許可する設定を用いる必要がある．
+Host OSが提供するDisk Image WriterまたはRaw Device Write Toolへ，Imageとして`out/x86_64-pc99-release/spencer.img`，DestinationとしてUSBメモリー等のBlock Device全体を指定する．書込み完了後にHost OSのFlushとDeviceの取外し処理を実行し，x86_64実機のUEFI Boot MenuからUSB Deviceを選択する．Legacy BIOS Bootは対象外である．Secure Bootを有効にしたFirmwareは，署名されていないA9NLoader-rsの実行を拒否し得るため，Firmwareが未署名のUEFI Applicationを許可する設定を用いる必要がある．
 
 実機上の動作範囲は，A9Nのx86_64 HALが対応するCPU，Firmware情報，Interrupt Controller，Timer，I/O Deviceに依存する．USB DeviceからA9NLoader-rsを開始できても，未対応Hardwareを用いるServiceやDriverの動作は保証されない．QEMUと実機は同じDisk Imageを利用できるが，Hardware依存の初期化結果は一致するとは限らない．
 

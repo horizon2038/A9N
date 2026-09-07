@@ -54,6 +54,11 @@ namespace a9n::kernel
         a9n::word kernel_patch_version {};
         char      kernel_pre_release[32] {};
         char      kernel_build_meta_data[32] {};
+        char      architecture_name[32] {};
+        char      platform_name[32] {};
+
+        // core information
+        a9n::word core_count {};
 
         // architectural information
         a9n::word arch_info[ARCH_INFO_MAX];
@@ -69,6 +74,10 @@ namespace a9n::kernel
     static_assert(
         sizeof(init_info) <= a9n::PAGE_SIZE,
         "init_info must be less than or equal to the page size"
+    );
+    static_assert(
+        sizeof(init_info) == (sizeof(a9n::word) == 4 ? 422 : 406) * sizeof(a9n::word),
+        "init_info layout must match the A9N Init Protocol"
     );
 
     kernel_result create_init(const boot_info &info);
