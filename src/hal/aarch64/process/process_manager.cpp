@@ -107,7 +107,7 @@ namespace a9n::hal
         }
     }
 
-    hal_result init_floating_context(a9n::kernel::floating_context &context)
+    hal_result configure_floating_context(a9n::kernel::floating_context &context)
     {
         liba9n::std::memset(&context, 0, sizeof(context));
         return {};

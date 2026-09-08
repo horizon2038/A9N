@@ -509,7 +509,7 @@ namespace a9n::kernel
         // init hardware contexts
         logger::printk("Initializing hardware context for init process ...\n");
         hal::init_hardware_context(hal::cpu_mode::USER, pcb.component.process_core.registers);
-        hal::init_floating_context(pcb.component.process_core.floating_registers);
+        hal::configure_floating_context(pcb.component.process_core.floating_registers);
         hal::configure_general_register(
             pcb.component.process_core,
             hal::register_type::INSTRUCTION_POINTER,

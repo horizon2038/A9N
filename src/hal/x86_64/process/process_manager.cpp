@@ -143,9 +143,9 @@ namespace a9n::hal
         return {};
     }
 
-    hal_result init_floating_context(a9n::kernel::floating_context &context)
+    hal_result configure_floating_context(a9n::kernel::floating_context &context)
     {
-        x86_64::init_floating_context(context);
+        x86_64::configure_floating_context(context);
         return {};
     }
 

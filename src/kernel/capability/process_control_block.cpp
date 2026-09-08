@@ -30,7 +30,7 @@ namespace a9n::kernel
     {
         // init hardware-specific contexts
         hal::init_hardware_context(hal::cpu_mode::USER, process_core.registers);
-        hal::init_floating_context(process_core.floating_registers);
+        hal::configure_floating_context(process_core.floating_registers);
     }
 
     capability_result process_control_block::execute(process &owner, capability_slot &self)
@@ -782,7 +782,7 @@ namespace a9n::kernel
             .and_then(
                 [&](void) -> kernel_result
                 {
-                    a9n::hal::init_floating_context(process_core.floating_registers);
+                    a9n::hal::configure_floating_context(process_core.floating_registers);
                     return {};
                 }
             )

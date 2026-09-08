@@ -91,7 +91,7 @@ namespace a9n::hal::x86_64
         alignas(16) static constexpr uint32_t DEFAULT_MXCSR = 0x1F80;
 
         asm volatile(
-            "fninit\n"
+            "finit\n"
             "ldmxcsr %0\n"
             :
             : "m"(DEFAULT_MXCSR)
@@ -103,7 +103,7 @@ namespace a9n::hal::x86_64
     {
         // XCR0 / x_save_mask configured first
         reset_floating_unit();
-        x_save(&initial_floating_context, x_save_mask);
+        x_save_opt(&initial_floating_context, x_save_mask);
     }
 
     inline void configure_floating_mode(void)
@@ -122,16 +122,9 @@ namespace a9n::hal::x86_64
         init_floating_context_template();
     }
 
-    inline void init_floating_context(a9n::kernel::floating_context &context)
+    inline void configure_floating_context(a9n::kernel::floating_context &context)
     {
         context = initial_floating_context;
-        /*
-        __builtin_memcpy(
-            context.data(),
-            initial_floating_context.data(),
-            sizeof(a9n::kernel::floating_context)
-        );
-        */
     }
 
     inline void switch_floating_context(
@@ -139,13 +132,15 @@ namespace a9n::hal::x86_64
         a9n::kernel::floating_context &next
     )
     {
-        if (x_save_mask == 0)
+        const auto mask = x_save_mask;
+
+        if (mask == 0)
         {
             return;
         }
 
-        x_save_opt(&preview, x_save_mask);
-        x_restore(&next, x_save_mask);
+        x_save_opt(&preview, mask);
+        x_restore(&next, mask);
     }
 }
 

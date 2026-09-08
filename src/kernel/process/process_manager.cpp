@@ -47,7 +47,7 @@ namespace a9n::kernel
             .and_then(
                 [](void) -> hal::hal_result
                 {
-                    return a9n::hal::init_floating_context(idle_context.floating_registers);
+                    return a9n::hal::configure_floating_context(idle_context.floating_registers);
                 }
             )
             .transform_error(convert_hal_to_kernel_error)
