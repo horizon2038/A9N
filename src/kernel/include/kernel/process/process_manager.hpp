@@ -28,7 +28,9 @@ namespace a9n::kernel
             process            &target_process,
             cpu_local_variable &local_variable
         );
+        template<bool ShouldAddQuantum = true>
         kernel_result try_direct_schedule_and_switch(process &target_process);
+        template<bool ShouldAddQuantum = true>
         kernel_result
             try_direct_schedule_and_switch(process &target_process, cpu_local_variable &local_variable);
 
@@ -54,6 +56,7 @@ namespace a9n::kernel
     liba9n::result<process_manager *, kernel_error> current_process_manager(void);
     kernel_result                                   reschedule_core(a9n::word core_number);
     kernel_result                                   try_schedule_and_switch(process &current);
+    template<bool ShouldAddQuantum = true>
     kernel_result try_direct_schedule_and_switch(process &current, process &target);
     kernel_result mark_scheduled(process &current, process &target);
     kernel_result mark_scheduled_with_preemption(process &current, process &target);

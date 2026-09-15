@@ -76,19 +76,26 @@ namespace a9n::hal::x86_64
                 [[fallthrough]];
             case DEBUG :
                 {
-                    kernel_call_handler(type);
                     auto current_clv = reinterpret_cast<kernel::cpu_local_variable *>(read_gs_base());
+                    auto *const previous_process = current_clv->current_process;
+
+                    kernel_call_handler(type);
+
                     if (current_clv->is_idle)
                     {
                         idle_loop();
                     }
-                    write_fs_base(
-                        current_clv->current_process->registers[x86_64::register_index::FS_BASE]
-                    );
-                    write_user_gs_base(
-                        current_clv->current_process->registers[x86_64::register_index::GS_BASE]
-                    );
-                    return (*current_clv->current_context)[x86_64::register_index::ENTER_FROM]
+                    auto *const next_process = current_clv->current_process;
+                    if (next_process == previous_process) [[unlikely]]
+                    {
+                        write_fs_base(
+                            next_process->registers[x86_64::register_index::FS_BASE]
+                        );
+                        write_user_gs_base(
+                            next_process->registers[x86_64::register_index::GS_BASE]
+                        );
+                    }
+                    return next_process->registers[x86_64::register_index::ENTER_FROM]
                         != x86_64::context_entry::SYSCALL;
                 }
 

@@ -12,6 +12,7 @@ namespace a9n::hal
 
     // x0-x30, SP_EL0, ELR_EL1, SPSR_EL1, TPIDR_EL0.
     inline constexpr a9n::word HARDWARE_CONTEXT_SIZE = 35;
+    inline constexpr a9n::word MESSAGE_REGISTER_COUNT = 10; // MR0-MR9, before the IPC buffer.
     // q0-q31 plus FPCR and FPSR (stored in word-addressable backing storage).
     inline constexpr a9n::word FLOATING_CONTEXT_SIZE    = 66;
     inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = a9n::PAGE_SIZE * 4;

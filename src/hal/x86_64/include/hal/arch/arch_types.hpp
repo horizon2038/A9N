@@ -13,6 +13,7 @@ namespace a9n::hal
 
     // context
     inline constexpr a9n::word HARDWARE_CONTEXT_SIZE    = 23;
+    inline constexpr a9n::word MESSAGE_REGISTER_COUNT   = 10; // MR0-MR9, before the IPC buffer.
     inline constexpr a9n::word FLOATING_CONTEXT_SIZE    = 256;
     inline constexpr a9n::word VIRTUAL_CPU_CONTEXT_SIZE = a9n::PAGE_SIZE * 4;
     inline constexpr a9n::word VIRTUAL_CPU_STATE_COUNT  = 64;

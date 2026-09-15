@@ -69,15 +69,28 @@ namespace a9n::kernel
         }
         if (target_priority < highest_priority) [[unlikely]]
         {
-            if (target_process->status != process_status::READY)
+            // schedule() may have emptied the queue at the cached upper bound.
+            while (target_priority < highest_priority && !queue[highest_priority].head)
             {
-                DEBUG_LOG("invalid process status");
-                return scheduler_error::INVALID_PROCESS;
+                --highest_priority;
             }
 
-            add_process(target_process);
+            if (target_priority < highest_priority) [[unlikely]]
+            {
+                if (target_process->status != process_status::READY)
+                {
+                    DEBUG_LOG("invalid process status");
+                    return scheduler_error::INVALID_PROCESS;
+                }
 
-            return schedule();
+                return add_process(target_process)
+                    .and_then(
+                        [&]() -> liba9n::result<process *, scheduler_error>
+                        {
+                            return schedule();
+                        }
+                    );
+            }
         }
 
         if (target_process->is_in_ready_queue) [[unlikely]]
@@ -85,12 +98,7 @@ namespace a9n::kernel
             return scheduler_error::PROCESS_ALREADY_EXISTS_IN_QUEUE;
         }
 
-        // update status
-        highest_priority        = target_process->priority;
-
-        target_process->next    = nullptr;
-        target_process->preview = nullptr;
-
+        // A process outside the ready queue already has cleared scheduler links.
         return target_process;
     }
 

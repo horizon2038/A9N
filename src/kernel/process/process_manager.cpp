@@ -292,6 +292,7 @@ namespace a9n::kernel
             .transform_error(convert_hal_to_kernel_error);
     }
 
+    template<bool ShouldAddQuantum>
     kernel_result process_manager::try_direct_schedule_and_switch(process &target_process)
     {
         return a9n::hal::current_local_variable()
@@ -299,11 +300,15 @@ namespace a9n::kernel
             .and_then(
                 [&](cpu_local_variable *local_variable) -> kernel_result
                 {
-                    return try_direct_schedule_and_switch(target_process, *local_variable);
+                    return try_direct_schedule_and_switch<ShouldAddQuantum>(
+                        target_process,
+                        *local_variable
+                    );
                 }
             );
     }
 
+    template<bool ShouldAddQuantum>
     kernel_result process_manager::try_direct_schedule_and_switch(
         process            &target_process,
         cpu_local_variable &local_variable
@@ -319,10 +324,14 @@ namespace a9n::kernel
             .and_then(
                 [&](process *next_process) -> hal::hal_result
                 {
-                    // yield quantum to next process
-                    next_process->quantum          += local_variable.current_process->quantum;
+                    process &preview_process = *local_variable.current_process;
 
-                    process &preview_process        = *local_variable.current_process;
+                    if constexpr (ShouldAddQuantum)
+                    {
+                        // yield quantum to next process
+                        next_process->quantum += preview_process.quantum;
+                    }
+
                     local_variable.current_process  = next_process;
                     local_variable.is_idle          = false;
 
@@ -538,20 +547,23 @@ namespace a9n::kernel
         return route_mark_scheduled<true>(current, target);
     }
 
+    template<bool ShouldAddQuantum>
     kernel_result try_direct_schedule_and_switch(process &current, process &target)
     {
         if constexpr (!SMP_ENABLED)
         {
-            return cpu_local_variables[BSP_ID].process_manager_core.try_direct_schedule_and_switch(
-                target
-            );
+            return cpu_local_variables[BSP_ID]
+                .process_manager_core.try_direct_schedule_and_switch<ShouldAddQuantum>(target);
         }
 
         auto &local_variable  = cpu_local_variables[current.core_affinity];
         auto &current_manager = local_variable.process_manager_core;
         if (target.core_affinity == current.core_affinity) [[likely]]
         {
-            return current_manager.try_direct_schedule_and_switch(target, local_variable);
+            return current_manager.try_direct_schedule_and_switch<ShouldAddQuantum>(
+                target,
+                local_variable
+            );
         }
 
         return cpu_local_variables[target.core_affinity]
@@ -574,4 +586,17 @@ namespace a9n::kernel
                 }
             );
     }
+
+    template kernel_result process_manager::try_direct_schedule_and_switch<true>(process &);
+    template kernel_result process_manager::try_direct_schedule_and_switch<false>(process &);
+    template kernel_result process_manager::try_direct_schedule_and_switch<true>(
+        process &,
+        cpu_local_variable &
+    );
+    template kernel_result process_manager::try_direct_schedule_and_switch<false>(
+        process &,
+        cpu_local_variable &
+    );
+    template kernel_result try_direct_schedule_and_switch<true>(process &, process &);
+    template kernel_result try_direct_schedule_and_switch<false>(process &, process &);
 }

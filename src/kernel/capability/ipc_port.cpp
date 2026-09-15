@@ -1,17 +1,17 @@
-#include "hal/interface/process_manager.hpp"
-#include "kernel/types.hpp"
-#include <kernel/capability/ipc_port.hpp>
-
+#include <kernel/capability/capability_invocation.hpp>
 #include <kernel/capability/capability_result.hpp>
 #include <kernel/capability/capability_utility.hpp>
+#include <kernel/capability/ipc_port.hpp>
+#include <kernel/capability/notification_port.hpp>
 #include <kernel/interrupt/fault.hpp>
 #include <kernel/kernel_result.hpp>
+#include <kernel/process/cpu.hpp>
 #include <kernel/process/process_manager.hpp>
-
-#include <kernel/capability/capability_invocation.hpp>
-#include <kernel/capability/capability_utility.hpp>
-#include <kernel/capability/notification_port.hpp>
+#include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
+
+#include <hal/arch/arch_types.hpp>
+#include <hal/interface/process_manager.hpp>
 
 namespace a9n::kernel
 {
@@ -433,7 +433,51 @@ namespace a9n::kernel
             return capability_error::PERMISSION_DENIED;
         }
 
-        return complete_reply_without_switch(owner, info)
+        auto *client                   = owner.destination_reply_target;
+        auto  has_pending_notification = [&]() -> bool
+        {
+            if (owner.binded_notification_port.type != capability_type::NOTIFICATION_PORT
+                || !owner.binded_notification_port.component) [[likely]]
+            {
+                return false;
+            }
+
+            return static_cast<notification_port *>(owner.binded_notification_port.component)
+                ->has_pending_notification();
+        };
+
+        // Reply directly only when the following receive will block on this core.
+        // Check notifications without consuming them or overwriting the reply payload.
+        if (owner.destination_reply_state == process::destination_reply_state_object::READY_TO_REPLY
+            && client && client->fault_reason == fault_type::NONE && info.is_block()
+            && (state == WAIT || state == READY_TO_RECEIVE)
+            && (!SMP_ENABLED || client->core_affinity == owner.core_affinity)
+            && !has_pending_notification()) [[likely]]
+        {
+            return complete_reply<false>(owner, info)
+                .and_then(
+                    [&]() -> capability_result
+                    {
+                        state           = READY_TO_RECEIVE;
+                        owner.status    = process_status::BLOCKED_RECEIVE;
+                        client->quantum = QUANTUM_MAX;
+
+                        return push_ipc_queue(owner)
+                            .and_then(
+                                [&]() -> kernel_result
+                                {
+                                    auto &local_variable
+                                        = cpu_local_variables[SMP_ENABLED ? owner.core_affinity : BSP_ID];
+                                    return local_variable.process_manager_core
+                                        .try_direct_schedule_and_switch<false>(*client, local_variable);
+                                }
+                            )
+                            .transform_error(convert_kernel_to_capability_error);
+                    }
+                );
+        }
+
+        return complete_reply(owner, info)
             .and_then(
                 [&]() -> capability_result
                 {
@@ -534,7 +578,8 @@ namespace a9n::kernel
         return {};
     }
 
-    capability_result ipc_port::complete_reply_without_switch(process &owner, message_info info)
+    template<bool ShouldEnqueueCaller>
+    capability_result ipc_port::complete_reply(process &owner, message_info info)
     {
         if (owner.destination_reply_state == process::destination_reply_state_object::NONE)
         {
@@ -580,8 +625,13 @@ namespace a9n::kernel
                     owner.destination_reply_state  = process::destination_reply_state_object::NONE;
                     owner.destination_reply_target = nullptr;
 
-                    return mark_scheduled(owner, *client)
-                        .transform_error(convert_kernel_to_capability_error);
+                    if constexpr (ShouldEnqueueCaller)
+                    {
+                        return mark_scheduled(owner, *client)
+                            .transform_error(convert_kernel_to_capability_error);
+                    }
+
+                    return {};
                 }
             );
     }
@@ -911,12 +961,6 @@ namespace a9n::kernel
     capability_result ipc_port::transfer_message(process &receiver, process &sender, message_info info)
     {
         using enum ipc_port_state;
-
-        // if it is the end of the queue, reset the state to WAIT
-        if (!queue_head)
-        {
-            state = WAIT;
-        }
 
         if (info.message_length() == 0 && info.transfer_count() == 0) [[likely]]
         {
@@ -1261,34 +1305,55 @@ namespace a9n::kernel
         a9n::word message_length
     )
     {
-        auto configure_value_from_register = [&](a9n::word index) -> a9n::hal::hal_result
+        auto configure_value_from_register = [&](a9n::word index) -> kernel_result
         {
+            DEBUG_LOG("copy message : %llu", index);
             index += (PAYLOAD_START); // skip descriptor, operation_type, message_info,
                                       // identifier
 
             DEBUG_LOG("get message register");
-            return a9n::hal::get_message_register(source_process, index)
-                .and_then(
-                    [&](a9n::word v) -> a9n::hal::hal_result
-                    {
-                        DEBUG_LOG("copy MR[%llu] value=0x%016llx -> MR[%llu]", index, v, index);
-                        DEBUG_LOG("configure message register");
-                        return a9n::hal::configure_message_register(destination_process, index, v);
-                    }
-                );
+            auto result
+                = a9n::hal::get_message_register(source_process, index)
+                      .and_then(
+                          [&](a9n::word v) -> a9n::hal::hal_result
+                          {
+                              DEBUG_LOG("copy MR[%llu] value=0x%016llx -> MR[%llu]", index, v, index);
+                              DEBUG_LOG("configure message register");
+                              return a9n::hal::configure_message_register(destination_process, index, v);
+                          }
+                      );
+
+            if (!result) [[unlikely]]
+            {
+                DEBUG_LOG("failed to copy message : %llu", index - PAYLOAD_START);
+                DEBUG_LOG("error : %s", hal_error_to_string(result.unwrap_error()));
+            }
+            return result.transform_error(convert_hal_to_kernel_error);
         };
 
         DEBUG_LOG("message_length : %llu", message_length);
-        // min_copy_length = 2 (message_info, identifier)
-        for (a9n::word i = 0; i < message_length; i++)
+        static_assert(PAYLOAD_START <= a9n::hal::MESSAGE_REGISTER_COUNT);
+        constexpr auto register_payload_count = a9n::hal::MESSAGE_REGISTER_COUNT - PAYLOAD_START;
+
+        // Bound the register copy separately so it does not need IPC buffer pointers.
+        for (a9n::word i = 0; i < register_payload_count; i++)
         {
-            DEBUG_LOG("copy message : %llu", i);
+            if (i == message_length)
+            {
+                return {};
+            }
             auto result = configure_value_from_register(i);
             if (!result) [[unlikely]]
             {
-                DEBUG_LOG("failed to copy message : %llu", i);
-                DEBUG_LOG("error : %s", hal_error_to_string(result.unwrap_error()));
-                return result.transform_error(convert_hal_to_kernel_error);
+                return result;
+            }
+        }
+        for (a9n::word i = register_payload_count; i < message_length; i++)
+        {
+            auto result = configure_value_from_register(i);
+            if (!result) [[unlikely]]
+            {
+                return result;
             }
         }
 
@@ -1441,11 +1506,11 @@ namespace a9n::kernel
         else
         {
             queue_head->preview_ipc_queue = nullptr;
+            target->next_ipc_queue        = nullptr;
         }
 
-        target->next_ipc_queue    = nullptr;
-        target->preview_ipc_queue = nullptr;
-        target->current_ipc_port  = nullptr;
+        // The old head has no predecessor; an only entry also has no successor.
+        target->current_ipc_port = nullptr;
 
         DEBUG_LOG("pop ipc queue");
         DEBUG_LOG("queue_head : 0x%016llx", queue_head);
