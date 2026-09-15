@@ -89,11 +89,7 @@ namespace a9n::kernel
 
     inline kernel_result try_configure_frame_slot(capability_slot &slot, const frame &target_frame)
     {
-        if (!target_frame.address)
-        {
-            return kernel_error::ILLEGAL_ARGUMENT;
-        }
-
+        // Physical address zero is valid; the capability type identifies a frame.
         slot.init();
         slot.component = &frame_capability_core;
         slot.type      = capability_type::FRAME;

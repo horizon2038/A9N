@@ -161,11 +161,6 @@ namespace a9n::hal
         a9n::word                      rights
     )
     {
-        if (!target_frame.address)
-        {
-            return kernel::memory_map_error::INVALID_FRAME;
-        }
-
         auto depth_result = aarch64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits);
         if (!depth_result)
         {
@@ -221,10 +216,6 @@ namespace a9n::hal
         a9n::virtual_address           target_address
     )
     {
-        if (!target_frame.address)
-        {
-            return kernel::memory_map_error::INVALID_FRAME;
-        }
         auto depth_result = aarch64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits);
         if (!depth_result)
         {

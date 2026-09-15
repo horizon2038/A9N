@@ -188,12 +188,6 @@ namespace a9n::hal
     )
     {
         DEBUG_LOG("map_frame");
-        if (!target_frame.address)
-        {
-            DEBUG_LOG("invalid frame");
-            return kernel::memory_map_error::INVALID_FRAME;
-        }
-
         auto target_leaf_depth_result
             = x86_64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits)
                   .transform_error(
@@ -260,11 +254,6 @@ namespace a9n::hal
         const a9n::virtual_address     target_address
     )
     {
-        if (!target_frame.address)
-        {
-            return kernel::memory_map_error::INVALID_FRAME;
-        }
-
         auto target_leaf_depth_result
             = x86_64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits)
                   .transform_error(
