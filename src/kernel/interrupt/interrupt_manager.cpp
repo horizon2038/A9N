@@ -152,21 +152,6 @@ namespace a9n::kernel
                                                 {
                                                     return kernel_error::TRY_AGAIN;
                                                 }
-                                            )
-                                            .and_then(
-                                                [](void) -> kernel_result
-                                                {
-                                                    return a9n::kernel::interrupt_manager_core
-                                                        .ack_interrupt();
-                                                }
-                                            )
-                                            .and_then(
-                                                [&](void) -> kernel_result
-                                                {
-                                                    return interrupt_manager_core.disable_interrupt(
-                                                        handler->irq_number
-                                                    );
-                                                }
                                             );
                                     }
                                 );
@@ -181,6 +166,25 @@ namespace a9n::kernel
                     return e;
                 }
             );
+
+        // Every delivered external IRQ must be completed, even when lookup or
+        // notification delivery failed. Mask the source before EOI so a level
+        // interrupt cannot retrigger before its driver has handled the device.
+        interrupt_manager_core.disable_interrupt(irq_number).or_else(
+            [irq_number](kernel_error e) -> kernel_result
+            {
+                DEBUG_LOG("IRQ %llu mask failed: %s", irq_number, kernel_error_to_string(e));
+                return e;
+            }
+        );
+        // Do not chain this with and_then: a masking error must not skip EOI.
+        interrupt_manager_core.ack_interrupt().or_else(
+            [irq_number](kernel_error e) -> kernel_result
+            {
+                DEBUG_LOG("IRQ %llu EOI failed: %s", irq_number, kernel_error_to_string(e));
+                return e;
+            }
+        );
     }
 
     extern "C" void handle_ipi_reschedule(void)

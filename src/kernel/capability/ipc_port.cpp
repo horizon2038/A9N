@@ -192,25 +192,32 @@ namespace a9n::kernel
         switch (state)
         {
             case WAIT :
-                DEBUG_LOG("WAIT");
-                if (!info.is_block()) [[unlikely]]
-                {
-                    // Do not advertise a receiver that was never queued.
-                    return {};
-                }
-                state = READY_TO_RECEIVE;
                 [[fallthrough]];
             case READY_TO_RECEIVE :
                 // The receiver (self) is ready, but there is no sender. Waiting until a
                 // sender appears.
                 {
                     DEBUG_LOG("READY_TO_RECEIVE");
+                    bool delivered_notification = false;
+                    if (auto notification_result
+                        = try_deliver_pending_binded_notification(owner, delivered_notification);
+                        !notification_result) [[unlikely]]
+                    {
+                        return notification_result;
+                    }
+                    if (delivered_notification) [[unlikely]]
+                    {
+                        return {};
+                    }
+
                     if (!info.is_block()) [[unlikely]]
                     {
                         // receiver is not ready
                         return {};
                     }
 
+                    // Advertise a receiver only when it will actually enter the queue.
+                    state        = READY_TO_RECEIVE;
                     owner.status = process_status::BLOCKED_RECEIVE;
 
                     return push_ipc_queue(owner)
