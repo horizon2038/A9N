@@ -14,6 +14,11 @@ namespace a9n::hal::x86_64
 {
     hal_result init_cpu_core(void)
     {
+        _write_cr0(
+            _read_cr0()
+            & ~(cr0_flag::CACHE_DISABLE | cr0_flag::NOT_WRITE_THROUGH)
+        );
+
         return init_cpu_core_features().and_then(init_cpu_core_segments);
     }
 
