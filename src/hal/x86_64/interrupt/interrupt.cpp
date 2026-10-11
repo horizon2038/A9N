@@ -176,7 +176,7 @@ namespace a9n::hal::x86_64
     {
         auto *local_variable
             = reinterpret_cast<a9n::kernel::cpu_local_variable *>(read_kernel_gs_base());
-        if (irq_number >= liba9n::enum_cast(reserved_irq::IO_BASE) && local_variable->is_idle)
+        if (irq_number >= liba9n::enum_cast(reserved_irq::BASE) && local_variable->is_idle)
         {
             dispatch_external_interrupt(irq_number);
 
@@ -214,7 +214,7 @@ namespace a9n::hal::x86_64
     extern "C" void do_irq_from_user(uint16_t irq_number, uint64_t error_code)
     {
         // exception
-        if (irq_number < liba9n::enum_cast(reserved_irq::IO_BASE))
+        if (irq_number < liba9n::enum_cast(reserved_irq::BASE))
         {
             auto                  fault         = a9n::kernel::fault_type::NONE;
             a9n::physical_address fault_address = (*current_context())[x86_64::register_index::RIP];

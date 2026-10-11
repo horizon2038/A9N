@@ -225,6 +225,8 @@ Fastpath成立時は，対象ServerによるRequest処理を同じPriority以下
 
 Server Loopは最初のRequestを`RECEIVE`で受信し，Reply Authorityを得た後は`REPLY_RECEIVE`を繰り返す．`REPLY_RECEIVE`は旧ClientへReplyを転送した後，SenderとPending Notificationが存在せず，`block = 1`ならServerを`BLOCKED_RECEIVE`としてReceiver Queueへ追加する．CALL + `REPLY_RECEIVE` Fastpathでは，Serverの待機がClientの`CALL`より先に発生する．
 
+同一Core上のClientへ直接戻る`REPLY_RECEIVE` Fastpathは，Clientの残りQuantumを維持する．Reply完了を理由としたQuantumのリセットやDonationは行わず，Timer TickによるQuantum消費と満了時の通常Schedulingを維持する．
+
 #block(breakable: false)[
   後続の`CALL`はReceiver QueueからServerを取り出し，Clientを`BLOCKED_REPLY`へ設定して，ServerとのReply Linkを構成する．カーネルはRequestのVirtual Message RegisterとCapabilityを転送し，転送完了後にServerを`READY`へ設定する．Serverより高いPriorityの実行可能Processが存在しなければ，Direct ScheduleによってClientからServerへ切り替える．高いPriorityのProcessが存在する場合は，通常のSchedulingがReady Queue内の最高Priority Processを選択する．
 ]

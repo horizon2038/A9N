@@ -467,7 +467,7 @@ namespace a9n::kernel
                     {
                         state           = READY_TO_RECEIVE;
                         owner.status    = process_status::BLOCKED_RECEIVE;
-                        client->quantum = QUANTUM_MAX;
+                        // Fast return keeps the caller's remaining execution budget.
 
                         return push_ipc_queue(owner)
                             .and_then(
@@ -476,7 +476,7 @@ namespace a9n::kernel
                                     auto &local_variable
                                         = cpu_local_variables[SMP_ENABLED ? owner.core_affinity : BSP_ID];
                                     return local_variable.process_manager_core
-                                        .try_direct_schedule_and_switch<false>(*client, local_variable);
+                                        .try_direct_schedule_and_switch(*client, local_variable);
                                 }
                             )
                             .transform_error(convert_kernel_to_capability_error);

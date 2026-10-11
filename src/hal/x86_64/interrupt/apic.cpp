@@ -203,6 +203,13 @@ namespace a9n::hal::x86_64
 
     hal_result io_apic::enable_interrupt(uint8_t irq_number)
     {
+        // Keep external vectors below the reserved IPI range, before narrowing.
+        if (liba9n::enum_cast(reserved_irq::IO_BASE) + irq_number
+            >= liba9n::enum_cast(reserved_irq::IPI_HALT)) [[unlikely]]
+        {
+            return hal_error::ILLEGAL_ARGUMENT;
+        }
+
         return configure_irq(irq_number, UNMASKED);
     }
 

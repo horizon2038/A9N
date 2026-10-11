@@ -2,10 +2,19 @@
 #include <kernel/interrupt/irq_notification_handlers.hpp>
 #include <kernel/process/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
+#include <hal/x86_64/interrupt/interrupt.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 
 using namespace a9n::kernel;
+
+using a9n::hal::x86_64::reserved_irq;
+static_assert(static_cast<unsigned>(reserved_irq::BASE) == 0x20);
+static_assert(static_cast<unsigned>(reserved_irq::TIMER) == 0x20);
+static_assert(static_cast<unsigned>(reserved_irq::IO_BASE) == 0x30);
+static_assert(static_cast<unsigned>(reserved_irq::IO_BASE) + 16 == 0x40);
+static_assert(static_cast<unsigned>(reserved_irq::IO_BASE) + 23
+              < static_cast<unsigned>(reserved_irq::IPI_HALT));
 
 #define CHECK(expression) do { if (!(expression)) { \
     fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #expression); abort(); \
@@ -72,7 +81,7 @@ namespace a9n::hal
     void spin_wait() { abort(); }
 }
 
-int main()
+static void completion_tests(a9n::word irq)
 {
     const unsigned scenarios[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     for (unsigned scenario : scenarios)
@@ -83,9 +92,9 @@ int main()
         mask_error = scenario == 8;
         eoi_error = scenario == 9;
         notified = completed = 0;
-        expected_irq = scenario == 7 ? a9n::hal::IRQ_NUMBER_MAX : 12;
-        auto &handler = irq_notification_handlers[12];
-        handler.irq_number = 12;
+        expected_irq = scenario == 7 ? a9n::hal::IRQ_NUMBER_MAX : irq;
+        auto &handler = irq_notification_handlers[irq];
+        handler.irq_number = irq;
         CHECK(try_configure_notification_port_slot(handler.slot, port, 1));
         if (scenario == 4) handler.slot.type = capability_type::NONE;
         if (scenario == 5) handler.slot.type = capability_type::FRAME;
@@ -95,5 +104,14 @@ int main()
         CHECK(order[0] == 1 && order[1] == 2); // Mask before EOI, including errors.
         CHECK(notified == (scenario == 0 || scenario == 3 || scenario >= 8 ? 1u : 0u));
     }
-    puts("PASS: 10 external IRQ completion paths (production handler)");
+}
+
+int main()
+{
+    const a9n::word irqs[] { 0, 12, 16, 23 };
+    for (a9n::word irq : irqs)
+    {
+        completion_tests(irq);
+    }
+    puts("PASS: fixed timer/IO vectors and 40 external IRQ completion paths (production handler)");
 }

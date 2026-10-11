@@ -2,6 +2,7 @@
 // and HAL message-register access. No SDK or IRQ timing is involved.
 #include <kernel/capability/ipc_port.hpp>
 #include <kernel/capability/notification_port.hpp>
+#include <kernel/process/cpu.hpp>
 #include <kernel/process/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
 #include <stdio.h>
@@ -16,6 +17,9 @@ using namespace a9n::kernel;
 namespace
 {
     unsigned switches {};
+    unsigned direct_switches {};
+    process *expected_direct_target {};
+    cpu_local_variable *expected_direct_local {};
     a9n::word failed_register = 64;
 
     struct test_process
@@ -97,18 +101,19 @@ namespace a9n::kernel
     {
         return mark_scheduled(owner, target);
     }
-    template<bool Quantum> kernel_result try_direct_schedule_and_switch(process &, process &)
+    kernel_result try_direct_schedule_and_switch(process &, process &target)
     {
-        abort();
+        CHECK(&target == expected_direct_target && !expected_direct_local);
+        ++direct_switches;
+        return {};
     }
-    template kernel_result try_direct_schedule_and_switch<true>(process &, process &);
-    template kernel_result try_direct_schedule_and_switch<false>(process &, process &);
-    template<bool Quantum> kernel_result process_manager::try_direct_schedule_and_switch(
-        process &, cpu_local_variable &)
+    kernel_result process_manager::try_direct_schedule_and_switch(
+        process &target, cpu_local_variable &local)
     {
-        abort();
+        CHECK(&target == expected_direct_target && &local == expected_direct_local);
+        ++direct_switches;
+        return {};
     }
-    template kernel_result process_manager::try_direct_schedule_and_switch<false>(process &, cpu_local_variable &);
 }
 namespace a9n::kernel::utility
 {
@@ -236,6 +241,46 @@ static void errors_do_not_enqueue_receiver()
     CHECK(server.core.status == process_status::READY && !server.core.current_ipc_port);
 }
 
+static void fast_reply_receive_preserves_quantum(a9n::sword remaining, a9n::word core)
+{
+    test_process server, caller;
+    test_endpoint endpoint;
+    server.core.core_affinity = caller.core.core_affinity = core;
+    server.core.quantum = 5;
+    caller.core.quantum = remaining;
+    switches = direct_switches = 0;
+    CHECK(endpoint.invoke(server, 2));
+    CHECK(server.core.status == process_status::BLOCKED_RECEIVE && switches == 1);
+
+    for (unsigned call = 0; call < 1000; ++call)
+    {
+        expected_direct_target = &server.core;
+        expected_direct_local = nullptr;
+        caller.buffer.messages[4] = call;
+        CHECK(endpoint.invoke(caller, 3, true, 1));
+        CHECK(caller.core.status == process_status::BLOCKED_REPLY);
+        CHECK(server.core.status == process_status::READY && !server.core.current_ipc_port);
+        CHECK(server.core.destination_reply_target == &caller.core);
+        CHECK(server.buffer.messages[4] == call);
+
+        expected_direct_target = &caller.core;
+        expected_direct_local = &cpu_local_variables[SMP_ENABLED ? core : BSP_ID];
+        server.buffer.messages[4] = call + 0x1000;
+        CHECK(endpoint.invoke(server, 5, true, 1));
+        CHECK(caller.core.quantum == remaining && server.core.quantum == 5);
+        CHECK(caller.core.status == process_status::READY);
+        CHECK(server.core.status == process_status::BLOCKED_RECEIVE);
+        CHECK(server.core.current_ipc_port == &endpoint.port);
+        CHECK(!caller.core.source_reply_target && !server.core.destination_reply_target);
+        CHECK(caller.core.source_reply_state == process::source_reply_state_object::NONE);
+        CHECK(server.core.destination_reply_state == process::destination_reply_state_object::NONE);
+        CHECK(caller.buffer.messages[4] == call + 0x1000);
+        CHECK(direct_switches == 2 * (call + 1) && switches == 1);
+    }
+    expected_direct_target = nullptr;
+    expected_direct_local = nullptr;
+}
+
 int main()
 {
     // Use the wire operation numbers through execute(), not private helpers.
@@ -247,5 +292,8 @@ int main()
     empty_nonblocking_receive_keeps_endpoint_idle();
     receive_discards_old_reply_before_delivering_notification();
     errors_do_not_enqueue_receiver();
-    puts("PASS: 10 pending Receive, queue-state and error scenarios");
+    fast_reply_receive_preserves_quantum(3, BSP_ID);
+    fast_reply_receive_preserves_quantum(0, BSP_ID);
+    fast_reply_receive_preserves_quantum(7, SMP_ENABLED ? 2 : BSP_ID);
+    puts("PASS: 13 Receive/Reply-Receive, queue-state, quantum and error scenarios");
 }

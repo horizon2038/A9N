@@ -98,17 +98,16 @@ namespace a9n::kernel
     extern "C" void handle_timer(void)
     {
         lock_guard guard(giant_lock);
-        auto       result = current_process_manager().and_then(
+        current_process_manager().and_then(
             [](process_manager *manager) -> kernel_result
             {
-                return manager->handle_timer().and_then(
-                    [](void) -> kernel_result
-                    {
-                        return a9n::kernel::interrupt_manager_core.ack_interrupt();
-                    }
-                );
+                return manager->handle_timer();
             }
         );
+
+        // Complete the timer IRQ even if process lookup or timer handling failed.
+        // Do not chain EOI with and_then: an error must not skip it.
+        interrupt_manager_core.ack_interrupt();
     }
 
     extern "C" void handle_interrupt(a9n::word irq_number)

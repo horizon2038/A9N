@@ -36,7 +36,7 @@ namespace a9n::hal::x86_64
             [this, hz](void) -> hal_result
             {
                 desired_frequency = hz;
-                return enable_current_core();
+                return {};
             }
         );
     }
@@ -48,13 +48,7 @@ namespace a9n::hal::x86_64
             return hal_error::INIT_FIRST;
         }
 
-        return configure_cycle(desired_frequency)
-            .and_then(
-                [this](void) -> hal_result
-                {
-                    return enable_current_core();
-                }
-            );
+        return configure_cycle(desired_frequency);
     }
 
     hal_result local_apic_timer::enable_current_core()
@@ -153,9 +147,16 @@ namespace a9n::hal::x86_64
 
         return local_apic_core.write(local_apic_offset::TIMER_DIVIDE, divide_config & 0x0F)
             .and_then(
+                [this](void) -> hal_result
+                {
+                    return enable_current_core();
+                }
+            )
+            .and_then(
                 [&, this](void) -> hal_result
                 {
-                    // configure divide
+                    // Start only after selecting periodic mode. A later LVT mode
+                    // change would not restart an already expired one-shot timer.
                     return local_apic_core.write(local_apic_offset::TIMER_INIT_COUNT, initial_count);
                 }
             )

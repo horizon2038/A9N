@@ -233,7 +233,7 @@ NotificationによってProcessがReadyになった場合，`schedule_if_preempt
 
 A9NのDirect Scheduleは，L4系MicrokernelのDirect Process Switchに由来するIPC Optimizationである@ElphinstoneEtAl:2013．`try_direct_schedule(target)`は，IPCの通信相手を通常のSchedulingを介さずに選択する．対象ProcessのPriorityがReady Queue内の最高Priority以上なら，Schedulerは対象ProcessをReady Queueから外して選択する．Ready Queueに対象Processより高いPriorityのProcessが存在する場合，Schedulerは対象ProcessをReady Queueへ追加し，`schedule()`で最高Priority Processを選択する．SMP Buildでは，Direct Scheduleは通信相手のAffinityが現在Coreと同じ場合だけ使用する．別Coreの通信相手は，対象CoreのReady QueueとReschedule IPIへRoutingする．
 
-`try_direct_schedule_and_switch()`は，切替元Processに残るQuantumを切替先Processへ加算してからContext Switchを行う．切替先Quantumは10を超え得る．IPC Portは，待機中Receiverへ`CALL`を配送する経路とFaultをResolverへ配送する経路でDirect Scheduleを使用する．`CALL`と`REPLY_RECEIVE`を組み合わせる#term[IPC Fastpath]は「IPC Port」に記載する．
+`try_direct_schedule_and_switch()`は，各Processに残るQuantumを変更せずにContext Switchを行う．Quantum Donationは行わない．IPC Portは，待機中Receiverへ`CALL`を配送する経路とFaultをResolverへ配送する経路でDirect Scheduleを使用する．`CALL`と`REPLY_RECEIVE`を組み合わせる#term[IPC Fastpath]は「IPC Port」に記載する．
 
 == Scheduling Limitations
 
