@@ -18,6 +18,7 @@
 #include <hal/x86_64/interrupt/pic.hpp>
 #include <hal/x86_64/io/serial.hpp>
 #include <hal/x86_64/memory/paging.hpp>
+#include <hal/x86_64/memory/memory_types.hpp>
 #include <hal/x86_64/platform/acpi.hpp>
 #include <hal/x86_64/systemcall/syscall.hpp>
 #include <hal/x86_64/time/acpi_pm_timer.hpp>
@@ -131,7 +132,7 @@ namespace a9n::hal::x86_64
 
         // init *main* core (i.e., BSP)
         // enable cpu features
-        return init_cpu_core()
+        return configure_cpu_memory_types().and_then(init_cpu_core)
             .or_else(
                 [](hal_error e) -> hal_result
                 {
@@ -586,7 +587,7 @@ namespace a9n::hal::x86_64
         using a9n::kernel::utility::logger;
 
         // long mode things
-        return init_cpu_core()
+        return configure_cpu_memory_types().and_then(init_cpu_core)
             .or_else(
                 [](hal_error e) -> hal_result
                 {

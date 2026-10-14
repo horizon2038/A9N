@@ -236,6 +236,10 @@ namespace a9n::kernel
                                                         );
 
                                                         DEBUG_LOG("hal::map_frame");
+                                                        if (!is_valid_mapping_attribute(attr))
+                                                        {
+                                                            return capability_error::INVALID_ARGUMENT;
+                                                        }
                                                         return complete_address_space_update(
                                                             owner,
                                                             root_table,

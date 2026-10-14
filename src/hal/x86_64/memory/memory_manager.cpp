@@ -8,6 +8,7 @@
 #include <hal/x86_64/arch/arch_types.hpp>
 #include <hal/x86_64/arch/control_register.hpp>
 #include <hal/x86_64/memory/paging.hpp>
+#include <hal/x86_64/memory/memory_types.hpp>
 
 #include <liba9n/libc/string.hpp>
 
@@ -203,6 +204,11 @@ namespace a9n::hal
         }
         a9n::word target_leaf_depth = target_leaf_depth_result.unwrap();
 
+        if (!kernel::is_valid_mapping_attribute(rights))
+        {
+            return kernel::memory_map_error::INVALID_FRAME;
+        }
+
         return traverse_page_table_entry(target_root, target_address, target_leaf_depth)
             .and_then(
                 [=](x86_64::page *entry) -> kernel::memory_map_result<>
@@ -229,13 +235,17 @@ namespace a9n::hal
                     bool is_executable
                         = (rights & static_cast<a9n::word>(a9n::kernel::rights::EXECUTE)) != 0;
 
-                    entry->init();
-                    entry->configure_physical_address(target_frame.address);
-                    entry->present         = true;
-                    entry->rw              = is_writable;
-                    entry->user_supervisor = true;
-                    entry->page_size       = (target_leaf_depth != x86_64::PAGE_DEPTH::PT);
-                    entry->execute_disable = !is_executable;
+                    // Publish the address, rights and cache type together: no
+                    // page walker may first observe a present WB Device leaf.
+                    x86_64::page mapping {};
+                    mapping.configure_physical_address(target_frame.address);
+                    mapping.present         = true;
+                    mapping.rw              = is_writable;
+                    mapping.user_supervisor = true;
+                    mapping.page_size       = (target_leaf_depth != x86_64::PAGE_DEPTH::PT);
+                    mapping.execute_disable = !is_executable;
+                    mapping.all |= x86_64::mapping_cache_flags(rights);
+                    entry->all = mapping.all;
 
                     DEBUG_LOG("entry addr : 0x%016llx", reinterpret_cast<uint64_t>(entry));
                     DEBUG_LOG("entry.all : 0x%016llx", entry->all);

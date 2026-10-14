@@ -161,6 +161,10 @@ namespace a9n::hal
         a9n::word                      rights
     )
     {
+        if (!kernel::is_valid_mapping_attribute(rights))
+        {
+            return kernel::memory_map_error::INVALID_FRAME;
+        }
         auto depth_result = aarch64::convert_leaf_size_bits_to_internal_depth(target_frame.size_bits);
         if (!depth_result)
         {
@@ -185,9 +189,19 @@ namespace a9n::hal
             return kernel::memory_map_error::ALREADY_MAPPED;
         }
 
-        const auto memory_attribute = kernel::frame_is_device(target_frame) ?
-                                          aarch64::descriptor_attr_device :
-                                          aarch64::descriptor_attr_normal;
+        const auto flag = kernel::get_mapping_flag(rights);
+        a9n::word memory_attribute = aarch64::descriptor_attr_normal;
+        switch (flag)
+        {
+            case kernel::mapping_flag::NORMAL:
+                break;
+            case kernel::mapping_flag::BUFFERED:
+                memory_attribute = aarch64::descriptor_attr_buffered;
+                break;
+            case kernel::mapping_flag::UNCACHED:
+                memory_attribute = aarch64::descriptor_attr_device;
+                break;
+        }
         a9n::word descriptor
             = (target_frame.address & descriptor_address_mask) | aarch64::descriptor_valid
             | aarch64::descriptor_access | aarch64::descriptor_inner_shareable | memory_attribute

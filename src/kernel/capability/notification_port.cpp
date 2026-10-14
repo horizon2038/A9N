@@ -269,7 +269,9 @@ namespace a9n::kernel
                                 target_process.current_ipc_port          = nullptr;
                                 target_process.current_notification_port = nullptr;
 
-                                return mark_scheduled(current, target_process)
+                                // Match notification Wait: a bound Receive wakeup must also
+                                // dispatch a higher-priority receiver on the local core.
+                                return mark_scheduled_with_preemption(current, target_process)
                                     .transform_error(convert_kernel_to_capability_error);
                             }
                         );

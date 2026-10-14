@@ -5,6 +5,11 @@
 
 namespace a9n::hal::x86_64
 {
+    inline void _writeback_invalidate_caches()
+    {
+        asm volatile("wbinvd" ::: "memory");
+    }
+
     inline void _write_cr0(uint64_t data)
     {
         asm volatile("mov %0, %%cr0" : : "r"(data) : "memory");

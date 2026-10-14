@@ -121,8 +121,9 @@ _boot_kernel_gateway:
     b .Lfill_l2_entry
 
 .Lenable_mmu:
-    // Attr0: Normal WBWA. Attr1: Device-nGnRE.
+    // Attr0: Normal WBWA. Attr1: Device-nGnRE. Attr2: Normal non-cacheable.
     mov x1, #0x04ff
+    movk x1, #0x0044, lsl #16
     msr mair_el1, x1
 
     // 48-bit TTBR0/TTBR1, 4 KiB granules, inner-shareable WBWA, 40-bit PA.

@@ -33,7 +33,7 @@ Address Spaceに対する操作は，Address Space SlotのRightsを検査しな�
 
 == Mapping Attribute
 
-`MAP`の`MR4`はMemory Rights Bit Maskである．
+`MAP`の`MR4`はRightsとMapping Flagを含む1 WordのAttributeである．0.3.8では既存のRights Bitを変更せず，未使用だったbit 4..7をMapping Flagとして使用する．MRの追加やFrame Objectの拡張はない．
 
 #reference_table(
   (1fr, 0.8fr, 2.7fr),
@@ -55,19 +55,37 @@ Address Spaceに対する操作は，Address Space SlotのRightsを検査しな�
       1,
       2,
       3,
+      4,
       7,
       text-size: 8pt,
     ),
-    bits(5)[RESERVED],
+    bits(4)[MAPPING FLAG],
+    flag[RESERVED],
     flag[EXECUTE],
     flag[WRITE],
     flag[READ],
     text-size: 4pt,
   ),
-  caption: [`MAP`のMemory Rights Bit配置],
+  caption: [`MAP`のAttribute Bit配置],
 )
 
-Cache属性，Global属性，Memory Typeを指定するFieldは共通インターフェースに存在しない．未定義のAttribute Bitは明示的に拒否されないが，Mappingへ反映されない．ユーザ空間は`0x0..0x7`だけを使用する必要がある．
+#reference_table(
+  (1fr, 0.8fr, 2.7fr),
+  ([*Mapping Flag*], [*Value*], [*x86_64 Page Memory Type*]),
+  [`Normal`], [0 / `0x00`], [WB (Write Back)．既存のRightsだけのAttributeは変更せずこの値になる．],
+  [`Buffered`], [1 / `0x10`], [WC (Write Combining)．Framebuffer等の連続書込み用．],
+  [`Uncached`], [2 / `0x20`], [UC (Uncacheable)．Device Register等のMMIO用．],
+)
+
+Mapping FlagはFrame LeafのMemory Typeを選択する．例としてRW + Bufferedは`0x13`，RW + Uncachedは`0x23`である．Frame Mappingではbit 3，bit 8以降，Mapping Flag 3..15を`INVALID_ARGUMENT`として拒否する．中間Page TableのMappingでは従来通りRightsだけを指定する．
+
+Rust User APIは公開済み`a9n_abi 0.8.0`の`Attribute::NORMAL`，`Attribute::BUFFERED`，`Attribute::UNCACHED`を使用する．Rightsは`Attribute::ALL`等で指定し，例として`Attribute::ALL | Attribute::BUFFERED`は`0x17`になる．独立したRust Mapping Typeや追加Fieldは不要である．
+
+カーネルは同一Physical Regionに対する異なるAttributeのAliasを追跡・拒否しない．UserはAliasのMemory Type整合性，必要なDevice Barrier，Mappingを変更する前のUnmapとCache処理に責任を持つ．FrameのDevice FlagはCapability Allocationの分類であり，Mapping Flagを上書きしない．
+
+x86_64では各CPUの初期化でPAT#raw("[0]")=WB，PAT#raw("[1]")=WC，PAT#raw("[3]")=UCを設定する．残りのPAT EntryとMTRRは変更しないため，実効Memory TypeはPATとMTRRの組合せにも依存する．KernelはDevice Regionを走査せず，Early Direct Mapの属性変更，GOPの特例，境界Page Tableの追加確保を行わない．DeviceのMapping FlagとAliasの整合性はUserが管理する．APICのメモリ属性はFirmwareに任せ，Kernel／Bootloaderで独自の属性確認や起動拒否を行わない．
+
+AArch64ではNormalをNormal WBWA，BufferedをNormal Non-cacheable，UncachedをDevice-nGnREへ対応させる．Buffered Memoryへの書込みをDeviceへ公開する時は，x86_64の`SFENCE`等のArchitecture固有Barrierを用いる必要がある．
 
 == Address Space Operations
 
@@ -110,7 +128,7 @@ Page Tableの`revoke()`は空実装である．Page Table CapabilityをRemoveし
 
 == Frame Capability
 
-Frame Slot DataはPhysical Address，Flags，Size Bitsを保持する．Genericから作成するFrameのFlagsは0である．Address Space Mapping AttributeはFrame Slot Flagsではなく`MAP`の`MR4`から取得する．
+Frame Slot DataはPhysical Address，Flags，Size Bitsを保持する．Genericから作成するFrameのFlagsは，Device Genericならbit 16のDevice Flag，通常のGenericなら0である．Address Space Mapping AttributeはFrame Slot Flagsではなく`MAP`の`MR4`から取得する．
 
 Headerは`GET_ADDRESS = 1`と`MR2` Resultを宣言する．Frame Capabilityの`execute()`はOperation NumberをDecodeせず，常に`DEBUG_UNIMPLEMENTED`を返すため，Physical Addressを取得する公開APIとしては使用できない．
 

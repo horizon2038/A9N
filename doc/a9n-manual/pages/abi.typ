@@ -104,6 +104,9 @@ Frame Size Bitsは12，21，30である．12は常に利用できる．21と30�
   [`READ`], [`0x1`], [PresentなUser Mappingを作る．独立したRead-disable Bitがないため，実装はBit 0を個別に判定しない．],
   [`WRITE`], [`0x2`], [`rw`を1にする．],
   [`EXECUTE`], [`0x4`], [`execute_disable`を0にする．未指定の場合はNXを設定する．],
+  [`Normal`], [`0x00`], [LeafのPWT=0，PCD=0，PAT selector=0 (WB)．],
+  [`Buffered`], [`0x10`], [LeafのPWT=1，PCD=0，PAT selector=1 (WC)．],
+  [`Uncached`], [`0x20`], [LeafのPWT=1，PCD=1，PAT selector=3 (UC)．],
 )
 
 4 KiB FrameはPTへ，2 MiB FrameはPDへ，1 GiB FrameはPDPTへMapする．FrameのPhysical Addressは12 bit右ShiftしてPage Entryへ格納する．Virtual AddressとPhysical AddressのAlignmentはAddress Space Callで検査されないため，ユーザ空間がFrame Sizeに合わせる必要がある．
@@ -122,7 +125,11 @@ Byte Width 1，2，4は，順に8 bit，16 bit，32 bitの命令へ対応する�
 
 `INITIAL_FRAME_SIZE_BITS`は12であり，Init Imageを4 KiB単位でMapする．`init_image_size`にはByte数ではなく4 KiB Frame数を設定する．Kernelは新しいPML4を作成し，Init ImageをVirtual Address 0から連続してMapする．IPC Bufferも4 KiB境界へ配置する必要がある．Kernel初期AllocatorのSizeは`PAGE_SIZE * 1024`，すなわち4 MiBである．
 
-`boot_info.arch_info[0]`は，ACPI RSDPのPhysical Addressである．HALはKernel Direct Map Addressへ変換してACPIの初期化に渡す．0は受理されない．`arch_info[1..127]`は使用しない．
+`boot_info.arch_info[0]`は，ACPI RSDPのPhysical Addressである．HALはKernel Direct Map Addressへ変換してACPIの初期化に渡す．0は受理されない．`arch_info[1]`はGOP FramebufferのPhysical Address，`[2]`はWidth，`[3]`はHeight，`[4]`はPixel Stride，`[5]`はBits Per Pixelである．GOP情報はUserへ引き渡す情報であり，Kernelはこれを利用してDirect Mapの属性を変更しない．
+
+BSP／APは各CPUの初期化でPAT#raw("[0]")をWB，PAT#raw("[1]")をWC，PAT#raw("[3]")をUCへ設定し，他の5 EntryとMTRRは維持する．必要なEntryが既に一致する場合は書込みやCache／TLB処理を行わない．変更時はCacheをDisableして`WBINVD`を実行し，PGEのClear，PAT書込み，CR3再Load，再度の`WBINVD`を行ってCR0/CR4を復元する．Boot Memory Map，GOP Geometry，共有の初期化済みFlagには依存しない．
+
+KernelはEarly Direct Mapを2 MiB Leafのまま維持し，Device境界の分割やBoot Memory MapのPage Count変更を行わない．APICのメモリ属性はFirmwareの設定に任せる．A9NLoader-rsに独自のAPIC Mode／BaseやMTRR属性の受入れ検査・起動拒否を設けず，MTRRの修正も行わない．同一Physical Regionに対するUser MappingのCache Type整合性はUserが管理する．
 
 InitのStack Pointerは0のままUser Modeへ復帰する．Init Entryは，CまたはC++のPrologueを実行する前に，Assembly StubでMap済みStackの上端を`RSP`へ設定する必要がある．
 

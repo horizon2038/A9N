@@ -38,6 +38,36 @@ namespace a9n::kernel
         ALL     = READ | WRITE | EXECUTE,
     };
 
+    // Kernel mapping attributes; architecture-specific cache bits belong to HAL.
+    enum class mapping_flag : a9n::word
+    {
+        NORMAL   = 0,
+        BUFFERED = 1,
+        UNCACHED = 2,
+    };
+
+    inline constexpr a9n::word MAPPING_FLAG_SHIFT = 4;
+    inline constexpr a9n::word MAPPING_FLAG_MASK  = 0xf << MAPPING_FLAG_SHIFT;
+    inline constexpr a9n::word MAPPING_ATTRIBUTE_MASK
+        = static_cast<a9n::word>(rights::ALL) | MAPPING_FLAG_MASK;
+
+    inline constexpr bool is_valid_mapping_attribute(a9n::word attribute)
+    {
+        return !(attribute & ~MAPPING_ATTRIBUTE_MASK)
+            && ((attribute & MAPPING_FLAG_MASK) >> MAPPING_FLAG_SHIFT)
+                   <= static_cast<a9n::word>(mapping_flag::UNCACHED);
+    }
+
+    inline constexpr mapping_flag get_mapping_flag(a9n::word attribute)
+    {
+        return static_cast<mapping_flag>((attribute & MAPPING_FLAG_MASK) >> MAPPING_FLAG_SHIFT);
+    }
+
+    inline constexpr a9n::word with_mapping_flag(a9n::word attribute, mapping_flag flag)
+    {
+        return (attribute & ~MAPPING_FLAG_MASK) | (static_cast<a9n::word>(flag) << MAPPING_FLAG_SHIFT);
+    }
+
     struct page_table
     {
         a9n::physical_address address;

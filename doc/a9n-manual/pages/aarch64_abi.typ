@@ -167,7 +167,7 @@ L0[511]は通常のMappingに使用せず，Address Spaceを実行中のCoreを�
   [`EXECUTE`], [`0x4`], [未指定ならUXNを設定する．Kernelからの実行は常にPXNで禁止する．],
 )
 
-Leaf DescriptorにはValid，Access Flag，Inner Shareable，Normal Memory Attribute，User Access，PXNを設定する．L3だけPage Bitを設定し，L1とL2はBlock Descriptorを使用する．
+Leaf DescriptorにはValid，Access Flag，Inner Shareable，User Access，PXNを設定する．AttributeのMapping FlagはNormal=MAIR index 0 (Normal WBWA，`0xff`)，Buffered=index 2 (Normal Non-cacheable，`0x44`)，Uncached=index 1 (Device-nGnRE，`0x04`)へ対応する．Boot CPUとSecondary CPUは同じMAIR値を設定する．L3だけPage Bitを設定し，L1とL2はBlock Descriptorを使用する．
 
 == Boot ABI
 

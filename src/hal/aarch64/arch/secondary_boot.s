@@ -49,6 +49,7 @@ aarch64_secondary_entry:
 
     // Reuse the page tables prepared by the boot core.
     mov x1, #0x04ff
+    movk x1, #0x0044, lsl #16 // Attr2: Normal non-cacheable (Buffered).
     msr mair_el1, x1
     movz x1, #0x3510
     movk x1, #0xb510, lsl #16
