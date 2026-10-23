@@ -7,6 +7,7 @@
 #include <kernel/kernel_result.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/process/reclamation.hpp>
 #include <kernel/types.hpp>
 #include <kernel/utility/logger.hpp>
 
@@ -15,6 +16,91 @@
 
 namespace a9n::kernel
 {
+    namespace
+    {
+        enum invocation_result_index : a9n::word
+        {
+            RESULT_IS_SUCCESS = 0,
+            RESULT_ERROR_CODE = 1,
+        };
+    }
+
+    capability_result complete_revoked_wait(process &target)
+    {
+        auto written = a9n::hal::configure_message_register(target, RESULT_IS_SUCCESS, false);
+        if (!written)
+        {
+            return capability_error::FATAL;
+        }
+        written = a9n::hal::configure_message_register(
+            target,
+            RESULT_ERROR_CODE,
+            static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION)
+        );
+        if (!written)
+        {
+            return capability_error::FATAL;
+        }
+        if (target.fault_reason != fault_type::NONE)
+        {
+            target.status = process_status::BLOCKED_SUSPEND;
+            return {};
+        }
+        switch (target.status)
+        {
+            case process_status::BLOCKED_SEND :
+            case process_status::BLOCKED_RECEIVE :
+            case process_status::BLOCKED_REPLY :
+            case process_status::BLOCKED_WAIT :
+                return mark_scheduled(target, target).transform_error(convert_kernel_to_capability_error);
+            default :
+                // Do not resume a suspended/reclaiming process or retry a
+                // faulting instruction without its resolver.
+                return {};
+        }
+    }
+
+    capability_result ipc_port::cancel_reply(process &client, reply_cancellation_mode mode)
+    {
+        auto *server = client.source_reply_target;
+        if (server && server->destination_reply_target == &client)
+        {
+            server->destination_reply_target = nullptr;
+            server->destination_reply_state  = process::destination_reply_state_object::NONE;
+        }
+        client.source_reply_target = nullptr;
+        client.source_reply_state  = process::source_reply_state_object::NONE;
+        if (mode == reply_cancellation_mode::RESUME_WITH_ERROR)
+        {
+            return complete_revoked_wait(client);
+        }
+        return {};
+    }
+
+    capability_result ipc_port::revoke(capability_slot &self)
+    {
+        while (queue_head)
+        {
+            auto waiter = pop_ipc_queue();
+            if (!waiter)
+            {
+                return capability_error::FATAL;
+            }
+            auto &target               = waiter.unwrap().get();
+            target.source_reply_state  = process::source_reply_state_object::NONE;
+            target.source_reply_target = nullptr;
+            auto completed             = complete_revoked_wait(target);
+            if (!completed)
+            {
+                return completed;
+            }
+        }
+        // Accepted CALLs belong to their caller/server reply relationship,
+        // not this Port. Only queued senders/receivers are cancelled here.
+        state = WAIT;
+        return {};
+    }
+
     capability_result ipc_port::execute(process &owner, capability_slot &self)
     {
         DEBUG_LOG("ipc_port::execute");
@@ -181,8 +267,11 @@ namespace a9n::kernel
             auto *client = owner.destination_reply_target;
             if (client)
             {
-                client->source_reply_state  = process::source_reply_state_object::NONE;
-                client->source_reply_target = nullptr;
+                auto cancelled = cancel_reply(*client, reply_cancellation_mode::RESUME_WITH_ERROR);
+                if (!cancelled)
+                {
+                    return cancelled;
+                }
             }
 
             owner.destination_reply_state  = process::destination_reply_state_object::NONE;
@@ -317,8 +406,8 @@ namespace a9n::kernel
                                 target->destination_reply_target = &owner;
 
                                 owner.status                     = process_status::BLOCKED_REPLY;
-                                owner.source_reply_state = process::source_reply_state_object::WAIT;
-                                owner.source_reply_target = &target.get();
+                                owner.source_reply_state         = process::source_reply_state_object::WAIT;
+                                owner.source_reply_target        = &target.get();
 
                                 return transfer_message(target.get(), owner, info)
                                     .and_then(
@@ -384,8 +473,8 @@ namespace a9n::kernel
                                 DEBUG_LOG("initialize reply_target");
 
                                 // init client
-                                client->status = process_status::READY;
-                                client->source_reply_state = process::source_reply_state_object::NONE;
+                                client->status              = process_status::READY;
+                                client->source_reply_state  = process::source_reply_state_object::NONE;
                                 client->source_reply_target = nullptr;
 
                                 // NOTE:
@@ -465,8 +554,8 @@ namespace a9n::kernel
                 .and_then(
                     [&]() -> capability_result
                     {
-                        state           = READY_TO_RECEIVE;
-                        owner.status    = process_status::BLOCKED_RECEIVE;
+                        state        = READY_TO_RECEIVE;
+                        owner.status = process_status::BLOCKED_RECEIVE;
                         // Fast return keeps the caller's remaining execution budget.
 
                         return push_ipc_queue(owner)
@@ -679,7 +768,8 @@ namespace a9n::kernel
                                         = process::destination_reply_state_object::READY_TO_REPLY;
                                     receiver.destination_reply_target = &sender.get();
 
-                                    sender->status = process_status::BLOCKED_REPLY;
+                                    sender->status              = process_status::BLOCKED_REPLY;
+                                    sender->source_reply_target = &receiver;
 
                                     return {};
                                 }
@@ -687,7 +777,7 @@ namespace a9n::kernel
                     }
 
                     const bool is_call_sender
-                        = sender->source_reply_state == process::source_reply_state_object::WAIT;
+                        = sender->source_reply_state != process::source_reply_state_object::NONE;
 
                     return transfer_message(receiver, sender.get(), sender_info)
                         .and_then(
@@ -699,7 +789,8 @@ namespace a9n::kernel
                                         = process::destination_reply_state_object::READY_TO_REPLY;
                                     receiver.destination_reply_target = &sender.get();
 
-                                    sender->status = process_status::BLOCKED_REPLY;
+                                    sender->status              = process_status::BLOCKED_REPLY;
+                                    sender->source_reply_target = &receiver;
 
                                     return {};
                                 }
@@ -867,7 +958,7 @@ namespace a9n::kernel
                                     != process::destination_reply_state_object::NONE
                                 )
                                 {
-                                    owner.status = process_status::BLOCKED_FAULT;
+                                    owner.status            = process_status::BLOCKED_FAULT;
                                     owner.source_reply_state = process::source_reply_state_object::WAIT;
                                     return push_ipc_queue(owner)
                                         .and_then(
@@ -883,7 +974,8 @@ namespace a9n::kernel
                                     = process::destination_reply_state_object::READY_TO_REPLY;
                                 target->destination_reply_target = &owner;
                                 owner.status                     = process_status::BLOCKED_FAULT;
-                                owner.source_reply_state = process::source_reply_state_object::WAIT;
+                                owner.source_reply_state         = process::source_reply_state_object::WAIT;
+                                owner.source_reply_target        = &target.get();
 
                                 return transfer_fault_message(target.get(), owner)
                                     .and_then(

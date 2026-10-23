@@ -156,6 +156,12 @@ namespace a9n::kernel
 
         // capability-call
       public:
+        enum class reply_cancellation_mode : bool
+        {
+            DETACH_ONLY       = false,
+            RESUME_WITH_ERROR = true,
+        };
+
         capability_result execute(process &owner, capability_slot &self) override;
 
         capability_result operation_send(process &owner, capability_slot &self, message_info info);
@@ -165,6 +171,7 @@ namespace a9n::kernel
         capability_result
             operation_reply_receive(process &owner, capability_slot &self, message_info info);
         capability_result operation_identify(process &owner, capability_slot &self);
+        static capability_result cancel_reply(process &client, reply_cancellation_mode mode);
 
         // for kernel
         capability_result operation_fault_call(process &owner, capability_slot &self);
@@ -201,10 +208,7 @@ namespace a9n::kernel
 
         // capability management
       public:
-        capability_result revoke(capability_slot &self) override
-        {
-            return {};
-        }
+        capability_result revoke(capability_slot &self) override;
 
         capability_lookup_result retrieve_slot(a9n::word index) override
         {

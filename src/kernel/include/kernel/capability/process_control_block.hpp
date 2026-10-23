@@ -18,148 +18,28 @@ namespace a9n::kernel
     class process_control_block final : public capability_component
     {
       private:
+        // Selection bits in the public PCB CONFIGURE message, not register indices.
+        enum class configuration_flag : a9n::word
+        {
+            ADDRESS_SPACE       = a9n::word { 1 } << 0,
+            ROOT_NODE           = a9n::word { 1 } << 1,
+            FRAME_IPC_BUFFER    = a9n::word { 1 } << 2,
+            NOTIFICATION_PORT   = a9n::word { 1 } << 3,
+            IPC_PORT_RESOLVER   = a9n::word { 1 } << 4,
+            INSTRUCTION_POINTER = a9n::word { 1 } << 5,
+            STACK_POINTER       = a9n::word { 1 } << 6,
+            THREAD_LOCAL_BASE   = a9n::word { 1 } << 7,
+            PRIORITY            = a9n::word { 1 } << 8,
+            AFFINITY            = a9n::word { 1 } << 9,
+        };
+
         struct configuration_info
         {
-            a9n::word data;
+            a9n::word flags;
 
-            constexpr configuration_info(a9n::word data) : data(data)
+            constexpr bool contains(configuration_flag flag) const
             {
-            }
-
-            constexpr configuration_info(
-                bool address_space,
-                bool root_node,
-                bool frame_ipc_buffer,
-                bool notification_port,
-                bool ipc_port_resolver,
-                bool instruction_pointer,
-                bool stack_pointer,
-                bool thread_local_base,
-                bool priority,
-                bool affinity
-            )
-            {
-                // configure space
-                configure_address_space(address_space);
-                configure_root_node(root_node);
-
-                // configure ipc buffer
-                configure_frame_ipc_buffer(frame_ipc_buffer);
-
-                // configure notification
-                configure_notification_port(notification_port);
-
-                // configure resolver (fault handler)
-                configure_ipc_port_resolver(ipc_port_resolver);
-
-                // configure hardware-independent registers
-                configure_instruction_pointer(instruction_pointer);
-                configure_stack_pointer(stack_pointer);
-                configure_thread_local_base(thread_local_base);
-
-                // scheduling
-                configure_priority(priority); // priority
-                configure_affinity(affinity); // SMP only
-            }
-
-            constexpr void configure_address_space(bool address_space)
-            {
-                data = (data & ~(1 << 0)) | address_space;
-            }
-
-            constexpr void configure_root_node(bool root_node)
-            {
-                data = (data & ~(1 << 1)) | root_node;
-            }
-
-            constexpr void configure_frame_ipc_buffer(bool frame_ipc_buffer)
-            {
-                data = (data & ~(1 << 2)) | frame_ipc_buffer;
-            }
-
-            constexpr void configure_notification_port(bool notification_port)
-            {
-                data = (data & ~(1 << 3)) | notification_port;
-            }
-
-            constexpr void configure_ipc_port_resolver(bool ipc_port_resolver)
-            {
-                data = (data & ~(1 << 4)) | ipc_port_resolver;
-            }
-
-            constexpr void configure_instruction_pointer(bool instruction_pointer)
-            {
-                data = (data & ~(1 << 5)) | instruction_pointer;
-            }
-
-            constexpr void configure_stack_pointer(bool stack_pointer)
-            {
-                data = (data & ~(1 << 6)) | stack_pointer;
-            }
-
-            constexpr void configure_thread_local_base(bool thread_local_base)
-            {
-                data = (data & ~(1 << 7)) | thread_local_base;
-            }
-
-            constexpr void configure_priority(bool priority)
-            {
-                data = (data & ~(1 << 8)) | priority;
-            }
-
-            constexpr void configure_affinity(bool affinity)
-            {
-                data = (data & ~(1 << 9)) | affinity;
-            }
-
-            constexpr bool is_address_space(void) const
-            {
-                return data & (1 << 0);
-            }
-
-            constexpr bool is_root_node(void) const
-            {
-                return data & (1 << 1);
-            }
-
-            constexpr bool is_frame_ipc_buffer(void) const
-            {
-                return data & (1 << 2);
-            }
-
-            constexpr bool is_notification_port(void) const
-            {
-                return data & (1 << 3);
-            }
-
-            constexpr bool is_ipc_port_resolver(void) const
-            {
-                return data & (1 << 4);
-            }
-
-            constexpr bool is_instruction_pointer(void) const
-            {
-                return data & (1 << 5);
-            }
-
-            constexpr bool is_stack_pointer(void) const
-            {
-                return data & (1 << 6);
-            }
-
-            constexpr bool is_thread_local_base(void) const
-            {
-                return data & (1 << 7);
-            }
-
-            constexpr bool is_priority(void) const
-            {
-                return data & (1 << 8);
-            }
-
-            constexpr bool is_affinity(void) const
-            {
-                return data & (1 << 9);
+                return (flags & static_cast<a9n::word>(flag)) != 0;
             }
         };
 

@@ -86,6 +86,10 @@ namespace a9n::kernel
 
     capability_result interrupt_region::operation_make_port(process &owner, capability_slot &self)
     {
+        if (!(self.rights & capability_slot::WRITE))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
         return with_message_registers<TARGET_NODE, TARGET_NODE_INDEX, IRQ_NUMBER>(
             owner,
             [&](a9n::word node_descriptor, a9n::word index, a9n::word irq) -> capability_result
@@ -117,7 +121,12 @@ namespace a9n::kernel
                                        handler->irq_number,
                                        0
                             )
-                                .transform_error(convert_kernel_to_capability_error);
+                                .transform_error(convert_kernel_to_capability_error)
+                                .and_then([&]() -> capability_result
+                                {
+                                    self.insert_child(*target_slot);
+                                    return {};
+                                });
                         }
                     );
             }

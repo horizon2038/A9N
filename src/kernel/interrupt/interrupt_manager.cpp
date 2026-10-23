@@ -237,6 +237,12 @@ namespace a9n::kernel
     )
     {
         lock_guard guard(giant_lock);
+        auto local = a9n::hal::current_local_variable();
+        if (local && local.unwrap()->is_idle)
+        {
+            // The faulting process was reclaimed while waiting at entry.
+            return;
+        }
         DEBUG_LOG(
             "Handle fault : type = %s, fault_code = %d, arch_fault_code = %d, fault_address = "
             "0x%016llx",

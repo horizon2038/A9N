@@ -62,6 +62,17 @@ static void capability_tests()
         CHECK(try_configure_frame_slot(slot, frame { 0, 12, flags }));
         CHECK(convert_slot_data_to_frame(slot.data).flags == flags);
     }
+    capability_slot first {}, alias {}, different {};
+    CHECK(try_configure_frame_slot(first, frame { 0, 12, 0 }));
+    CHECK(try_copy_capability_slot(alias, first));
+    alias.rights = capability_slot::WRITE;
+    alias.data[1] = FRAME_FLAG_DEVICE;
+    CHECK(first.is_same_object(alias));
+    CHECK(try_configure_frame_slot(different, frame { 4096, 12, 0 }));
+    CHECK(!first.is_same_object(different));
+    different.data[0] = 0;
+    different.data[2] = 21;
+    CHECK(!first.is_same_object(different));
 }
 
 static void mapping_test(a9n::word size_bits, bool device)
@@ -69,9 +80,22 @@ static void mapping_test(a9n::word size_bits, bool device)
     alignas(4096) a9n::word tables[4][512] {};
     const page_table root { reinterpret_cast<a9n::physical_address>(tables[0]), 4 };
     constexpr a9n::virtual_address va = 1ULL << 30; // PA 0 need not map at VA 0.
-    const a9n::word leaf_depth = size_bits == 12 ? 1 : size_bits == 21 ? 2 : 3;
+    a9n::word leaf_depth = 3;
+    if (size_bits == 12)
+    {
+        leaf_depth = 1;
+    }
+    else if (size_bits == 21)
+    {
+        leaf_depth = 2;
+    }
     test_machine::active_root = root.address;
-    const auto rights = static_cast<a9n::word>(rights::READ);
+    auto rights = static_cast<a9n::word>(rights::READ);
+    if (device)
+    {
+        // Device flags describe the resource; the user explicitly chooses UC.
+        rights = with_mapping_flag(rights, mapping_flag::UNCACHED);
+    }
     for (a9n::word depth = 3; depth >= leaf_depth; --depth)
     {
         page_table child { reinterpret_cast<a9n::physical_address>(tables[4 - depth]), depth };

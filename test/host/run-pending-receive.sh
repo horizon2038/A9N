@@ -22,6 +22,8 @@ for smp in 0 1; do
     "$a9n_dir/test/host/pending-receive.cpp" \
     "$a9n_dir/src/kernel/capability/ipc_port.cpp" \
     "$a9n_dir/src/kernel/capability/notification_port.cpp" \
+    "$a9n_dir/src/kernel/capability/capability_node.cpp" \
+    "$a9n_dir/src/kernel/capability/capability_node_reclamation.cpp" \
     "$strip_flag" -o "$test_dir/pending-receive-$smp"
     "$test_dir/pending-receive-$smp"
 done

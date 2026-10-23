@@ -2,10 +2,49 @@
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/process/reclamation.hpp>
 #include <kernel/utility/logger.hpp>
 
 namespace a9n::kernel
 {
+    capability_result notification_port::revoke(capability_slot &self)
+    {
+        while (queue_head)
+        {
+            auto waiter = pop_notification_queue();
+            if (!waiter)
+            {
+                return capability_error::FATAL;
+            }
+            auto completed = complete_revoked_wait(waiter.unwrap().get());
+            if (!completed)
+            {
+                return completed;
+            }
+        }
+        if (binded_process)
+        {
+            auto &target = *binded_process;
+            auto unbound = unbind_process(target);
+            if (!unbound)
+            {
+                return capability_error::FATAL;
+            }
+            if (&target.binded_notification_port != &self
+                && target.binded_notification_port.component == this)
+            {
+                auto removed = target.binded_notification_port.try_remove_and_init();
+                if (!removed)
+                {
+                    return capability_error::FATAL;
+                }
+            }
+        }
+        core.consume();
+        state = WAIT;
+        return {};
+    }
+
     // utility
     namespace
     {

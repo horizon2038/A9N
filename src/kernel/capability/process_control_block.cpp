@@ -10,6 +10,7 @@
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/process/reclamation.hpp>
 
 #include <hal/interface/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
@@ -71,277 +72,137 @@ namespace a9n::kernel
 
     capability_result process_control_block::operation_configure(process &owner, capability_slot &self)
     {
-        return a9n::hal::get_message_register(owner, CONFIGURATION_INFO)
-            .transform_error(convert_hal_to_kernel_error)
-            .transform_error(convert_kernel_to_capability_error)
-            .transform(
-                [](a9n::word v) -> configuration_info
-                {
-                    return configuration_info(v);
-                }
-            )
-            .and_then(
-                [&](configuration_info info) -> capability_result
-                {
-                    auto get_argument =
-                        [&](a9n::word index) -> liba9n::result<a9n::word, capability_error>
-                    {
-                        return a9n::hal::get_message_register(owner, index)
-                            .transform_error(convert_hal_to_kernel_error)
-                            .transform_error(convert_kernel_to_capability_error);
-                    };
+        auto request = a9n::hal::get_message_register(owner, CONFIGURATION_INFO);
+        if (!request)
+        {
+            return capability_error::FATAL;
+        }
+        const configuration_info configuration { request.unwrap() };
 
-                    if (info.is_address_space())
-                    {
-                        DEBUG_LOG("process_control_block::configure::address_space");
-                        auto result
-                            = get_argument(ADDRESS_SPACE_DESCRIPTOR)
-                                  .and_then(
-                                      [&](a9n::word descriptor) -> capability_result
-                                      {
-                                          return configure_address_space(owner, descriptor);
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
+        // Apply capability bindings in ABI order, stopping at the first failure.
+        struct capability_configuration
+        {
+            configuration_flag flag;
+            operation_configure_index message_index;
+            capability_result (process_control_block::*configure)(process &, a9n::capability_descriptor);
+        };
+        static constexpr capability_configuration capability_configurations[] {
+            { configuration_flag::ADDRESS_SPACE, ADDRESS_SPACE_DESCRIPTOR,
+              &process_control_block::configure_address_space },
+            { configuration_flag::ROOT_NODE, ROOT_NODE_DESCRIPTOR,
+              &process_control_block::configure_root_node },
+            { configuration_flag::FRAME_IPC_BUFFER, FRAME_IPC_BUFFER_DESCRIPTOR,
+              &process_control_block::configure_frame_ipc_buffer },
+            { configuration_flag::NOTIFICATION_PORT, NOTIFICATION_PORT_DESCRIPTOR,
+              &process_control_block::configure_notification_port },
+            { configuration_flag::IPC_PORT_RESOLVER, IPC_PORT_RESOLVER,
+              &process_control_block::configure_ipc_port_resolver },
+        };
 
-                    if (info.is_root_node())
-                    {
-                        DEBUG_LOG("process_control_block::configure::root_node");
-                        auto result
-                            = get_argument(ROOT_NODE_DESCRIPTOR)
-                                  .and_then(
-                                      [&](a9n::word descriptor) -> capability_result
-                                      {
-                                          return configure_root_node(owner, descriptor);
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
+        for (const auto &binding : capability_configurations)
+        {
+            if (!configuration.contains(binding.flag))
+            {
+                continue;
+            }
 
-                    if (info.is_frame_ipc_buffer())
-                    {
-                        DEBUG_LOG("process_control_block::configure::frame_ipc_buffer");
-                        auto result
-                            = get_argument(FRAME_IPC_BUFFER_DESCRIPTOR)
-                                  .and_then(
-                                      [&](a9n::word descriptor) -> capability_result
-                                      {
-                                          return configure_frame_ipc_buffer(owner, descriptor);
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
+            auto descriptor_result = a9n::hal::get_message_register(owner, binding.message_index);
+            if (!descriptor_result)
+            {
+                return capability_error::FATAL;
+            }
 
-                    if (info.is_notification_port())
-                    {
-                        DEBUG_LOG("process_control_block::configure::notification_port");
-                        auto result
-                            = get_argument(NOTIFICATION_PORT_DESCRIPTOR)
-                                  .and_then(
-                                      [&](a9n::word descriptor) -> capability_result
-                                      {
-                                          return configure_notification_port(owner, descriptor);
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
+            auto configure_result = (this->*binding.configure)(owner, descriptor_result.unwrap());
+            if (!configure_result)
+            {
+                return configure_result;
+            }
+        }
 
-                    if (info.is_ipc_port_resolver())
-                    {
-                        DEBUG_LOG("process_control_block::configure::ipc_port_resolver");
-                        auto result
-                            = get_argument(IPC_PORT_RESOLVER)
-                                  .and_then(
-                                      [&](a9n::word descriptor) -> capability_result
-                                      {
-                                          return configure_ipc_port_resolver(owner, descriptor);
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
+        struct register_configuration
+        {
+            configuration_flag flag;
+            operation_configure_index message_index;
+            a9n::hal::register_type register_type;
+            capability_error invalid_address_error;
+        };
+        // Preserve the ABI's FATAL error for invalid TLS, unlike IP/SP.
+        static constexpr register_configuration register_configurations[] {
+            { configuration_flag::INSTRUCTION_POINTER, INSTRUCTION_POINTER,
+              a9n::hal::register_type::INSTRUCTION_POINTER, capability_error::ILLEGAL_OPERATION },
+            { configuration_flag::STACK_POINTER, STACK_POINTER,
+              a9n::hal::register_type::STACK_POINTER, capability_error::ILLEGAL_OPERATION },
+            { configuration_flag::THREAD_LOCAL_BASE, THREAD_LOCAL_BASE,
+              a9n::hal::register_type::THREAD_LOCAL_BASE, capability_error::FATAL },
+        };
 
-                    if (info.is_instruction_pointer())
-                    {
-                        DEBUG_LOG("process_control_block::configure::instruction_pointer");
-                        auto result
-                            = a9n::hal::get_message_register(owner, INSTRUCTION_POINTER)
-                                  .transform_error(convert_hal_to_kernel_error)
-                                  .transform_error(convert_kernel_to_capability_error)
-                                  .and_then(
-                                      [&](a9n::word value) -> capability_result
-                                      {
-                                          if (!a9n::hal::is_valid_user_address(value))
-                                          {
-                                              return capability_error::ILLEGAL_OPERATION;
-                                          }
+        for (const auto &register_setting : register_configurations)
+        {
+            if (!configuration.contains(register_setting.flag))
+            {
+                continue;
+            }
 
-                                          DEBUG_LOG("instruction_pointer : 0x%016llx", value);
+            auto value_result = a9n::hal::get_message_register(owner, register_setting.message_index);
+            if (!value_result)
+            {
+                return capability_error::FATAL;
+            }
+            const auto register_value = value_result.unwrap();
+            if (!a9n::hal::is_valid_user_address(register_value))
+            {
+                return register_setting.invalid_address_error;
+            }
 
-                                          auto result = a9n::hal::configure_general_register(
-                                              process_core,
-                                              a9n::hal::register_type::INSTRUCTION_POINTER,
-                                              value
-                                          );
-                                          if (!result)
-                                          {
-                                              return capability_error::FATAL;
-                                          }
-
-                                          return {};
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
-
-                    if (info.is_stack_pointer())
-                    {
-                        DEBUG_LOG("process_control_block::configure::stack_pointer");
-                        auto result
-                            = a9n::hal::get_message_register(owner, STACK_POINTER)
-                                  .transform_error(convert_hal_to_kernel_error)
-                                  .transform_error(convert_kernel_to_capability_error)
-                                  .and_then(
-                                      [&](a9n::word value) -> capability_result
-                                      {
-                                          if (!a9n::hal::is_valid_user_address(value))
-                                          {
-                                              return capability_error::ILLEGAL_OPERATION;
-                                          }
-
-                                          DEBUG_LOG("stack_pointer : 0x%016llx", value);
-
-                                          auto result = a9n::hal::configure_general_register(
-                                              process_core,
-                                              a9n::hal::register_type::STACK_POINTER,
-                                              value
-                                          );
-                                          if (!result)
-                                          {
-                                              return capability_error::FATAL;
-                                          }
-
-                                          return {};
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
-
-                    if (info.is_thread_local_base())
-                    {
-                        DEBUG_LOG("process_control_block::configure::thread_local_base");
-                        auto result
-                            = a9n::hal::get_message_register(owner, THREAD_LOCAL_BASE)
-                                  .transform_error(convert_hal_to_kernel_error)
-                                  .transform_error(convert_kernel_to_capability_error)
-                                  .and_then(
-                                      [&](a9n::word value) -> capability_result
-                                      {
-                                          DEBUG_LOG("thread_local_base : 0x%016llx", value);
-                                          if (!a9n::hal::is_valid_user_address(value))
-                                          {
-                                              return capability_error::ILLEGAL_OPERATION;
-                                          }
-
-                                          auto result = a9n::hal::configure_general_register(
-                                              process_core,
-                                              a9n::hal::register_type::THREAD_LOCAL_BASE,
-                                              value
-                                          );
-                                          if (!result)
-                                          {
-                                              return capability_error::FATAL;
-                                          }
-
-                                          return {};
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return capability_error::FATAL;
-                        }
-                    }
-
-                    if (info.is_priority())
-                    {
-                        DEBUG_LOG("process_control_block::configure::priority");
-                        // process_core.priority = self.data[0];
-                        auto result
-                            = a9n::hal::get_message_register(owner, PRIORITY)
-                                  .transform_error(convert_hal_to_kernel_error)
-                                  .transform_error(convert_kernel_to_capability_error)
-                                  .and_then(
-                                      [&](a9n::word priority) -> capability_result
-                                      {
-                                          if (priority >= PRIORITY_MAX)
-                                          {
-                                              // range error !
-                                              return capability_error::INVALID_ARGUMENT;
-                                          }
-
-                                          process_core.priority = priority;
-
-                                          return {};
-                                      }
-                                  );
-                        if (!result)
-                        {
-                            return result;
-                        }
-                    }
-
-                    if (info.is_affinity())
-                    {
-                        DEBUG_LOG("process_control_block::configure::affinity");
-                        auto affinity_result
-                            = a9n::hal::get_message_register(owner, AFFINITY)
-                                  .transform_error(convert_hal_to_kernel_error)
-                                  .transform_error(convert_kernel_to_capability_error);
-                        if (!affinity_result)
-                        {
-                            return affinity_result.unwrap_error();
-                        }
-
-                        auto new_affinity = affinity_result.unwrap();
-                        if (new_affinity >= a9n::hal::core_count()) [[unlikely]]
-                        {
-                            return capability_error::INVALID_ARGUMENT;
-                        }
-
-                        if (new_affinity != process_core.core_affinity
-                            && (process_core.status == process_status::READY
-                                || is_running_on_assigned_core(process_core))) [[unlikely]]
-                        {
-                            return capability_error::INVALID_ARGUMENT;
-                        }
-
-                        process_core.core_affinity = new_affinity;
-                    }
-
-                    return {};
-                }
+            auto configure_result = a9n::hal::configure_general_register(
+                process_core, register_setting.register_type, register_value
             );
+            if (!configure_result)
+            {
+                return capability_error::FATAL;
+            }
+        }
+
+        if (configuration.contains(configuration_flag::PRIORITY))
+        {
+            auto priority_result = a9n::hal::get_message_register(owner, PRIORITY);
+            if (!priority_result)
+            {
+                return capability_error::FATAL;
+            }
+
+            const auto new_priority = priority_result.unwrap();
+            if (new_priority >= PRIORITY_MAX)
+            {
+                return capability_error::INVALID_ARGUMENT;
+            }
+            process_core.priority = new_priority;
+        }
+
+        if (configuration.contains(configuration_flag::AFFINITY))
+        {
+            auto affinity_result = a9n::hal::get_message_register(owner, AFFINITY);
+            if (!affinity_result)
+            {
+                return capability_error::FATAL;
+            }
+
+            const auto new_affinity = affinity_result.unwrap();
+            if (new_affinity >= a9n::hal::core_count())
+            {
+                return capability_error::INVALID_ARGUMENT;
+            }
+
+            // A ready/running process must be stopped before moving cores.
+            if (new_affinity != process_core.core_affinity
+                && (process_core.status == process_status::READY
+                    || is_running_on_assigned_core(process_core)))
+            {
+                return capability_error::INVALID_ARGUMENT;
+            }
+            process_core.core_affinity = new_affinity;
+        }
+        return {};
     }
 
     capability_result process_control_block::configure_address_space(
@@ -555,7 +416,6 @@ namespace a9n::kernel
                         return capability_error::INVALID_DESCRIPTOR;
                     }
 
-                    // auto result = slot->try_remove_and_init();
                     auto result = process_core.resolver_port.try_remove_and_init();
                     if (!result)
                     {
@@ -726,17 +586,11 @@ namespace a9n::kernel
 
     capability_result process_control_block::revoke(capability_slot &self)
     {
-        // Revoking an address space while another CPU can still execute in it is unsafe. A caller
-        // must first suspend the process and retry after the reschedule IPI has switched it out.
-        auto current_core_result = a9n::hal::current_core_number();
-        if (!current_core_result) [[unlikely]]
+        // No CPU may still use this process's resources during teardown.
+        auto stop_result = stop_process_for_reclamation(process_core);
+        if (!stop_result)
         {
-            return capability_error::FATAL;
-        }
-        if (process_core.core_affinity != current_core_result.unwrap()
-            && is_running_on_assigned_core(process_core)) [[unlikely]]
-        {
-            return capability_error::INVALID_ARGUMENT;
+            return convert_kernel_to_capability_error(stop_result.unwrap_error());
         }
         auto detach_result = detach_from_wait_queues();
         if (!detach_result) [[unlikely]]
@@ -744,64 +598,60 @@ namespace a9n::kernel
             return detach_result;
         }
 
-        auto &manager        = cpu_local_variables[process_core.core_affinity].process_manager_core;
-        auto  suspend_result = manager.mark_suspended(process_core);
-        if (!suspend_result) [[unlikely]]
+        // Wake this process's caller, but only detach its own pending reply.
+        if (process_core.destination_reply_target)
         {
-            return suspend_result.transform_error(convert_kernel_to_capability_error);
+            auto caller_cancel_result = ipc_port::cancel_reply(
+                *process_core.destination_reply_target,
+                ipc_port::reply_cancellation_mode::RESUME_WITH_ERROR
+            );
+            if (!caller_cancel_result)
+            {
+                return caller_cancel_result;
+            }
+        }
+        auto own_reply_cancel_result
+            = ipc_port::cancel_reply(process_core, ipc_port::reply_cancellation_mode::DETACH_ONLY);
+        if (!own_reply_cancel_result)
+        {
+            return own_reply_cancel_result;
         }
 
-        return process_core.root_slot.try_remove_and_init()
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    return process_core.root_address_space.try_remove_and_init();
-                }
-            )
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    auto result         = process_core.buffer_frame.try_remove_and_init();
-                    process_core.buffer = nullptr;
-                    return result;
-                }
-            )
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    return process_core.resolver_port.try_remove_and_init();
-                }
-            )
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    a9n::hal::init_hardware_context(hal::cpu_mode::USER, process_core.registers);
-                    return {};
-                }
-            )
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    a9n::hal::configure_floating_context(process_core.floating_registers);
-                    return {};
-                }
-            )
-            .and_then(
-                [&](void) -> kernel_result
-                {
-                    if (process_core.binded_notification_port.type == capability_type::NOTIFICATION_PORT
-                        && process_core.binded_notification_port.component)
-                    {
-                        auto *target_notification_port = static_cast<notification_port *>(
-                            process_core.binded_notification_port.component
-                        );
+        capability_slot *owned_slots[] {
+            &process_core.root_slot,
+            &process_core.root_address_space,
+            &process_core.buffer_frame,
+            &process_core.resolver_port,
+        };
+        for (auto *owned_slot : owned_slots)
+        {
+            auto remove_result = owned_slot->try_remove_and_init();
+            if (owned_slot == &process_core.buffer_frame)
+            {
+                // Stop using the buffer even if its Frame cleanup failed.
+                process_core.buffer = nullptr;
+            }
+            if (!remove_result)
+            {
+                return convert_kernel_to_capability_error(remove_result.unwrap_error());
+            }
+        }
 
-                        target_notification_port->unbind_process(process_core);
-                    }
+        a9n::hal::init_hardware_context(hal::cpu_mode::USER, process_core.registers);
+        a9n::hal::configure_floating_context(process_core.floating_registers);
 
-                    return process_core.binded_notification_port.try_remove_and_init();
-                }
-            )
-            .transform_error(convert_kernel_to_capability_error);
+        auto &bound_notification = process_core.binded_notification_port;
+        if (bound_notification.type == capability_type::NOTIFICATION_PORT && bound_notification.component)
+        {
+            auto *bound_port = static_cast<notification_port *>(bound_notification.component);
+            bound_port->unbind_process(process_core);
+        }
+
+        auto notification_remove_result = bound_notification.try_remove_and_init();
+        if (!notification_remove_result)
+        {
+            return convert_kernel_to_capability_error(notification_remove_result.unwrap_error());
+        }
+        return {};
     }
 }

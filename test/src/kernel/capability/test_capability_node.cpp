@@ -88,12 +88,12 @@ TEST_F(capability_node_test, retrieve_slot_index_max_test)
     ASSERT_EQ(slot->get_local_data(0), 0xdeadbeaf);
 }
 
-TEST_F(capability_node_test, retrieve_slot_index_out_of_range_test)
+TEST_F(capability_node_test, retrieve_slot_unavailable_test)
 {
-    // FIXME
-    auto slot = node_root->retrieve_slot(256);
+    a9n::kernel::capability_node unavailable_node(0, NODE_ROOT_RADIX, nullptr);
+    auto slot = unavailable_node.retrieve_slot(0);
 
-    ASSERT_EQ(slot, a9n::kernel::capability_lookup_error::INDEX_OUT_OF_RANGE);
+    ASSERT_EQ(slot, a9n::kernel::capability_lookup_error::UNAVAILABLE);
 }
 
 TEST_F(capability_node_test, traverse_slot_index_min_depth_root_test)

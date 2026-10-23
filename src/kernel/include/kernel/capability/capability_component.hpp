@@ -38,6 +38,7 @@ namespace a9n::kernel
             {
                 capability_type type { capability_type::NONE };
                 uint8_t         rights { object_rights::NONE };
+                bool            reclaiming { false };
             };
         };
 
@@ -54,6 +55,7 @@ namespace a9n::kernel
             component = nullptr;
             type      = capability_type::NONE;
             rights    = object_rights::NONE;
+            reclaiming = false;
             data.fill(0);
             next_slot    = nullptr;
             preview_slot = nullptr;
@@ -61,6 +63,7 @@ namespace a9n::kernel
         }
 
         kernel_result try_remove_and_init(void);
+        kernel_result try_revoke(void);
 
         void remove_from_dependency_node(void)
         {
@@ -75,32 +78,44 @@ namespace a9n::kernel
             }
         }
 
+        // Peer aliases have the same depth and Object identity. Generated
+        // children follow the alias group in the dependency chain.
+        const capability_slot *last_alias_in_group(void) const
+        {
+            auto *last_alias = this;
+            while (last_alias->next_slot && last_alias->next_slot->depth == depth
+                   && is_same_object(*last_alias->next_slot))
+            {
+                last_alias = last_alias->next_slot;
+            }
+            return last_alias;
+        }
+
+        capability_slot *last_alias_in_group(void)
+        {
+            return const_cast<capability_slot *>(
+                static_cast<const capability_slot *>(this)->last_alias_in_group()
+            );
+        }
+
         bool has_child(void) const
         {
-            if (!next_slot)
-            {
-                return false;
-            }
-
-            return (depth > next_slot->depth);
+            const auto *last_alias = last_alias_in_group();
+            return last_alias->next_slot && last_alias->next_slot->depth > depth;
         }
 
         bool has_sibling(void) const
         {
-            if (!next_slot || !preview_slot)
-            {
-                return false;
-            }
-
-            return (depth == next_slot->depth) || (depth == preview_slot->depth);
+            return (next_slot && depth == next_slot->depth && is_same_object(*next_slot))
+                || (preview_slot && depth == preview_slot->depth && is_same_object(*preview_slot));
         }
 
-        bool is_same_slot(const capability_slot &rhs) const;
+        bool is_same_object(const capability_slot &rhs) const;
 
         void insert_child(capability_slot &child_slot)
         {
             child_slot.depth = depth + 1;
-            insert(child_slot);
+            last_alias_in_group()->insert(child_slot);
         }
 
         void insert_sibling(capability_slot &sibling_slot)
@@ -176,13 +191,19 @@ namespace a9n::kernel
         // called from user
         virtual capability_result execute(process &this_process, capability_slot &this_slot) = 0;
 
-        // called from node
+        // Reclaim this object, including any required stop/acknowledgment.
+        // Dependency traversal and slot removal belong to the Node layer.
         virtual capability_result revoke(capability_slot &self) = 0;
 
-        virtual bool
-            is_same_slot(const capability_slot &this_slot, const capability_slot &target_slot) const
+        virtual bool is_reclaiming(void) const
         {
             return false;
+        }
+
+        virtual bool
+            is_same_object(const capability_slot &this_slot, const capability_slot &target_slot) const
+        {
+            return this_slot.component == target_slot.component;
         }
 
         // for tree
@@ -195,52 +216,18 @@ namespace a9n::kernel
         ) = 0;
     };
 
-    inline bool capability_slot::is_same_slot(const capability_slot &rhs) const
+    inline bool capability_slot::is_same_object(const capability_slot &rhs) const
     {
-        if (!rhs.component)
+        if (type == capability_type::NONE || type != rhs.type || !component
+            || component != rhs.component)
         {
             return false;
         }
 
-        return rhs.component->is_same_slot(rhs, *this);
+        return component->is_same_object(*this, rhs);
     }
 
-    inline kernel_result capability_slot::try_remove_and_init(void)
-    {
-        if (type == capability_type::NONE)
-        {
-            remove_from_dependency_node();
-            init();
-            return {};
-        }
-
-        if (!(rights & object_rights::READ) || !(rights & object_rights::WRITE))
-        {
-            return kernel_error::PERMISSION_DENIED;
-        }
-
-        if (has_sibling())
-        {
-            remove_from_dependency_node();
-            init();
-
-            return {};
-        }
-
-        if (component)
-        {
-            auto result = component->revoke(*this);
-            if (!result)
-            {
-                return kernel_error::UNEXPECTED;
-            }
-        }
-
-        remove_from_dependency_node();
-        init();
-
-        return {};
-    }
+    static_assert(sizeof(capability_slot) == 8 * sizeof(a9n::word));
 
     inline kernel_result try_move_capability_slot(capability_slot &destination, capability_slot &source)
     {

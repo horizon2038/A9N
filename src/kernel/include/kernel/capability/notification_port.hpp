@@ -87,11 +87,7 @@ namespace a9n::kernel
         kernel_result remove_notification_queue(process &target_process);
 
       public:
-        capability_result revoke(capability_slot &self) override
-        {
-            // remove all processes from the queue
-            return {};
-        }
+        capability_result revoke(capability_slot &self) override;
 
         capability_lookup_result retrieve_slot(a9n::word index) override
         {

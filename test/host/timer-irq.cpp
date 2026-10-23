@@ -1,5 +1,6 @@
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/process/lock.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,6 +25,7 @@ namespace
 
 namespace a9n::kernel
 {
+    void spin_lock_no_owner::lock_contended() { abort(); }
     liba9n::result<process_manager *, kernel_error> current_process_manager()
     {
         record(1);

@@ -130,6 +130,12 @@ namespace a9n::kernel
         );
 
       public:
+        bool is_same_object(const capability_slot &left, const capability_slot &right) const override
+        {
+            return left.data[0] == right.data[0]
+                && generic_flags_size_bits(left.data[1]) == generic_flags_size_bits(right.data[1]);
+        }
+
         capability_result execute(process &this_process, capability_slot &self) override;
 
         capability_result revoke(capability_slot &self) override;

@@ -1,6 +1,7 @@
 #include <kernel/interrupt/interrupt_manager.hpp>
 #include <kernel/interrupt/irq_notification_handlers.hpp>
 #include <kernel/process/process_manager.hpp>
+#include <kernel/process/lock.hpp>
 #include <kernel/utility/logger.hpp>
 #include <hal/x86_64/interrupt/interrupt.hpp>
 #include <stdio.h>
@@ -32,6 +33,7 @@ namespace
 
 namespace a9n::kernel
 {
+    void spin_lock_no_owner::lock_contended() { abort(); }
     liba9n::result<process_manager *, kernel_error> current_process_manager()
     {
         if (manager_error) return kernel_error::TRY_AGAIN;
@@ -43,6 +45,7 @@ namespace a9n::kernel
         return &current;
     }
     capability_result notification_port::execute(process &, capability_slot &) { abort(); }
+    capability_result notification_port::revoke(capability_slot &) { abort(); }
     capability_result notification_port::operation_notify(process &, capability_slot &)
     {
         ++notified;

@@ -152,6 +152,11 @@ namespace a9n::kernel
 
     capability_result generic::convert(process &owner, capability_slot &self)
     {
+        if ((self.rights & (capability_slot::READ | capability_slot::WRITE))
+            != (capability_slot::READ | capability_slot::WRITE))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
         auto convert_capability_error = [](capability_lookup_error e) -> capability_error
         {
             switch (e)
@@ -179,6 +184,15 @@ namespace a9n::kernel
             .and_then(
                 [&](capability_slot *root_slot) -> capability_result
                 {
+                    if (root_slot->type != capability_type::NODE || !root_slot->component)
+                    {
+                        return capability_error::INVALID_DESCRIPTOR;
+                    }
+                    if ((root_slot->rights & (capability_slot::READ | capability_slot::WRITE))
+                        != (capability_slot::READ | capability_slot::WRITE))
+                    {
+                        return capability_error::PERMISSION_DENIED;
+                    }
                     auto self_info = create_generic_info(self.data);
 
                     // get index
@@ -407,6 +421,13 @@ namespace a9n::kernel
 
             case NODE :
                 {
+                    constexpr auto slot_size_bits
+                        = liba9n::calculate_radix_ceil(sizeof(capability_slot));
+                    if (!capability_node::is_geometry_valid(0, specific_bits)
+                        || specific_bits >= a9n::WORD_BITS - slot_size_bits)
+                    {
+                        return liba9n::option_none;
+                    }
                     constexpr auto node_alignment = static_cast<a9n::word>(
                         1ULL << liba9n::calculate_radix_ceil(sizeof(capability_node))
                     );
@@ -475,16 +496,12 @@ namespace a9n::kernel
 
     capability_result generic::revoke(capability_slot &self)
     {
-        // generic cannot be copied; so it is basically read/write and 1-set
-        [[unlikely]] if (
-            !(self.rights & capability_slot::object_rights::READ)
-            && !(self.rights & capability_slot::object_rights::WRITE)
-        )
+        // Authorized ancestor cleanup also handles attenuated Generics. Never
+        // reset the cursor while a generated object remains reachable.
+        if (self.has_child())
         {
             return capability_error::ILLEGAL_OPERATION;
         }
-
-        // init this generic (watermark)
         auto info = create_generic_info(self.data);
         info.init();
         self.data = info.dump_slot_data();

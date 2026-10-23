@@ -24,6 +24,8 @@ for architecture in x86_64 aarch64; do
         "$a9n_dir/src/hal/$architecture/memory/memory_manager.cpp" \
         "$a9n_dir/src/kernel/capability/frame_capability.cpp" \
         "$a9n_dir/src/kernel/capability/generic.cpp" \
+        "$a9n_dir/src/kernel/capability/capability_node.cpp" \
+        "$a9n_dir/src/kernel/capability/capability_node_reclamation.cpp" \
         "$strip_flag" -o "$test_dir/frame-zero-$architecture"
     "$test_dir/frame-zero-$architecture"
 done

@@ -137,6 +137,10 @@ namespace a9n::kernel
 
     capability_result io_port_capability::operation_mint(process &owner, capability_slot &self)
     {
+        if (!(self.rights & capability_slot::COPY))
+        {
+            return capability_error::PERMISSION_DENIED;
+        }
         auto get_address_range = [&](void) -> io_port_address_range
         {
             auto range_min = a9n::hal::get_message_register(owner, NEW_ADDRESS_MIN)
@@ -167,7 +171,20 @@ namespace a9n::kernel
                     }
 
                     return try_configure_io_port_slot(destination_slot.get(), new_range)
-                        .transform_error(convert_kernel_to_capability_error);
+                        .transform_error(convert_kernel_to_capability_error)
+                        .and_then([&]() -> capability_result
+                        {
+                            destination_slot->rights = self.rights;
+                            if (self.is_same_object(destination_slot.get()))
+                            {
+                                self.insert_sibling(destination_slot.get());
+                            }
+                            else
+                            {
+                                self.insert_child(destination_slot.get());
+                            }
+                            return {};
+                        });
 
                     return {};
                 }

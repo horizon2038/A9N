@@ -48,13 +48,9 @@ namespace a9n::kernel
         // the number of slots is 2^radix_bits.
         capability_slot *capability_slots;
 
-        capability_result decode_operation(process &owner, capability_slot &self);
-
-        capability_result operation_copy(process &owner, capability_slot &self);
-
-        capability_result operation_move(process &this_proecess, capability_slot &self);
-
-        capability_result operation_mint(process &owner, capability_slot &self);
+        capability_result operation_transfer(
+            process &owner, capability_slot &self, operation_type operation
+        );
 
         capability_result operation_demote(process &owner, capability_slot &self);
 
@@ -66,30 +62,13 @@ namespace a9n::kernel
             lookup_slot(a9n::capability_descriptor target_descriptor, a9n::word descriptor_used_bits);
 
         // inline section
-        inline const bool is_index_valid(a9n::word index)
-        {
-            auto index_max = static_cast<a9n::word>(1 << radix_bits);
-
-            if (index >= index_max)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        inline const bool is_depth_remain(a9n::word depth)
-        {
-            return (depth < a9n::WORD_BITS);
-        }
-
         inline const a9n::word calculate_capability_index(
             a9n::capability_descriptor descriptor,
             a9n::word                  descriptor_used_bits
         )
         {
-            auto mask_bits  = static_cast<a9n::word>((1 << radix_bits) - 1);
-            auto shift_bits = (a9n::WORD_BITS - (ignore_bits + radix_bits + descriptor_used_bits));
+            auto mask_bits  = (static_cast<a9n::word>(1) << radix_bits) - 1;
+            auto shift_bits = a9n::WORD_BITS - (ignore_bits + radix_bits + descriptor_used_bits);
             return (descriptor >> shift_bits) & mask_bits;
         }
 
@@ -99,6 +78,20 @@ namespace a9n::kernel
         }
 
       public:
+        // Manage dependency links and call each object's self-contained revoke.
+        static kernel_result revoke_slot(capability_slot &slot);
+        static kernel_result remove_slot(capability_slot &slot);
+
+        bool is_reclaiming(void) const override;
+
+        static constexpr bool is_geometry_valid(a9n::word ignored, a9n::word radix)
+        {
+            return ignored < a9n::WORD_BITS && radix != 0 && radix < a9n::WORD_BITS
+                && radix <= a9n::WORD_BITS - ignored;
+        }
+
+        bool is_valid(void) const { return capability_slots != nullptr; }
+
         capability_node(
             a9n::word        initial_ignore_bits,
             a9n::word        initial_radix_bits,
@@ -109,6 +102,7 @@ namespace a9n::kernel
 
         capability_result revoke(capability_slot &self) override;
 
+        // The caller supplies an index within this Node's radix.
         capability_lookup_result retrieve_slot(a9n::word index) override;
 
         capability_lookup_result traverse_slot(
@@ -118,11 +112,13 @@ namespace a9n::kernel
         ) override;
     };
 
+    static_assert(sizeof(capability_node) == 4 * sizeof(a9n::word));
+
     // unsafe : no check boundary
     inline liba9n::result<liba9n::not_null<capability_node>, kernel_error>
         try_make_capability_node(a9n::virtual_address base, a9n::word radix)
     {
-        if (!base || radix == 0 || radix >= a9n::WORD_BITS)
+        if (!base || !capability_node::is_geometry_valid(0, radix))
         {
             DEBUG_LOG("illegal argument");
             return kernel_error::ILLEGAL_ARGUMENT;
@@ -141,6 +137,10 @@ namespace a9n::kernel
 
         constexpr auto slot_unit_radix = liba9n::calculate_radix_ceil(sizeof(capability_slot));
         constexpr auto slot_unit_size  = static_cast<a9n::word>(1) << slot_unit_radix;
+        if (radix >= a9n::WORD_BITS - slot_unit_radix)
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
+        }
         DEBUG_LOG("slot_unit_radix : 0x%llx", slot_unit_radix);
         DEBUG_LOG("slot_unit_size : 0x%llx", slot_unit_size);
 
@@ -168,6 +168,10 @@ namespace a9n::kernel
         if (slot.type != capability_type::NONE)
         {
             return kernel_error::INIT_FIRST;
+        }
+        if (!node.is_valid())
+        {
+            return kernel_error::ILLEGAL_ARGUMENT;
         }
 
         slot.init();

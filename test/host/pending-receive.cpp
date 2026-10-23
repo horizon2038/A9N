@@ -79,7 +79,10 @@ namespace a9n::hal
     hal_result configure_message_register(process &target, a9n::word index, a9n::word value)
     {
         CHECK(index < 64);
-        if (index == failed_register) return hal_error::TRY_AGAIN;
+        if (index == failed_register)
+        {
+            return hal_error::TRY_AGAIN;
+        }
         CHECK(target.buffer);
         target.buffer->messages[index] = value;
         return {};
@@ -213,7 +216,9 @@ static void receive_discards_old_reply_before_delivering_notification()
     CHECK(!server.core.destination_reply_target && !caller.core.source_reply_target);
     CHECK(server.core.destination_reply_state == process::destination_reply_state_object::NONE);
     CHECK(caller.core.source_reply_state == process::source_reply_state_object::NONE);
-    CHECK(caller.core.status == process_status::BLOCKED_REPLY); // Dropped, not replied to.
+    CHECK(caller.core.status == process_status::READY);
+    CHECK(caller.buffer.messages[0] == 0);
+    CHECK(caller.buffer.messages[1] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
 }
 
 static void errors_do_not_enqueue_receiver()
@@ -281,6 +286,135 @@ static void fast_reply_receive_preserves_quantum(a9n::sword remaining, a9n::word
     expected_direct_local = nullptr;
 }
 
+static void revoke_cancels_only_queued_calls()
+{
+    test_process server, caller, queued;
+    test_endpoint endpoint, reply_endpoint;
+    // Queue-first acceptance exercises the slow CALL path's reply back-link.
+    caller.buffer.messages[0] = 0x1357;
+    CHECK(endpoint.invoke(caller, 3));
+    CHECK(endpoint.invoke(server, 2));
+    CHECK(caller.core.source_reply_state == process::source_reply_state_object::WAIT);
+    CHECK(caller.core.source_reply_target == &server.core);
+    CHECK(endpoint.invoke(queued, 3));
+    CHECK(endpoint.port.revoke(endpoint.slot));
+    CHECK(caller.core.status == process_status::BLOCKED_REPLY);
+    CHECK(caller.core.source_reply_state == process::source_reply_state_object::WAIT);
+    CHECK(caller.core.source_reply_target == &server.core);
+    CHECK(server.core.destination_reply_target == &caller.core);
+    CHECK(server.core.destination_reply_state == process::destination_reply_state_object::READY_TO_REPLY);
+    CHECK(caller.buffer.messages[0] == 0x1357 && caller.buffer.messages[1] == 3);
+    CHECK(queued.core.status == process_status::READY && !queued.core.current_ipc_port);
+    CHECK(queued.core.source_reply_state == process::source_reply_state_object::NONE);
+    CHECK(queued.buffer.messages[0] == 0);
+    CHECK(queued.buffer.messages[1] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
+    CHECK(endpoint.port.revoke(endpoint.slot)); // idempotent after cancellation
+
+    // Reply uses the receiver's saved relationship, not the original Port.
+    server.buffer.messages[4] = 0x2468;
+    expected_direct_target = &server.core;
+    CHECK(reply_endpoint.invoke(server, 4, true, 1));
+    expected_direct_target = nullptr;
+    CHECK(caller.core.status == process_status::READY);
+    CHECK(caller.buffer.messages[4] == 0x2468);
+    CHECK(caller.core.source_reply_state == process::source_reply_state_object::NONE);
+    CHECK(!caller.core.source_reply_target && !server.core.destination_reply_target);
+
+    test_notification notification(server);
+    CHECK(notification.port.operation_wait(server.core, notification.slot));
+    CHECK(server.core.status == process_status::BLOCKED_WAIT);
+    CHECK(notification.port.revoke(notification.slot));
+    CHECK(server.core.status == process_status::READY);
+    CHECK(!server.core.current_notification_port);
+    CHECK(!server.core.binded_notification_port.component);
+}
+
+static void reply_survives_port_destruction_and_reuse()
+{
+    test_process server, caller, other_server, other_caller;
+    test_endpoint endpoint, reply_endpoint;
+    CHECK(endpoint.invoke(server, 2));
+    expected_direct_target = &server.core;
+    CHECK(endpoint.invoke(caller, 3));
+    expected_direct_target = nullptr;
+    CHECK(endpoint.port.revoke(endpoint.slot));
+
+    // Reuse the exact address: the old caller must retain no Port reference.
+    endpoint.port.~ipc_port();
+    new (&endpoint.port) ipc_port {};
+    CHECK(endpoint.invoke(other_server, 2));
+    expected_direct_target = &other_server.core;
+    CHECK(endpoint.invoke(other_caller, 3));
+    expected_direct_target = nullptr;
+    CHECK(endpoint.port.revoke(endpoint.slot));
+    CHECK(caller.core.source_reply_target == &server.core);
+    CHECK(caller.core.source_reply_state == process::source_reply_state_object::WAIT);
+    CHECK(caller.core.status == process_status::BLOCKED_REPLY);
+    CHECK(other_caller.core.source_reply_target == &other_server.core);
+    CHECK(other_caller.core.source_reply_state == process::source_reply_state_object::WAIT);
+    CHECK(other_caller.core.status == process_status::BLOCKED_REPLY);
+
+    server.buffer.messages[4] = 0x1234;
+    other_server.buffer.messages[4] = 0x5678;
+    expected_direct_target = &server.core;
+    CHECK(reply_endpoint.invoke(server, 4, true, 1));
+    CHECK(caller.core.status == process_status::READY && caller.buffer.messages[4] == 0x1234);
+    CHECK(other_caller.core.status == process_status::BLOCKED_REPLY);
+    CHECK(other_server.core.destination_reply_target == &other_caller.core);
+    expected_direct_target = &other_server.core;
+    CHECK(reply_endpoint.invoke(other_server, 4, true, 1));
+    expected_direct_target = nullptr;
+    CHECK(other_caller.core.status == process_status::READY);
+    CHECK(other_caller.buffer.messages[4] == 0x5678);
+}
+
+static void revoke_cancels_queued_receivers()
+{
+    test_process server;
+    test_endpoint endpoint;
+    CHECK(endpoint.invoke(server, 2));
+    CHECK(server.core.status == process_status::BLOCKED_RECEIVE);
+    CHECK(endpoint.port.revoke(endpoint.slot));
+    CHECK(server.core.status == process_status::READY && !server.core.current_ipc_port);
+    CHECK(server.buffer.messages[0] == 0);
+    CHECK(server.buffer.messages[1] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
+}
+
+static void pcb_reply_cleanup_remains_independent()
+{
+    test_process server, caller;
+    test_endpoint endpoint;
+    CHECK(endpoint.invoke(server, 2));
+    expected_direct_target = &server.core;
+    CHECK(endpoint.invoke(caller, 3));
+    expected_direct_target = nullptr;
+    CHECK(endpoint.port.revoke(endpoint.slot));
+
+    // A destroyed/suspended caller must no longer be a server's reply target.
+    caller.core.status = process_status::BLOCKED_SUSPEND;
+    caller.buffer.messages[0] = 0x1234;
+    caller.buffer.messages[1] = 0x5678;
+    CHECK(ipc_port::cancel_reply(caller.core, ipc_port::reply_cancellation_mode::DETACH_ONLY));
+    CHECK(caller.core.status == process_status::BLOCKED_SUSPEND);
+    CHECK(caller.buffer.messages[0] == 0x1234 && caller.buffer.messages[1] == 0x5678);
+    CHECK(caller.core.source_reply_state == process::source_reply_state_object::NONE);
+    CHECK(!caller.core.source_reply_target && !server.core.destination_reply_target);
+    CHECK(server.core.destination_reply_state == process::destination_reply_state_object::NONE);
+
+    CHECK(endpoint.invoke(server, 2));
+    caller.core.status = process_status::READY;
+    expected_direct_target = &server.core;
+    CHECK(endpoint.invoke(caller, 3));
+    expected_direct_target = nullptr;
+    // PCB revoke uses this path when destroying the receiver of a CALL.
+    CHECK(ipc_port::cancel_reply(caller.core, ipc_port::reply_cancellation_mode::RESUME_WITH_ERROR));
+    CHECK(caller.core.status == process_status::READY);
+    CHECK(caller.core.source_reply_state == process::source_reply_state_object::NONE);
+    CHECK(!caller.core.source_reply_target && !server.core.destination_reply_target);
+    CHECK(caller.buffer.messages[0] == 0);
+    CHECK(caller.buffer.messages[1] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
+}
+
 int main()
 {
     // Use the wire operation numbers through execute(), not private helpers.
@@ -295,5 +429,9 @@ int main()
     fast_reply_receive_preserves_quantum(3, BSP_ID);
     fast_reply_receive_preserves_quantum(0, BSP_ID);
     fast_reply_receive_preserves_quantum(7, SMP_ENABLED ? 2 : BSP_ID);
-    puts("PASS: 13 Receive/Reply-Receive, queue-state, quantum and error scenarios");
+    revoke_cancels_only_queued_calls();
+    reply_survives_port_destruction_and_reuse();
+    revoke_cancels_queued_receivers();
+    pcb_reply_cleanup_remains_independent();
+    puts("PASS: Receive/Reply-Receive, quantum, queued cancellation, independent replies and Port reuse");
 }

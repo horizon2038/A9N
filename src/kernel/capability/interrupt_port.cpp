@@ -157,10 +157,18 @@ namespace a9n::kernel
             .and_then(
                 [&](liba9n::not_null<irq_notification_handler> handler) -> capability_result
                 {
-                    handler->used = false;
-                    return handler->slot.try_remove_and_init().transform_error(
-                        convert_kernel_to_capability_error
-                    );
+                    auto masked = interrupt_manager_core.disable_interrupt(port_info.irq_number);
+                    if (!masked)
+                    {
+                        return masked.transform_error(convert_kernel_to_capability_error);
+                    }
+                    return handler->slot.try_remove_and_init()
+                        .transform_error(convert_kernel_to_capability_error)
+                        .and_then([&]() -> capability_result
+                        {
+                            handler->used = false;
+                            return {};
+                        });
                 }
             );
 

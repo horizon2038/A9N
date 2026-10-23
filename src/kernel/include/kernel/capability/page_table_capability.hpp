@@ -18,6 +18,12 @@ namespace a9n::kernel
     class page_table_capability : public capability_component
     {
       public:
+        bool is_same_object(const capability_slot &left, const capability_slot &right) const override
+        {
+            return left.data[0] == right.data[0]
+                && (left.data[1] & 0xff) == (right.data[1] & 0xff);
+        }
+
         capability_result execute(process &owner, capability_slot &self) override
         {
             return capability_error::ILLEGAL_OPERATION;

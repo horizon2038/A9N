@@ -73,6 +73,11 @@ namespace a9n::kernel
         };
 
       public:
+        bool is_same_object(const capability_slot &left, const capability_slot &right) const override
+        {
+            return left.data[0] == right.data[0] && left.data[1] == right.data[1];
+        }
+
         capability_result execute(process &owner, capability_slot &self) override;
 
         capability_result operation_read(process &owner, capability_slot &self);

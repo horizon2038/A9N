@@ -91,6 +91,7 @@ namespace a9n::kernel
     {
       private:
         alignas(64) volatile uint32_t locked { 0 };
+        void lock_contended(void);
 
       public:
         spin_lock_no_owner(void)                                       = default;
@@ -112,14 +113,9 @@ namespace a9n::kernel
 
         kernel_result lock(void)
         {
-            for (;;)
+            if (!try_lock()) [[unlikely]]
             {
-                auto result = try_lock();
-                if (result)
-                {
-                    break;
-                }
-                a9n::hal::spin_wait();
+                lock_contended();
             }
 
             return {};

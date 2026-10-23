@@ -20,6 +20,125 @@ and duplicate mappings. No host memory at address zero is accessed.
 
 These tests do not replace booting the kernel on actual hardware.
 
+# Capability reclamation and lookup hot-path regressions
+
+```sh
+sh test/host/run-capability-reclamation.sh
+sh test/host/run-smp-reclamation.sh
+sh test/host/run-capability-lookup-codegen.sh
+```
+
+The reclamation tests use the production Node implementation with AddressSanitizer
+and UndefinedBehaviorSanitizer. They cover sibling aliases, slot-local identity,
+weak-capability removal, Node containment/cycles, failed cleanup and retry, and
+Node construction/descriptor traversal. Active Node finalizers are tracked
+on a giant-lock-protected stack chain; lookup fields and the 32-byte Node layout
+are unchanged. An internal lookup during a failing or successful finalizer
+verifies that reclamation state does not alter lookup geometry.
+
+Dependency traversal and Slot removal are implemented by the Node layer in
+`capability_node_reclamation.cpp`; the existing Slot methods only forward to it.
+Each Object's `revoke` owns its own teardown. There is no `prepare_revoke` hook or
+global process-preparation pass. Descendants are reclaimed independently before
+their parent callback, so failed cleanup prevents the parent Generic's allocator
+reset. Tests check this postorder and retained dependency links on failure.
+Slot size is also constrained to eight words by a production `static_assert`.
+
+`last_alias_in_group` names the shared alias-boundary walk used by child lookup,
+insertion and revocation. Slot removal spells out active-cycle, empty-Slot,
+remaining-alias and final-alias cases, sharing only the unlink/reset step.
+Regressions also exercise both const/mutable alias lookup and empty linked-Slot
+removal without disturbing neighboring Slots or finalizing their Objects.
+
+Node geometry checks run at construction/configuration. `retrieve_slot` retains
+its original contract: callers supply an index within the Node's radix; it checks
+Slot storage availability, not index bounds. `lookup_slot` extracts a radix-masked
+index and calls `retrieve_slot`. `traverse_slot` retains its original `.and_then`
+chain for termination and recursive lookup, without a per-Node reclamation flag
+mask or new depth-validation branch.
+Descriptors must supply a valid depth for each traversed Node, as in the
+original lookup contract.
+
+The code-generation check exports `BASELINE_REF` (default: `HEAD`) into an
+isolated temporary directory, compiles baseline and current production Node
+code for both architectures at O2/O3, retains their disassembly, and rejects
+increases in static instruction or conditional-branch counts in `traverse_slot`
+and `lookup_slot`. Like the production toolchains, its default compiler and
+disassembler come from `llvm-config --bindir`; `CODEGEN_CXX` and `LLVM_OBJDUMP`
+can override them.
+
+These are translation-unit code-generation checks, not final-LTO byte equality
+or real syscall latency measurements. In particular, the separate SMP
+giant-lock contention/rendezvous is not measured by this lookup check.
+
+`run-smp-reclamation.sh` exercises the production stop mailbox and giant lock
+over 100 modeled IRQ-masked remote entries, checking acknowledgment after the
+context switch, pending-target removal, and retry after a failed IPI send.
+The existing spin lock uses a separate contention function, with no special
+lock subclass, per-lock rendezvous flag, or nonstandard compiler attributes.
+Only giant-lock waiters service stop requests; other locks cannot retire their
+caller's context. Privileged HAL effects are substituted, and host atomic
+operations use a pthread mutex. The test is not an IPC performance benchmark.
+Request servicing and ACK waiting are named helpers in the contention/teardown
+code; the ordinary lock-acquisition path is unchanged. IPI-send failure still
+precedes request publication, and ACK still follows the context switch.
+The stop protocol and its per-CPU requests live in `process/reclamation.cpp`;
+`process/lock.cpp` only implements the contended lock loop and calls its
+giant-lock reclamation hook.
+
+A separate Release/full-LTO audit against the baseline above checked actual
+x86_64 and AArch64 kernel executables. Uncontended kernel entry retains the
+same register saves and has no additional lock checks, branches or calls;
+the stop-request handling stays in the contention path. This is a code-path
+comparison, not a claim of equal measured IPC latency.
+
+# PCB configuration and reclamation regressions
+
+```sh
+sh test/host/run-pcb-lifecycle.sh
+```
+
+The production PCB implementation is tested with and without SMP under
+AddressSanitizer/UndefinedBehaviorSanitizer; HAL and scheduling effects are
+substituted. All 1,024 configuration masks are exercised across 21 profiles:
+success, each message-read failure, invalid IP/SP/TLS, priority/affinity limits,
+register-write failures, and retargeting a ready process. Five further cases
+inject failure at each owned-slot cleanup stage and then retry, checking that
+failed cleanup retains the backing metadata, including the
+existing IPC-buffer clearing order. PCB `revoke` is called directly, without a
+preparation call, and its owned-resource callbacks require the process to have
+been stopped first. A further Node/PCB regression injects a stop failure during
+ancestor reclamation: PCB resources, dependency
+links and the ancestor allocation state must remain available for retry. The
+current suite exercises 21,510 cases in each SMP configuration.
+
+The PCB readability refactor keeps table-driven configuration, with typed,
+named selection flags separate from message-register indices. The register
+table explicitly preserves the distinct invalid-address error for TLS.
+The suite pins the pre-refactor ordered-operation trace
+`12865827607116404806` in both SMP configurations, covering argument reads,
+configuration effects, errors and resource-cleanup order.
+
+Before the Object-owned revoke change, both the pre-refactor and simplified
+implementations produced 21,509 passing
+cases and the same ordered-operation trace, 9504414185266343312. The trace covers
+argument reads, capability lookup/binding, register writes, errors and cleanup.
+Node tests additionally exercise COPY/MOVE/MINT through the public operation
+entry, sibling depth/identity, weak rights and attenuation.
+
+The simplification keeps IPC CALL/Reply-Receive and giant-lock entry code intact.
+Release/full-LTO comparisons on both architectures found identical opcode
+sequences and instruction/branch/call counts in IPC execute, Reply-Receive and
+message-transfer helpers, and syscall entry. This is a code-generation check,
+not a real-hardware latency measurement.
+
+The Object-owned revoke refactor was separately checked against the preceding
+simplified implementation. Release/full-LTO builds for x86_64 and AArch64 retain
+the same opcode sequences and instruction/branch/call counts in the six audited
+IPC/syscall-entry functions above. QEMU boots with the updated kernels passed
+on both architectures with one and four CPUs, including Capability reclamation,
+reuse and provider handover probes.
+
 # External IRQ completion regression tests
 
 ```sh
@@ -145,6 +264,18 @@ reply-link cleanup and the server's receive-queue state. Before removing the
 fast Reply-Receive reset, the first transaction changes the caller's budget
 and fails this regression. Both SMP configurations pass with and without
 AddressSanitizer and UndefinedBehaviorSanitizer.
+
+Port revoke cancels only senders and receivers still on that Port's queue.
+Accepted CALLs remain blocked waiting for their receiver's reply, independently
+of the original Port's lifetime. Additional regressions cover queue-first and
+receiver-first acceptance, cancellation of queued calls/receivers, and destruction
+and reconstruction of a Port at the same address while old and new CALLs wait.
+Replies through a different live Port must reach the correct callers. PCB-side
+reply cancellation still removes caller/server links when either process is
+reclaimed. No global process registry or per-CALL Port reference is maintained.
+Reply cancellation uses explicit `DETACH_ONLY` and `RESUME_WITH_ERROR` modes;
+the former preserves both the suspended state and existing message registers.
+The error-result register indices are named without changing their wire values.
 
 Unlike the SDK deferred-notification regression, this flag has **not** been
 consumed by a previous Call: it is still in the kernel notification object.

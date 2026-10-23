@@ -94,6 +94,7 @@ namespace a9n::kernel
         // state, the identifier needs to be temporarily saved here.
         a9n::word identifier_when_blocked;
 
+        // Once accepted, a CALL's reply relationship is independent of the Port.
         enum class source_reply_state_object : a9n::word
         {
             NONE,
@@ -116,6 +117,7 @@ namespace a9n::kernel
 
         // tag for debugging
         char name[PROCESS_NAME_MAX];
+
     };
 
     static_assert(sizeof(process) <= 4096);
