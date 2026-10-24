@@ -12,7 +12,8 @@ namespace a9n::kernel
     // The waiting CPU does not own the lock; the requester holds it until ACK.
     void service_pending_stop_request(void);
 
-    // The caller holds giant_lock until the remote CPU acknowledges the stop.
+    // Synchronous stop shared by SUSPEND and revoke. The caller holds giant_lock
+    // until the remote CPU acknowledges the context/page-table switch.
     kernel_result stop_process_for_reclamation(process &target);
     capability_result complete_revoked_wait(process &target);
 }

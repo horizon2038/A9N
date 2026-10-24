@@ -513,8 +513,7 @@ namespace a9n::kernel
 
     capability_result process_control_block::operation_resume(process &owner, capability_slot &self)
     {
-        // A remote suspend is completed by its reschedule IPI. Do not enqueue the process again
-        // until that CPU has actually stopped using its context.
+        // A process still executing on its assigned CPU cannot be resumed.
         if (is_running_on_assigned_core(process_core)) [[unlikely]]
         {
             return capability_error::INVALID_ARGUMENT;
@@ -553,32 +552,7 @@ namespace a9n::kernel
         return detach_from_wait_queues().and_then(
             [&](void) -> capability_result
             {
-                auto &local_variable = cpu_local_variables[process_core.core_affinity];
-                auto  was_running    = is_running_on_assigned_core(process_core);
-                return local_variable.process_manager_core.mark_suspended(process_core)
-                    .and_then(
-                        [&](void) -> kernel_result
-                        {
-                            if (!was_running)
-                            {
-                                return {};
-                            }
-
-                            return a9n::hal::current_core_number()
-                                .transform_error(convert_hal_to_kernel_error)
-                                .and_then(
-                                    [&](a9n::word current_core) -> kernel_result
-                                    {
-                                        if (process_core.core_affinity == current_core)
-                                        {
-                                            return local_variable.process_manager_core
-                                                .try_schedule_and_switch();
-                                        }
-                                        return reschedule_core(process_core.core_affinity);
-                                    }
-                                );
-                        }
-                    )
+                return stop_process_for_reclamation(process_core)
                     .transform_error(convert_kernel_to_capability_error);
             }
         );
