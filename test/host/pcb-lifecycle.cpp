@@ -20,6 +20,9 @@ namespace
     bool failed_stop = false;
     unsigned stop_calls = 0;
     process *stopped_process = nullptr;
+    unsigned ipc_detaches = 0;
+    unsigned notification_detaches = 0;
+    bool failed_detach = false;
     a9n::word checksum = 1469598103934665603;
     unsigned cases = 0;
     void record(a9n::word value) { checksum = (checksum ^ value) * 1099511628211; }
@@ -103,8 +106,26 @@ namespace a9n::kernel
         return {};
     }
     capability_result ipc_port::cancel_reply(process &, reply_cancellation_mode) { return {}; }
-    kernel_result ipc_port::remove_ipc_queue(process &) { abort(); }
-    kernel_result notification_port::remove_notification_queue(process &) { abort(); }
+    kernel_result ipc_port::remove_ipc_queue(process &target)
+    {
+        ++ipc_detaches;
+        if (failed_detach)
+        {
+            return kernel_error::UNEXPECTED;
+        }
+        target.current_ipc_port = nullptr;
+        return {};
+    }
+    kernel_result notification_port::remove_notification_queue(process &target)
+    {
+        ++notification_detaches;
+        if (failed_detach)
+        {
+            return kernel_error::UNEXPECTED;
+        }
+        target.current_notification_port = nullptr;
+        return {};
+    }
     kernel_result notification_port::bind_process(process &) { record(400); return {}; }
     kernel_result notification_port::unbind_process(process &) { record(401); return {}; }
     capability_result notification_port::execute(process &, capability_slot &) { abort(); }
@@ -300,4 +321,55 @@ int main()
     CHECK(cases == expected_cases);
     CHECK(checksum == expected_trace);
     printf("PCB configuration/reclamation: cases=%u trace=%llu PASS\n", cases, static_cast<unsigned long long>(checksum));
+    // SUSPEND must reach the same synchronous stop routine as revoke, including
+    // for a running remote target. The helper's ACK protocol is tested separately.
+    {
+        process_control_block pcb;
+        capability_slot self {};
+        CHECK(try_configure_process_control_block_slot(self, pcb));
+        auto &target = pcb.process_core;
+        target.core_affinity = 1;
+        target.priority = 17;
+        target.status = process_status::READY;
+        auto &remote = cpu_local_variables[1];
+        remote.current_process = &target;
+        remote.is_idle = false;
+        stopped_process = nullptr;
+        stop_calls = 0;
+        failed_stop = true;
+        CHECK(!pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 1 && stopped_process == nullptr);
+        CHECK(target.status == process_status::READY && target.priority == 17);
+        failed_stop = false;
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 2 && stopped_process == &target);
+        CHECK(target.status == process_status::BLOCKED_SUSPEND && target.priority == 17);
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 3);
+        remote.current_process = nullptr;
+        remote.is_idle = true;
+
+        target.current_ipc_port = reinterpret_cast<ipc_port *>(0x1000);
+        failed_detach = true;
+        CHECK(!pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 3 && ipc_detaches == 1);
+        CHECK(target.current_ipc_port != nullptr);
+        failed_detach = false;
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 4 && ipc_detaches == 2 && target.current_ipc_port == nullptr);
+
+        target.current_notification_port = &notification;
+        failed_detach = true;
+        CHECK(!pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 4 && notification_detaches == 1);
+        CHECK(target.current_notification_port == &notification);
+        failed_detach = false;
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(stop_calls == 5 && notification_detaches == 2 && target.current_notification_port == nullptr);
+
+        // The caller may suspend itself; it must use the same stop routine.
+        CHECK(pcb.operation_suspend(target, self));
+        CHECK(stop_calls == 6 && stopped_process == &target);
+    }
+    puts("PCB synchronous suspend: routing, stop failure/retry, idempotence, queue detach and self suspend PASS");
 }

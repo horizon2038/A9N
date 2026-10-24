@@ -112,7 +112,7 @@ Bit 10以降はカーネルが解釈しない．ユーザ空間は未使用Bit�
   [`RESUME`はIdempotentではない．Ready Queueへ所属済みのProcessまたは実行中Processへ`RESUME`を再実行すると，重複追加の失敗またはQueue Linkの破損を起こし得る．User-level Process ManagerはPCBごとのStateとQueue所属を管理し，構成済みかつReady Queueへ所属していないProcessだけを`RESUME`する必要がある．],
 )
 
-`SUSPEND`は対象ProcessをWait QueueとReady Queueから外すが，対象Processが呼出し元自身である場合に即時Schedulingを実行しない．Self Suspendを実行したProcessは`BLOCKED_SUSPEND`へ設定された後もKernel Callから復帰し得る．実行中Processを停止する処理は，別のProcess Managerから`SUSPEND`するか，IPCまたはNotificationのBlocking Operationへ移す必要がある．
+`SUSPEND`は対象ProcessをIPC／NotificationのWait QueueとReady Queueから外し，Priorityを変更せず`BLOCKED_SUSPEND`へ設定する．別Coreで実行中の場合は，対象CoreがContextとPage Tableを切り替えた後のACKを待ってから成功を返す．成功後はProcess Managerが対象のRegisterを読み書きし，続けて`RESUME`できる．停止済みProcessへの再実行でも停止状態を維持する．Self Suspendでは実行ContextをIDLEへ切り替えるため，別Processから`RESUME`されるまでUser Spaceへ復帰しない．この同期停止処理はPCB Revokeと共通であり，IPCの`CALL`／`REPLY_RECEIVE`経路は変更しない．
 
 == Benno Scheduling
 

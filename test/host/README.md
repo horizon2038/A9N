@@ -112,6 +112,23 @@ ancestor reclamation: PCB resources, dependency
 links and the ancestor allocation state must remain available for retry. The
 current suite exercises 21,510 cases in each SMP configuration.
 
+Ordinary PCB `SUSPEND` uses the same synchronous stop routine as `revoke`.
+Additional lifecycle tests check remote-running and self-suspend routing,
+stop failure/retry, idempotent suspension, preserved priority, and IPC/notification
+queue detachment failures. `run-smp-reclamation.sh` separately checks the shared
+production protocol's context-switch-before-ACK ordering, including IRQ-masked
+remote entries. A successful remote `SUSPEND` therefore waits for context and
+page-table retirement rather than merely sending a reschedule IPI.
+The optional common-ABI guest probe in `tests/alpha/capabilities` additionally
+checks that a spinning worker stops changing shared memory after `SUSPEND`,
+round-trips its saved registers and resumes immediately, and that a suspended
+caller returns only after its worker resumes it. It runs on the real kernel
+with either one or four virtual CPUs on x86_64 and AArch64.
+The root repository's `tests/alpha/boot-smoke.py --expect-suspend` checks these
+kernel observations and boot/rootfs readiness without depending on interleaved
+startup logs from unrelated Alter services. Other boot-test modes retain their
+existing service-readiness checks.
+
 The PCB readability refactor keeps table-driven configuration, with typed,
 named selection flags separate from message-register indices. The register
 table explicitly preserves the distinct invalid-address error for TLS.

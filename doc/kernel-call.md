@@ -469,7 +469,9 @@ operation type:
 
 #### SUSPEND
 
-- 対象processを`BLOCKED`化し，priorityを0へ設定する．
+- IPC／NotificationのWait QueueとReady Queueから対象processを外し，priorityを変更せず`BLOCKED_SUSPEND`へ設定する．
+- 他コアで実行中の場合，対象コアのContext／Page Table切替完了のACKを待ってから成功を返す．成功後，対象のレジスタを読み書きし，続けて`RESUME`できる．
+- Self Suspendでは実行ContextをIDLEへ切り替える．別processから`RESUME`されるまで，呼出し元はUser Spaceへ復帰しない．
 
 ### 4.7 IPC_PORT (`ipc_port`)
 
