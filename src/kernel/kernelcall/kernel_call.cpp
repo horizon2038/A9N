@@ -19,7 +19,7 @@ namespace a9n::kernel
     // called from hal's system call handler
     void handle_kernel_call(kernel_call_type type)
     {
-        lock_guard guard(giant_lock);
+        lock_guard<giant_lock_type, kernel_entry_type::SYSCALL> guard(giant_lock);
         auto       result = current_process_on_this_core().and_then(
             [type](process *current_process) -> kernel_result
             {

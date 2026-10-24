@@ -31,6 +31,10 @@ namespace a9n::hal
     hal_result        init_hardware_context(cpu_mode mode, a9n::kernel::hardware_context &context);
     hal_result        configure_floating_context(a9n::kernel::floating_context &context);
 
+    // The syscall has not been executed, or its fault IPC was cancelled.
+    // Called only on a stopped context; ordinary entry/return paths do not use it.
+    void restart_syscall(a9n::kernel::process &target);
+
     liba9n::result<a9n::word, hal_error>
         get_message_register(const a9n::kernel::process &target_process, a9n::word index);
 

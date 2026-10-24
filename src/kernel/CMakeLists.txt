@@ -14,6 +14,12 @@ message(STATUS "kernel sources : ${KERNEL_SOURCES}")
 
 set(KERNEL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+# Keep the contended lock loop behind an ordinary object-file boundary. LTO
+# otherwise pulls its stop-request handling into syscall entry and adds spills
+# even to uncontended IPC. No compiler-specific function attributes are used.
+set(KERNEL_LOCK_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/process/lock.cpp")
+set_source_files_properties("${KERNEL_LOCK_SOURCE}" PROPERTIES COMPILE_OPTIONS "-fno-lto")
+
 add_executable(${KERNEL_BINARY} ${KERNEL_SOURCES})
 
 set(
@@ -59,7 +65,7 @@ add_compile_definitions(
 
 set(KERNEL_MAJOR_VERSION 0)
 set(KERNEL_MINOR_VERSION 3)
-set(KERNEL_PATCH_VERSION 10)
+set(KERNEL_PATCH_VERSION 11)
 
 set(KERNEL_VERSION_STAGE "smp")
 string(TIMESTAMP KERNEL_VERSION_DATE "%Y%m%d")

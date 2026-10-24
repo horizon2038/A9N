@@ -33,7 +33,7 @@ namespace
 
 namespace a9n::kernel
 {
-    void spin_lock_no_owner::lock_contended() { abort(); }
+    void spin_lock::lock_contended(kernel_entry_type) { abort(); }
     liba9n::result<process_manager *, kernel_error> current_process_manager()
     {
         if (manager_error) return kernel_error::TRY_AGAIN;

@@ -20,6 +20,7 @@ for smp in 0 1; do
     -I "$a9n_dir/src/hal/include" -I "$a9n_dir/src/kernel/include" \
     -I "$a9n_dir/src/liba9n/include" \
     "$a9n_dir/test/host/pending-receive.cpp" \
+    "$a9n_dir/src/kernel/capability/process_control_block.cpp" \
     "$a9n_dir/src/kernel/capability/ipc_port.cpp" \
     "$a9n_dir/src/kernel/capability/notification_port.cpp" \
     "$a9n_dir/src/kernel/capability/capability_node.cpp" \

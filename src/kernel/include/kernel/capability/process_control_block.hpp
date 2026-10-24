@@ -18,6 +18,8 @@ namespace a9n::kernel
     class process_control_block final : public capability_component
     {
       private:
+        capability_result cancel_own_wait(void);
+
         // Selection bits in the public PCB CONFIGURE message, not register indices.
         enum class configuration_flag : a9n::word
         {

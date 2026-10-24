@@ -3,6 +3,7 @@
 #include <hal/interface/cpu.hpp>
 #include <hal/interface/interrupt.hpp>
 #include <hal/interface/lock.hpp>
+#include <hal/interface/process_manager.hpp>
 #include <kernel/config.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process_manager.hpp>
@@ -45,7 +46,7 @@ namespace a9n::kernel
 
     // Called only while this CPU waits for the giant lock. The requester
     // holds that lock until we publish completion of the context switch.
-    void service_pending_stop_request(void)
+    void service_pending_stop_request(kernel_entry_type entry)
     {
         auto local_result = a9n::hal::current_local_variable();
         if (!local_result)
@@ -71,6 +72,12 @@ namespace a9n::kernel
             if (!switch_result)
             {
                 completion_state = stop_request::FAILED;
+            }
+            else if (entry == kernel_entry_type::SYSCALL)
+            {
+                // No operation ran before this lock acquisition. Re-enter it
+                // on resume instead of falling through with an unset result.
+                a9n::hal::restart_syscall(*target);
             }
         }
 

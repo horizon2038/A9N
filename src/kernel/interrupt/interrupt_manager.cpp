@@ -169,13 +169,14 @@ namespace a9n::kernel
         // Every delivered external IRQ must be completed, even when lookup or
         // notification delivery failed. Mask the source before EOI so a level
         // interrupt cannot retrigger before its driver has handled the device.
-        interrupt_manager_core.disable_interrupt(irq_number).or_else(
-            [irq_number](kernel_error e) -> kernel_result
-            {
-                DEBUG_LOG("IRQ %llu mask failed: %s", irq_number, kernel_error_to_string(e));
-                return e;
-            }
-        );
+        interrupt_manager_core.disable_interrupt(irq_number)
+            .or_else(
+                [irq_number](kernel_error e) -> kernel_result
+                {
+                    DEBUG_LOG("IRQ %llu mask failed: %s", irq_number, kernel_error_to_string(e));
+                    return e;
+                }
+            );
         // Do not chain this with and_then: a masking error must not skip EOI.
         interrupt_manager_core.ack_interrupt().or_else(
             [irq_number](kernel_error e) -> kernel_result
@@ -200,8 +201,8 @@ namespace a9n::kernel
                         {
                             return convert_hal_to_kernel_error(local_result.unwrap_error());
                         }
-                        auto *local = local_result.unwrap();
-                        auto *target = local->pending_reschedule_target;
+                        auto *local                      = local_result.unwrap();
+                        auto *target                     = local->pending_reschedule_target;
                         local->pending_reschedule_target = nullptr;
 
                         if (current_process->status == process_status::READY
@@ -211,8 +212,7 @@ namespace a9n::kernel
                         }
 
                         if (target && target->core_affinity == local->core_number
-                            && target->status == process_status::READY
-                            && target->is_in_ready_queue)
+                            && target->status == process_status::READY && target->is_in_ready_queue)
                         {
                             return manager->try_remote_target_and_switch(*target, *local);
                         }
@@ -236,11 +236,18 @@ namespace a9n::kernel
         a9n::virtual_address    fault_address
     )
     {
-        lock_guard guard(giant_lock);
+        auto entry = kernel_entry_type::INTERRUPT;
+        if (type == fault_type::INVALID_KERNEL_CALL)
+        {
+            entry = kernel_entry_type::SYSCALL;
+        }
+        // Fault kind is selected at runtime; keep delivery in this handler.
+        giant_lock.lock(entry);
         auto local = a9n::hal::current_local_variable();
         if (local && local.unwrap()->is_idle)
         {
             // The faulting process was reclaimed while waiting at entry.
+            giant_lock.unlock();
             return;
         }
         DEBUG_LOG(
@@ -312,5 +319,6 @@ namespace a9n::kernel
                     );
             }
         );
+        giant_lock.unlock();
     }
 }

@@ -18,8 +18,8 @@ PCBに対する操作は，PCB SlotのRightsを検査しない．PCB Capability�
   [`CONFIGURE = 1`], [`MR2 = configuration info` \ `MR3..MR12 = fields`], [Bit Maskで選択したPCB Fieldを順番に設定する．複数Fieldの更新はAtomicではない．], [`INVALID_DESCRIPTOR`，`ILLEGAL_OPERATION`，`INVALID_ARGUMENT`，`FATAL`．],
   [`READ_REGISTER = 2`], [`MR2 = register count`], [Hardware Contextの先頭から`register_count` Wordを`MR3..`へ返す．], [`INVALID_ARGUMENT`，`FATAL`．],
   [`WRITE_REGISTER = 3`], [`MR2 = register count` \ `MR3.. = values`], [Hardware Contextの先頭から`register_count` Wordを書き換える．], [`INVALID_ARGUMENT`，`FATAL`．],
-  [`RESUME = 4`], [追加引数なし．], [Processを`READY`へ設定し，Quantumを10へ設定してAffinity先CoreのReady Queueへ追加する．], [`INVALID_ARGUMENT`，`FATAL`．],
-  [`SUSPEND = 5`], [追加引数なし．], [IPC QueueまたはNotification QueueからProcessを外し，Ready Queueから削除して`BLOCKED_SUSPEND`へ設定する．], [`FATAL`．],
+  [`RESUME = 4`], [追加引数なし．], [自身の待機・古いFaultを解除し，設定済みContextのまま`READY`へ設定してAffinity先CoreのReady Queueへ追加する．], [`INVALID_ARGUMENT`，`FATAL`．],
+  [`SUSPEND = 5`], [追加引数なし．], [同期停止後に自身の待機を解除し，再開Contextを確定して`BLOCKED_SUSPEND`を維持する．], [`FATAL`．],
 )
 
 == CONFIGURE
@@ -112,7 +112,15 @@ Bit 10以降はカーネルが解釈しない．ユーザ空間は未使用Bit�
   [`RESUME`はIdempotentではない．Ready Queueへ所属済みのProcessまたは実行中Processへ`RESUME`を再実行すると，重複追加の失敗またはQueue Linkの破損を起こし得る．User-level Process ManagerはPCBごとのStateとQueue所属を管理し，構成済みかつReady Queueへ所属していないProcessだけを`RESUME`する必要がある．],
 )
 
-`SUSPEND`は対象ProcessをIPC／NotificationのWait QueueとReady Queueから外し，Priorityを変更せず`BLOCKED_SUSPEND`へ設定する．別Coreで実行中の場合は，対象CoreがContextとPage Tableを切り替えた後のACKを待ってから成功を返す．成功後はProcess Managerが対象のRegisterを読み書きし，続けて`RESUME`できる．停止済みProcessへの再実行でも停止状態を維持する．Self Suspendでは実行ContextをIDLEへ切り替えるため，別Processから`RESUME`されるまでUser Spaceへ復帰しない．この同期停止処理はPCB Revokeと共通であり，IPCの`CALL`／`REPLY_RECEIVE`経路は変更しない．
+`SUSPEND`は停止前の待機状態を取得し，Ready Queueから対象Processを外して実行を停止する．別Coreで実行中の場合は，対象CoreがContextとPage Tableを切り替えた後のACKを待つ．続いてIPC／NotificationのWait Queueと自身の送信側Reply関係を解除し，Priorityを変更せず`BLOCKED_SUSPEND`を維持する．対象がServerとして保持する別ClientへのReply関係は解除しない．
+
+Kernel lock取得前のsyscall入口で停止した場合，停止対象Coreは再開PCをsyscall命令の位置へ戻してからACKを返す．通常のIRQによる停止ではPCを維持する．Unknown Syscall Faultのキャンセルでもsyscall命令の位置へ戻すが，syscall番号と引数は保持する．Memory Fault等の原因命令を指すPCは変更しない．古いFault情報はキャンセル完了後に解除するため，停止済みProcessへの再実行でPCを二重に巻き戻さない．
+
+Native IPC／Notificationの待機は，対象の`MR0 = 0`，`MR1 = ILLEGAL_OPERATION`を設定してキャンセルする．その場では起床させず，`RESUME`後に呼出し元へエラーを返す．Native IPCの自動再送や相手側の副作用の取消しは行わない．Fault ContextにはNative用エラーを設定しない．Notificationの待機を解除しても，未消費Notificationは消費しない．
+
+成功後は`SUSPEND -> READ_REGISTER -> WRITE_REGISTER -> RESUME`の順で対象Contextを変更できる．`RESUME`は残存する自身の待機・送信側Reply関係・古いFault情報を解除して，設定済みContextを実行する．PCは巻き戻さない．Fault Handlerが結果を書いた後，`SUSPEND`を挟まず直接`RESUME`する経路も維持する．受理済みFaultの副作用はKernelでは取り消せないため，User-level ManagerはHandlerと停止操作を直列化し，完了済み要求を再実行しないContextを設定する必要がある．
+
+Self Suspendでは実行ContextをIDLEへ切り替えるため，別Processから`RESUME`されるまでUser Spaceへ復帰しない．Self Suspend自身を再実行するPCには戻さない．同期停止のACK機構はPCB Revokeと共通であり，IPCの`CALL`／`REPLY_RECEIVE`本体は変更しない．Operation番号，MR配置，公開Hardware Contextの配列長，Capability SlotのSizeも維持する．
 
 == Benno Scheduling
 

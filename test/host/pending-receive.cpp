@@ -2,6 +2,7 @@
 // and HAL message-register access. No SDK or IRQ timing is involved.
 #include <kernel/capability/ipc_port.hpp>
 #include <kernel/capability/notification_port.hpp>
+#include <kernel/capability/process_control_block.hpp>
 #include <kernel/process/cpu.hpp>
 #include <kernel/process/process_manager.hpp>
 #include <kernel/utility/logger.hpp>
@@ -41,10 +42,15 @@ namespace
         capability_result invoke(test_process &target, a9n::word operation, bool block = true,
                                  a9n::word length = 0)
         {
-            target.buffer.messages[1] = operation;
-            target.buffer.messages[2] = (length << 1) | static_cast<a9n::word>(block);
-            target.buffer.messages[3] = 0;
-            return port.execute(target.core, slot);
+            return invoke(target.core, operation, block, length);
+        }
+        capability_result invoke(process &target, a9n::word operation, bool block = true,
+                                 a9n::word length = 0)
+        {
+            target.buffer->messages[1] = operation;
+            target.buffer->messages[2] = (length << 1) | static_cast<a9n::word>(block);
+            target.buffer->messages[3] = 0;
+            return port.execute(target, slot);
         }
     };
 
@@ -70,6 +76,13 @@ namespace
 
 namespace a9n::hal
 {
+    a9n::word core_count() { return 4; }
+    liba9n::result<a9n::word, hal_error> current_core_number() { return a9n::word { 0 }; }
+    hal_result init_hardware_context(cpu_mode, hardware_context &) { return {}; }
+    hal_result configure_floating_context(floating_context &) { return {}; }
+    bool is_valid_user_address(a9n::word) { return true; }
+    hal_result configure_general_register(process &, register_type, a9n::word) { abort(); }
+    void restart_syscall(process &target) { target.registers[15] -= 2; }
     liba9n::result<a9n::word, hal_error> get_message_register(const process &target, a9n::word index)
     {
         CHECK(index < 64);
@@ -87,13 +100,22 @@ namespace a9n::hal
         target.buffer->messages[index] = value;
         return {};
     }
-    liba9n::result<a9n::word, hal_error> get_general_register(const process &, register_type)
+    liba9n::result<a9n::word, hal_error> get_general_register(const process &target, register_type type)
     {
-        abort();
+        CHECK(type == register_type::INSTRUCTION_POINTER);
+        return static_cast<a9n::word>(target.registers[15]);
     }
 }
 namespace a9n::kernel
 {
+    kernel_result reschedule_core(a9n::word) { abort(); }
+    kernel_result process_manager::mark_suspended(process &) { abort(); }
+    kernel_result process_manager::try_schedule_and_switch() { abort(); }
+    kernel_result stop_process_for_reclamation(process &target)
+    {
+        target.status = process_status::BLOCKED_SUSPEND;
+        return {};
+    }
     kernel_result try_schedule_and_switch(process &) { ++switches; return {}; }
     kernel_result mark_scheduled(process &, process &target)
     {
@@ -415,6 +437,112 @@ static void pcb_reply_cleanup_remains_independent()
     CHECK(caller.buffer.messages[1] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
 }
 
+static void suspend_cancels_real_queues()
+{
+    const a9n::word operations[] { 1, 2, 3 };
+    for (auto operation : operations)
+    {
+        process_control_block pcb;
+        ipc_buffer buffer {};
+        capability_slot self {};
+        test_process owner, peer;
+        test_endpoint endpoint;
+        pcb.process_core.buffer = &buffer;
+        pcb.process_core.status = process_status::READY;
+        CHECK(endpoint.invoke(pcb.process_core, operation));
+        CHECK(pcb.process_core.current_ipc_port == &endpoint.port);
+        CHECK(pcb.operation_suspend(owner.core, self));
+        CHECK(pcb.process_core.status == process_status::BLOCKED_SUSPEND);
+        CHECK(!pcb.process_core.current_ipc_port);
+        CHECK(buffer.messages[0] == 0);
+        CHECK(buffer.messages[1] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
+        // No cancelled sender/receiver may later be accepted or woken.
+        CHECK(endpoint.invoke(peer, operation == 2 ? 1 : 2, false));
+        CHECK(pcb.process_core.status == process_status::BLOCKED_SUSPEND);
+    }
+    process_control_block pcb;
+    ipc_buffer buffer {};
+    capability_slot self {}, notification_slot {};
+    notification_port notification;
+    test_process owner;
+    pcb.process_core.buffer = &buffer;
+    CHECK(try_configure_notification_port_slot(notification_slot, notification, 7));
+    CHECK(notification.operation_wait(pcb.process_core, notification_slot));
+    CHECK(pcb.operation_suspend(owner.core, self));
+    CHECK(notification.operation_notify(owner.core, notification_slot));
+    CHECK(notification.has_pending_notification());
+    CHECK(pcb.process_core.status == process_status::BLOCKED_SUSPEND);
+    CHECK(!pcb.process_core.current_notification_port);
+}
+
+static void suspend_preserves_incoming_reply()
+{
+    // C -> A -> B: Suspend(A) cancels A's outgoing call, not C's incoming one.
+    process_control_block middle;
+    ipc_buffer buffer {};
+    capability_slot self {};
+    test_process owner, caller, server;
+    test_endpoint incoming, outgoing;
+    auto &target = middle.process_core;
+    target.buffer = &buffer;
+    CHECK(incoming.invoke(caller, 3));
+    CHECK(incoming.invoke(target, 2));
+    CHECK(outgoing.invoke(target, 3));
+    CHECK(outgoing.invoke(server, 2));
+    CHECK(middle.operation_suspend(owner.core, self));
+    CHECK(!target.source_reply_target && !server.core.destination_reply_target);
+    CHECK(target.destination_reply_target == &caller.core);
+    CHECK(caller.core.source_reply_target == &target);
+    CHECK(caller.core.status == process_status::BLOCKED_REPLY);
+    const auto before = direct_switches;
+    CHECK(outgoing.invoke(server, 4)); // stale reply is harmless
+    CHECK(target.status == process_status::BLOCKED_SUSPEND && direct_switches == before);
+    CHECK(middle.operation_resume(owner.core, self));
+    CHECK(target.destination_reply_target == &caller.core);
+    expected_direct_target = &target;
+    CHECK(incoming.invoke(target, 4));
+    expected_direct_target = nullptr;
+    CHECK(caller.core.status == process_status::READY);
+}
+
+static void suspend_and_resume_fault_ipc()
+{
+    process_control_block pcb;
+    ipc_buffer buffer {};
+    capability_slot self {};
+    test_process owner, server;
+    test_endpoint endpoint;
+    auto &target = pcb.process_core;
+    target.buffer = &buffer;
+    target.fault_reason = fault_type::INVALID_KERNEL_CALL;
+    target.fault_code = 123;
+    target.registers[15] = 0x4002;
+    target.registers[4] = 0x1234;
+    buffer.messages[0] = 0x5678;
+    CHECK(endpoint.port.operation_fault_call(target, endpoint.slot));
+    CHECK(pcb.operation_suspend(owner.core, self));
+    CHECK(target.registers[15] == 0x4000 && target.registers[4] == 0x1234);
+    CHECK(buffer.messages[0] == 0x5678); // no native error in a foreign syscall
+    CHECK(!target.current_ipc_port && target.fault_reason == fault_type::NONE);
+    CHECK(endpoint.invoke(server, 2, false));
+    CHECK(!server.core.destination_reply_target);
+
+    CHECK(pcb.operation_resume(owner.core, self));
+    target.registers[15] = 0x4002; // model re-execution of the syscall instruction
+    target.fault_reason = fault_type::INVALID_KERNEL_CALL;
+    CHECK(endpoint.port.operation_fault_call(target, endpoint.slot));
+    CHECK(endpoint.invoke(server, 2));
+    CHECK(server.core.destination_reply_target == &target);
+    // A parked fault handler publishes a completed result and directly resumes.
+    target.registers[0] = 42;
+    CHECK(pcb.operation_resume(owner.core, self));
+    CHECK(target.registers[15] == 0x4002 && target.registers[0] == 42);
+    CHECK(target.fault_reason == fault_type::NONE && !target.source_reply_target);
+    CHECK(!server.core.destination_reply_target);
+    CHECK(endpoint.invoke(server, 4));
+    CHECK(target.status == process_status::READY);
+}
+
 int main()
 {
     // Use the wire operation numbers through execute(), not private helpers.
@@ -433,5 +561,8 @@ int main()
     reply_survives_port_destruction_and_reuse();
     revoke_cancels_queued_receivers();
     pcb_reply_cleanup_remains_independent();
+    suspend_cancels_real_queues();
+    suspend_preserves_incoming_reply();
+    suspend_and_resume_fault_ipc();
     puts("PASS: Receive/Reply-Receive, quantum, queued cancellation, independent replies and Port reuse");
 }

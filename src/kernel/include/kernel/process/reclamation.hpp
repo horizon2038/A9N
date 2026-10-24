@@ -8,9 +8,17 @@ namespace a9n::kernel
 {
     class process;
 
+    // Only a syscall interrupted before acquiring giant_lock needs replay.
+    // IRQs and synchronous exceptions already save their continuation PC.
+    enum class kernel_entry_type
+    {
+        INTERRUPT,
+        SYSCALL,
+    };
+
     // Contended giant-lock hook: service only this CPU's pending stop request.
     // The waiting CPU does not own the lock; the requester holds it until ACK.
-    void service_pending_stop_request(void);
+    void service_pending_stop_request(kernel_entry_type entry = kernel_entry_type::INTERRUPT);
 
     // Synchronous stop shared by SUSPEND and revoke. The caller holds giant_lock
     // until the remote CPU acknowledges the context/page-table switch.

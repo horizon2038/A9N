@@ -113,6 +113,12 @@ namespace a9n::hal
         return {};
     }
 
+    void restart_syscall(a9n::kernel::process &target)
+    {
+        constexpr a9n::word SVC_INSTRUCTION_BYTES = 4;
+        target.registers[aarch64::register_index::ELR_EL1] -= SVC_INSTRUCTION_BYTES;
+    }
+
     liba9n::result<a9n::word, hal_error>
         get_message_register(const a9n::kernel::process &target_process, a9n::word index)
     {

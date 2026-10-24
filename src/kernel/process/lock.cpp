@@ -5,7 +5,7 @@
 
 namespace a9n::kernel
 {
-    void spin_lock_no_owner::lock_contended(void)
+    void spin_lock::lock_contended(kernel_entry_type entry)
     {
         do
         {
@@ -15,7 +15,7 @@ namespace a9n::kernel
                 // Only giant-lock waiters may retire their current context.
                 if (static_cast<const void *>(this) == static_cast<const void *>(&giant_lock))
                 {
-                    service_pending_stop_request();
+                    service_pending_stop_request(entry);
                 }
             }
         } while (!try_lock());

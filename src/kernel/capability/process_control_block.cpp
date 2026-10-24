@@ -25,6 +25,14 @@ namespace a9n::kernel
                 && !cpu_local_variables[target.core_affinity].is_idle;
         }
 
+        void clear_fault(process &target)
+        {
+            target.fault_reason    = fault_type::NONE;
+            target.fault_code      = 0;
+            target.arch_fault_code = 0;
+            target.fault_address   = 0;
+        }
+
     }
 
     process_control_block::process_control_block()
@@ -518,6 +526,14 @@ namespace a9n::kernel
         {
             return capability_error::INVALID_ARGUMENT;
         }
+        // Parked fault handlers may write the result and resume without a
+        // Suspend. Retire their old IPC relationship, not their new context.
+        auto cancelled = cancel_own_wait();
+        if (!cancelled)
+        {
+            return cancelled;
+        }
+        clear_fault(process_core);
         process_core.status = process_status::READY;
 
         return mark_scheduled(owner, process_core).transform_error(convert_kernel_to_capability_error);
@@ -549,11 +565,63 @@ namespace a9n::kernel
 
     capability_result process_control_block::operation_suspend(process &owner, capability_slot &self)
     {
-        return detach_from_wait_queues().and_then(
-            [&](void) -> capability_result
+        // The stop routine changes status; keep only the information needed
+        // to complete this cancellation, without per-invocation saved state.
+        const auto fault = process_core.fault_reason;
+        const bool native_wait = fault == fault_type::NONE
+            && (process_core.current_ipc_port || process_core.current_notification_port
+                || process_core.source_reply_state == process::source_reply_state_object::WAIT
+                || process_core.status == process_status::BLOCKED_SEND
+                || process_core.status == process_status::BLOCKED_RECEIVE
+                || process_core.status == process_status::BLOCKED_REPLY
+                || process_core.status == process_status::BLOCKED_WAIT);
+
+        auto stopped = stop_process_for_reclamation(process_core);
+        if (!stopped)
+        {
+            return convert_kernel_to_capability_error(stopped.unwrap_error());
+        }
+
+        if (native_wait)
+        {
+            // Unlike a fault IPC, a native invocation has an error-result ABI.
+            // Write it before detaching so an output error remains retryable.
+            auto result = a9n::hal::configure_message_register(process_core, IS_SUCCESS, false);
+            if (!result)
             {
-                return stop_process_for_reclamation(process_core)
-                    .transform_error(convert_kernel_to_capability_error);
+                return capability_error::FATAL;
+            }
+            result = a9n::hal::configure_message_register(
+                process_core, ERROR_CODE, static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION)
+            );
+            if (!result)
+            {
+                return capability_error::FATAL;
+            }
+        }
+
+        auto cancelled = cancel_own_wait();
+        if (!cancelled)
+        {
+            return cancelled;
+        }
+        if (fault == fault_type::INVALID_KERNEL_CALL)
+        {
+            // Fault IPC never overwrites the original syscall number/args.
+            // A pre-lock entry was already rewound by the remote stop hook;
+            // it has no fault_reason yet and cannot enter this branch twice.
+            a9n::hal::restart_syscall(process_core);
+        }
+        clear_fault(process_core);
+        return {};
+    }
+
+    capability_result process_control_block::cancel_own_wait(void)
+    {
+        return detach_from_wait_queues().and_then(
+            [&]() -> capability_result
+            {
+                return ipc_port::cancel_reply(process_core, ipc_port::reply_cancellation_mode::DETACH_ONLY);
             }
         );
     }

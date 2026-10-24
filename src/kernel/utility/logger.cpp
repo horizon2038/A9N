@@ -10,7 +10,7 @@ namespace a9n::kernel::utility
     uint32_t logger::log_id      = 0;
     logger  *logger::this_logger = nullptr;
 
-    using guard                  = lock_guard<spin_lock_no_owner>;
+    using guard                  = lock_guard<spin_lock>;
 
     logger::logger()
     {

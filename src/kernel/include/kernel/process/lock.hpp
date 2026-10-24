@@ -5,6 +5,7 @@
 #include <kernel/config.hpp>
 #include <kernel/kernel_result.hpp>
 #include <kernel/process/cpu.hpp>
+#include <kernel/process/reclamation.hpp>
 #include <kernel/types.hpp>
 
 #include <hal/interface/cpu.hpp>
@@ -22,8 +23,8 @@ namespace a9n::kernel
     class spin_lock
     {
       private:
-        alignas(64) volatile uint32_t locked;
-        alignas(64) a9n::sword owner_id { -1 };
+        alignas(64) volatile uint32_t locked { 0 };
+        void lock_contended(kernel_entry_type entry);
 
       public:
         spin_lock(void)                              = default;
@@ -40,82 +41,14 @@ namespace a9n::kernel
                 return kernel_error::TRY_AGAIN;
             }
 
-            return a9n::hal::current_local_variable()
-                .and_then(
-                    [&](cpu_local_variable *variable) -> a9n::hal::hal_result
-                    {
-                        owner_id = variable->core_number;
-                        return {};
-                    }
-                )
-                .transform_error(convert_hal_to_kernel_error);
-        }
-
-        kernel_result lock(void)
-        {
-            for (;;)
-            {
-                auto result = try_lock();
-                if (result)
-                {
-                    break;
-                }
-                a9n::hal::spin_wait();
-            }
-
             return {};
         }
 
-        kernel_result unlock(void)
-        {
-            return a9n::hal::current_local_variable()
-                .and_then(
-                    [&](cpu_local_variable *variable) -> a9n::hal::hal_result
-                    {
-                        if (variable->core_number != owner_id)
-                        {
-                            return hal::hal_error::TRY_AGAIN;
-                        }
-
-                        owner_id = -1;
-                        a9n::hal::atomic_store(&locked, 0);
-
-                        return {};
-                    }
-                )
-                .transform_error(convert_hal_to_kernel_error);
-        }
-    };
-
-    class spin_lock_no_owner
-    {
-      private:
-        alignas(64) volatile uint32_t locked { 0 };
-        void lock_contended(void);
-
-      public:
-        spin_lock_no_owner(void)                                       = default;
-        spin_lock_no_owner(const spin_lock_no_owner &other)            = delete;
-        spin_lock_no_owner(spin_lock_no_owner &&other)                 = delete;
-
-        spin_lock_no_owner &operator=(const spin_lock_no_owner &other) = delete;
-        spin_lock_no_owner &operator=(spin_lock_no_owner &&other)      = delete;
-
-        kernel_result try_lock(void)
-        {
-            if (a9n::hal::atomic_compare_exchange(&locked, 0, 1) != 0)
-            {
-                return kernel_error::TRY_AGAIN;
-            }
-
-            return {};
-        }
-
-        kernel_result lock(void)
+        kernel_result lock(kernel_entry_type entry = kernel_entry_type::INTERRUPT)
         {
             if (!try_lock()) [[unlikely]]
             {
-                lock_contended();
+                lock_contended(entry);
             }
 
             return {};
@@ -131,7 +64,7 @@ namespace a9n::kernel
     class null_lock
     {
       public:
-        constexpr kernel_result lock(void)
+        constexpr kernel_result lock(kernel_entry_type = kernel_entry_type::INTERRUPT)
         {
             return {};
         }
@@ -142,13 +75,20 @@ namespace a9n::kernel
         }
     };
 
-    template<lockable Lock>
+    template<lockable Lock, kernel_entry_type Entry = kernel_entry_type::INTERRUPT>
     class lock_guard
     {
       public:
         lock_guard(Lock &target_lock) : lock { target_lock }
         {
-            lock.lock();
+            if constexpr (Entry == kernel_entry_type::INTERRUPT)
+            {
+                lock.lock();
+            }
+            else
+            {
+                lock.lock(Entry);
+            }
         }
 
         ~lock_guard()
@@ -188,7 +128,7 @@ namespace a9n::kernel
     }
 
     // kernel giant lock
-    using giant_lock_type = liba9n::std::conditional_t<SMP_ENABLED, spin_lock_no_owner, null_lock>;
+    using giant_lock_type = liba9n::std::conditional_t<SMP_ENABLED, spin_lock, null_lock>;
     inline giant_lock_type giant_lock {};
 }
 

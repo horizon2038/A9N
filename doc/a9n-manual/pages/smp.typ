@@ -33,7 +33,9 @@ SMPを無効にする場合はOptionを省略するか，明示的に`-DA9N_CONF
 
 == Compile-time Path Selection
 
-共通Kernel Codeは`kernel::SMP_ENABLED`をCompile-time定数として参照する．SMP Buildでは`spin_lock_no_owner`が#term[Giant Lock]として選択される．SP Buildでは同じ型の位置に`null_lock`が選択され，`lock()`と`unlock()`は空の`constexpr`操作になる．Core選択，Remote Scheduling，IPI送信の分岐も`if constexpr`で選択する．
+共通Kernel Codeは`kernel::SMP_ENABLED`をCompile-time定数として参照する．SMP BuildではOwnerを追跡しない`spin_lock`が#term[Giant Lock]として選択される．SP Buildでは同じ型の位置に`null_lock`が選択され，`lock()`と`unlock()`は空の`constexpr`操作になる．Core選択，Remote Scheduling，IPI送信の分岐も`if constexpr`で選択する．
+
+`lock_guard<Lock, Entry>`の入口種別はTemplate引数で固定する．既定は`INTERRUPT`であり，syscall入口では`SYSCALL`を指定する．入口種別をGuardの実行時引数やMemberとして保持しない．共通Fault入口の`handle_fault`だけは種別が実行時に決まるため，Unknown Syscallを`SYSCALL`，通常Faultを`INTERRUPT`として`lock(entry)`を直接呼ぶ．Fault配送は同じ関数内で行い，早期returnと通常終了の両方でGiant Lockを解放する．
 
 この構成により，SP BuildはAP起動を行わず，`core_count()`は1を返し，Process ManagerをCore 0から直接取得する．SMPのRemote PathはSP Binaryへ残らない．IPCの同一Core PathはSMP BuildでもDirect Scheduleを維持し，通信相手のAffinityが異なる場合だけRemote Pathへ分岐する．
 
@@ -103,7 +105,7 @@ x86_64固有のCPU-local領域は，Logical CoreごとのLocal APIC ID，GDT，I
 
 PCBの`CONFIGURE`は，`configuration_info`のBit 9と`MR12`を使用してCPU Affinityを設定する．AffinityはLogical Core番号であり，`core_count()`以上の値は`INVALID_ARGUMENT`となる．新しいPCBとInitの既定Affinityは0である．
 
-READY Processまたは割当て先Coreで実行中のProcessに対して，別CoreへのAffinity変更はできない．Process Managerは対象をSuspendし，Remote Reschedule IPIによって対象Coreが実際にContextを切り替えた後にAffinityを変更してResumeする必要がある．v0.2.0は自動Migration，Work Stealing，Ready Queue間のLoad Balancingを実装しない．
+READY Processまたは割当て先Coreで実行中のProcessに対して，別CoreへのAffinity変更はできない．Process Managerは対象をSuspendし，Context切替完了のACKを含む成功を確認してからAffinityを変更してResumeする必要がある．Kernel lock待ちのsyscall入口を停止した場合は，停止対象Coreがsyscall再実行位置を確定してからACKを返す．IRQ入口では通常の継続位置を維持する．追加処理は停止要求を扱う競合経路に限定し，無競合のlock取得時に入口状態を保存しない．v0.2.0は自動Migration，Work Stealing，Ready Queue間のLoad Balancingを実装しない．
 
 Local APIC TimerまたはAArch64 Generic TimerはCoreごとにQuantumを更新する．BSPがSystem Clock Frequencyを指定し，APはRelease後に同じ周波数で各CoreのTimerを開始する．Timer Tickは現在CoreのProcess Managerだけを操作する．
 

@@ -22,6 +22,9 @@ namespace
     process *stopped_process = nullptr;
     unsigned ipc_detaches = 0;
     unsigned notification_detaches = 0;
+    unsigned restarted_syscalls = 0;
+    unsigned scheduled = 0;
+    a9n::word failed_result_register = ~a9n::word { 0 };
     bool failed_detach = false;
     a9n::word checksum = 1469598103934665603;
     unsigned cases = 0;
@@ -85,12 +88,32 @@ namespace a9n::hal
         }
         return {};
     }
-    hal_result configure_message_register(process &, a9n::word, a9n::word) { abort(); }
+    hal_result configure_message_register(process &target, a9n::word index, a9n::word value)
+    {
+        if (index == failed_result_register)
+        {
+            return hal_error::TRY_AGAIN;
+        }
+        CHECK(index < 2);
+        target.registers[4 + index] = value; // x86-64 MR0=RDI, MR1=RSI
+        return {};
+    }
+    void restart_syscall(process &target)
+    {
+        CHECK(target.status == process_status::BLOCKED_SUSPEND);
+        target.registers[15] -= 2;
+        ++restarted_syscalls;
+    }
 }
 
 namespace a9n::kernel
 {
-    kernel_result mark_scheduled(process &, process &) { abort(); }
+    kernel_result mark_scheduled(process &, process &target)
+    {
+        ++scheduled;
+        target.status = process_status::READY;
+        return {};
+    }
     kernel_result reschedule_core(a9n::word) { abort(); }
     kernel_result process_manager::mark_suspended(process &) { abort(); }
     kernel_result process_manager::try_schedule_and_switch() { abort(); }
@@ -105,7 +128,19 @@ namespace a9n::kernel
         stopped_process = &target;
         return {};
     }
-    capability_result ipc_port::cancel_reply(process &, reply_cancellation_mode) { return {}; }
+    capability_result ipc_port::cancel_reply(process &target, reply_cancellation_mode mode)
+    {
+        CHECK(mode == reply_cancellation_mode::DETACH_ONLY);
+        auto *server = target.source_reply_target;
+        if (server && server->destination_reply_target == &target)
+        {
+            server->destination_reply_target = nullptr;
+            server->destination_reply_state = process::destination_reply_state_object::NONE;
+        }
+        target.source_reply_target = nullptr;
+        target.source_reply_state = process::source_reply_state_object::NONE;
+        return {};
+    }
     kernel_result ipc_port::remove_ipc_queue(process &target)
     {
         ++ipc_detaches;
@@ -352,24 +387,146 @@ int main()
         target.current_ipc_port = reinterpret_cast<ipc_port *>(0x1000);
         failed_detach = true;
         CHECK(!pcb.operation_suspend(owner, self));
-        CHECK(stop_calls == 3 && ipc_detaches == 1);
+        CHECK(stop_calls == 4 && ipc_detaches == 1);
         CHECK(target.current_ipc_port != nullptr);
         failed_detach = false;
         CHECK(pcb.operation_suspend(owner, self));
-        CHECK(stop_calls == 4 && ipc_detaches == 2 && target.current_ipc_port == nullptr);
+        CHECK(stop_calls == 5 && ipc_detaches == 2 && target.current_ipc_port == nullptr);
 
         target.current_notification_port = &notification;
         failed_detach = true;
         CHECK(!pcb.operation_suspend(owner, self));
-        CHECK(stop_calls == 4 && notification_detaches == 1);
+        CHECK(stop_calls == 6 && notification_detaches == 1);
         CHECK(target.current_notification_port == &notification);
         failed_detach = false;
         CHECK(pcb.operation_suspend(owner, self));
-        CHECK(stop_calls == 5 && notification_detaches == 2 && target.current_notification_port == nullptr);
+        CHECK(stop_calls == 7 && notification_detaches == 2 && target.current_notification_port == nullptr);
 
         // The caller may suspend itself; it must use the same stop routine.
         CHECK(pcb.operation_suspend(target, self));
-        CHECK(stop_calls == 6 && stopped_process == &target);
+        CHECK(stop_calls == 8 && stopped_process == &target);
     }
     puts("PCB synchronous suspend: routing, stop failure/retry, idempotence, queue detach and self suspend PASS");
+
+    const process_status waits[] {
+        process_status::BLOCKED_SEND, process_status::BLOCKED_RECEIVE,
+        process_status::BLOCKED_REPLY, process_status::BLOCKED_WAIT,
+    };
+    for (auto status : waits)
+    {
+        process_control_block pcb;
+        capability_slot self {};
+        auto &target = pcb.process_core;
+        target.status = status;
+        target.registers[15] = 0x4002;
+        target.registers[4] = 0x1234;
+        target.registers[5] = 0x5678;
+        const auto before = scheduled;
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(scheduled == before && target.status == process_status::BLOCKED_SUSPEND);
+        CHECK(target.registers[4] == 0);
+        CHECK(target.registers[5] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
+        CHECK(target.registers[15] == 0x4002);
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(target.registers[15] == 0x4002 && scheduled == before);
+    }
+    // Fault cancellation preserves every syscall argument, even when a
+    // detach fails and the same Suspend must be retried.
+    const fault_type faults[] {
+        fault_type::INVALID_KERNEL_CALL, fault_type::MEMORY,
+        fault_type::INVALID_INSTRUCTION, fault_type::INVALID_ARITHMETIC,
+    };
+    for (auto fault : faults)
+    {
+        process_control_block pcb;
+        capability_slot self {};
+        process server {}, caller {};
+        auto &target = pcb.process_core;
+        target.status = process_status::BLOCKED_FAULT;
+        target.fault_reason = fault;
+        target.fault_code = 99;
+        target.arch_fault_code = 42;
+        target.fault_address = 0x4002;
+        target.current_ipc_port = reinterpret_cast<ipc_port *>(0x1000);
+        target.source_reply_state = process::source_reply_state_object::WAIT;
+        target.source_reply_target = &server;
+        server.destination_reply_target = &target;
+        server.destination_reply_state = process::destination_reply_state_object::READY_TO_REPLY;
+        target.destination_reply_target = &caller;
+        target.destination_reply_state = process::destination_reply_state_object::READY_TO_REPLY;
+        for (a9n::word index = 0; index < target.registers.size(); ++index)
+        {
+            target.registers[index] = 0x4000 + index;
+        }
+        auto original = target.registers;
+        const auto before = restarted_syscalls;
+        failed_detach = true;
+        CHECK(!pcb.operation_suspend(owner, self));
+        CHECK(target.fault_reason == fault && restarted_syscalls == before);
+        CHECK(target.registers[15] == original[15]);
+        failed_detach = false;
+        CHECK(pcb.operation_suspend(owner, self));
+        auto expected_pc = original[15];
+        if (fault == fault_type::INVALID_KERNEL_CALL)
+        {
+            expected_pc -= 2;
+        }
+        for (a9n::word index = 0; index < target.registers.size(); ++index)
+        {
+            const auto expected = index == 15 ? expected_pc : original[index];
+            CHECK(target.registers[index] == expected);
+        }
+        CHECK(target.fault_reason == fault_type::NONE && target.fault_code == 0);
+        CHECK(target.arch_fault_code == 0 && target.fault_address == 0);
+        CHECK(!target.current_ipc_port && !target.source_reply_target);
+        CHECK(target.source_reply_state == process::source_reply_state_object::NONE);
+        CHECK(!server.destination_reply_target);
+        CHECK(target.destination_reply_target == &caller);
+        CHECK(target.destination_reply_state == process::destination_reply_state_object::READY_TO_REPLY);
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(target.registers[15] == expected_pc);
+        // A replacement signal handler PC must survive Resume untouched.
+        target.registers[15] = 0x8000;
+        CHECK(pcb.operation_resume(owner, self));
+        CHECK(target.status == process_status::READY && target.registers[15] == 0x8000);
+    }
+    for (a9n::word failed_index = 0; failed_index < 2; ++failed_index)
+    {
+        process_control_block pcb;
+        capability_slot self {};
+        auto &target = pcb.process_core;
+        target.status = process_status::BLOCKED_SEND;
+        target.current_ipc_port = reinterpret_cast<ipc_port *>(0x1000);
+        failed_result_register = failed_index;
+        CHECK(!pcb.operation_suspend(owner, self));
+        CHECK(target.current_ipc_port && target.status == process_status::BLOCKED_SUSPEND);
+        failed_result_register = ~a9n::word { 0 };
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(!target.current_ipc_port && target.registers[4] == 0);
+        CHECK(target.registers[5] == static_cast<a9n::word>(capability_error::ILLEGAL_OPERATION));
+    }
+    {
+        // Direct Resume is also used by parked fault handlers. It must not
+        // replay a syscall whose result/context they have already installed.
+        process_control_block pcb;
+        capability_slot self {};
+        process server {};
+        auto &target = pcb.process_core;
+        target.status = process_status::BLOCKED_REPLY;
+        target.fault_reason = fault_type::INVALID_KERNEL_CALL;
+        target.fault_code = 99;
+        target.source_reply_target = &server;
+        target.source_reply_state = process::source_reply_state_object::WAIT;
+        server.destination_reply_target = &target;
+        target.registers[15] = 0x4002;
+        target.registers[0] = 123;
+        const auto before = restarted_syscalls;
+        CHECK(pcb.operation_resume(owner, self));
+        CHECK(restarted_syscalls == before && target.registers[15] == 0x4002);
+        CHECK(target.registers[0] == 123 && target.fault_reason == fault_type::NONE);
+        CHECK(!server.destination_reply_target && !target.source_reply_target);
+        CHECK(pcb.operation_suspend(owner, self));
+        CHECK(target.registers[15] == 0x4002 && restarted_syscalls == before);
+    }
+    puts("PCB suspend continuation: native cancellation, fault argument preservation, retries, incoming replies and explicit Resume context PASS");
 }

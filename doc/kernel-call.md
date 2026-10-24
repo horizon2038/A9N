@@ -465,12 +465,18 @@ operation type:
 
 #### RESUME
 
-- 対象processを`READY`化し，schedulerへ登録する．
+- 対象自身の残存するIPC／Notification待機と送信側Reply関係，古いFault情報を解除し，現在設定されているContextのまま`READY`化してschedulerへ登録する．対象が受信側として保持する別clientへのReply関係は維持する．
+- PCは巻き戻さない．Fault handlerが結果を書き込んだ後，`SUSPEND`を挟まず直接`RESUME`する既存の経路も利用できる．
 
 #### SUSPEND
 
-- IPC／NotificationのWait QueueとReady Queueから対象processを外し，priorityを変更せず`BLOCKED_SUSPEND`へ設定する．
+- 停止前の待機状態を取得し，対象の実行を停止してから，IPC／NotificationのWait Queueと対象自身の送信側Reply関係を解除する．priorityは変更せず，成功後は`BLOCKED_SUSPEND`を維持する．対象がserverとして保持する別clientへのReply関係は解除しない．
 - 他コアで実行中の場合，対象コアのContext／Page Table切替完了のACKを待ってから成功を返す．成功後，対象のレジスタを読み書きし，続けて`RESUME`できる．
+- 対象がKernel lock取得前のsyscall入口で停止した場合，HALがPCをsyscall命令の位置へ戻してからACKを返す．IRQによる通常の停止ではPCを変更しない．
+- Unknown Syscall Faultをキャンセルする場合，PCをsyscall命令へ戻し，syscall番号と引数を保持したまま古いFault情報を解除する．Memory Fault等では原因命令のPCを維持する．同じ停止への再実行でPCを二重に巻き戻さない．
+- Native IPC／Notificationの待機をキャンセルする場合，対象の`MR0=0`，`MR1=ILLEGAL_OPERATION`を設定するが，その場では起床させない．`RESUME`後にその呼出しがエラーで戻る．Native IPCは自動再送せず，既に相手が実行した処理も取り消さない．Fault ContextへNative用エラーは書き込まない．未消費Notificationは保持する．
+- Fault handlerが受理済みの要求に対する副作用はKernelが巻き戻せない．User-level managerはhandlerと停止・Context変更を直列化し，処理済みの要求を再実行しないContextを設定する責任を持つ．
+- 推奨手順は`SUSPEND -> READ_REGISTER -> WRITE_REGISTER -> RESUME`．停止後に書き込んだPCは`RESUME`で補正しない．公開Operation番号，MR配置，Hardware Contextの配列長は変更しない．
 - Self Suspendでは実行ContextをIDLEへ切り替える．別processから`RESUME`されるまで，呼出し元はUser Spaceへ復帰しない．
 
 ### 4.7 IPC_PORT (`ipc_port`)

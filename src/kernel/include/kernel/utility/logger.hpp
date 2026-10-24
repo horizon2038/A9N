@@ -63,7 +63,7 @@ namespace a9n::kernel::utility
         static uint32_t    log_id;
         static logger     *this_logger;
         print              _print;
-        spin_lock_no_owner lock;
+        spin_lock lock;
 
         void print_log_id(const char *color_id = terminal_color::GREEN);
         void print_sender(const char *sender, const char *color_id = terminal_color::RESET);

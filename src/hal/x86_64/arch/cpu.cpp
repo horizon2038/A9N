@@ -75,7 +75,7 @@ namespace a9n::hal::x86_64
     }
 
     inline a9n::word                       current_cpu_number { 0 };
-    inline a9n::kernel::spin_lock_no_owner lock;
+    inline a9n::kernel::spin_lock lock;
 
     liba9n::result<a9n::word, hal_error> try_allocate_core_number(void)
     {

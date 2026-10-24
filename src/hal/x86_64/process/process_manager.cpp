@@ -149,6 +149,12 @@ namespace a9n::hal
         return {};
     }
 
+    void restart_syscall(a9n::kernel::process &target)
+    {
+        constexpr a9n::word SYSCALL_INSTRUCTION_BYTES = 2;
+        target.registers[x86_64::register_index::RIP] -= SYSCALL_INSTRUCTION_BYTES;
+    }
+
     // virtual message register mappings
 
     liba9n::result<a9n::word, hal_error>
