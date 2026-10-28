@@ -42,7 +42,7 @@ namespace a9n::hal::x86_64
         // This is an odd specification. Therefore, it's necessary to specify a
         // Null Selector in STAR[63-48], followed by the User Data Segment, and
         // then the User Code Segment.
-        uint64_t star_value = (static_cast<uint64_t>(segment_selector::USER_CS_NULL) << 48)
+        uint64_t star_value = (static_cast<uint64_t>(segment_selector::USER_CS_NULL | 0x03) << 48)
                             | (static_cast<uint64_t>(segment_selector::KERNEL_CS) << 32);
         a9n::kernel::utility::logger::printh("STAR value: 0x%016llx\n", star_value);
         _write_msr(msr::STAR, star_value);
