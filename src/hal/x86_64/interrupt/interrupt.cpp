@@ -87,6 +87,7 @@ namespace a9n::hal::x86_64
 
     void print_page_fault_reason(uint64_t error_code, a9n::virtual_address fault_address)
     {
+#ifdef A9N_CONFIG_ENABLE_LOG_PAGE_FAULT
         using a9n::kernel::utility::logger;
 
         bool is_present           = error_code >> 0 & 1;
@@ -108,6 +109,7 @@ namespace a9n::hal::x86_64
         logger::printh("- protection_key    : %s\n", is_protection_key ? "Y" : "N");
         logger::printh("- shadow_stack      : %s\n", is_shadow_stack ? "Y" : "N");
         logger::printh("- sgx               : %s\n", is_sgx ? "Y" : "N");
+#endif
     }
 
     inline constexpr const char *register_names[]
@@ -232,8 +234,10 @@ namespace a9n::hal::x86_64
                                         a9n::kernel::fault_type::MEMORY_INSTRUCTION_FETCH :
                                         a9n::kernel::fault_type::MEMORY;
                     fault_address = read_cr2(); // overwrite
-                    print_registers();          // TEST
+#ifdef A9N_CONFIG_ENABLE_LOG_PAGE_FAULT
+                    print_registers();
                     print_page_fault_reason(error_code, fault_address);
+#endif
                     break;
 
                 case exception_type::INVALID_OPCODE :

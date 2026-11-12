@@ -94,6 +94,12 @@ cmake -B build \
 cmake --build build
 ```
 
+The x86-64 HAL page-fault register and reason dumps are disabled by default.
+Enable them when diagnosing faults with
+`cmake -S . -B build -DA9N_CONFIG_ENABLE_LOG_PAGE_FAULT=ON`, then rebuild.
+Use `OFF` to disable them again. Fault classification and delivery to the
+user-space resolver are identical with either setting.
+
 ## How to Use
 
 The A9N Microkernel can be custom-configured and automatically configured to suit the needs of a User-space OS.
